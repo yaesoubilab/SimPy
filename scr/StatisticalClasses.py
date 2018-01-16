@@ -323,3 +323,37 @@ class DifferenceStatIndp(DifferenceStat):
         return  self.x.mean() - self.y.mean()
 
 
+class DifferenceStatPaired(DifferenceStat):
+
+    def __init__(self, x, y):
+        self.sumStat = SummaryStat(name, x - y)
+
+    def get_mean(self):
+        return self.sumStat.get_mean()
+
+    def diff_paired(self, alpha):
+
+        # confidence interval for paired data
+        n = len(self.x)
+        alpha = alpha/100.0
+
+        # X-Y
+        d = self.x - self.y
+        d_mean = d.mean()
+
+        # calculate CI using formula: paired t-interval
+        # ref: https://onlinecourses.science.psu.edu/stat414/node/202
+        df = n - 1
+
+        # t distribution quantile
+        q = scs.t.ppf(1 - (alpha / 2), df)
+        c = (d.var() / n) ** 0.5
+        x_y = [d_mean - q * c, d_mean + q * c]
+
+        return d_mean, x_y
+
+    def percentile_d_paired(self, alpha):
+        d = self.x - self.y
+        q = np.percentile(d, alpha)
+
+        return q
