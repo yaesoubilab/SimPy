@@ -10,4 +10,3 @@ mySamplePath.record(5, 0)
 
 # plot
 Path.graph_sample_path(mySamplePath, 'Test', 'time', 'y', Path.OutType.SHOW)
-
