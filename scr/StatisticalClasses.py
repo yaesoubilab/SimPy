@@ -260,3 +260,66 @@ class ContinuousTimeStat(Statistics):
     def get_PI(self, alpha):
         """ percentile intervals cannot be calculated for this statistics """
         return None
+
+
+class ComparativeStat(Statistics):
+    '''
+    list or array of sample data, with same length
+    '''
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+class DifferenceStat(ComparativeStat):
+
+    def __init__(self, x, y):
+        ComparativeStat.__init__(self, x, y)
+
+
+class DifferenceStatIndp(DifferenceStat):
+
+    def diff_ind(self, alpha):
+        # confidence interval for independent data
+        n = len(self.x)
+        m = len(self.y)
+        sig_x = np.std(self.x)
+        sig_y = np.std(self.y)
+
+        alpha = alpha/100.0
+
+        # E[X] - E[Y]
+        diff = np.mean(self.x) - np.mean(self.y)
+
+        # calculate CI using formula: Welch's t-interval
+        # ref: https://onlinecourses.science.psu.edu/stat414/node/203
+        df_n = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 2.0
+        df_d = (sig_x ** 2.0 / n) ** 2 / (n - 1) + (sig_y ** 2.0 / m) ** 2 / (m - 1)
+        df = round(df_n / df_d, 0)
+
+        # t distribution quantile
+        q = scs.t.ppf(1 - (alpha / 2), df)
+        c = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 0.5
+
+        x_y = [diff - q * c, diff + q * c]
+
+        return diff, x_y
+
+    def percentile_d_ind(self, alpha, M):
+        # 95% CI and mu for alpha th percentile of X-Y
+        delta = np.ones(M)
+
+        for i in range(M):
+            x_i = np.random.choice(self.x, size=len(self.x), replace=True)
+            y_i = np.random.choice(self.y, size=len(self.y), replace=True)
+
+            delta[i] = np.percentile(x_i - y_i, alpha)
+
+        q = np.percentile(delta, [2.5, 50, 97.5])
+
+        return q
+
+    def get_mean(self):
+        return  self.x.mean() - self.y.mean()
+
+
