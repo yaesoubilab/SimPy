@@ -2,7 +2,7 @@ import sys
 import numpy as numpy
 import scipy.stats as stat
 import math
-from scr import SupportFunctions as Support
+import SupportFunctions as Support
 
 
 class Statistics(object):
