@@ -2,7 +2,7 @@ import sys
 import numpy as numpy
 import scipy.stats as stat
 # no 'math' module under python 2.7, comment out for my version
-import math
+# import math
 
 # need to set the working dictionary to the sub-file to import SupportFunctions.py
 sys.path.append('../HPM573_SupportLib/scr')
@@ -140,7 +140,7 @@ class SummaryStat(Statistics):
             delta[i] = sample_i.mean() - self.get_mean()
 
         # return [l, u]
-        return -numpy.percentile(delta, [100*(1 - alpha / 2.0), 100*alpha / 2.0]) + self.get_mean()
+        return -numpy.percentile(delta, [100 - alpha / 2.0, alpha / 2.0]) + self.get_mean()
 
     def get_PI(self, alpha):
         """
@@ -285,24 +285,31 @@ class RatioStat(ComparativeStat):
     def __init__(self, name, x, y):
         ComparativeStat.__init__(self, name, x, y)
         # make sure no 0 in the denominator variable
-        assert (self.y != 0).all(), 'invalid value of y, the ratio is not computable'
+        if (self.y != 0).all() == False:
+            raise ValueError('invalid value of y, the ratio is not computable')
 
 class RatioStatIndp(RatioStat):
 
     def __init__(self, name, x, y):
         RatioStat.__init__(self, name, x, y)
         self._n = len(self.x)              # number of data points
+        # since the calling of mean and stdev functions here,
+        # if mean(y) == 0, the RatioStatIndp object can not be define
         self._mean = self.get_mean()       # sample mean
         self._stDev = self.get_stdev()     # sample standard deviation
         self._max = self.get_max()         # maximum
         self._min = self.get_max()         # minimum
+
+
 
     def get_mean(self):
         '''
         for independent variable x and y, E(x/y)=E(x)/E(y)
         :return: E(x)/E(y)
         '''
-        assert self.y.mean() != 0, 'invalid value of y, the ratio is not computable'
+        if self.y.mean() == 0:
+            raise ValueError('invalid value of mean of y, the ratio is not computable')
+
         mu = self.x.mean()/self.y.mean()
 
         return mu
@@ -312,7 +319,9 @@ class RatioStatIndp(RatioStat):
         for independent variable x and y, var(x/y) = E(x^2)/E(y^2)-E(x)^2/E(y)^2
         :return: std(x/y)
         '''
-        assert self.y.mean() != 0, 'invalid value of y, the ratio is not computable'
+        if self.y.mean() == 0:
+            raise ValueError('invalid value of mean of y, the ratio is not computable')
+
         var = numpy.mean(self.x**2) * numpy.mean(1.0/self.y**2) - \
               (numpy.mean(self.x)**2)/(numpy.mean(self.y)**2)
         std = numpy.sqrt(var)
@@ -383,7 +392,9 @@ class RatioStatIndp(RatioStat):
             # calculate the CI of E(x)/E(y) with confidence 100-alpha
             delta = numpy.ones(M)
             # assert all the means should not be 0
-            assert self.y.mean() != 0, 'invalid value of y, the ratio is not computable'
+            if self.y.mean() == 0:
+                raise ValueError('invalid value of mean of y, the ratio is not computable')
+
             r_bar = self.x.mean() / self.y.mean()
 
             for i in range(M):
@@ -391,7 +402,8 @@ class RatioStatIndp(RatioStat):
                 y_i = numpy.random.choice(self.y, size=len(self.y), replace=True)
 
                 # assert all the means should not be 0
-                assert y_i.mean() != 0, 'invalid value of y, the ratio is not computable'
+                if y_i.mean() == 0:
+                    raise ValueError('invalid value of mean of y, the ratio is not computable')
                 ri_bar = x_i.mean() / y_i.mean()
 
                 delta[i] = ri_bar - r_bar
@@ -500,19 +512,20 @@ class RatioStatPaired(RatioStat):
 
     def get_bootstrap_CI(self, alpha, M, method=''):
         '''
-
         :param alpha: confidence level
         :param M: number of samples
-        :param method: choose to calculate 'ratio_of_expect': E(x)/E(y) or 'expect_of_ratio': E(x/y)
+        :param method: choose to calculate 'for_mean': E(x)/E(y) or 'for_ratio': E(x/y)
         :return: bootstrap confidence interval
         '''
 
-        if method == 'ratio_of_expect':
+        if method == 'for_mean':
             # calculate the CI of E(x)/E(y) with confidence 100-alpha
             delta = numpy.ones(M)
 
             # assert all the means should not be 0
-            assert self.y.mean() != 0, 'invalid value of y, the ratio is not computable'
+            if self.y.mean() == 0:
+                raise ValueError('invalid value of mean of y, the ratio is not computable')
+
             r_bar = self.x.mean() / self.y.mean()
 
             for i in range(M):
@@ -522,17 +535,18 @@ class RatioStatPaired(RatioStat):
                 y_i = self.y[ind]
 
                 # assert all the means should not be 0
-                assert y_i.mean() != 0, 'invalid value of y, the ratio is not computable'
+                if y_i.mean() == 0:
+                    raise ValueError('invalid value of mean of y, the ratio is not computable')
                 ri_bar = x_i.mean() / y_i.mean()
 
                 delta[i] = ri_bar - r_bar
 
             result = -numpy.percentile(delta, [100 - alpha / 2.0, alpha / 2.0]) + r_bar
 
-        else:
+        elif method == 'for_ratio':
             # calculate the CI of E(x/y) with confidence 100-alpha
-            r = SummaryStat(self.r)
-            result = r.get_bootstrap_CI(alpha, M)
+            a = SummaryStat('tempr',self.r)
+            result = a.get_bootstrap_CI(alpha, M)
 
         return result
 
@@ -558,7 +572,7 @@ class RatioStatPaired(RatioStat):
                 Support.format_number(self.get_min(), digits),
                 Support.format_number(self.get_max(), digits),
                 Support.format_number(self.get_percentile(10), digits),
-                Support.format_interval(self.get_bootstrap_CI(alpha, 1000, 'ratio_of_expect'), digits)]
+                Support.format_interval(self.get_bootstrap_CI(alpha, 1000, 'for_ratio'), digits)]
 
 
 
