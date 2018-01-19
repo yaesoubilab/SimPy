@@ -1,8 +1,8 @@
 import sys
 import numpy as numpy
 import scipy.stats as stat
-# no 'math' module under python 2.7, comment out for now
-# import math
+# no 'math' module under python 2.7, comment out for my version
+import math
 
 # need to set the working dictionary to the sub-file to import SupportFunctions.py
 sys.path.append('../HPM573_SupportLib/scr')
@@ -379,7 +379,6 @@ class RatioStatIndp(RatioStat):
         :param method: choose to calculate 'for_mean': E(x)/E(y) or 'for_ratio': E(x/y)
         :return: bootstrap confidence interval
         '''
-
         if method == 'for_mean':
             # calculate the CI of E(x)/E(y) with confidence 100-alpha
             delta = numpy.ones(M)
@@ -686,7 +685,6 @@ class DifferenceStatIndp(DifferenceStat):
 
         return result
 
-
     def get_t_half_length(self, alpha):
         '''
         Independent x_bar - y_bar is t distribution
@@ -715,8 +713,6 @@ class DifferenceStatIndp(DifferenceStat):
         c = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 0.5
 
         return q*c
-
-
 
     def get_t_CI(self, alpha):
 
