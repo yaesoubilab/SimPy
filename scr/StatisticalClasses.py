@@ -91,7 +91,6 @@ class Statistics(object):
                 Support.format_number(self.get_max(), digits)]
 
 
-# no change
 class SummaryStat(Statistics):
     def __init__(self, name, data):
         """:param data: a list of data points"""
@@ -149,7 +148,7 @@ class SummaryStat(Statistics):
         """
         return [self.get_percentile(100*(1-alpha/2)), self.get_percentile(100*alpha/2)]
 
-# no change
+
 class DiscreteTimeStat(Statistics):
     """ to calculate statistics on observations accumulating over time """
     def __init__(self, name):
@@ -200,7 +199,7 @@ class DiscreteTimeStat(Statistics):
         """ percentile intervals cannot be calculated for this statistics """
         return None
 
-# no change
+
 class ContinuousTimeStat(Statistics):
     """ to calculate statistics on the area-under-the-curve for observations accumulating over time """
     def __init__(self, name,  initial_time):
@@ -268,14 +267,13 @@ class ContinuousTimeStat(Statistics):
         return None
 
 
-
-
 class ComparativeStat(Statistics):
-    '''
-    list or array of sample data, with same length
-    '''
     def __init__(self, name, x, y):
-        Statistics.__init__(self,name)
+        """
+        :param x: list or array of first set of observations
+        :param y: list or array of second set of observations
+        """
+        Statistics.__init__(self, name)
         self.x = x
         self.y = y
 
@@ -286,6 +284,7 @@ class RatioStat(ComparativeStat):
         ComparativeStat.__init__(self, name, x, y)
         # make sure no 0 in the denominator variable
         assert (self.y != 0).all(), 'invalid value of y, the ratio is not computable'
+
 
 class RatioStatIndp(RatioStat):
 
