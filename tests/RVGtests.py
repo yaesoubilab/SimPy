@@ -14,6 +14,7 @@ def print_test_results(dist_name, samples, expectation, variance):
 def get_samples(dist, rnd):
     samples = []
     for i in range(0, 10000):
+        # get 10000 samples
         samples.append(dist.sample(rnd))
     return samples
 

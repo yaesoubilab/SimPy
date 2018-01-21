@@ -80,7 +80,6 @@ class BetaBinomial(RVG):
         return sample
 
 
-
 class Binomial(RVG):
     def __init__(self, N, p):
         """
@@ -94,26 +93,51 @@ class Binomial(RVG):
     def sample(self, numpy_rnd):
         return numpy_rnd.binomial(self.N, self.p)
 
-'''
+
 class Dirichlet(RVG):
     def __init__(self, a):
         """
-        E[X] = sum(
-        Var[X] = (ai(ao-ai))/((ao)^2(ao+1)) where ao=sum_ai through K.
+        E[Xi] = ai/a0
+        Var[Xi] = (ai(a0-ai))/((a0)^2(a0+1)) where a0 = sum all ai.
         """
         RVG.__init__(self)
-        self.a = a[]
+        self.a = a
 
     def sample(self, numpy_rnd):
         """
         :param numpy_rnd: numpy .random object
-        :return: a realization from the Dirichlet distribution
+        :return: a realization from the Dirichlet distribution, length K.
         """
         return numpy_rnd.dirichlet(self.a)
-'''
+
 
 class Empirical(RVG):
-    pass
+    """
+    inverse transform sampling
+    calculate the CDF for each bin in the histogram then interpolate it using scipy function
+    """
+    def __init__(self, x, n_bins):
+        """
+        E[X] = x_bar
+        Var[X] = var(x)
+        """
+        RVG.__init__(self)
+        self.x = x
+        self.bin = n_bins
+
+    def sample(self, numpy_rnd):
+        """
+        :param numpy_rnd: numpy .random object
+        :return: a realization from the Empirical distribution
+        """
+        import scipy.interpolate as interpolate
+        hist, bin_edges = numpy.histogram(self.x, bins=self.bin, density=True)
+        cum_values = numpy.zeros(bin_edges.shape)
+        cum_values[1:] = numpy.cumsum(hist * numpy.diff(bin_edges))
+        inv_cdf = interpolate.interp1d(cum_values, bin_edges)
+        r = numpy_rnd.rand(1)
+
+        return inv_cdf(r)
 
 
 class Gamma(RVG):
