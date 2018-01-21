@@ -4,9 +4,7 @@ import scipy.stats as stat
 # no 'math' module under python 2.7, comment out for my version
 # import math
 
-# need to set the working dictionary to the sub-file to import SupportFunctions.py
-sys.path.append('../HPM573_SupportLib/scr')
-import SupportFunctions as Support
+from scr import SupportFunctions as Support
 
 
 class Statistics(object):
@@ -146,7 +144,7 @@ class SummaryStat(Statistics):
         :param alpha: significance level
         :return: percentile interval in the format of list [l, u]
         """
-        return [self.get_percentile(100*(1-alpha/2)), self.get_percentile(100*alpha/2)]
+        return [self.get_percentile(alpha/2), self.get_percentile(100-alpha/2)]
 
 
 class DiscreteTimeStat(Statistics):
@@ -267,6 +265,8 @@ class ContinuousTimeStat(Statistics):
         return None
 
 
+
+
 class ComparativeStat(Statistics):
     def __init__(self, name, x, y):
         """
@@ -278,6 +278,7 @@ class ComparativeStat(Statistics):
         self.y = y
 
 
+
 class RatioStat(ComparativeStat):
 
     def __init__(self, name, x, y):
@@ -285,7 +286,6 @@ class RatioStat(ComparativeStat):
         # make sure no 0 in the denominator variable
         if (self.y != 0).all() == False:
             raise ValueError('invalid value of y, the ratio is not computable')
-
 
 class RatioStatIndp(RatioStat):
 

@@ -1,4 +1,5 @@
 import random
+
 from scr import StatisticalClasses as Stat
 from scr import SupportFunctions as Support
 
@@ -10,11 +11,11 @@ def print_results(stat):
     print('   Max =', Support.format_number(stat.get_max(), digits=3))
     print('   Median =', Support.format_number(stat.get_percentile(50), digits=3))
     print('   95% Mean Confidence Interval (t-based) =',
-          Support.format_interval(stat.get_t_CI(.05), 3))
+          Support.format_interval(stat.get_t_CI(5), 3))
     print('   95% Mean Confidence Interval (bootstrap) =',
-          Support.format_interval(stat.get_bootstrap_CI(.05, 1000), 3))
+          Support.format_interval(stat.get_bootstrap_CI(5, 1000), 3))
     print('   95% Prediction Interval =',
-          Support.format_interval(stat.get_PI(.05), 3))
+          Support.format_interval(stat.get_PI(5), 3))
 
 
 def summary_stat_test(data):

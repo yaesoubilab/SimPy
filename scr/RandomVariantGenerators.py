@@ -1,5 +1,5 @@
 # https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.random.html
-
+import numpy
 
 class RVG(object):
     def __init__(self):
@@ -8,7 +8,7 @@ class RVG(object):
     def sample(self, numpy_rnd):
         """
         :param numpy_rnd: numpy .random object
-        :returns a realization from the defined probability distribution """
+        :returns one realization from the defined probability distribution """
 
         # abstract method to be overridden in derived classes to process an event
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
@@ -56,9 +56,9 @@ class Beta(RVG):
     def sample(self, numpy_rnd):
         return numpy_rnd.beta(self.a, self.b)
 
-'''
+
 class BetaBinomial(RVG):
-    def __init__(self,k, n, a, b):
+    def __init__(self, n, a, b):
         """
         E[X] = na/(a+b)
         Var[X] = (nab(a+b+n))/((a+b)^2(a+b+1))
@@ -70,14 +70,15 @@ class BetaBinomial(RVG):
 
     def sample(self, numpy_rnd):
         """
-        :param numpy_rnd: numpy .random object
+        :param numpy_rnd: numpy.random object
         :return: a realization from the Beta Binomial distribution
+        # ref: https://blogs.sas.com/content/iml/2017/11/20/simulate-beta-binomial-sas.html
         """
-        sample = 0
-        if numpy_rnd.sample() <= self.p:
-            sample = 1
+        sample_p = numpy_rnd.beta(self.a, self.b)
+        sample = numpy_rnd.binomial(self.n, sample_p)
+
         return sample
-'''
+
 
 
 class Binomial(RVG):
