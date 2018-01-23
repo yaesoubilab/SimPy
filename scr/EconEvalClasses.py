@@ -113,6 +113,7 @@ class NMBPaired(NMB):
         stat = Stat.SummaryStat(self._name, NMBsamples)
         return stat.get_t_CI(alpha)
 
+
 class NMBIndepedent(NMB):
     def __init__(self, name, cost_intervention, health_intervention, cost_base, health_base):
         self.__init__(name, cost_intervention, health_intervention, cost_base, health_base)

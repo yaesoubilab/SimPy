@@ -1,8 +1,6 @@
 import sys
 import numpy as numpy
 import scipy.stats as stat
-# no 'math' module under python 2.7, comment out for my version
-# import math
 
 from scr import SupportFunctions as Support
 
@@ -10,7 +8,7 @@ from scr import SupportFunctions as Support
 class Statistics(object):
     def __init__(self, name):
         """ abstract method to be overridden in derived classes"""
-        self.name = name        # name of this statistics
+        self._name = name        # name of this statistics
         self._n = 0              # number of data points
         self._mean = 0           # sample mean
         self._stDev = 0          # sample standard deviation
@@ -50,7 +48,7 @@ class Statistics(object):
 
         return stat.t.ppf(1 - alpha / 200.0, self._n - 1) * self.get_stdev() / numpy.sqrt(self._n)
 
-    def get_t_CI(self,alpha):
+    def get_t_CI(self, alpha):
         """ calculates t-based confidence interval for population mean
         :param alpha: significance level
         :return: a list [l, u]
@@ -80,7 +78,7 @@ class Statistics(object):
         :param digits: digits to round the numbers to
         :return: a list ['name', 'mean', 'confidence interval', 'percentile interval', 'st dev', 'min', 'max']
         """
-        return [self.name,
+        return [self._name,
                 Support.format_number(self.get_mean(), digits),
                 Support.format_interval(self.get_t_CI(alpha), digits),
                 Support.format_interval(self.get_PI(alpha), digits),
@@ -94,10 +92,15 @@ class SummaryStat(Statistics):
         """:param data: a list of data points"""
 
         Statistics.__init__(self, name)
-        self._data = data
-        self._n = len(data)
-        self._mean = numpy.mean(data)
-        self._stDev = numpy.std(data, ddof=1)  # unbiased estimator of the standard deviation
+        # convert data to numpy array if needed
+        if type(data) == list:
+            self._data = numpy.array(data)
+        else:
+            self._data = data
+
+        self._n = len(self._data)
+        self._mean = numpy.mean(self._data)
+        self._stDev = numpy.std(self._data, ddof=1)  # unbiased estimator of the standard deviation
 
     def get_mean(self):
         return self._mean
@@ -113,7 +116,7 @@ class SummaryStat(Statistics):
 
     def get_percentile(self, q):
         """
-        :param q: percentile to compute (q in range [0, 100]
+        :param q: percentile to compute (q in range [0, 100])
         :returns: qth percentile """
 
         return numpy.percentile(self._data, q)
@@ -265,8 +268,6 @@ class ContinuousTimeStat(Statistics):
         return None
 
 
-
-
 class ComparativeStat(Statistics):
     def __init__(self, name, x, y):
         """
@@ -274,305 +275,16 @@ class ComparativeStat(Statistics):
         :param y: list or array of second set of observations
         """
         Statistics.__init__(self, name)
-        self.x = x
-        self.y = y
 
+        if type(x) == list:
+            self.x = numpy.array(x)
+        else:
+            self.x = x
 
-
-class RatioStat(ComparativeStat):
-
-    def __init__(self, name, x, y):
-        ComparativeStat.__init__(self, name, x, y)
-        # make sure no 0 in the denominator variable
-        if (self.y != 0).all() == False:
-            raise ValueError('invalid value of y, the ratio is not computable')
-
-class RatioStatIndp(RatioStat):
-
-    def __init__(self, name, x, y):
-        RatioStat.__init__(self, name, x, y)
-        self._n = len(self.x)              # number of data points
-        # since the calling of mean and stdev functions here,
-        # if mean(y) == 0, the RatioStatIndp object can not be define
-        self._mean = self.get_mean()       # sample mean
-        self._stDev = self.get_stdev()     # sample standard deviation
-        self._max = self.get_max()         # maximum
-        self._min = self.get_max()         # minimum
-
-
-
-    def get_mean(self):
-        '''
-        for independent variable x and y, E(x/y)=E(x)/E(y)
-        :return: E(x)/E(y)
-        '''
-        if self.y.mean() == 0:
-            raise ValueError('invalid value of mean of y, the ratio is not computable')
-
-        mu = self.x.mean()/self.y.mean()
-
-        return mu
-
-    def get_stdev(self):
-        '''
-        for independent variable x and y, var(x/y) = E(x^2)/E(y^2)-E(x)^2/E(y)^2
-        :return: std(x/y)
-        '''
-        if self.y.mean() == 0:
-            raise ValueError('invalid value of mean of y, the ratio is not computable')
-
-        var = numpy.mean(self.x**2) * numpy.mean(1.0/self.y**2) - \
-              (numpy.mean(self.x)**2)/(numpy.mean(self.y)**2)
-        std = numpy.sqrt(var)
-
-        return std
-
-    def get_min(self):
-        '''
-        for independent variable x and y, sample min, max, and percentiles are given after permutation
-        re-sampling with sample size M
-        :return: min(x/y)
-        '''
-        M = self._n
-        x_i = numpy.random.choice(self.x, size= M, replace=True)
-        y_i = numpy.random.choice(self.y, size= M, replace=True)
-        r_temp = numpy.divide(x_i, y_i)
-
-        min = numpy.min(r_temp)
-
-        return min
-
-    def get_max(self):
-        '''
-        for independent variable x and y, sample min, max, and percentiles are given after permutation
-        re-sampling with sample size M
-        :return: max(x/y)
-        '''
-        M = self._n
-        x_i = numpy.random.choice(self.x, size=M, replace=True)
-        y_i = numpy.random.choice(self.y, size=M, replace=True)
-        r_temp = numpy.divide(x_i, y_i)
-
-        max = numpy.max(r_temp)
-
-        return max
-
-    def get_percentile(self, q):
-        '''
-        for independent variable x and y, sample min, max, and percentiles are given after permutation
-        re-sampling with sample size M
-        :return: q th percentile of (x/y)
-        '''
-        M = self._n
-        x_i = numpy.random.choice(self.x, size=M, replace=True)
-        y_i = numpy.random.choice(self.y, size=M, replace=True)
-        r_temp = numpy.divide(x_i, y_i)
-
-        qth = numpy.percentile(r_temp, q)
-
-        return qth
-
-    def get_t_half_length(self):
-        # Independent Gaussian ratio distribution is Cauchy
-        return "This variable is not applicable for t distribution"
-
-    def get_t_CI(self):
-        # Independent Gaussian ratio distribution is Cauchy
-        return "This variable is not applicable for t distribution"
-
-    def get_bootstrap_CI(self, alpha, M, method):
-        '''
-        :param alpha: confidence level
-        :param M: number of samples
-        :param method: choose to calculate 'for_mean': E(x)/E(y) or 'for_ratio': E(x/y)
-        :return: bootstrap confidence interval
-        '''
-        if method == 'for_mean':
-            # calculate the CI of E(x)/E(y) with confidence 100-alpha
-            delta = numpy.ones(M)
-            # assert all the means should not be 0
-            if self.y.mean() == 0:
-                raise ValueError('invalid value of mean of y, the ratio is not computable')
-
-            r_bar = self.x.mean() / self.y.mean()
-
-            for i in range(M):
-                x_i = numpy.random.choice(self.x, size=len(self.x), replace=True)
-                y_i = numpy.random.choice(self.y, size=len(self.y), replace=True)
-
-                # assert all the means should not be 0
-                if y_i.mean() == 0:
-                    raise ValueError('invalid value of mean of y, the ratio is not computable')
-                ri_bar = x_i.mean() / y_i.mean()
-
-                delta[i] = ri_bar - r_bar
-
-            result = -numpy.percentile(delta, [100 - alpha / 2.0, alpha / 2.0]) + r_bar
-        elif method == 'for_ratio':
-            # calculate the CI of E(x/y) with confidence 100-alpha
-            ratio = numpy.ones(M)
-
-            for i in range(M):
-                x_i = numpy.random.choice(self.x, size=len(self.x), replace=True)
-                y_i = numpy.random.choice(self.y, size=len(self.y), replace=True)
-                r_temp = numpy.divide(x_i, y_i)
-                ratio[i] = numpy.mean(r_temp)
-
-            r_bar = numpy.mean(ratio)
-            result = numpy.percentile(ratio, [alpha / 2.0, 100 - alpha / 2.0])
-
-        return result
-    
-    def get_PI(self, alpha):
-        # significant level alpha percentile for random sample of x/y with size M
-        M = self._n
-        x_i = numpy.random.choice(self.x, size= M, replace=True)
-        y_i = numpy.random.choice(self.y, size= M, replace=True)
-        r_temp = numpy.divide(x_i, y_i)
-
-        q = numpy.percentile(r_temp, [alpha/2.0, 100-alpha/2.0])
-
-        return q
-
-    def get_summary(self, alpha, digits):
-        """
-        due to change of argument, need override origin summary function
-        :param alpha: significance level
-        :param digits: digits to round the numbers to
-        :return: a list ['name', 'mean', 'percentile interval', 'st dev', 'min', 'max', 'confidence interval',
-        'bootstrap confidence interval']
-        """
-        return [self.name,
-                Support.format_number(self.get_mean(), digits),
-                self.get_t_CI(),
-                Support.format_interval(self.get_PI(alpha), digits),
-                Support.format_number(self.get_stdev(), digits),
-                Support.format_number(self.get_min(), digits),
-                Support.format_number(self.get_max(), digits),
-                Support.format_number(self.get_percentile(10), digits),
-                Support.format_interval(self.get_bootstrap_CI(alpha, 1000,'for_mean'), digits)]
-
-class RatioStatPaired(RatioStat):
-
-    def __init__(self, name, x, y):
-        RatioStat.__init__(self, name, x, y)
-        # add element-wise ratio
-        self.r = numpy.divide(self.x, self.y)
-        self._n = len(self.r)              # number of data points
-        self._mean = self.get_mean()       # sample mean
-        self._stDev = self.get_stdev()     # sample standard deviation
-        self._max = self.get_max()         # maximum
-        self._min = self.get_max()         # minimum
-
-    def get_mean(self):
-        '''
-        for paired variable x and y, calculate ratio first
-        :return: E(x/y)
-        '''
-        mu = numpy.mean(self.r)
-
-        return mu
-
-    def get_stdev(self):
-        '''
-        for paired variable x and y, calculate ratio first
-        :return: std(r)
-        '''
-        std = numpy.std(self.r)
-
-        return std
-
-    def get_min(self):
-        '''
-        for paired variable x and y, calculate ratio first
-        :return: min(r)
-        '''
-        min = numpy.min(self.r)
-
-        return min
-
-    def get_max(self):
-        '''
-        for paired variable x and y, calculate ratio first
-        :return: max(r)
-        '''
-        max = numpy.max(self.r)
-
-        return max
-
-    def get_percentile(self, q):
-        '''
-        for paired variable x and y, calculate ratio first
-        :return: q th percentile of (x/y)
-        '''
-        qth = numpy.percentile(self.r, q)
-
-        return qth
-
-    def get_bootstrap_CI(self, alpha, M, method=''):
-        '''
-        :param alpha: confidence level
-        :param M: number of samples
-        :param method: choose to calculate 'for_mean': E(x)/E(y) or 'for_ratio': E(x/y)
-        :return: bootstrap confidence interval
-        '''
-
-        if method == 'for_mean':
-            # calculate the CI of E(x)/E(y) with confidence 100-alpha
-            delta = numpy.ones(M)
-
-            # assert all the means should not be 0
-            if self.y.mean() == 0:
-                raise ValueError('invalid value of mean of y, the ratio is not computable')
-
-            r_bar = self.x.mean() / self.y.mean()
-
-            for i in range(M):
-                # choice paired sample by index
-                ind = numpy.random.choice(range(len(self.x)), size=len(self.x), replace=True)
-                x_i = self.x[ind]
-                y_i = self.y[ind]
-
-                # assert all the means should not be 0
-                if y_i.mean() == 0:
-                    raise ValueError('invalid value of mean of y, the ratio is not computable')
-                ri_bar = x_i.mean() / y_i.mean()
-
-                delta[i] = ri_bar - r_bar
-
-            result = -numpy.percentile(delta, [100 - alpha / 2.0, alpha / 2.0]) + r_bar
-
-        elif method == 'for_ratio':
-            # calculate the CI of E(x/y) with confidence 100-alpha
-            a = SummaryStat('tempr',self.r)
-            result = a.get_bootstrap_CI(alpha, M)
-
-        return result
-
-    def get_PI(self, alpha):
-        # significant level alpha percentile for ratio vector
-        q = numpy.percentile(self.r, [alpha/2.0, 100-alpha/2.0])
-
-        return q
-
-    def get_summary(self, alpha, digits):
-        """
-        due to change of argument, need override origin summary function
-        :param alpha: significance level
-        :param digits: digits to round the numbers to
-        :return: a list ['name', 'mean', 'percentile interval', 'st dev', 'min', 'max', 'confidence interval',
-        'bootstrap confidence interval']
-        """
-        return [self.name,
-                Support.format_number(self.get_mean(), digits),
-                Support.format_interval(self.get_t_CI(alpha), digits),
-                Support.format_interval(self.get_PI(alpha), digits),
-                Support.format_number(self.get_stdev(), digits),
-                Support.format_number(self.get_min(), digits),
-                Support.format_number(self.get_max(), digits),
-                Support.format_number(self.get_percentile(10), digits),
-                Support.format_interval(self.get_bootstrap_CI(alpha, 1000, 'for_ratio'), digits)]
-
+        if type(y) == list:
+            self.y = numpy.array(y)
+        else:
+            self.y = y
 
 
 class DifferenceStat(ComparativeStat):
@@ -580,27 +292,52 @@ class DifferenceStat(ComparativeStat):
     def __init__(self, name, x, y):
         ComparativeStat.__init__(self, name, x, y)
 
+
+class DifferenceStatPaired(DifferenceStat):
+
+    def __init__(self, name, x, y):
+        DifferenceStat.__init__(self, name, x, y)
+
+        self.dStat = SummaryStat(name, self.x - self.y)
+
+    def get_mean(self):
+        return self.dStat.get_mean()
+
+    def get_stdev(self):
+        return self.dStat.get_stdev()
+
+    def get_min(self):
+        return self.dStat.get_min()
+
+    def get_max(self):
+        return self.dStat.get_max()
+
+    def get_percentile(self, q):
+        return self.dStat.get_percentile(q)
+
+    def get_bootstrap_CI(self, alpha, num_samples):
+        return self.dStat.get_bootstrap_CI(alpha, num_samples)
+
+    def get_PI(self, alpha):
+        return self.dStat.get_PI(alpha)
+
+
 class DifferenceStatIndp(DifferenceStat):
 
     def __init__(self, name, x, y):
         DifferenceStat.__init__(self, name, x, y)
-        # add element-wise difference
-        self.d = self.x - self.y
 
-        self._n = len(self.d)              # number of data points
-        self._mean = self.get_mean()       # sample mean
-        self._stDev = self.get_stdev()     # sample standard deviation
-        self._max = self.get_max()         # maximum
-        self._min = self.get_max()         # minimum
+        numpy.random.seed(1)
+        x_i = numpy.random.choice(self.x, size=self._n, replace=True)
+        y_i = numpy.random.choice(self.y, size=self._n, replace=True)
+        self.sum_stat_sample_delta = SummaryStat(name, x_i - y_i)
 
     def get_mean(self):
-        '''
+        """
         for independent variable x and y, E(x-y) = E(x) - E(y)
         :return: sample mean of (x-y)
-        '''
-        mu = numpy.mean(self.x) - numpy.mean(self.y)
-
-        return mu
+        """
+        return numpy.mean(self.x) - numpy.mean(self.y)
 
     def get_stdev(self):
         '''
@@ -610,39 +347,13 @@ class DifferenceStatIndp(DifferenceStat):
         '''
         var_x = numpy.var(self.x)
         var_y = numpy.var(self.y)
-        std = numpy.sqrt(var_x + var_y)
-
-        return std
+        return numpy.sqrt(var_x + var_y)
 
     def get_min(self):
-        '''
-        for independent variable x and y, sample min, max, and percentiles are given after permutation
-        re-sampling with sample size M
-        :return: sample min of (x-y)
-        '''
-        M = self._n
-        x_i = numpy.random.choice(self.x, size= M, replace=True)
-        y_i = numpy.random.choice(self.y, size= M, replace=True)
-        d_temp = x_i - y_i
-
-        min = numpy.min(d_temp)
-
-        return min
+        return None
 
     def get_max(self):
-        '''
-        for independent variable x and y, sample min, max, and percentiles are given after permutation
-        re-sampling with sample size M
-        :return: sample max of (x-y)
-        '''
-        M = self._n
-        x_i = numpy.random.choice(self.x, size= M, replace=True)
-        y_i = numpy.random.choice(self.y, size= M, replace=True)
-        d_temp = x_i - y_i
-
-        max = numpy.max(d_temp)
-
-        return max
+        return None
 
     def get_percentile(self, q):
         '''
@@ -650,16 +361,9 @@ class DifferenceStatIndp(DifferenceStat):
         re-sampling with sample size M
         :return: sample quantile of (x-y)
         '''
-        M = self._n
-        x_i = numpy.random.choice(self.x, size=M, replace=True)
-        y_i = numpy.random.choice(self.y, size=M, replace=True)
-        d_temp = x_i - y_i
+        return self.sum_stat_sample_delta.get_percentile(self.sample_delta, q)
 
-        qth = numpy.percentile(d_temp, q)
-
-        return qth
-
-    def get_bootstrap_CI(self, alpha, M, method):
+    def get_bootstrap_CI(self, alpha, num_samples):
         '''
         :param alpha: confidence level
         :param M: number of samples
@@ -667,36 +371,7 @@ class DifferenceStatIndp(DifferenceStat):
         get_t_CI is equivalent to 'for_mean' method in 'get_bootstrap_CI', theoretical
         :return: bootstrap confidence interval
         '''
-        if method == 'for_mean':
-            # confidence interval for independent data's (mu_x - mu_y)
-            delta = numpy.ones(M)
-            d_bar = self.x.mean() - self.y.mean()
-
-            for i in range(M):
-                x_i = numpy.random.choice(self.x, size=len(self.x), replace=True)
-                y_i = numpy.random.choice(self.y, size=len(self.y), replace=True)
-
-                # assert all the means should not be 0
-                di_bar = x_i.mean() - y_i.mean()
-
-                delta[i] = di_bar - d_bar
-
-            result = -numpy.percentile(delta, [100 - alpha / 2.0, alpha / 2.0]) + d_bar
-
-        elif method == 'for_diff':
-            # calculate the CI of mu_(x-y) with confidence 100-alpha
-            delta = numpy.ones(M)
-
-            for i in range(M):
-                x_i = numpy.random.choice(self.x, size=len(self.x), replace=True)
-                y_i = numpy.random.choice(self.y, size=len(self.y), replace=True)
-                d_temp = x_i - y_i
-                delta[i] = numpy.mean(d_temp)
-
-            d_bar = numpy.mean(delta)
-            result = numpy.percentile(delta, [alpha / 2.0, 100 - alpha / 2.0])
-
-        return result
+        return self.sum_stat_sample_delta.get_bootstrap_CI(alpha, num_samples)
 
     def get_t_half_length(self, alpha):
         '''
@@ -712,9 +387,6 @@ class DifferenceStatIndp(DifferenceStat):
 
         alpha = alpha / 100.0
 
-        # E[X] - E[Y]
-        diff = numpy.mean(self.x) - numpy.mean(self.y)
-
         # calculate CI using formula: Welch's t-interval
         # ref: https://onlinecourses.science.psu.edu/stat414/node/203
         df_n = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 2.0
@@ -722,138 +394,118 @@ class DifferenceStatIndp(DifferenceStat):
         df = round(df_n / df_d, 0)
 
         # t distribution quantile
-        q = stat.t.ppf(1 - (alpha / 2), df)
-        c = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 0.5
+        t_q = stat.t.ppf(1 - (alpha / 2), df)
+        st_dev = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 0.5
 
-        return q*c
+        return t_q*st_dev
 
     def get_t_CI(self, alpha):
 
         interval = self.get_t_half_length(alpha)
         diff = numpy.mean(self.x) - numpy.mean(self.y)
-        x_y = [diff - interval, diff + interval]
 
-        return x_y
+        return [diff - interval, diff + interval]
 
     def get_PI(self, alpha):
+        return self.sum_stat_sample_delta.get_PI(alpha)
+
+
+class RatioStat(ComparativeStat):
+
+    def __init__(self, name, x, y):
+        ComparativeStat.__init__(self, name, x, y)
+        # make sure no 0 in the denominator variable
+        if (self.y != 0).all() == False:
+            raise ValueError('invalid value of y, the ratio is not computable')
+
+
+class RatioStatPaired(RatioStat):
+
+    def __init__(self, name, x, y):
+        RatioStat.__init__(self, name, x, y)
+        # add element-wise ratio
+        ratio = numpy.divide(self.x, self.y)
+        self.ratioStat = SummaryStat(name, ratio)
+
+    def get_mean(self):
+        return self.ratioStat.get_mean()
+
+    def get_stdev(self):
+        return self.ratioStat.get_stdev()
+
+    def get_min(self):
+        return self.ratioStat.get_min()
+
+    def get_max(self):
+        return self.ratioStat.get_max()
+
+    def get_percentile(self, alpha):
+        return self.ratioStat.get_PI(alpha)
+
+    def get_bootstrap_CI(self, alpha, num_samples):
+        return self.ratioStat.get_bootstrap_CI(alpha, num_samples)
+
+    def get_PI(self, alpha):
+        return self.ratioStat.get_PI(alpha)
+
+
+class RatioStatIndp(RatioStat):
+
+    def __init__(self, name, x, y):
+        RatioStat.__init__(self, name, x, y)
+
+        numpy.random.seed(1)
+        x_i = numpy.random.choice(self.x, size=self._n, replace=True)
+        y_i = numpy.random.choice(self.y, size=self._n, replace=True)
+        self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(x_i, y_i))
+
+    def get_mean(self):
+        return self.sum_stat_sample_ratio.get_mean()
+
+    def get_stdev(self):
+        '''
+        for independent variable x and y, var(x/y) = E(x^2)*E(1/y^2)-E(x)^2*(E(1/y)^2)
+        :return: std(x/y)
+        '''
+        if self.y.mean() == 0:
+            raise ValueError('invalid value of mean of y, the ratio is not computable')
+
+        var = numpy.mean(self.x**2) * numpy.mean(1.0/self.y**2) - \
+              (numpy.mean(self.x)**2)*(numpy.mean(1.0/self.y)**2)
+        return numpy.sqrt(var)
+
+    def get_min(self):
+        return None
+
+    def get_max(self):
+        return None
+
+    def get_percentile(self, q):
         '''
         for independent variable x and y, sample min, max, and percentiles are given after permutation
         re-sampling with sample size M
-        :return: significant level alpha percentile for random sample of x-y with size M
+        :return: q th percentile of (x/y)
         '''
-        M = self._n
-        x_i = numpy.random.choice(self.x, size= M, replace=True)
-        y_i = numpy.random.choice(self.y, size= M, replace=True)
-        d_temp = x_i - y_i
+        return self.sum_stat_sample_ratio.get_percentile(q)
 
-        q = numpy.percentile(d_temp, [alpha/2.0, 100-alpha/2.0])
+    def get_t_half_length(self, alpha):
+        return self.sum_stat_sample_ratio.get_t_half_length(alpha)
 
-        return q
+    def get_t_CI(self, alpha):
+        return self.sum_stat_sample_ratio.get_t_CI(alpha)
 
-    def get_summary(self, alpha, digits):
-        """
-        due to change of argument, need override origin summary function
-        :param alpha: significance level
-        :param digits: digits to round the numbers to
-        :return: a list ['name', 'mean', 'percentile interval', 'st dev', 'min', 'max', 'confidence interval',
-        'bootstrap confidence interval']
-        """
-        return [self.name,
-                Support.format_number(self.get_mean(), digits),
-                Support.format_interval(self.get_t_CI(alpha), digits),
-                Support.format_interval(self.get_PI(alpha), digits),
-                Support.format_number(self.get_stdev(), digits),
-                Support.format_number(self.get_min(), digits),
-                Support.format_number(self.get_max(), digits),
-                Support.format_number(self.get_percentile(10), digits),
-                Support.format_interval(self.get_bootstrap_CI(alpha, 1000, 'for_mean'), digits)]
-
-class DifferenceStatPaired(DifferenceStat):
-
-    def __init__(self, name, x, y):
-        DifferenceStat.__init__(self, name, x, y)
-        # add element-wise difference
-        self.d = self.x - self.y
-
-        self._n = len(self.d)              # number of data points
-        self._mean = self.get_mean()       # sample mean
-        self._stDev = self.get_stdev()     # sample standard deviation
-        self._max = self.get_max()         # maximum
-        self._min = self.get_max()         # minimum
-
-    def get_mean(self):
-        mu = numpy.mean(self.d)
-
-        return mu
-
-    def get_stdev(self):
-        std = numpy.std(self.d)
-
-        return std
-
-    def get_min(self):
-        min = numpy.min(self.d)
-
-        return min
-
-    def get_max(self):
-        max = numpy.max(self.d)
-
-        return max
-
-    def get_percentile(self, q):
-        qth = numpy.percentile(self.d, q)
-
-        return qth
-
-    def get_bootstrap_CI(self, alpha, M):
+    def get_bootstrap_CI(self, alpha, num_samples):
         '''
         :param alpha: confidence level
         :param M: number of samples
+        :param method: choose to calculate 'for_mean': E(x)/E(y) or 'for_ratio': E(x/y)
         :return: bootstrap confidence interval
         '''
-        # confidence interval for paired data
-        n = len(self.x)
-        alpha = alpha / 100.0
 
-        # X-Y
-        d = self.x - self.y
-        d_mean = d.mean()
-
-        # calculate CI using formula: paired t-interval
-        # ref: https://onlinecourses.science.psu.edu/stat414/node/202
-        df = n - 1
-
-        # t distribution quantile
-        q = stat.t.ppf(1 - (alpha / 2), df)
-        c = (d.var() / n) ** 0.5
-        x_y = [d_mean - q * c, d_mean + q * c]
-
-        return x_y
+        return self.sum_stat_sample_ratio.get_bootstrap_CI(alpha, num_samples)
 
     def get_PI(self, alpha):
-        # significant level alpha percentile for difference vector
-        q = numpy.percentile(self.d, [alpha/2.0, 100-alpha/2.0])
-
-        return q
-
-    def get_summary(self, alpha, digits):
-        """
-        due to change of argument, need override origin summary function
-        :param alpha: significance level
-        :param digits: digits to round the numbers to
-        :return: a list ['name', 'mean', 'percentile interval', 'st dev', 'min', 'max', 'confidence interval',
-        'bootstrap confidence interval']
-        """
-        return [self.name,
-                Support.format_number(self.get_mean(), digits),
-                Support.format_interval(self.get_t_CI(alpha), digits),
-                Support.format_interval(self.get_PI(alpha), digits),
-                Support.format_number(self.get_stdev(), digits),
-                Support.format_number(self.get_min(), digits),
-                Support.format_number(self.get_max(), digits),
-                Support.format_number(self.get_percentile(10), digits),
-                Support.format_interval(self.get_bootstrap_CI(alpha, 1000), digits)]
+        return self.sum_stat_sample_ratio.get_PI(alpha)
 
 
 
