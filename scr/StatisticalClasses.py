@@ -1,6 +1,7 @@
 import sys
 import numpy as numpy
 import scipy.stats as stat
+import math
 
 from scr import SupportFunctions as Support
 
@@ -43,14 +44,14 @@ class Statistics(object):
 
     def get_t_half_length(self, alpha):
         """
-        :param alpha: significance level
+        :param alpha: significance level (between 0 and 1)
         :returns half-length of 100(1-alpha)% t-confidence interval """
 
-        return stat.t.ppf(1 - alpha / 200.0, self._n - 1) * self.get_stdev() / numpy.sqrt(self._n)
+        return stat.t.ppf(1 - alpha / 2, self._n - 1) * self.get_stdev() / numpy.sqrt(self._n)
 
     def get_t_CI(self, alpha):
         """ calculates t-based confidence interval for population mean
-        :param alpha: significance level
+        :param alpha: significance level (between 0 and 1)
         :return: a list [l, u]
         """
         mean = self.get_mean()
@@ -67,7 +68,7 @@ class Statistics(object):
 
     def get_PI(self, alpha):
         """ calculates percentile interval (abstract method to be overridden in derived classes)
-        :param alpha: significance level
+        :param alpha: significance level (between 0 and 1)
         :returns a list [L, U]
          """
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
@@ -89,7 +90,7 @@ class Statistics(object):
 
 class SummaryStat(Statistics):
     def __init__(self, name, data):
-        """:param data: a list of data points"""
+        """:param data: a list or numpy.array of data points"""
 
         Statistics.__init__(self, name)
         # convert data to numpy array if needed
@@ -123,7 +124,7 @@ class SummaryStat(Statistics):
 
     def get_bootstrap_CI(self, alpha, num_samples):
         """ calculates the empirical bootstrap confidence interval
-        :param alpha: significance level
+        :param alpha: significance level (between 0 and 1)
         :param num_samples: number of bootstrap samples
         :return: a list [l, u]
         """
@@ -140,14 +141,14 @@ class SummaryStat(Statistics):
             delta[i] = sample_i.mean() - self.get_mean()
 
         # return [l, u]
-        return -numpy.percentile(delta, [100 - alpha / 2.0, alpha / 2.0]) + self.get_mean()
+        return self.get_mean() - numpy.percentile(delta, [100*(1-alpha / 2.0), 100*alpha / 2.0])
 
     def get_PI(self, alpha):
         """
-        :param alpha: significance level
+        :param alpha: significance level (between 0 and 1)
         :return: percentile interval in the format of list [l, u]
         """
-        return [self.get_percentile(alpha/2), self.get_percentile(100-alpha/2)]
+        return [self.get_percentile(100*alpha/2), self.get_percentile(100*(1-alpha/2))]
 
 
 class DiscreteTimeStat(Statistics):
@@ -271,8 +272,8 @@ class ContinuousTimeStat(Statistics):
 class ComparativeStat(Statistics):
     def __init__(self, name, x, y):
         """
-        :param x: list or array of first set of observations
-        :param y: list or array of second set of observations
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
         """
         Statistics.__init__(self, name)
 
@@ -286,7 +287,7 @@ class ComparativeStat(Statistics):
         else:
             self.y = y
 
-        self._n = len(self.x)
+        self._n = len(self.x)   # number of observations
 
 
 class DifferenceStat(ComparativeStat):
@@ -299,7 +300,7 @@ class DifferenceStatPaired(DifferenceStat):
 
     def __init__(self, name, x, y):
         DifferenceStat.__init__(self, name, x, y)
-
+        # create a summary statistics for the element-wise difference
         self.dStat = SummaryStat(name, self.x - self.y)
 
     def get_mean(self):
@@ -329,6 +330,7 @@ class DifferenceStatIndp(DifferenceStat):
     def __init__(self, name, x, y):
         DifferenceStat.__init__(self, name, x, y)
 
+        # generate random realizations for random variable X - Y
         numpy.random.seed(1)
         x_i = numpy.random.choice(self.x, size=self._n, replace=True)
         y_i = numpy.random.choice(self.y, size=self._n, replace=True)
@@ -359,7 +361,7 @@ class DifferenceStatIndp(DifferenceStat):
     def get_percentile(self, q):
         """
         for independent variable x and y, percentiles are given after re-sampling
-        :param q: the percentile want to return, in [0,100]
+        :param q: the percentile want to return, in [0, 100]
         :return: qth percentile of sample (x-y)
         """
         return self.sum_stat_sample_delta.get_percentile(q)
@@ -383,8 +385,7 @@ class DifferenceStatIndp(DifferenceStat):
             d_temp = x_i - y_i
             diff[i] = numpy.mean(d_temp)
 
-        return numpy.percentile(diff, [alpha/2.0, 100-alpha/2.0])
-
+        return numpy.percentile(diff, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
     def get_t_half_length(self, alpha):
         """
@@ -413,6 +414,7 @@ class DifferenceStatIndp(DifferenceStat):
         return t_q*st_dev
 
     def get_t_CI(self, alpha):
+
         interval = self.get_t_half_length(alpha)
         diff = numpy.mean(self.x) - numpy.mean(self.y)
 
@@ -427,7 +429,7 @@ class RatioStat(ComparativeStat):
     def __init__(self, name, x, y):
         ComparativeStat.__init__(self, name, x, y)
         # make sure no 0 in the denominator variable
-        if (self.y != 0).all() == False:
+        if not (self.y != 0).all():
             raise ValueError('invalid value of y, the ratio is not computable')
 
 
@@ -466,6 +468,7 @@ class RatioStatIndp(RatioStat):
     def __init__(self, name, x, y):
         RatioStat.__init__(self, name, x, y)
 
+        # generate random realizations for random variable X/Y
         numpy.random.seed(1)
         x_i = numpy.random.choice(self.x, size=self._n, replace=True)
         y_i = numpy.random.choice(self.y, size=self._n, replace=True)

@@ -1,11 +1,6 @@
 import numpy
-
 from scr import StatisticalClasses as Stat
 from scr import SupportFunctions as Support
-
-# generate sample data
-x = numpy.random.normal(10, 4, 1000)
-y = numpy.random.normal(5, 8, 1000)
 
 
 def print_results(stat):
@@ -15,81 +10,23 @@ def print_results(stat):
     print('   Max =', Support.format_number(stat.get_max(), digits=3))
     print('   Median =', Support.format_number(stat.get_percentile(50), digits=3))
     print('   95% Mean Confidence Interval (t-based) =',
-          Support.format_interval(stat.get_t_CI(5), 3))
+          Support.format_interval(stat.get_t_CI(0.05), 3))
     print('   95% Mean Confidence Interval (bootstrap) =',
-          Support.format_interval(stat.get_bootstrap_CI(5, 1000), 3))
+          Support.format_interval(stat.get_bootstrap_CI(0.05, 1000), 3))
     print('   95% Percentile Interval =',
-          Support.format_interval(stat.get_PI(5), 3))
+          Support.format_interval(stat.get_PI(0.05), 3))
 
 
-def summary_stat_test(data):
-
+def test_summary_stat(data):
     # define a summary statistics
-    sum_stat = Stat.SummaryStat('Test summary statistics',data)
-
+    sum_stat = Stat.SummaryStat('Test summary statistics', data)
     print('Testing summary statistics:')
     print_results(sum_stat)
 
-summary_stat_test(x)
 
-
-def difference_stat_indp_test(x, y):
-
-    # define
-    stat = Stat.DifferenceStatIndp('Test DifferenceStatIndp', x, y)
-
-    print('Testing DifferenceStatIndp:')
-    print_results(stat)
-
-difference_stat_indp_test(x,y)
-
-
-def difference_stat_paired_test(x, y):
-
-    # define
-    stat = Stat.DifferenceStatPaired('Test DifferenceStatPaired', x, y)
-
-    print('Testing DifferenceStatPaired:')
-    print_results(stat)
-
-difference_stat_paired_test(x,y)
-
-
-
-def ratio_stat_indp_test(x, y):
-
-    # define
-    stat = Stat.RatioStatIndp('Test RatioStatIndp', x, y)
-
-    print('Testing RatioStatIndp:')
-    print_results(stat)
-
-ratio_stat_indp_test(x,y)
-
-
-def ratio_stat_paired_test(x, y):
-
-    # define
-    stat = Stat.RatioStatPaired('Test RatioStatPaired', x, y)
-
-    print('Testing RatioStatPaired:')
-    print_results(stat)
-
-ratio_stat_paired_test(x,y)
-
-
-
-
-
-
-
-
-# following functions are for discrete and continuous classes, unchanged
-def discrete_time_test(data):
-
-    # define a summary statistics
+def test_discrete_time(data):
+    # define a discrete-time statistics
     discrete_stat = Stat.DiscreteTimeStat('Test discrete-time statistics')
-
     # record data points
     for point in data:
         discrete_stat.record(point)
@@ -98,8 +35,8 @@ def discrete_time_test(data):
     print_results(discrete_stat)
 
 
-def continuous_time_test(times, observations):
-
+def test_continuous_time(times, observations):
+    # define a continuous-time statistics
     continuous_stat = Stat.ContinuousTimeStat('Test continuous-time statistics', 0)
 
     for obs in range(0, len(times)):
@@ -115,15 +52,64 @@ def continuous_time_test(times, observations):
     print_results(continuous_stat)
 
 
-discrete_time_test(samples)
+def test_diff_stat_indp(x, y):
+    # define
+    stat = Stat.DifferenceStatIndp('Test DifferenceStatIndp', x, y)
+    print('Testing DifferenceStatIndp:')
+    print_results(stat)
+
+
+def test_diff_stat_paired(x, y):
+    # define
+    stat = Stat.DifferenceStatPaired('Test DifferenceStatPaired', x, y)
+    print('Testing DifferenceStatPaired:')
+    print_results(stat)
+
+
+def test_ratio_stat_indp(x, y):
+    # define
+    stat = Stat.RatioStatIndp('Test RatioStatIndp', x, y)
+    print('Testing RatioStatIndp:')
+    print_results(stat)
+
+
+def test_ratio_stat_paied(x, y):
+    # define
+    stat = Stat.RatioStatPaired('Test RatioStatPaired', x, y)
+
+    print('Testing RatioStatPaired:')
+    print_results(stat)
+
+
+# generate sample data
+x = numpy.random.normal(10, 4, 1000)
+y_ind = numpy.random.normal(5, 2, 1000)
+delta = numpy.random.normal(5, 1, 1000)
+y_diff_paired = x - delta
+ratio = numpy.random.normal(2, 1, 1000)
+y_ratio_paired = numpy.divide(x, ratio)
+
 
 # populate a data set to test continuous-time statistics
 sampleT = []
 sampleObs = []
 i = 0
 for i in range(0, 100):
-    t = random.uniform(i, i + 1)
+    t = numpy.random.uniform(i, i + 1)
     sampleT.append(t)
     sampleObs.append(10*t)
 
-continuous_time_test(sampleT, sampleObs)
+# test summary statistics
+test_summary_stat(x)
+# test discrete-time statistics
+test_discrete_time(x)
+# test continuous-time statistics
+test_continuous_time(sampleT, sampleObs)
+# test statistics for the difference of two independent samples
+test_diff_stat_indp(x, y_ind)
+# test statistics for the difference of two paired samples
+test_diff_stat_paired(x, y_diff_paired)
+# test statistics for the ratio of two independent samples
+test_ratio_stat_indp(x, y_ind)
+# test statistics for the ratio of two paired samples
+test_ratio_stat_paied(x, y_ratio_paired)
