@@ -1,7 +1,11 @@
-import random
+import numpy
 
 from scr import StatisticalClasses as Stat
 from scr import SupportFunctions as Support
+
+# generate sample data
+x = numpy.random.normal(10, 4, 1000)
+y = numpy.random.normal(5, 8, 1000)
 
 
 def print_results(stat):
@@ -14,7 +18,7 @@ def print_results(stat):
           Support.format_interval(stat.get_t_CI(5), 3))
     print('   95% Mean Confidence Interval (bootstrap) =',
           Support.format_interval(stat.get_bootstrap_CI(5, 1000), 3))
-    print('   95% Prediction Interval =',
+    print('   95% Percentile Interval =',
           Support.format_interval(stat.get_PI(5), 3))
 
 
@@ -26,7 +30,61 @@ def summary_stat_test(data):
     print('Testing summary statistics:')
     print_results(sum_stat)
 
+summary_stat_test(x)
 
+
+def difference_stat_indp_test(x, y):
+
+    # define
+    stat = Stat.DifferenceStatIndp('Test DifferenceStatIndp', x, y)
+
+    print('Testing DifferenceStatIndp:')
+    print_results(stat)
+
+difference_stat_indp_test(x,y)
+
+
+def difference_stat_paired_test(x, y):
+
+    # define
+    stat = Stat.DifferenceStatPaired('Test DifferenceStatPaired', x, y)
+
+    print('Testing DifferenceStatPaired:')
+    print_results(stat)
+
+difference_stat_paired_test(x,y)
+
+
+
+def ratio_stat_indp_test(x, y):
+
+    # define
+    stat = Stat.RatioStatIndp('Test RatioStatIndp', x, y)
+
+    print('Testing RatioStatIndp:')
+    print_results(stat)
+
+ratio_stat_indp_test(x,y)
+
+
+def ratio_stat_paired_test(x, y):
+
+    # define
+    stat = Stat.RatioStatPaired('Test RatioStatPaired', x, y)
+
+    print('Testing RatioStatPaired:')
+    print_results(stat)
+
+ratio_stat_paired_test(x,y)
+
+
+
+
+
+
+
+
+# following functions are for discrete and continuous classes, unchanged
 def discrete_time_test(data):
 
     # define a summary statistics
@@ -57,12 +115,6 @@ def continuous_time_test(times, observations):
     print_results(continuous_stat)
 
 
-# populate a data set to test offline and online summary statistics
-samples = []
-for i in range(0, 1000):
-    samples.append(random.uniform(-100, 100))
-
-summary_stat_test(samples)
 discrete_time_test(samples)
 
 # populate a data set to test continuous-time statistics

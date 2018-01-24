@@ -451,8 +451,8 @@ class RatioStatPaired(RatioStat):
     def get_max(self):
         return self.ratioStat.get_max()
 
-    def get_percentile(self, alpha):
-        return self.ratioStat.get_PI(alpha)
+    def get_percentile(self, q):
+        return self.ratioStat.get_percentile(q)
 
     def get_bootstrap_CI(self, alpha, num_samples):
         return self.ratioStat.get_bootstrap_CI(alpha, num_samples)
