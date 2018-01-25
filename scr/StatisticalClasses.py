@@ -375,7 +375,7 @@ class DifferenceStatIndp(DifferenceStat):
         # set random number generator seed
         numpy.random.seed(1)
 
-        # initialize ratio array
+        # initialize difference array
         diff = numpy.zeros(num_samples)
 
         # obtain bootstrap samples
