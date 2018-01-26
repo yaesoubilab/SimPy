@@ -100,6 +100,7 @@ class Dirichlet(RVG):
         """
         E[Xi] = ai/a0
         Var[Xi] = (ai(a0-ai))/((a0)**2(a0+1)) where a0 = sum all ai.
+        :param a: array or list
         """
         RVG.__init__(self)
         self.a = a
@@ -115,10 +116,12 @@ class Dirichlet(RVG):
 class Empirical(RVG):
     def __init__(self, outcome, prob):
         """
-        E[X] = x_bar
-        Var[X] = var(x)
+        E[X] = sum(outcome*prob)
+        Var[X] = sum((outcome**2)*prob) - E[X]**2
         """
         RVG.__init__(self)
+        if sum(prob) != 1:
+            raise ValueError('invalid value of probability')
         self.outcome = outcome
         self.prob = prob
 

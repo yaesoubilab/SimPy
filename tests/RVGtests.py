@@ -10,6 +10,13 @@ def print_test_results(dist_name, samples, expectation, variance):
     print('  Var[x] = {var:.{prec}f} | Sample variance = {sv:.{prec}f}\n'.format(
         var=variance, sv=np.var(samples), prec=3))
 
+def print_test_results_multivariate(dist_name, samples, expectation, variance):
+    print('Testing ' + dist_name + ':')
+    print("  E[x] = %(ex)s | Sample mean = %(sm)s" % {'ex':expectation, 'sm': np.average(samples,axis=1)})
+    print("  Var[x] = %(var)s | Sample variance = %(sv)s" % \
+          {'var': variance, 'sv': np.var(samples, axis=1)})
+
+
 
 def get_samples(dist, rnd):
     samples = []
@@ -17,6 +24,14 @@ def get_samples(dist, rnd):
         # get 10000 samples
         samples.append(dist.sample(rnd))
     return samples
+
+def get_samples_multivariate(dist, rnd):
+    samples = np.zeros([len(dist.a), 10000])
+    for i in range(0, 10000):
+        # get 10000 samples
+        samples[:,i] = dist.sample(rnd)
+    return samples
+
 
 
 def test_exponential(rnd, mean):
@@ -61,7 +76,19 @@ def test_beta(rnd, a, b):
                        variance=(a*b)/((a+b+1)*(a+b)**2))
 
 
-#def test_betabinomial(rnd, n, p):
+def test_betabinomial(rnd, n, a, b):
+
+    # beta random variate generator
+    betabinomial_dist = RVGs.BetaBinomial(n, a, b)
+
+    # obtain samples
+    samples = get_samples(betabinomial_dist, rnd)
+
+    # report mean and variance
+    print_test_results('BetaBinomial', samples,
+                       expectation=a*n/(a + b),
+                       variance=(n*a*b*(a+b+n))/((a+b)**2*(a+b+1)))
+
 
 
 def test_binomial(rnd, n, p):
@@ -78,10 +105,46 @@ def test_binomial(rnd, n, p):
                        variance=n*p*(1-p))
 
 
-#def test_dirichlet(rnd, a):
+def test_dirichlet(rnd, a):
+    # dirichlet random variate generator
+    dirichlet_dist = RVGs.Dirichlet(a)
+
+    # obtain samples
+    samples = get_samples_multivariate(dirichlet_dist, rnd)
+
+    # report mean and variance
+    a0 = sum(a)
+    if type(a) == list:
+        a = np.array(a)
+    mean = a * (1.0/a0)
+    var = np.zeros(len(a))
+    for i in range(len(a)):
+        var[i] = (a[i]*(a0-a[i]))/(((a0)**2)*(a0+1.0))
+
+    print_test_results_multivariate('Dirichlet', samples,
+                       expectation=mean,
+                       variance=var)
 
 
-#def test_empirical(rnd
+
+def test_empirical(rnd, outcome, prob):
+    # empirical random variate generator
+    empirical_dist = RVGs.Empirical(outcome, prob)
+
+    # obtain samples
+    samples = get_samples(empirical_dist, rnd)
+
+    # report mean and variance
+    if (type(outcome) == list) | (type(prob) == list):
+        outcome = np.array(outcome)
+        prob = np.array(prob)
+
+    mean = sum(outcome*prob)
+    var = sum((outcome**2)*prob) - mean**2
+
+    print_test_results('Empirical', samples,
+                       expectation=mean,
+                       variance=var)
 
 
 def test_gamma(rnd, shape, scale):
@@ -113,7 +176,7 @@ def test_geometric(rnd, p):
                        variance=(1-p)/(p**2))
 
 
-#def test_johnsonsb(rnd,
+
 
 
 #def test_johnsonSb(rnd,
