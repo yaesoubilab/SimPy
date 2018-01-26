@@ -1,5 +1,6 @@
 # https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.random.html
 import numpy
+import scipy
 
 class RVG(object):
     def __init__(self):
@@ -18,7 +19,7 @@ class Exponential(RVG):
     def __init__(self, mean):
         """
         E[X] = mean
-        Var[X] = mean^2
+        Var[X] = mean**2
         """
         RVG.__init__(self)
         self.mean = mean
@@ -47,7 +48,7 @@ class Beta(RVG):
     def __init__(self, a, b):
         """
         E[X] = a/(a + b)
-        Var[X] = ab/[(a + b)^2(a + b + 1)]
+        Var[X] = ab/[(a + b)**2(a + b + 1)]
         """
         RVG.__init__(self)
         self.a = a
@@ -61,7 +62,7 @@ class BetaBinomial(RVG):
     def __init__(self, n, a, b):
         """
         E[X] = na/(a+b)
-        Var[X] = (nab(a+b+n))/((a+b)^2(a+b+1))
+        Var[X] = (nab(a+b+n))/((a+b)**2(a+b+1))
         """
         RVG.__init__(self)
         self.n = n
@@ -70,9 +71,9 @@ class BetaBinomial(RVG):
 
     def sample(self, numpy_rnd):
         """
+        ref: https://blogs.sas.com/content/iml/2017/11/20/simulate-beta-binomial-sas.html
         :param numpy_rnd: numpy.random object
         :return: a realization from the Beta Binomial distribution
-        # ref: https://blogs.sas.com/content/iml/2017/11/20/simulate-beta-binomial-sas.html
         """
         sample_p = numpy_rnd.beta(self.a, self.b)
         sample = numpy_rnd.binomial(self.n, sample_p)
@@ -98,7 +99,7 @@ class Dirichlet(RVG):
     def __init__(self, a):
         """
         E[Xi] = ai/a0
-        Var[Xi] = (ai(a0-ai))/((a0)^2(a0+1)) where a0 = sum all ai.
+        Var[Xi] = (ai(a0-ai))/((a0)**2(a0+1)) where a0 = sum all ai.
         """
         RVG.__init__(self)
         self.a = a
@@ -112,32 +113,19 @@ class Dirichlet(RVG):
 
 
 class Empirical(RVG):
-    """
-    inverse transform sampling
-    calculate the CDF for each bin in the histogram then interpolate it using scipy function
-    """
-    def __init__(self, x, n_bins):
+    def __init__(self, outcome, prob):
         """
         E[X] = x_bar
         Var[X] = var(x)
         """
         RVG.__init__(self)
-        self.x = x
-        self.bin = n_bins
+        self.outcome = outcome
+        self.prob = prob
 
     def sample(self, numpy_rnd):
-        """
-        :param numpy_rnd: numpy .random object
-        :return: a realization from the Empirical distribution
-        """
-        import scipy.interpolate as interpolate
-        hist, bin_edges = numpy.histogram(self.x, bins=self.bin, density=True)
-        cum_values = numpy.zeros(bin_edges.shape)
-        cum_values[1:] = numpy.cumsum(hist * numpy.diff(bin_edges))
-        inv_cdf = interpolate.interp1d(cum_values, bin_edges)
-        r = numpy_rnd.rand(1)
-
-        return inv_cdf(r)
+        # this works for both numpy array and list
+        # ref:https://stackoverflow.com/questions/4265988/generate-random-numbers-with-a-given-numerical-distribution
+        return numpy_rnd.choice(self.outcome, size=1, p=self.prob)
 
 
 class Gamma(RVG):
@@ -155,14 +143,32 @@ class Gamma(RVG):
 
 
 class GammaPoisson(RVG):
-    pass
+    # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
+    # in this article shape is beta, scale is alpha, change to Wiki version below
+    # with shape-alpha, scale-theta
+    def __init__(self, shape, scale):
+        """
+        E[X] = shape*scale
+        Var[X] = shape*scale + shape*(scale**2)
+        """
+        RVG.__init__(self)
+        self.shape = shape
+        self.scale = scale
+
+    def sample(self, numpy_rnd):
+        sample_rate = Gamma(self.shape, self.scale).sample(numpy_rnd)
+        sample_poisson = Poisson(sample_rate)
+        return sample_poisson.sample(numpy_rnd)
+
+
+
 
 
 class Geometric(RVG):
     def __init__(self, p):
         """
         E[X] = 1/p
-        Var[X] = (1-p)/p^2
+        Var[X] = (1-p)/p**2
         """
         RVG.__init__(self)
         self.p = p
@@ -172,21 +178,49 @@ class Geometric(RVG):
 
 
 class JohnsonSb(RVG):
-    pass
+    def __init__(self, a, b, loc, scale):
+        """
+        The moments of the Johnson SB distribution do not have a simple expression.
+        E[X] = theoretical value give by SciPy johnsonsb.mean(a,b,loc,scale)
+        Var[X] = theoretical value give by SciPy johnsonsb.var(a,b,loc,scale)
+        """
+        RVG.__init__(self)
+        self.a = a
+        self.b = b
+        self.loc = loc
+        self.scale = scale
+
+    def sample(self, scipy_rnd):
+        return scipy_rnd.johnsonsb.rvs(self.a, self.b, self.loc, self.scale)
 
 
 class JohnsonSI(RVG):
     pass
 
 
+
 class JohnsonSu(RVG):
-    pass
+    def __init__(self, a, b, loc, scale):
+        """
+        The moments of the Johnson SU distribution do not have a simple expression.
+        E[X] = theoretical value give by SciPy johnsonsu.mean(a,b,loc,scale)
+        Var[X] = theoretical value give by SciPy johnsonsu.var(a,b,loc,scale)
+        """
+        RVG.__init__(self)
+        self.a = a
+        self.b = b
+        self.loc = loc
+        self.scale = scale
+
+    def sample(self, scipy_rnd):
+        return scipy_rnd.johnsonsu.rvs(self.a, self.b, self.loc, self.scale)
+
 
 
 class LogNormal(RVG):
     def __init__(self, mean, sigma):
         """
-        E[X] = exp(mean +sigma^2/2)
+        E[X] = exp(mean +sigma**2/2)
         Var[X] = [exp(sigma**2-1)]exp(2*mean + sigma**2)
         """
         RVG.__init__(self)
@@ -288,7 +322,20 @@ class Uniform(RVG):
 
 
 class UniformDiscrete(RVG):
-    pass
+    def __init__(self, a, b):
+        """
+        E[X] = (a+b)/2
+        Var[X] = ((b-a+1)**2 - 1)/12
+        :param a: int
+        :param b: int
+        """
+        RVG.__init__(self)
+        self.a = a
+        self.b = b
+
+    def sample(self, numpy_rnd):
+        return numpy_rnd.randint(low=self.a, high=self.b+1)
+
 
 
 class Weibull(RVG):
