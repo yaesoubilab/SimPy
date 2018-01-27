@@ -17,14 +17,14 @@ def print_results(stat):
           Support.format_interval(stat.get_PI(0.05), 3))
 
 
-def test_summary_stat(data):
+def mytest_summary_stat(data):
     # define a summary statistics
     sum_stat = Stat.SummaryStat('Test summary statistics', data)
     print('Testing summary statistics:')
     print_results(sum_stat)
 
 
-def test_discrete_time(data):
+def mytest_discrete_time(data):
     # define a discrete-time statistics
     discrete_stat = Stat.DiscreteTimeStat('Test discrete-time statistics')
     # record data points
@@ -35,7 +35,7 @@ def test_discrete_time(data):
     print_results(discrete_stat)
 
 
-def test_continuous_time(times, observations):
+def mytest_continuous_time(times, observations):
     # define a continuous-time statistics
     continuous_stat = Stat.ContinuousTimeStat('Test continuous-time statistics', 0)
 
@@ -52,28 +52,28 @@ def test_continuous_time(times, observations):
     print_results(continuous_stat)
 
 
-def test_diff_stat_indp(x, y):
+def mytest_diff_stat_indp(x, y):
     # define
     stat = Stat.DifferenceStatIndp('Test DifferenceStatIndp', x, y)
     print('Testing DifferenceStatIndp:')
     print_results(stat)
 
 
-def test_diff_stat_paired(x, y):
+def mytest_diff_stat_paired(x, y):
     # define
     stat = Stat.DifferenceStatPaired('Test DifferenceStatPaired', x, y)
     print('Testing DifferenceStatPaired:')
     print_results(stat)
 
 
-def test_ratio_stat_indp(x, y):
+def mytest_ratio_stat_indp(x, y):
     # define
     stat = Stat.RatioStatIndp('Test RatioStatIndp', x, y)
     print('Testing RatioStatIndp:')
     print_results(stat)
 
 
-def test_ratio_stat_paied(x, y):
+def mytest_ratio_stat_paied(x, y):
     # define
     stat = Stat.RatioStatPaired('Test RatioStatPaired', x, y)
 
@@ -100,16 +100,16 @@ for i in range(0, 100):
     sampleObs.append(10*t)
 
 # test summary statistics
-test_summary_stat(x)
+mytest_summary_stat(x)
 # test discrete-time statistics
-test_discrete_time(x)
+mytest_discrete_time(x)
 # test continuous-time statistics
-test_continuous_time(sampleT, sampleObs)
+mytest_continuous_time(sampleT, sampleObs)
 # test statistics for the difference of two independent samples
-test_diff_stat_indp(x, y_ind)
+mytest_diff_stat_indp(x, y_ind)
 # test statistics for the difference of two paired samples
-test_diff_stat_paired(x, y_diff_paired)
+mytest_diff_stat_paired(x, y_diff_paired)
 # test statistics for the ratio of two independent samples
-test_ratio_stat_indp(x, y_ind)
+mytest_ratio_stat_indp(x, y_ind)
 # test statistics for the ratio of two paired samples
-test_ratio_stat_paied(x, y_ratio_paired)
+mytest_ratio_stat_paied(x, y_ratio_paired)
