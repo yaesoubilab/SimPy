@@ -160,7 +160,17 @@ def test_gamma(rnd, shape, scale):
                        variance=shape*scale**2)
 
 
-#def test_gammapoisson(rnd
+def test_gammapoisson(rnd, shape, scale):
+    # gamma-poisson random variate generator
+    gammapoisson_dist = RVGs.GammaPoisson(shape, scale)
+
+    # obtain samples
+    samples = get_samples(gammapoisson_dist, rnd)
+
+    # report mean and variance
+    print_test_results('GammaPoisson', samples,
+                       expectation=shape*scale,
+                       variance=shape*scale + shape*(scale**2))
 
 
 def test_geometric(rnd, p):
@@ -179,13 +189,44 @@ def test_geometric(rnd, p):
 
 
 
-#def test_johnsonSb(rnd,
+def test_johnsonsb(scipy_rnd, a, b, loc, scale):
+    # johnsonSb random variate generator
+    johnsonsb_dist = RVGs.JohnsonSb(a, b, loc, scale)
+
+    # obtain samples
+    samples = get_samples(johnsonsb_dist, scipy_rnd)
+
+    # report mean and variance
+    mean = scipy_rnd.johnsonsb.mean(a,b,loc,scale)
+    var = scipy_rnd.johnsonsb.var(a,b,loc,scale)
+
+    print_test_results('JohnsonSb', samples,
+                       expectation=mean,
+                       variance=var)
+
+
+
 
 
 #def test_johnsonSI(rnd,
 
 
-#def test_johnsonSu(rnd,
+def test_johnsonsu(scipy_rnd, a, b, loc, scale):
+    # johnsonSu random variate generator
+    johnsonsu_dist = RVGs.JohnsonSu(a, b, loc, scale)
+
+    # obtain samples
+    samples = get_samples(johnsonsu_dist, scipy_rnd)
+
+    # report mean and variance
+    mean = scipy_rnd.johnsonsu.mean(a,b,loc,scale)
+    var = scipy_rnd.johnsonsu.var(a,b,loc,scale)
+
+    print_test_results('JohnsonSu', samples,
+                       expectation=mean,
+                       variance=var)
+
+
 
 
 def test_lognormal(rnd, mean, sigma):
@@ -287,7 +328,19 @@ def test_uniform(rnd, l, r):
                        )
 
 
-#def test_uniformdiscrete(rnd,
+def test_uniformdiscrete(rnd, l, r):
+    # uniform discrete random variate generator
+    uniformdiscrete_dist = RVGs.UniformDiscrete(l, r)
+
+    # obtain samples
+    samples = get_samples(uniformdiscrete_dist, rnd)
+
+    # report mean and variance
+    print_test_results('Uniform', samples,
+                       expectation=(l + r) / 2.0,
+                       variance=((r-l+1)**2 - 1)/12.0
+                       )
+
 
 
 def test_weibull(rnd, a):
