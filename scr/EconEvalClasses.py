@@ -2,82 +2,65 @@ import numpy as numpy
 import scr.StatisticalClasses as Stat
 
 
-class ICER:
+class ICER_Paired():
+
     def __init__(self, name, cost_intervention, health_intervention, cost_base, health_base):
-        self._name = name
-        self._costIntervention = numpy.array(cost_intervention)
-        self._healthIntervention = numpy.array(health_intervention)
-        self._costBase = numpy.array(cost_base)
-        self._healthBase = numpy.array(health_base)
-        self._ICER = 0
-        
+
+        # convert input data to numpy.array if needed
+        if type(cost_intervention) == list:
+            self._deltaCost = numpy.array(cost_intervention) - numpy.array(cost_base)
+        if type(health_intervention) == list:
+            self._deltaHealth = numpy.array(health_intervention) - numpy.array(health_base)
+
+        # initialize the base class
+        self._ratio_stat = Stat.RatioStatPaired.__init__(self, name, self._deltaCost, self._deltaHealth)
+
+        # calculate ICER
+        self._ICER = numpy.average(self._deltaCost) / numpy.average(self._deltaHealth)
+
     def get_ICER(self):
         return self._ICER
 
-    def get_CI(self, alpha, num_bootstrap_samples):
-        pass
+    def get_ICER_CI(self, alpha, num_bootstrap_samples):
 
-    def get_PI(self, alpha):
-        pass
+        ICERs = numpy.zeros(num_bootstrap_samples)
 
+        for i in range(num_bootstrap_samples):
+            d_cost = numpy.random.choice(self._deltaCost, size=len(self._deltaCost), replace=True)
+            d_health = numpy.random.choice(self._deltaHealth, size=len(self._deltaHealth), replace=True)
 
-class ICERPaired(ICER):
+            ave_dCost = numpy.average(d_cost)
+            ave_dHealth = numpy.average(d_health)
 
-    def __init__(self, name, cost_intervention, health_intervention, cost_base, health_base):
-        ICER.__init__(self, name, cost_intervention, health_intervention, cost_base, health_base)
+            # assert all the means should not be 0
+            if numpy.average(ave_dHealth) == 0:
+                raise ValueError('invalid value of mean of y, the ratio is not computable')
 
-        self._deltaCost = self._costIntervention - self._costBase
-        self._deltaHealth = self._healthIntervention - self._healthBase
-        self._ICER = numpy.average(self._deltaCost) / numpy.average(self._deltaHealth)
+            ICERs[i] = ave_dCost/ave_dHealth - self._ICER
 
-    def get_CI(self, alpha, num_bootstrap_samples):
-        ratio_stat = Stat.RatioStatPaired(self._name, self._deltaCost, self._deltaHealth)
-        return ratio_stat.get_bootstrap_CI(alpha, num_bootstrap_samples)
+        return self._ICER - numpy.percentile(ICERs, [100*(1 - alpha / 2.0), 100*alpha / 2.0])
 
-    def get_PI(self, alpha):
-        ratio_stat = Stat.RatioStatPaired(self._name, self._deltaCost, self._deltaHealth)
-        return ratio_stat.get_PI(alpha)
+    def get_ICER_PI(self, alpha):
+        return self._ratio_stat.get_PI(alpha)
 
 
-class ICERIndepedent(ICER):
+class ICER_Indp():
 
     def __init__(self, name, cost_intervention, health_intervention, cost_base, health_base):
-        ICER.__init__(self, name, cost_intervention, health_intervention, cost_base, health_base)
+
+        # convert input data to numpy.array if needed
+        if type(cost_intervention) == list:
+            self._cost_intervention = numpy.array(cost_intervention)
+        if type(health_intervention) == list:
+            self._health_intervention = numpy.array(health_intervention)
+        if type(cost_base) == list:
+            self._cost_base = numpy.array(cost_base)
+        if type(health_base) == list:
+            self._health_base = numpy.array(health_base)
 
         delta_ave_cost = numpy.average(self._costIntervention) - numpy.average(self._costBase)
         delta_ave_health = numpy.average(self._healthIntervention) - numpy.average(self._healthBase)
         self._ICER = delta_ave_cost / delta_ave_health
-
-    def get_CI(self, alpha, num_bootstrap_samples):
-
-        pass
-
-        #################### needs to be updated ##########################
-        # calculate the CI of E(x)/E(y) with confidence 100-alpha
-        delta = numpy.zeros(num_bootstrap_samples)
-
-        # assert all the means should not be 0
-        if self.y.mean() == 0:
-            raise ValueError('invalid value of mean of y, the ratio is not computable')
-
-        r_bar = self.x.mean() / self.y.mean()
-
-        for i in range(num_bootstrap_samples):
-            x_i = numpy.random.choice(self.x, size=len(self.x), replace=True)
-            y_i = numpy.random.choice(self.y, size=len(self.y), replace=True)
-
-            # assert all the means should not be 0
-            if y_i.mean() == 0:
-                raise ValueError('invalid value of mean of y, the ratio is not computable')
-            ri_bar = x_i.mean() / y_i.mean()
-
-            delta[i] = ri_bar - r_bar
-
-        result = -numpy.percentile(delta, [100 - alpha / 2.0, alpha / 2.0]) + r_bar
-
-    def get_PI(self, alpha):
-        #################### needs to be updated ##########################
-        pass
 
 
 class NMB:
