@@ -1,6 +1,4 @@
 # https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.random.html
-import numpy
-import scipy
 
 class RVG(object):
     def __init__(self):
@@ -325,19 +323,19 @@ class Uniform(RVG):
 
 
 class UniformDiscrete(RVG):
-    def __init__(self, a, b):
+    def __init__(self, l, r):
         """
-        E[X] = (a+b)/2
-        Var[X] = ((b-a+1)**2 - 1)/12
-        :param a: int
-        :param b: int
+        E[X] = (l+r)/2
+        Var[X] = ((r-l+1)**2 - 1)/12
+        :param l: int
+        :param r: int
         """
         RVG.__init__(self)
-        self.a = a
-        self.b = b
+        self.l = l
+        self.r = r
 
     def sample(self, numpy_rnd):
-        return numpy_rnd.randint(low=self.a, high=self.b+1)
+        return numpy_rnd.randint(low=self.l, high=self.r+1)
 
 
 
