@@ -58,9 +58,11 @@ class ICER_Indp():
         if type(health_base) == list:
             self._health_base = numpy.array(health_base)
 
+        # calculate ICER
         delta_ave_cost = numpy.average(self._costIntervention) - numpy.average(self._costBase)
         delta_ave_health = numpy.average(self._healthIntervention) - numpy.average(self._healthBase)
         self._ICER = delta_ave_cost / delta_ave_health
+
 
 
 class NMB:

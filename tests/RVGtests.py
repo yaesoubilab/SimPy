@@ -1,6 +1,7 @@
 import numpy as np
 import scr.RandomVariantGenerators as RVGs
 import math
+import scipy.stats as scipy
 
 
 def print_test_results(dist_name, samples, expectation, variance):
@@ -10,12 +11,12 @@ def print_test_results(dist_name, samples, expectation, variance):
     print('  Var[x] = {var:.{prec}f} | Sample variance = {sv:.{prec}f}\n'.format(
         var=variance, sv=np.var(samples), prec=3))
 
+
 def print_test_results_multivariate(dist_name, samples, expectation, variance):
     print('Testing ' + dist_name + ':')
     print("  E[x] = %(ex)s | Sample mean = %(sm)s" % {'ex':expectation, 'sm': np.average(samples,axis=1)})
     print("  Var[x] = %(var)s | Sample variance = %(sv)s" % \
           {'var': variance, 'sv': np.var(samples, axis=1)})
-
 
 
 def get_samples(dist, rnd):
@@ -31,7 +32,6 @@ def get_samples_multivariate(dist, rnd):
         # get 10000 samples
         samples[:,i] = dist.sample(rnd)
     return samples
-
 
 
 def test_exponential(rnd, mean):
@@ -90,7 +90,6 @@ def test_betabinomial(rnd, n, a, b):
                        variance=(n*a*b*(a+b+n))/((a+b)**2*(a+b+1)))
 
 
-
 def test_binomial(rnd, n, p):
 
     # bimonial random variate generator
@@ -124,7 +123,6 @@ def test_dirichlet(rnd, a):
     print_test_results_multivariate('Dirichlet', samples,
                        expectation=mean,
                        variance=var)
-
 
 
 def test_empirical(rnd, outcome, prob):
@@ -186,47 +184,36 @@ def test_geometric(rnd, p):
                        variance=(1-p)/(p**2))
 
 
-
-
-
-def test_johnsonsb(scipy_rnd, a, b, loc, scale):
+def test_johnsonsb(rnd, a, b, loc, scale):
     # johnsonSb random variate generator
     johnsonsb_dist = RVGs.JohnsonSb(a, b, loc, scale)
 
     # obtain samples
-    samples = get_samples(johnsonsb_dist, scipy_rnd)
+    samples = get_samples(johnsonsb_dist, rnd)
 
     # report mean and variance
-    mean = scipy_rnd.johnsonsb.mean(a,b,loc,scale)
-    var = scipy_rnd.johnsonsb.var(a,b,loc,scale)
+    mean = scipy.johnsonsb.mean(a,b,loc,scale)
+    var = scipy.johnsonsb.var(a,b,loc,scale)
 
     print_test_results('JohnsonSb', samples,
                        expectation=mean,
                        variance=var)
 
 
-
-
-
-#def test_johnsonSI(rnd,
-
-
-def test_johnsonsu(scipy_rnd, a, b, loc, scale):
+def test_johnsonsu(rnd, a, b, loc, scale):
     # johnsonSu random variate generator
     johnsonsu_dist = RVGs.JohnsonSu(a, b, loc, scale)
 
     # obtain samples
-    samples = get_samples(johnsonsu_dist, scipy_rnd)
+    samples = get_samples(johnsonsu_dist, rnd)
 
     # report mean and variance
-    mean = scipy_rnd.johnsonsu.mean(a,b,loc,scale)
-    var = scipy_rnd.johnsonsu.var(a,b,loc,scale)
+    mean = scipy.johnsonsu.mean(a,b,loc,scale)
+    var = scipy.johnsonsu.var(a,b,loc,scale)
 
     print_test_results('JohnsonSu', samples,
                        expectation=mean,
                        variance=var)
-
-
 
 
 def test_lognormal(rnd, mean, sigma):
@@ -336,11 +323,10 @@ def test_uniformdiscrete(rnd, l, r):
     samples = get_samples(uniformdiscrete_dist, rnd)
 
     # report mean and variance
-    print_test_results('Uniform', samples,
+    print_test_results('Uniform Discrete', samples,
                        expectation=(l + r) / 2.0,
                        variance=((r-l+1)**2 - 1)/12.0
                        )
-
 
 
 def test_weibull(rnd, a):

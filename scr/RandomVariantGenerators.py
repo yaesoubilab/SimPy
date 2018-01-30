@@ -1,4 +1,4 @@
-# https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.random.html
+import scipy.stats as scipy
 
 class RVG(object):
     def __init__(self):
@@ -119,7 +119,7 @@ class Empirical(RVG):
         """
         RVG.__init__(self)
         if sum(prob) != 1:
-            raise ValueError('invalid value of probability')
+            raise ValueError('Probabilities should sum to 1.')
         self.outcome = outcome
         self.prob = prob
 
@@ -162,9 +162,6 @@ class GammaPoisson(RVG):
         return sample_poisson.sample(numpy_rnd)
 
 
-
-
-
 class Geometric(RVG):
     def __init__(self, p):
         """
@@ -191,13 +188,8 @@ class JohnsonSb(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, scipy_rnd):
-        return scipy_rnd.johnsonsb.rvs(self.a, self.b, self.loc, self.scale)
-
-
-class JohnsonSI(RVG):
-    pass
-
+    def sample(self, numpy_rnd):
+        return scipy.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=numpy_rnd)
 
 
 class JohnsonSu(RVG):
@@ -213,9 +205,8 @@ class JohnsonSu(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, scipy_rnd):
-        return scipy_rnd.johnsonsu.rvs(self.a, self.b, self.loc, self.scale)
-
+    def sample(self, numpy_rnd):
+        return scipy.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=numpy_rnd)
 
 
 class LogNormal(RVG):
@@ -336,7 +327,6 @@ class UniformDiscrete(RVG):
 
     def sample(self, numpy_rnd):
         return numpy_rnd.randint(low=self.l, high=self.r+1)
-
 
 
 class Weibull(RVG):

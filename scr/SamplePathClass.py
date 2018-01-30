@@ -42,7 +42,7 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type):
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
-    :param output_type: select from show, pdf, or jpg
+    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     """
 
     fig = plt.figure(title)
@@ -61,9 +61,9 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type):
     plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
 
     # output
-    if output_type == OutType.SHOW.value:
+    if output_type.value == OutType.SHOW.value:
         plt.show()
-    elif output_type == OutType.JPG.value:
+    elif output_type.value == OutType.JPG.value:
         plt.savefig(title+".png")
-    elif output_type == OutType.PDF:
+    elif output_type.value == OutType.PDF:
         plt.savefig(title+".pdf")

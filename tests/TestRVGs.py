@@ -1,6 +1,5 @@
 import numpy as np
 from tests import RVGtests as Tests
-import scipy.stats as scipy_rnd
 
 # use numpy random number generator
 rnd = np.random
@@ -19,11 +18,8 @@ Tests.test_empirical(rnd, outcome=[1,2,3], prob=[0.2,0.2,0.6])
 Tests.test_gamma(rnd, shape=2, scale=4)
 Tests.test_gammapoisson(rnd, shape=2, scale=4)
 Tests.test_geometric(rnd, p=.2)
-Tests.test_johnsonsb(scipy_rnd, a=10, b=3, loc=10, scale=100)
-
-#tests.test_johnsonSI(scipy,
-
-Tests.test_johnsonsu(scipy_rnd, a=10, b=3, loc=1, scale=2)
+Tests.test_johnsonsb(rnd, a=10, b=3, loc=10, scale=100)
+Tests.test_johnsonsu(rnd, a=10, b=3, loc=1, scale=2)
 Tests.test_lognormal(rnd, mean=10, sigma=1.2)
 Tests.test_multinomial(rnd, n=1000, pvals=.2)
 Tests.test_negativebinomial(rnd, n=100, p=.2)
