@@ -2,12 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 class Strategy:
     def __init__(self, cost, effect):
         self.cost = cost
         self.effect = effect
-
 
 class CEA:
     def __init__(self, strategies):
@@ -56,34 +54,30 @@ class CEA:
                     v2_x = inner_points['effect'] - x1
                     v2_y = inner_points['cost']-y1
                     cross_product = v1[0] * np.array(v2_y) - v1[1] * np.array(v2_x)
-                    # if cross_product >0 the point is above the line
+                    # if cross_product > 0 the point is above the line
                     # (because the point are sorted vertically)
+                    # ref: https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
                     ind_remove = inner_points[cross_product > 0].index
-                    data2.loc[list(ind_remove), 'dominated'] = True
-                    data2.loc[list(ind_remove), 'color'] = 'blue'
+                    data.loc[list(ind_remove), 'dominated'] = True
+                    data.loc[list(ind_remove), 'color'] = 'blue'
 
-        # merge data2 into original data set and plot
-        ind_change = data2.loc[data2['dominated'] == True].index
-        data.ix[list(ind_change), 'dominated'] = True
-        data.ix[list(ind_change), 'color'] = 'blue'
-
-        plt.scatter(data['effect'], data['cost'], color=data['color'], alpha=0.5)
+        plt.scatter(data['effect'], data['cost'], c=list(data['color']), alpha=0.6)
         plt.xlabel('effect')
         plt.ylabel('cost')
         plt.show()
+
+        return data
 
 
 
     def BuildCETable(self):
         pass
 
-
-cost = np.random.normal(0, 5, 100)
-effect = np.random.normal(2, 10, 100)
-
-
+np.random.seed(573)
+cost = np.random.normal(0, 5, 50)
+effect = np.random.normal(0, 5, 50)
 
 s = Strategy(cost,effect)
 
 myCEA = CEA(s)
-myCEA.FindFrontier()
+data = myCEA.FindFrontier()
