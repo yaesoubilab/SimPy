@@ -3,30 +3,40 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 class Strategy:
-    def __init__(self, cost, effect):
+    def __init__(self, name, cost, effect):
+        self.name = name
         self.cost = cost
         self.effect = effect
+        self.ifDominated = False
 
 class CEA:
     def __init__(self, strategies):
         """
         :param strategies: the list of strategies
         """
-        self.cost = strategies.cost
-        self.effect = strategies.effect
+        self.strategies = pd.DataFrame(index=range(len(strategies)), \
+                            columns=['Name', 'Expected Cost', 'Expected Utility', \
+                                                                 'dominated', 'color'])
 
-        self.n = len(self.cost)
-        # default dominated status for strategies
-        self.dominated = [False] * self.n
+        for i in range(len(strategies)):
+            self.strategies.loc[i, 'Name'] = strategies[i].name
+            self.strategies.loc[i, 'Expected Cost'] = strategies[i].cost
+            self.strategies.loc[i, 'Expected Utility'] = strategies[i].effect
+            self.strategies.loc[i, 'dominated'] = strategies[i].ifDominated
+            self.strategies.loc[i, 'color'] = "k"  # not dominated black, dominated blue
+
+        self.n = len(strategies)
+
+        # seems no need to define following attributes?
+
+        # self.cost = strategies.cost
+        # self.effect = strategies.effect
+        # self.dominated = [False] * self.n
 
     def FindFrontier(self):
-        # convert data to panda data frame
-        # sort by cost, ascending
-        data = pd.DataFrame({'Expected Cost': self.cost, 'Expected Utility': self.effect,\
-                             'dominated': self.dominated, 'color': ['red']*self.n})
-        data = data.sort_values('Expected Cost')
-        # assign names to strategies, alphabeta may not enough
-        data['Strategy'] = range(1, self.n + 1)
+        # sort strategies by cost, ascending
+        # operate on local variable data rather than self attribute
+        data = self.strategies.sort_values('Expected Cost')
 
         # apply criteria 1
         for i in range(self.n):
@@ -64,22 +74,30 @@ class CEA:
                     data.loc[list(ind_remove), 'dominated'] = True
                     data.loc[list(ind_remove), 'color'] = 'blue'
 
+        # update strategies
+        self.strategies = data
+
+        return data.loc[data['dominated']==False]
+
+    def ShowCEPlane(self):
         # plots
+        # operate on local variable data rather than self attribute
+        data = self.strategies
+
+        # re-sorted according to Effect to draw line
         linedat = data.loc[data["dominated"] == False].sort_values('Expected Utility')
-        plt.scatter(data['Expected Utility'], data['Expected Cost'], c=list(data['color']), alpha=0.6)
-        plt.plot(linedat['Expected Utility'], linedat['Expected Cost'], c='red', alpha=0.6)
-        plt.axhline(y=0, color='k')
-        plt.axvline(x=0, color='k')
+
+        plt.scatter(data['Expected Utility'], data['Expected Cost'], c=list(data['color']))
+        plt.plot(linedat['Expected Utility'], linedat['Expected Cost'], c='k')
+        plt.axhline(y=0, color='k',linewidth=0.5)
+        plt.axvline(x=0, color='k',linewidth=0.5)
         plt.xlabel('Expected Utility')
         plt.ylabel('Expected Cost')
         plt.show()
 
-        return data
-
-
 
     def BuildCETable(self):
-        data = self.FindFrontier()
+        data = self.strategies
         data['Expected Incremental Cost'] = "-"
         data['Expected Incremental Utility'] = "-"
         data['ICER'] = "Dominated"
@@ -108,17 +126,35 @@ class CEA:
         data.loc[ind_change, 'ICER'] = ICER
         data.loc[not_dominated_points.index[0], 'ICER'] = '-'
 
-        return data[['Strategy', 'Expected Cost', 'Expected Utility', 'Expected Incremental Cost', 'Expected Incremental Utility',\
+        return data[['Name', 'Expected Cost', 'Expected Utility', 'Expected Incremental Cost', 'Expected Incremental Utility',\
             'ICER']]
 
 
-
-
 np.random.seed(573)
-cost = np.random.normal(0, 5, 20)
-effect = np.random.normal(0, 5, 20)
-s = Strategy(cost,effect) # unsorted
 
-myCEA = CEA(s)
-data = myCEA.FindFrontier()
-table = myCEA.BuildCETable()
+s0 = Strategy('s0',0, 0)
+s1 = Strategy("s1",np.random.normal(0, 5),np.random.normal(0, 5))
+s2 = Strategy("s2",np.random.normal(0, 5),np.random.normal(0, 5))
+s3 = Strategy("s3",np.random.normal(0, 5),np.random.normal(0, 5))
+s4 = Strategy("s4",np.random.normal(0, 5),np.random.normal(0, 5))
+s5 = Strategy("s5",np.random.normal(0, 5),np.random.normal(0, 5))
+s6 = Strategy("s6",np.random.normal(0, 5),np.random.normal(0, 5))
+s7 = Strategy("s7",np.random.normal(0, 5),np.random.normal(0, 5))
+s8 = Strategy("s8",np.random.normal(0, 5),np.random.normal(0, 5))
+s9 = Strategy("s9",np.random.normal(0, 5),np.random.normal(0, 5))
+s10 = Strategy("s10",np.random.normal(0, 5),np.random.normal(0, 5))
+
+
+
+strategies = [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10]
+myCEA = CEA(strategies)
+
+# frontier results
+frontiers = myCEA.FindFrontier()
+
+# updated strategies
+myCEA.strategies
+
+# plot
+myCEA.ShowCEPlane()
+
