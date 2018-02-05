@@ -61,7 +61,12 @@ class CEA:
                     data.loc[list(ind_remove), 'dominated'] = True
                     data.loc[list(ind_remove), 'color'] = 'blue'
 
+        # plots
+        linedat = data.loc[data["dominated"] == False].sort_values('effect')
         plt.scatter(data['effect'], data['cost'], c=list(data['color']), alpha=0.6)
+        plt.plot(linedat['effect'], linedat['cost'], c='red', alpha=0.6)
+        plt.axhline(y=0, color='k')
+        plt.axvline(x=0, color='k')
         plt.xlabel('effect')
         plt.ylabel('cost')
         plt.show()
