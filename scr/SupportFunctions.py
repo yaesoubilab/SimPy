@@ -26,7 +26,7 @@ def format_interval(interval, digits):
 
 def format_estimate_interval(estimate, interval, digits):
     """
-    :return: text in the form 'estimate [l, u]'
+    :return: text in the form 'estimate (l, u)'
     """
     return format_number(estimate, digits) + ' ' + format_interval(interval, digits)
 

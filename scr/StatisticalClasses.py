@@ -278,16 +278,16 @@ class ComparativeStat(Statistics):
         Statistics.__init__(self, name)
 
         if type(x) == list:
-            self.x = numpy.array(x)
+            self._x = numpy.array(x)
         else:
-            self.x = x
+            self._x = x
 
         if type(y) == list:
-            self.y = numpy.array(y)
+            self._y = numpy.array(y)
         else:
-            self.y = y
+            self._y = y
 
-        self._n = len(self.x)   # number of observations
+        self._n = len(self._x)   # number of observations
 
 
 class DifferenceStat(ComparativeStat):
@@ -301,7 +301,11 @@ class DifferenceStatPaired(DifferenceStat):
     def __init__(self, name, x, y):
         DifferenceStat.__init__(self, name, x, y)
         # create a summary statistics for the element-wise difference
-        self.dStat = SummaryStat(name, self.x - self.y)
+
+        if len(self._x) != len(self._y):
+            raise ValueError('Two samples should have the same size.')
+
+        self.dStat = SummaryStat(name, self._x - self._y)
 
     def get_mean(self):
         return self.dStat.get_mean()
@@ -332,8 +336,8 @@ class DifferenceStatIndp(DifferenceStat):
 
         # generate random realizations for random variable X - Y
         numpy.random.seed(1)
-        x_i = numpy.random.choice(self.x, size=self._n, replace=True)
-        y_i = numpy.random.choice(self.y, size=self._n, replace=True)
+        x_i = numpy.random.choice(self._x, size=self._n, replace=True)
+        y_i = numpy.random.choice(self._y, size=self._n, replace=True)
         self.sum_stat_sample_delta = SummaryStat(name, x_i - y_i)
 
     def get_mean(self):
@@ -341,15 +345,15 @@ class DifferenceStatIndp(DifferenceStat):
         for independent variable x and y, E(x-y) = E(x) - E(y)
         :return: sample mean of (x-y)
         """
-        return numpy.mean(self.x) - numpy.mean(self.y)
+        return numpy.mean(self._x) - numpy.mean(self._y)
 
     def get_stdev(self):
         """
         for independent variable x and y, var(x-y) = var_x + var_y
         :returns: sample standard deviation
         """
-        var_x = numpy.var(self.x)
-        var_y = numpy.var(self.y)
+        var_x = numpy.var(self._x)
+        var_y = numpy.var(self._y)
         return numpy.sqrt(var_x + var_y)
 
     def get_min(self):
@@ -380,8 +384,8 @@ class DifferenceStatIndp(DifferenceStat):
 
         # obtain bootstrap samples
         for i in range(num_samples):
-            x_i = numpy.random.choice(self.x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self.y, size=self._n, replace=True)
+            x_i = numpy.random.choice(self._x, size=self._n, replace=True)
+            y_i = numpy.random.choice(self._y, size=self._n, replace=True)
             d_temp = x_i - y_i
             diff[i] = numpy.mean(d_temp)
 
@@ -395,10 +399,10 @@ class DifferenceStatIndp(DifferenceStat):
         :return: confidence interval of x_bar - y_bar
         """
 
-        n = len(self.x)
-        m = len(self.y)
-        sig_x = numpy.std(self.x)
-        sig_y = numpy.std(self.y)
+        n = len(self._x)
+        m = len(self._y)
+        sig_x = numpy.std(self._x)
+        sig_y = numpy.std(self._y)
 
         alpha = alpha / 100.0
 
@@ -416,7 +420,7 @@ class DifferenceStatIndp(DifferenceStat):
     def get_t_CI(self, alpha):
 
         interval = self.get_t_half_length(alpha)
-        diff = numpy.mean(self.x) - numpy.mean(self.y)
+        diff = numpy.mean(self._x) - numpy.mean(self._y)
 
         return [diff - interval, diff + interval]
 
@@ -429,7 +433,7 @@ class RatioStat(ComparativeStat):
     def __init__(self, name, x, y):
         ComparativeStat.__init__(self, name, x, y)
         # make sure no 0 in the denominator variable
-        if not (self.y != 0).all():
+        if not (self._y != 0).all():
             raise ValueError('invalid value of y, the ratio is not computable')
 
 
@@ -437,8 +441,12 @@ class RatioStatPaired(RatioStat):
 
     def __init__(self, name, x, y):
         RatioStat.__init__(self, name, x, y)
+
+        if len(self._x) != len(self._y):
+            raise ValueError('Two samples should have the same size.')
+
         # add element-wise ratio
-        ratio = numpy.divide(self.x, self.y)
+        ratio = numpy.divide(self._x, self._y)
         self.ratioStat = SummaryStat(name, ratio)
 
     def get_mean(self):
@@ -470,8 +478,8 @@ class RatioStatIndp(RatioStat):
 
         # generate random realizations for random variable X/Y
         numpy.random.seed(1)
-        x_i = numpy.random.choice(self.x, size=self._n, replace=True)
-        y_i = numpy.random.choice(self.y, size=self._n, replace=True)
+        x_i = numpy.random.choice(self._x, size=self._n, replace=True)
+        y_i = numpy.random.choice(self._y, size=self._n, replace=True)
         self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(x_i, y_i))
 
     def get_mean(self):
@@ -482,11 +490,11 @@ class RatioStatIndp(RatioStat):
         for independent variable x and y, var(x/y) = E(x^2)*E(1/y^2)-E(x)^2*(E(1/y)^2)
         :return: std(x/y)
         """
-        if self.y.mean() == 0:
+        if self._y.mean() == 0:
             raise ValueError('invalid value of mean of y, the ratio is not computable')
 
-        var = numpy.mean(self.x**2) * numpy.mean(1.0/self.y**2) - \
-              (numpy.mean(self.x)**2)*(numpy.mean(1.0/self.y)**2)
+        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y ** 2) - \
+              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y) ** 2)
         return numpy.sqrt(var)
 
     def get_min(self):
@@ -523,8 +531,8 @@ class RatioStatIndp(RatioStat):
 
         # obtain bootstrap samples
         for i in range(num_samples):
-            x_i = numpy.random.choice(self.x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self.y, size=self._n, replace=True)
+            x_i = numpy.random.choice(self._x, size=self._n, replace=True)
+            y_i = numpy.random.choice(self._y, size=self._n, replace=True)
             r_temp = numpy.divide(x_i, y_i)
             ratio[i] = numpy.mean(r_temp)
 
