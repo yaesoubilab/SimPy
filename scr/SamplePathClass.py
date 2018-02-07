@@ -1,22 +1,22 @@
 import matplotlib.pyplot as plt
 from enum import Enum
-import numpy as numpy
 
 
 class OutType(Enum):
-    SHOW = 1
-    JPG = 2
-    PDF = 3
+    """output types for plotted figures"""
+    SHOW = 1    # show
+    JPG = 2     # save the figure as a jpg file
+    PDF = 3     # save the figure as a pdf file
 
 
 class SamplePath(object):
 
-    def __init__(self, name, itr, initial_size):
-        self.name = name
-        self.itr = itr
-        self.currentSize = initial_size
-        self.times = [0]
-        self.observations = [initial_size]
+    def __init__(self, name, index, initial_size):
+        self._name = name
+        self._index = index
+        self._currentSize = initial_size
+        self._times = [0]
+        self._observations = [initial_size]
 
     def record(self, time, increment):
         """
@@ -26,13 +26,22 @@ class SamplePath(object):
         """
 
         # store the current size
-        self.times.append(time)
-        self.observations.append(self.currentSize)
+        self._times.append(time)
+        self._observations.append(self._currentSize)
         # increment the size
-        self.currentSize += increment
+        self._currentSize += increment
         # store the new size
-        self.times.append(time)
-        self.observations.append(self.currentSize)
+        self._times.append(time)
+        self._observations.append(self._currentSize)
+
+    def get_current_size(self):
+        return self._currentSize
+
+    def get_times(self):
+        return self._times
+
+    def get_observations(self):
+        return self._observations
 
 
 def graph_sample_path(sample_path, title, x_label, y_label, output_type):
@@ -51,8 +60,8 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type):
     plt.ylabel(y_label)     # y-axis label
 
     # x and y values
-    x_values = sample_path.times
-    y_values = sample_path.observations
+    x_values = sample_path.get_times()
+    y_values = sample_path.get_observations()
 
     # plot
     plt.plot(x_values, y_values, '-')
