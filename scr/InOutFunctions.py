@@ -43,12 +43,12 @@ def read_csv_rows(file_name, if_del_first_row, if_convert_float):
         return rows
 
 
-def read_csv_cols(file_name, n_cols, if_del_first_row, if_convert_float):
+def read_csv_cols(file_name, n_cols, if_ignore_first_row, if_convert_float):
     """ reads the columns of a csv file
     :param file_name: the csv file name
     :param n_cols: number of columns in the csv file
-    :param if_del_first_row: set true to delete the first row
-    :param if_convert_float: set true to convert column values to numbers
+    :param if_ignore_first_row: set True to ignore the first row
+    :param if_convert_float: set True to convert column values to numbers
     :returns a list containing the columns of the csv file
     """
     with open(file_name, "r") as file:
@@ -65,7 +65,7 @@ def read_csv_cols(file_name, n_cols, if_del_first_row, if_convert_float):
                 cols[j].append(row[j])
 
         # delete the first row if needed
-        if if_del_first_row:
+        if if_ignore_first_row:
             for j in range(0, n_cols):
                 del cols[j][0]
 
