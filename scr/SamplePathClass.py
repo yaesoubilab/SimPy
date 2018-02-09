@@ -80,7 +80,7 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=
 
 def graph_sample_paths\
                 (sample_paths, title, x_label, y_label, output_type,
-                 legends=None, transparency=1, if_same_color=False):
+                 legends=None, transparency=1, common_color_code=None):
     """
     :param sample_paths: a list of sample paths
     :param title: (string) title of the figure
@@ -89,7 +89,8 @@ def graph_sample_paths\
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     :param legends: list of strings for legend
     :param transparency: float (0.0 transparent through 1.0 opaque)
-    :param if_same_color: set to True if all sample paths should have the same color
+    :param common_color_code: (string) color code if all sample paths should have the same color
+        'b'	blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     """
 
     if len(sample_paths) == 1:
@@ -100,16 +101,25 @@ def graph_sample_paths\
     plt.xlabel(x_label)     # x-axis label
     plt.ylabel(y_label)     # y-axis label
 
-    # x and y values
+    # color
+    color_marker_text = '-'
+    if not (common_color_code is None):
+        color_marker_text = common_color_code+color_marker_text
+
+        # x and y values
     for path in sample_paths:
         x_values = path.get_times()
         y_values = path.get_observations()
         # plot
-        plt.plot(x_values, y_values, '-')
+        plt.plot(x_values, y_values, color_marker_text, alpha=transparency)
 
     # add legend if provided
     if not (legends is None):
-        plt.legend(legends)
+        if common_color_code is None:
+            plt.legend(legends)
+        else:
+            plt.legend([legends[0]])
+
 
     # set the minimum of y-axis to zero
     plt.ylim(ymin=0)  # the minimum has to be set after plotting the values

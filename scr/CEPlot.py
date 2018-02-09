@@ -179,3 +179,4 @@ myCEA.dfStrategies
 # plot
 myCEA.show_CE_plane()
 
+print(myCEA.BuildCETable())

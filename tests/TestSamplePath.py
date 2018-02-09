@@ -26,4 +26,6 @@ Path.graph_sample_paths(
     x_label='time',
     y_label='y',
     output_type=Path.OutType.SHOW,
-    legends=['S1', 'S2'])
+    legends=['S1', 'S2'],
+    transparency=0.5,
+    common_color_code='g')
