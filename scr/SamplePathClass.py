@@ -44,7 +44,7 @@ class SamplePath(object):
         return self._observations
 
 
-def graph_sample_path(sample_path, title, x_label, y_label, output_type):
+def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=None):
     """
     produces a sample path
     :param sample_path: a sample path
@@ -52,6 +52,7 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type):
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param legend: string that contains the legend
     """
 
     fig = plt.figure(title)
@@ -66,13 +67,68 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type):
     # plot
     plt.plot(x_values, y_values, '-')
 
+    # add legend if provided
+    if not (legend is None):
+        plt.legend(legend)
+        
     # set the minimum of y-axis to zero
     plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
 
+    # output figure
+    output_figure(plt, output_type, title)
+
+
+def graph_sample_paths\
+                (sample_paths, title, x_label, y_label, output_type,
+                 legends=None, transparency=1, if_same_color=False):
+    """
+    :param sample_paths: a list of sample paths
+    :param title: (string) title of the figure
+    :param x_label: (string) x-axis label
+    :param y_label: (string) y-axis label
+    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param legends: list of strings for legend
+    :param transparency: float (0.0 transparent through 1.0 opaque)
+    :param if_same_color: set to True if all sample paths should have the same color
+    """
+
+    if len(sample_paths) == 1:
+        raise ValueError('Only one sample path is provided. Use graph_sample_path instead.')
+
+    fig = plt.figure(title)
+    plt.title(title)        # title
+    plt.xlabel(x_label)     # x-axis label
+    plt.ylabel(y_label)     # y-axis label
+
+    # x and y values
+    for path in sample_paths:
+        x_values = path.get_times()
+        y_values = path.get_observations()
+        # plot
+        plt.plot(x_values, y_values, '-')
+
+    # add legend if provided
+    if not (legends is None):
+        plt.legend(legends)
+
+    # set the minimum of y-axis to zero
+    plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
+
+    # output figure
+    output_figure(plt, output_type, title)
+
+
+def output_figure(plt, output_type, title):
+    """
+    :param plt: reference to the plot
+    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param title: figure title
+    :return:
+    """
     # output
-    if output_type.value == OutType.SHOW.value:
+    if output_type == OutType.SHOW:
         plt.show()
-    elif output_type.value == OutType.JPG.value:
+    elif output_type == OutType.JPG:
         plt.savefig(title+".png")
-    elif output_type.value == OutType.PDF:
+    elif output_type == OutType.PDF:
         plt.savefig(title+".pdf")

@@ -3,7 +3,7 @@ import numpy as numpy
 import scipy.stats as stat
 import math
 
-from scr import SupportFunctions as Support
+from scr import FormatFunctions as Support
 
 
 class Statistics(object):
