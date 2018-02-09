@@ -44,7 +44,7 @@ class SamplePath(object):
         return self._observations
 
 
-def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=None):
+def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=None, color_code=None):
     """
     produces a sample path
     :param sample_path: a sample path
@@ -53,6 +53,7 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=
     :param y_label: (string) y-axis label
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     :param legend: string that contains the legend
+    :param color_code: (string) 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     """
 
     fig = plt.figure(title)
@@ -64,12 +65,17 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=
     x_values = sample_path.get_times()
     y_values = sample_path.get_observations()
 
+    # color
+    color_marker_text = '-'
+    if not (color_code is None):
+        color_marker_text = color_code + color_marker_text
+
     # plot
-    plt.plot(x_values, y_values, '-')
+    plt.plot(x_values, y_values, color_marker_text)
 
     # add legend if provided
     if not (legend is None):
-        plt.legend(legend)
+        plt.legend([legend])
         
     # set the minimum of y-axis to zero
     plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
@@ -118,7 +124,7 @@ def graph_sample_paths\
         if common_color_code is None:
             plt.legend(legends)
         else:
-            plt.legend([legends[0]])
+            plt.legend([legends])
 
 
     # set the minimum of y-axis to zero
