@@ -106,8 +106,10 @@ class CEA:
         self.dfStrategies = df1
         self.strategiesOnFrontier = df1.loc[df1['Dominated']==False, ['Name', 'E[Cost]', 'E[Effect]']]
 
-    def show_CE_plane(self, show_names=False, show_clouds=False):
+    def show_CE_plane(self, x_label, y_label, show_names=False, show_clouds=False):
         """
+        :param x_label: (string) x-axis label
+        :param y_label: (string) y-axis label
         :param show_names: logical, show strategy names
         :param show_clouds: logical, show true sample observation of strategies
         """
@@ -130,8 +132,8 @@ class CEA:
         plt.plot(linedat['E[Effect]'], linedat['E[Cost]'], c='k')
         plt.axhline(y=0, c='k',linewidth=0.5)
         plt.axvline(x=0, c='k',linewidth=0.5)
-        plt.xlabel('E[Effect]')
-        plt.ylabel('E[Cost]')
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
 
         # show names of strategies
         if show_names:
@@ -146,7 +148,11 @@ class CEA:
         plt.show()
 
 
-    def BuildCETable(self):
+    def BuildCETable(self, digits=5):
+        """
+        :param digits: specify how many digits return in the table, 5 by default
+        :return: output csv file called "CETable.csv" in local environment
+        """
         data = self.dfStrategies
         data['Expected Incremental Cost'] = "-"
         data['Expected Incremental Effect'] = "-"
@@ -176,8 +182,12 @@ class CEA:
         data.loc[ind_change, 'ICER'] = ICER
         data.loc[not_Dominated_points.index[0], 'ICER'] = '-'
 
-        return data[['Name', 'E[Cost]', 'E[Effect]', 'Expected Incremental Cost', 'Expected Incremental Effect',\
+        output = data[['Name', 'E[Cost]', 'E[Effect]', 'Expected Incremental Cost', 'Expected Incremental Effect',\
             'ICER']]
+
+        output.to_csv("CETable.csv", encoding='utf-8', index=False)
+
+        return output
 
 
 np.random.seed(573)
@@ -186,16 +196,16 @@ s_center = np.random.normal(0, 5, (10, 2))
 
 
 s0 = Strategy('s0',0, 0)
-s1 = Strategy("s1",s_center[0,0]+np.random.normal(0, 0.5, 10), s_center[0,1]+np.random.normal(0, 0.1, 10))
-s2 = Strategy("s2",s_center[1,0]+np.random.normal(0, 0.5, 10), s_center[1,1]+np.random.normal(0, 0.1, 10))
-s3 = Strategy("s3",s_center[2,0]+np.random.normal(0, 0.5, 10), s_center[2,1]+np.random.normal(0, 0.1, 10))
-s4 = Strategy("s4",s_center[3,0]+np.random.normal(0, 0.5, 10), s_center[3,1]+np.random.normal(0, 0.1, 10))
-s5 = Strategy("s5",s_center[4,0]+np.random.normal(0, 0.5, 10), s_center[4,1]+np.random.normal(0, 0.1, 10))
-s6 = Strategy("s6",s_center[5,0]+np.random.normal(0, 0.5, 10), s_center[5,1]+np.random.normal(0, 0.1, 10))
-s7 = Strategy("s7",s_center[6,0]+np.random.normal(0, 0.5, 10), s_center[6,1]+np.random.normal(0, 0.1, 10))
-s8 = Strategy("s8",s_center[7,0]+np.random.normal(0, 0.5, 10), s_center[7,1]+np.random.normal(0, 0.1, 10))
-s9 = Strategy("s9",s_center[8,0]+np.random.normal(0, 0.5, 10), s_center[8,1]+np.random.normal(0, 0.1, 10))
-s10 = Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+np.random.normal(0, 0.1, 10))
+s1 = Strategy("s1",s_center[0,0]+np.random.normal(0, 0.5, 10), s_center[0,1]+np.random.normal(0, 0.5, 10))
+s2 = Strategy("s2",s_center[1,0]+np.random.normal(0, 0.5, 10), s_center[1,1]+np.random.normal(0, 0.5, 10))
+s3 = Strategy("s3",s_center[2,0]+np.random.normal(0, 0.5, 10), s_center[2,1]+np.random.normal(0, 0.5, 10))
+s4 = Strategy("s4",s_center[3,0]+np.random.normal(0, 0.5, 10), s_center[3,1]+np.random.normal(0, 0.5, 10))
+s5 = Strategy("s5",s_center[4,0]+np.random.normal(0, 0.5, 10), s_center[4,1]+np.random.normal(0, 0.5, 10))
+s6 = Strategy("s6",s_center[5,0]+np.random.normal(0, 0.5, 10), s_center[5,1]+np.random.normal(0, 0.5, 10))
+s7 = Strategy("s7",s_center[6,0]+np.random.normal(0, 0.5, 10), s_center[6,1]+np.random.normal(0, 0.5, 10))
+s8 = Strategy("s8",s_center[7,0]+np.random.normal(0, 0.5, 10), s_center[7,1]+np.random.normal(0, 0.5, 10))
+s9 = Strategy("s9",s_center[8,0]+np.random.normal(0, 0.5, 10), s_center[8,1]+np.random.normal(0, 0.5, 10))
+s10 = Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+np.random.normal(0, 0.5, 10))
 
 
 strategies = [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10]
@@ -208,7 +218,7 @@ myCEA.get_frontier()
 myCEA.dfStrategies
 
 # plot with label and sample cloud
-myCEA.show_CE_plane(True, True)
+myCEA.show_CE_plane('E[Effect]','E[Cost]', True, True)
 
 # table
 print(myCEA.BuildCETable())
