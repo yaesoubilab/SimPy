@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import pandas as pd
 
 
@@ -24,8 +25,14 @@ class CEA:
         :param strategies: the list of strategies
         """
         self.n = len(strategies)
-        self.strategiesOnFrontier = pd.DataFrame()  # data frame to contain the strategies on the frontier
-        
+
+        # store all observations for all strategies
+        self.dataCloud = strategies
+
+        # data frame to contain the strategies on the frontier
+        self.strategiesOnFrontier = pd.DataFrame()
+
+        # data frame for all strategies' expected outcomes
         self.dfStrategies = pd.DataFrame(
             index=range(self.n), 
             columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
@@ -99,7 +106,11 @@ class CEA:
         self.dfStrategies = df1
         self.strategiesOnFrontier = df1.loc[df1['Dominated']==False, ['Name', 'E[Cost]', 'E[Effect]']]
 
-    def show_CE_plane(self, show_names = False):
+    def show_CE_plane(self, show_names=False, show_clouds=False):
+        """
+        :param show_names: logical, show strategy names
+        :param show_clouds: logical, show true sample observation of strategies
+        """
         # plots
         # operate on local variable data rather than self attribute
         data = self.dfStrategies
@@ -107,12 +118,31 @@ class CEA:
         # re-sorted according to Effect to draw line
         linedat = data.loc[data["Dominated"] == False].sort_values('E[Effect]')
 
-        plt.scatter(data['E[Effect]'], data['E[Cost]'], c=list(data['Color']))
+        # show observation clouds for strategies
+        if show_clouds:
+            for strategy_i, color in zip(self.dataCloud, cm.rainbow(np.linspace(0, 1, self.n))):
+                x_values = strategy_i.effect
+                y_values = strategy_i.cost
+                # plot
+                plt.scatter(x_values, y_values, c=color, alpha=0.5, s=50)
+
+        plt.scatter(data['E[Effect]'], data['E[Cost]'], c=list(data['Color']), s=50)
         plt.plot(linedat['E[Effect]'], linedat['E[Cost]'], c='k')
-        plt.axhline(y=0, Color='k',linewidth=0.5)
-        plt.axvline(x=0, Color='k',linewidth=0.5)
+        plt.axhline(y=0, c='k',linewidth=0.5)
+        plt.axvline(x=0, c='k',linewidth=0.5)
         plt.xlabel('E[Effect]')
         plt.ylabel('E[Cost]')
+
+        # show names of strategies
+        if show_names:
+            for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
+                plt.annotate(
+                    label,
+                    xy=(x, y), xytext=(-20, 20),
+                    textcoords='offset points', ha='right', va='bottom',
+                    bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5),
+                    arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+
         plt.show()
 
 
@@ -152,31 +182,33 @@ class CEA:
 
 np.random.seed(573)
 
+s_center = np.random.normal(0, 5, (10, 2))
+
+
 s0 = Strategy('s0',0, 0)
-s1 = Strategy("s1",np.random.normal(0, 5),np.random.normal(0, 5))
-s2 = Strategy("s2",np.random.normal(0, 5),np.random.normal(0, 5))
-s3 = Strategy("s3",np.random.normal(0, 5),np.random.normal(0, 5))
-s4 = Strategy("s4",np.random.normal(0, 5),np.random.normal(0, 5))
-s5 = Strategy("s5",np.random.normal(0, 5),np.random.normal(0, 5))
-s6 = Strategy("s6",np.random.normal(0, 5),np.random.normal(0, 5))
-s7 = Strategy("s7",np.random.normal(0, 5),np.random.normal(0, 5))
-s8 = Strategy("s8",np.random.normal(0, 5),np.random.normal(0, 5))
-s9 = Strategy("s9",np.random.normal(0, 5),np.random.normal(0, 5))
-s10 = Strategy("s10",np.random.normal(0, 5),np.random.normal(0, 5))
+s1 = Strategy("s1",s_center[0,0]+np.random.normal(0, 0.5, 10), s_center[0,1]+np.random.normal(0, 0.1, 10))
+s2 = Strategy("s2",s_center[1,0]+np.random.normal(0, 0.5, 10), s_center[1,1]+np.random.normal(0, 0.1, 10))
+s3 = Strategy("s3",s_center[2,0]+np.random.normal(0, 0.5, 10), s_center[2,1]+np.random.normal(0, 0.1, 10))
+s4 = Strategy("s4",s_center[3,0]+np.random.normal(0, 0.5, 10), s_center[3,1]+np.random.normal(0, 0.1, 10))
+s5 = Strategy("s5",s_center[4,0]+np.random.normal(0, 0.5, 10), s_center[4,1]+np.random.normal(0, 0.1, 10))
+s6 = Strategy("s6",s_center[5,0]+np.random.normal(0, 0.5, 10), s_center[5,1]+np.random.normal(0, 0.1, 10))
+s7 = Strategy("s7",s_center[6,0]+np.random.normal(0, 0.5, 10), s_center[6,1]+np.random.normal(0, 0.1, 10))
+s8 = Strategy("s8",s_center[7,0]+np.random.normal(0, 0.5, 10), s_center[7,1]+np.random.normal(0, 0.1, 10))
+s9 = Strategy("s9",s_center[8,0]+np.random.normal(0, 0.5, 10), s_center[8,1]+np.random.normal(0, 0.1, 10))
+s10 = Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+np.random.normal(0, 0.1, 10))
 
 
 strategies = [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10]
 myCEA = CEA(strategies)
 
 # frontier results
-frontiers = myCEA.get_frontier()
-print(frontiers)
-
+myCEA.get_frontier()
 
 # updated strategies
 myCEA.dfStrategies
 
-# plot
-myCEA.show_CE_plane()
+# plot with label and sample cloud
+myCEA.show_CE_plane(True, True)
 
+# table
 print(myCEA.BuildCETable())
