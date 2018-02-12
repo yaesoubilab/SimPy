@@ -177,14 +177,19 @@ class CEA:
             ICER = np.append(ICER, temp_num/temp_den)
 
         ind_change = not_Dominated_points.index[1:]
-        data.loc[ind_change, 'Expected Incremental Cost'] = incre_cost
-        data.loc[ind_change, 'Expected Incremental Effect'] = incre_Effect
-        data.loc[ind_change, 'ICER'] = ICER
+        data.loc[ind_change, 'Expected Incremental Cost'] = incre_cost.astype(float).round(digits)
+        data.loc[ind_change, 'Expected Incremental Effect'] = incre_Effect.astype(float).round(digits)
+        data.loc[ind_change, 'ICER'] = ICER.astype(float).round(digits)
         data.loc[not_Dominated_points.index[0], 'ICER'] = '-'
 
         output = data[['Name', 'E[Cost]', 'E[Effect]', 'Expected Incremental Cost', 'Expected Incremental Effect',\
             'ICER']]
 
+        # set digits number to display
+        output.loc[:, 'E[Cost]'] = output['E[Cost]'].astype(float).round(digits)
+        output.loc[:, 'E[Effect]'] = output['E[Effect]'].astype(float).round(digits)
+
+        # write csv
         output.to_csv("CETable.csv", encoding='utf-8', index=False)
 
         return output
@@ -221,4 +226,4 @@ myCEA.dfStrategies
 myCEA.show_CE_plane('E[Effect]','E[Cost]', True, True)
 
 # table
-print(myCEA.BuildCETable())
+print(myCEA.BuildCETable(digits=2))
