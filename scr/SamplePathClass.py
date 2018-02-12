@@ -62,6 +62,7 @@ class SamplePathRealTimeUpdate(SamplePath):
     def get_values(self):
         return self._values
 
+
 class SamplePathBatchUpdate(SamplePath):
     """ a sample path where observations are recorded at the end of the simulation """
     def __init__(self, name, index, initial_size):
