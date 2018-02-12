@@ -1,4 +1,5 @@
 import scipy.stats as scipy
+import numpy as np
 
 class RVG(object):
     def __init__(self):
@@ -112,21 +113,25 @@ class Dirichlet(RVG):
 
 
 class Empirical(RVG):
-    def __init__(self, outcome, prob):
+    def __init__(self, probabilities):
         """
+        assuming outcomes = [0, 1, 2, 3, ...]
         E[X] = sum(outcome*prob)
         Var[X] = sum((outcome**2)*prob) - E[X]**2
         """
         RVG.__init__(self)
-        if sum(prob) != 1:
+
+        self.prob = np.array(probabilities)
+        self.nOutcomes = len(self.prob)
+
+        if self.prob.sum() != 1:
             raise ValueError('Probabilities should sum to 1.')
-        self.outcome = outcome
-        self.prob = prob
+        self.prob = probabilities
 
     def sample(self, numpy_rnd):
         # this works for both numpy array and list
         # ref:https://stackoverflow.com/questions/4265988/generate-random-numbers-with-a-given-numerical-distribution
-        return numpy_rnd.choice(self.outcome, size=1, p=self.prob)
+        return numpy_rnd.choice(range(self.nOutcomes), size=1, p=self.prob)
 
 
 class Gamma(RVG):

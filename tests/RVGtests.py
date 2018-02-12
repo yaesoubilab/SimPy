@@ -125,17 +125,18 @@ def test_dirichlet(rnd, a):
                        variance=var)
 
 
-def test_empirical(rnd, outcome, prob):
+def test_empirical(rnd, prob):
     # empirical random variate generator
-    empirical_dist = RVGs.Empirical(outcome, prob)
+    empirical_dist = RVGs.Empirical(prob)
 
     # obtain samples
     samples = get_samples(empirical_dist, rnd)
 
     # report mean and variance
-    if (type(outcome) == list) | (type(prob) == list):
-        outcome = np.array(outcome)
+    if type(prob) == list:
         prob = np.array(prob)
+
+    outcome = np.array(range(len(prob)))
 
     mean = sum(outcome*prob)
     var = sum((outcome**2)*prob) - mean**2
