@@ -86,7 +86,8 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=
 
 def graph_sample_paths\
                 (sample_paths, title, x_label, y_label, output_type,
-                 legends=None, transparency=1, common_color_code=None):
+                 legends=None, transparency=1, common_color_code=None,
+                 if_same_color=False):
     """
     :param sample_paths: a list of sample paths
     :param title: (string) title of the figure
@@ -97,6 +98,7 @@ def graph_sample_paths\
     :param transparency: float (0.0 transparent through 1.0 opaque)
     :param common_color_code: (string) color code if all sample paths should have the same color
         'b'	blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
+    :param if_same_color: logical, default False, if set True, paint the sample paths the same color
     """
 
     if len(sample_paths) == 1:
@@ -113,11 +115,18 @@ def graph_sample_paths\
         color_marker_text = common_color_code+color_marker_text
 
         # x and y values
-    for path in sample_paths:
-        x_values = path.get_times()
-        y_values = path.get_observations()
-        # plot
-        plt.plot(x_values, y_values, color_marker_text, alpha=transparency)
+    if if_same_color:
+        for path in sample_paths:
+            x_values = path.get_times()
+            y_values = path.get_observations()
+            # plot
+            plt.plot(x_values, y_values, common_color_code, alpha=transparency)
+    else:
+        for path in sample_paths:
+            x_values = path.get_times()
+            y_values = path.get_observations()
+            # plot
+            plt.plot(x_values, y_values, color_marker_text, alpha=transparency)
 
     # add legend if provided
     if not (legends is None):
