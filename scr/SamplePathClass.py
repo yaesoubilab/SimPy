@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 from enum import Enum
-import numpy as np
 
 
 class OutType(Enum):
