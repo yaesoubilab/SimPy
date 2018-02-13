@@ -216,13 +216,12 @@ s10 = Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+n
 myCEA = CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10])
 
 # frontier results
-myCEA.get_frontier()
-
-# updated strategies
-myCEA._dfStrategies
+print('Strategies on CE frontier:')
+print(myCEA.get_frontier())
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('E[Effect]','E[Cost]', True, True)
 
 # table
+print('')
 print(myCEA.BuildCETable(digits=2))
