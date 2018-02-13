@@ -9,13 +9,14 @@ class OutType(Enum):
     PDF = 3     # save the figure as a pdf file
 
 
-def graph_histogram(observations, title, x_label, y_label, output_type):
+def graph_histogram(observations, title, x_label, y_label, output_type, legend=None):
     """ graphs the histogram of observations
     :param observations: list of observations
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param legend: string for the legend
     """
 
     fig = plt.figure(title)
@@ -27,6 +28,10 @@ def graph_histogram(observations, title, x_label, y_label, output_type):
              edgecolor='black',
              linewidth=1)
     plt.xlim([0, max(observations)])
+
+    # add legend if provided
+    if not (legend is None):
+        plt.legend([legend])
 
     # output figure
     output_figure(plt, output_type, title)

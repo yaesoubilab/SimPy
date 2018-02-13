@@ -118,7 +118,7 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
-    :param legend: string that contains the legend
+    :param legend: string for the legend
     :param color_code: (string) 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     """
 
