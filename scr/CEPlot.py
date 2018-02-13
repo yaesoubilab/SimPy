@@ -24,39 +24,39 @@ class CEA:
         """
         :param strategies: the list of strategies
         """
-        self.n = len(strategies)
+        self._n = len(strategies)
 
         # store all observations for all strategies
-        self.dataCloud = strategies
+        self._dataCloud = strategies
 
         # data frame to contain the strategies on the frontier
-        self.strategiesOnFrontier = pd.DataFrame()
+        self._strategiesOnFrontier = pd.DataFrame()
 
         # data frame for all strategies' expected outcomes
-        self.dfStrategies = pd.DataFrame(
-            index=range(self.n), 
+        self._dfStrategies = pd.DataFrame(
+            index=range(self._n),
             columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
 
         for i in range(len(strategies)):
-            self.dfStrategies.loc[i, 'Name'] = strategies[i].name
-            self.dfStrategies.loc[i, 'E[Cost]'] = strategies[i].aveCost
-            self.dfStrategies.loc[i, 'E[Effect]'] = strategies[i].aveEffect
-            self.dfStrategies.loc[i, 'Dominated'] = strategies[i].ifDominated
-            self.dfStrategies.loc[i, 'Color'] = "k"  # not Dominated black, Dominated blue
+            self._dfStrategies.loc[i, 'Name'] = strategies[i].name
+            self._dfStrategies.loc[i, 'E[Cost]'] = strategies[i].aveCost
+            self._dfStrategies.loc[i, 'E[Effect]'] = strategies[i].aveEffect
+            self._dfStrategies.loc[i, 'Dominated'] = strategies[i].ifDominated
+            self._dfStrategies.loc[i, 'Color'] = "k"  # not Dominated black, Dominated blue
 
         # find the CE frontier
-        self.find_frontier()
+        self.__find_frontier()
 
     def get_frontier(self):
-        return self.strategiesOnFrontier
+        return self._strategiesOnFrontier
 
-    def find_frontier(self):
+    def __find_frontier(self):
         # sort strategies by cost, ascending
         # operate on local variable data rather than self attribute
-        df1 = self.dfStrategies.sort_values('E[Cost]')
+        df1 = self._dfStrategies.sort_values('E[Cost]')
 
         # apply criteria 1
-        for i in range(self.n):
+        for i in range(self._n):
             # strategies with higher cost and lower Effect are dominated
             df1.loc[
                 (df1['E[Cost]'] > df1['E[Cost]'][i]) &
@@ -103,8 +103,8 @@ class CEA:
                     df1.loc[list(dominated_index), 'Color'] = 'blue'
 
         # update strategies
-        self.dfStrategies = df1
-        self.strategiesOnFrontier = df1.loc[df1['Dominated']==False, ['Name', 'E[Cost]', 'E[Effect]']]
+        self._dfStrategies = df1
+        self._strategiesOnFrontier = df1.loc[df1['Dominated'] == False, ['Name', 'E[Cost]', 'E[Effect]']]
 
     def show_CE_plane(self, x_label, y_label, show_names=False, show_clouds=False):
         """
@@ -115,14 +115,14 @@ class CEA:
         """
         # plots
         # operate on local variable data rather than self attribute
-        data = self.dfStrategies
+        data = self._dfStrategies
 
         # re-sorted according to Effect to draw line
         linedat = data.loc[data["Dominated"] == False].sort_values('E[Effect]')
 
         # show observation clouds for strategies
         if show_clouds:
-            for strategy_i, color in zip(self.dataCloud, cm.rainbow(np.linspace(0, 1, self.n))):
+            for strategy_i, color in zip(self._dataCloud, cm.rainbow(np.linspace(0, 1, self._n))):
                 x_values = strategy_i.effect
                 y_values = strategy_i.cost
                 # plot
@@ -153,7 +153,7 @@ class CEA:
         :param digits: specify how many digits return in the table, 5 by default
         :return: output csv file called "CETable.csv" in local environment
         """
-        data = self.dfStrategies
+        data = self._dfStrategies
         data['Expected Incremental Cost'] = "-"
         data['Expected Incremental Effect'] = "-"
         data['ICER'] = "Dominated"
@@ -213,14 +213,13 @@ s9 = Strategy("s9",s_center[8,0]+np.random.normal(0, 0.5, 10), s_center[8,1]+np.
 s10 = Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+np.random.normal(0, 0.5, 10))
 
 
-strategies = [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10]
-myCEA = CEA(strategies)
+myCEA = CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10])
 
 # frontier results
 myCEA.get_frontier()
 
 # updated strategies
-myCEA.dfStrategies
+myCEA._dfStrategies
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('E[Effect]','E[Cost]', True, True)
