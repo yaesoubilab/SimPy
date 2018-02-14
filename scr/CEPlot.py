@@ -207,8 +207,8 @@ class CEA:
             ICER = np.append(ICER, temp_num/temp_den)
 
         ind_change = not_Dominated_points.index[1:]
-        data.loc[ind_change, 'E[dCost]'] = incre_cost.astype(float).round(2)
-        data.loc[ind_change, 'E[dEffect]'] = incre_Effect.astype(float).round(2)
+        data.loc[ind_change, 'E[dCost]'] = incre_cost.astype(float).round(cost_digits)
+        data.loc[ind_change, 'E[dEffect]'] = incre_Effect.astype(float).round(effect_digits)
         data.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
         data.loc[not_Dominated_points.index[0], 'ICER'] = '-'
 
