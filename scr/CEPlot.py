@@ -148,9 +148,11 @@ class CEA:
         plt.show()
 
 
-    def BuildCETable(self, digits=5):
+    def BuildCETable(self, cost_digits=0, effect_digits=2, icer_digits=0):
         """
-        :param digits: specify how many digits return in the table, 5 by default
+        :param cost_digits: specify how many digits return in the table for cost
+        :param effect_digits: specify how many digits return in the table for effect
+        :param icer_digits: specify how many digits return in the table for ICER
         :return: output csv file called "CETable.csv" in local environment
         """
         data = self._dfStrategies
@@ -177,20 +179,36 @@ class CEA:
             ICER = np.append(ICER, temp_num/temp_den)
 
         ind_change = not_Dominated_points.index[1:]
-        data.loc[ind_change, 'Expected Incremental Cost'] = incre_cost.astype(float).round(digits)
-        data.loc[ind_change, 'Expected Incremental Effect'] = incre_Effect.astype(float).round(digits)
-        data.loc[ind_change, 'ICER'] = ICER.astype(float).round(digits)
+        data.loc[ind_change, 'Expected Incremental Cost'] = incre_cost.astype(float).round(2)
+        data.loc[ind_change, 'Expected Incremental Effect'] = incre_Effect.astype(float).round(2)
+        data.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
         data.loc[not_Dominated_points.index[0], 'ICER'] = '-'
 
-        output = data[['Name', 'E[Cost]', 'E[Effect]', 'Expected Incremental Cost', 'Expected Incremental Effect',\
+        # creat output dataframe
+        # python round will leave trailing 0 for 0 decimal
+        if cost_digits == 0:
+            output_cost = data['E[Cost]'].astype(int)
+        else:
+            output_cost = data['E[Cost]'].astype(float).round(cost_digits)
+
+        if effect_digits == 0:
+            output_effect = data['E[Effect]'].astype(int)
+        else:
+            output_effect = data['E[Effect]'].astype(float).round(effect_digits)
+
+        output = pd.DataFrame(
+            {'Name': data['Name'], 'E[Cost]': output_cost,
+             'E[Effect]': output_effect,
+             'Expected Incremental Cost': data['Expected Incremental Cost'],
+             'Expected Incremental Effect': data['Expected Incremental Effect'],
+             'ICER': data['ICER']
+             })
+
+        output = output[['Name', 'E[Cost]', 'E[Effect]', 'Expected Incremental Cost', 'Expected Incremental Effect',\
             'ICER']]
 
-        # set digits number to display
-        output.loc[:, 'E[Cost]'] = output['E[Cost]'].astype(float).round(digits)
-        output.loc[:, 'E[Effect]'] = output['E[Effect]'].astype(float).round(digits)
-
-        # write csv
-        output.to_csv("CETable.csv", encoding='utf-8', index=False)
+       # write csv
+        #output.to_csv("CETable.csv", encoding='utf-8', index=False)
 
         return output
 
@@ -224,4 +242,4 @@ myCEA.show_CE_plane('E[Effect]','E[Cost]', True, True)
 
 # table
 print('')
-print(myCEA.BuildCETable(digits=2))
+print(myCEA.BuildCETable())
