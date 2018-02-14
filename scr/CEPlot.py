@@ -210,8 +210,8 @@ class CEA:
         output = output[['Name', 'E[Cost]', 'E[Effect]', 'Expected Incremental Cost', 'Expected Incremental Effect',\
             'ICER']]
 
-       # write csv
-        #output.to_csv("CETable.csv", encoding='utf-8', index=False)
+        # write csv
+        output.to_csv("CETable.csv", encoding='utf-8', index=False)
 
         return output
 
