@@ -2,20 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
+from scr import FigureSupport as Fig
 
 
 class Strategy:
-    def __init__(self, name, cost, effect):
+    def __init__(self, name, cost_obs, effect_obs):
         """        
         :param name: name of the strategy
-        :param cost: list o numpy.array  
-        :param effect: list or numpy.array
+        :param cost_obs: list ro numpy.array of cost observations
+        :param effect_obs: list or numpy.array of effect observation s
         """
         self.name = name
-        self.cost = cost
-        self.effect = effect
-        self.aveCost = np.average(self.cost)
-        self.aveEffect = np.average(self.effect)
+        self.costObs = cost_obs
+        self.effectObs = effect_obs
+        self.aveCost = np.average(self.costObs)
+        self.aveEffect = np.average(self.effectObs)
         self.ifDominated = False
 
 
@@ -48,9 +49,16 @@ class CEA:
         self.__find_frontier()
 
     def get_frontier(self):
+        """ :return list of strategies on the frontier"""
         return self._strategiesOnFrontier
 
+    def get_none_frontier(self):
+        """ :return list of strategies that are not on the frontier """
+        return self._strategiesNotOnFrontier
+
     def __find_frontier(self):
+        """ find the cost-effectiveness frontier """
+
         # sort strategies by cost, ascending
         # operate on local variable data rather than self attribute
         df1 = self._dfStrategies.sort_values('E[Cost]')
@@ -121,9 +129,9 @@ class CEA:
                                 strategiesNotOnFrontier.iloc[i, 2]))
         self._strategiesNotOnFrontier = SnoF
 
-
-    def show_CE_plane(self, x_label, y_label, show_names=False, show_clouds=False):
+    def show_CE_plane(self, title, x_label, y_label, show_names=False, show_clouds=False):
         """
+        :param title: title of the figure
         :param x_label: (string) x-axis label
         :param y_label: (string) y-axis label
         :param show_names: logical, show strategy names
@@ -139,8 +147,8 @@ class CEA:
         # show observation clouds for strategies
         if show_clouds:
             for strategy_i, color in zip(self._dataCloud, cm.rainbow(np.linspace(0, 1, self._n))):
-                x_values = strategy_i.effect
-                y_values = strategy_i.cost
+                x_values = strategy_i.effectObs
+                y_values = strategy_i.costObs
                 # plot clouds
                 plt.scatter(x_values, y_values, c=color, alpha=0.5, s=25)
 
@@ -152,6 +160,7 @@ class CEA:
         plt.plot(linedat['E[Effect]'], linedat['E[Cost]'], c='k')
         plt.axhline(y=0, c='k',linewidth=0.5)
         plt.axvline(x=0, c='k',linewidth=0.5)
+        plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
@@ -164,7 +173,7 @@ class CEA:
                     textcoords='offset points', ha='right', va='bottom',
                     arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'),weight='bold')
 
-        plt.show()
+        Fig.output_figure(plt, Fig.OutType.SHOW, title)
 
 
     def BuildCETable(self, cost_digits=0, effect_digits=2, icer_digits=0):
@@ -175,8 +184,8 @@ class CEA:
         :return: output csv file called "CETable.csv" in local environment
         """
         data = self._dfStrategies
-        data['Expected Incremental Cost'] = "-"
-        data['Expected Incremental Effect'] = "-"
+        data['E[dCost]'] = "-"
+        data['E[dEffect]'] = "-"
         data['ICER'] = "Dominated"
         not_Dominated_points = data.loc[data["Dominated"] == False].sort_values('E[Cost]')
 
@@ -192,14 +201,14 @@ class CEA:
 
             temp_den = not_Dominated_points["E[Effect]"].iloc[i]-not_Dominated_points["E[Effect]"].iloc[i-1]
             if temp_den == 0:
-                raise ValueError('invalid value of Expected Incremental Effect, the ratio is not computable')
+                raise ValueError('invalid value of E[dEffect], the ratio is not computable')
             incre_Effect = np.append(incre_Effect, temp_den)
 
             ICER = np.append(ICER, temp_num/temp_den)
 
         ind_change = not_Dominated_points.index[1:]
-        data.loc[ind_change, 'Expected Incremental Cost'] = incre_cost.astype(float).round(2)
-        data.loc[ind_change, 'Expected Incremental Effect'] = incre_Effect.astype(float).round(2)
+        data.loc[ind_change, 'E[dCost]'] = incre_cost.astype(float).round(2)
+        data.loc[ind_change, 'E[dEffect]'] = incre_Effect.astype(float).round(2)
         data.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
         data.loc[not_Dominated_points.index[0], 'ICER'] = '-'
 
@@ -218,13 +227,12 @@ class CEA:
         output = pd.DataFrame(
             {'Name': data['Name'], 'E[Cost]': output_cost,
              'E[Effect]': output_effect,
-             'Expected Incremental Cost': data['Expected Incremental Cost'],
-             'Expected Incremental Effect': data['Expected Incremental Effect'],
+             'E[dCost]': data['E[dCost]'],
+             'E[dEffect]': data['E[dEffect]'],
              'ICER': data['ICER']
              })
 
-        output = output[['Name', 'E[Cost]', 'E[Effect]', 'Expected Incremental Cost', 'Expected Incremental Effect',\
-            'ICER']]
+        output = output[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]
 
         # write csv
         output.to_csv("CETable.csv", encoding='utf-8', index=False)
@@ -257,7 +265,7 @@ print('Strategies on CE frontier:')
 print(myCEA.get_frontier())
 
 # plot with label and sample cloud
-myCEA.show_CE_plane('E[Effect]','E[Cost]', True, True)
+myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', True, True)
 
 # table
 print('')

@@ -28,7 +28,6 @@ Path.graph_sample_path(
     title='Plotting a single sample path',
     x_label='time',
     y_label='observed value',
-    output_type=Path.OutType.SHOW,
     legend= 'Path 1',
     color_code='r')
 
@@ -38,7 +37,6 @@ Path.graph_sample_path(
     title='Plotting a single sample path that is updated in batch',
     x_label='time',
     y_label='observed value',
-    output_type=Path.OutType.SHOW,
     legend= 'Path 3',
     color_code='r')
 
@@ -48,7 +46,6 @@ Path.graph_sample_paths(
     title='Plot two sample paths with different color',
     x_label='time',
     y_label='observed value',
-    output_type=Path.OutType.SHOW,
     legends=['Path 1', 'Path 2'],
     transparency=0.75)
 
@@ -57,7 +54,6 @@ Path.graph_sample_paths(
     title='Plot 2 sample paths with the same color',
     x_label='time',
     y_label='observed value',
-    output_type=Path.OutType.SHOW,
     legends='Path',
     transparency=0.5,
     common_color_code='g')

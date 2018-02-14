@@ -1,12 +1,5 @@
 import matplotlib.pyplot as plt
-from enum import Enum
-
-
-class OutType(Enum):
-    """output types for plotted figures"""
-    SHOW = 1    # show
-    JPG = 2     # save the figure as a jpg file
-    PDF = 3     # save the figure as a pdf file
+from scr import FigureSupport as Fig
 
 
 class SamplePath(object):
@@ -110,7 +103,8 @@ class SamplePathBatchUpdate(SamplePath):
         self._ifProcessed = True
 
 
-def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=None, color_code=None):
+def graph_sample_path(sample_path, title, x_label, y_label,
+                      output_type=Fig.OutType.SHOW, legend=None, color_code=None):
     """
     produces a sample path
     :param sample_path: a sample path
@@ -147,11 +141,11 @@ def graph_sample_path(sample_path, title, x_label, y_label, output_type, legend=
     plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
 
     # output figure
-    output_figure(plt, output_type, title)
+    Fig.output_figure(plt, output_type, title)
 
 
 def graph_sample_paths\
-                (sample_paths, title, x_label, y_label, output_type,
+                (sample_paths, title, x_label, y_label, output_type=Fig.OutType.SHOW,
                  legends=None, transparency=1, common_color_code=None,
                  if_same_color=False):
     """
@@ -206,20 +200,4 @@ def graph_sample_paths\
     plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
 
     # output figure
-    output_figure(plt, output_type, title)
-
-
-def output_figure(plt, output_type, title):
-    """
-    :param plt: reference to the plot
-    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
-    :param title: figure title
-    :return:
-    """
-    # output
-    if output_type == OutType.SHOW:
-        plt.show()
-    elif output_type == OutType.JPG:
-        plt.savefig(title+".png")
-    elif output_type == OutType.PDF:
-        plt.savefig(title+".pdf")
+    Fig.output_figure(plt, output_type, title)
