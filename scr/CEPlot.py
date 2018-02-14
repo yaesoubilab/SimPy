@@ -125,10 +125,14 @@ class CEA:
             for strategy_i, color in zip(self._dataCloud, cm.rainbow(np.linspace(0, 1, self._n))):
                 x_values = strategy_i.effect
                 y_values = strategy_i.cost
-                # plot
-                plt.scatter(x_values, y_values, c=color, alpha=0.5, s=50)
+                # plot clouds
+                plt.scatter(x_values, y_values, c=color, alpha=0.5, s=25)
 
-        plt.scatter(data['E[Effect]'], data['E[Cost]'], c=list(data['Color']), s=50)
+            plt.scatter(data['E[Effect]'], data['E[Cost]'], marker='x', c='k', s=50, linewidths=2)
+
+        else:
+            plt.scatter(data['E[Effect]'], data['E[Cost]'], c=list(data['Color']), s=50)
+
         plt.plot(linedat['E[Effect]'], linedat['E[Cost]'], c='k')
         plt.axhline(y=0, c='k',linewidth=0.5)
         plt.axvline(x=0, c='k',linewidth=0.5)
@@ -142,8 +146,7 @@ class CEA:
                     label,
                     xy=(x, y), xytext=(-20, 20),
                     textcoords='offset points', ha='right', va='bottom',
-                    bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5),
-                    arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+                    arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'),weight='bold')
 
         plt.show()
 
