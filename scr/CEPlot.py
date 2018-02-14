@@ -268,3 +268,15 @@ myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', True, True
 # table
 print('')
 print(myCEA.BuildCETable())
+
+
+# see output strategy list
+myCEA.get_frontier()
+# example: first object(strategy)
+a = myCEA.get_frontier()[0]
+print(a.effectObs)
+print(a.costObs)
+
+
+
+
