@@ -114,19 +114,17 @@ class CEA:
         self._dfStrategies = df1
 
         # create list of strategies on frontier
-        strategiesOnFrontier = df1.loc[df1['Dominated'] == False, ['Name', 'E[Cost]', 'E[Effect]']]
+        OnFrontier_index = df1[df1['Dominated'] == False].index
         SoF = []
-        for i in range(strategiesOnFrontier.shape[0]):
-            SoF.append(Strategy(strategiesOnFrontier.iloc[i,0],strategiesOnFrontier.iloc[i,1],
-                                                            strategiesOnFrontier.iloc[i, 2]))
+        for i in OnFrontier_index:
+             SoF.append(self._dataCloud[i])
         self._strategiesOnFrontier = SoF
 
         # create list of strategies not on frontier
-        strategiesNotOnFrontier = df1.loc[df1['Dominated'] == True, ['Name', 'E[Cost]', 'E[Effect]']]
+        NotOnFrontier_index = df1[df1['Dominated'] == True].index
         SnoF = []
-        for i in range(strategiesNotOnFrontier.shape[0]):
-            SnoF.append(Strategy(strategiesNotOnFrontier.iloc[i, 0], strategiesNotOnFrontier.iloc[i, 1],
-                                strategiesNotOnFrontier.iloc[i, 2]))
+        for j in NotOnFrontier_index:
+             SnoF.append(self._dataCloud[j])
         self._strategiesNotOnFrontier = SnoF
 
     def show_CE_plane(self, title, x_label, y_label, show_names=False, show_clouds=False):
@@ -257,8 +255,8 @@ s8 = Strategy("s8",s_center[7,0]+np.random.normal(0, 0.5, 10), s_center[7,1]+np.
 s9 = Strategy("s9",s_center[8,0]+np.random.normal(0, 0.5, 10), s_center[8,1]+np.random.normal(0, 0.5, 10))
 s10 = Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+np.random.normal(0, 0.5, 10))
 
-
-myCEA = CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10])
+S_test = [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10]
+myCEA = CEA(S_test)
 
 # frontier results
 print('Strategies on CE frontier:')
