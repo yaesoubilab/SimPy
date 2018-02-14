@@ -29,8 +29,8 @@ class CEA:
         # store all observations for all strategies
         self._dataCloud = strategies
 
-        # data frame to contain the strategies on the frontier
-        self._strategiesOnFrontier = pd.DataFrame()
+        # list to contain the strategies on the frontier
+        self._strategiesOnFrontier = []
 
         # data frame for all strategies' expected outcomes
         self._dfStrategies = pd.DataFrame(
@@ -104,7 +104,23 @@ class CEA:
 
         # update strategies
         self._dfStrategies = df1
-        self._strategiesOnFrontier = df1.loc[df1['Dominated'] == False, ['Name', 'E[Cost]', 'E[Effect]']]
+
+        # create list of strategies on frontier
+        strategiesOnFrontier = df1.loc[df1['Dominated'] == False, ['Name', 'E[Cost]', 'E[Effect]']]
+        SoF = []
+        for i in range(strategiesOnFrontier.shape[0]):
+            SoF.append(Strategy(strategiesOnFrontier.iloc[i,0],strategiesOnFrontier.iloc[i,1],
+                                                            strategiesOnFrontier.iloc[i, 2]))
+        self._strategiesOnFrontier = SoF
+
+        # create list of strategies not on frontier
+        strategiesNotOnFrontier = df1.loc[df1['Dominated'] == True, ['Name', 'E[Cost]', 'E[Effect]']]
+        SnoF = []
+        for i in range(strategiesNotOnFrontier.shape[0]):
+            SnoF.append(Strategy(strategiesNotOnFrontier.iloc[i, 0], strategiesNotOnFrontier.iloc[i, 1],
+                                strategiesNotOnFrontier.iloc[i, 2]))
+        self._strategiesNotOnFrontier = SnoF
+
 
     def show_CE_plane(self, x_label, y_label, show_names=False, show_clouds=False):
         """
