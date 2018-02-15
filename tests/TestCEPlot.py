@@ -20,10 +20,6 @@ s10 = ce.Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1
 # create a CEA object
 myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10])
 
-# frontier results
-print('Strategies on CE frontier:')
-print(myCEA.get_frontier())
-
 # plot with label and sample cloud
 myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', True, True)
 
@@ -34,10 +30,9 @@ myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', True, Fals
 print('')
 print(myCEA.build_CE_table(cost_digits=2, effect_digits=1, icer_digits=2))
 
-
-# see output ce.Strategy list
-myCEA.get_frontier()
-# example: first object(ce.Strategy)
-a = myCEA.get_frontier()[0]
-print(a.effectObs)
-print(a.costObs)
+# frontier results
+print('')
+print('Strategies on the frontier:')
+frontier = myCEA.get_frontier()
+for s in frontier:
+    print(s.name)
