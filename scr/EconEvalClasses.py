@@ -130,13 +130,16 @@ class CEA:
         for j in not_on_frontier_index:
             self._strategiesNotOnFrontier.append(self._strategies[j])
 
-    def show_CE_plane(self, title, x_label, y_label, show_names=False, show_clouds=False):
+    def show_CE_plane(self, title, x_label, y_label, show_names=False, show_clouds=False,
+                      show_legend=False, figure_size=6):
         """
         :param title: title of the figure
         :param x_label: (string) x-axis label
         :param y_label: (string) y-axis label
         :param show_names: logical, show strategy names
         :param show_clouds: logical, show true sample observation of strategies
+        :param show_legend: shows the legend of strategies, would only be used when show_clouds is true
+        :param figure_size: int, specify the figure size
         """
         # plots
         # operate on local variable data rather than self attribute
@@ -147,15 +150,18 @@ class CEA:
 
         # show observation clouds for strategies
         if show_clouds:
+            plt.figure(figsize=(figure_size, figure_size))
             for strategy_i, color in zip(self._strategies, cm.rainbow(np.linspace(0, 1, self._n))):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
-                plt.scatter(x_values, y_values, c=color, alpha=0.5, s=25)
-
+                plt.scatter(x_values, y_values, c=color, alpha=0.5, s=25, label=strategy_i.name)
+            if show_legend:
+                plt.legend(loc='lower right', numpoints=1, ncol=3, fontsize=8)
             plt.scatter(data['E[Effect]'], data['E[Cost]'], marker='x', c='k', s=50, linewidths=2)
 
         else:
+            plt.figure(figsize=(figure_size, figure_size))
             plt.scatter(data['E[Effect]'], data['E[Cost]'], c=list(data['Color']), s=50)
 
         plt.plot(line_plot['E[Effect]'], line_plot['E[Cost]'], c='k')
@@ -170,9 +176,9 @@ class CEA:
             for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
                 plt.annotate(
                     label,
-                    xy=(x, y), xytext=(-20, 20),
-                    textcoords='offset points', ha='right', va='bottom',
-                    arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'), weight='bold')
+                    xy=(x, y), xycoords='data',xytext=(x-0.8, y+0.8),textcoords='data',
+                    arrowprops=dict(arrowstyle='-', connectionstyle='arc3',shrinkA=0, shrinkB=2),
+                    weight='bold', bbox=dict(pad=-4, facecolor="none", edgecolor="none"))
 
         # show the figure
         Fig.output_figure(plt, Fig.OutType.SHOW, title)

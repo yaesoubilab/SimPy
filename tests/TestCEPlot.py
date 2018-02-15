@@ -21,10 +21,13 @@ s10 = ce.Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1
 myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10])
 
 # plot with label and sample cloud
-myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', True, True)
+myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]',show_names=True, show_clouds=True, figure_size=6)
+
+# plot with sample cloud and legend
+myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', show_legend=True, show_clouds=True, figure_size=6)
 
 # plot with no label and sample cloud
-myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', True, False)
+myCEA.show_CE_plane('Cost-Effectiveness Plane','E[Effect]','E[Cost]', show_clouds=True)
 
 # table
 print('')
