@@ -175,12 +175,19 @@ class CEA:
 
         # show names of strategies
         if show_names:
-            for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
-                plt.annotate(
-                    label,
-                    xy=(x, y), xycoords='data', xytext=(x-0.8, y+0.8), textcoords='data',
-                    arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
-                    weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
+            if not show_clouds:
+                for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
+                    plt.annotate(
+                        label, xy=(x, y), xycoords='data', xytext=(x - 0.6, y + 0.3),
+                        textcoords='data',weight='bold')
+
+            elif show_clouds:
+                for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
+                    plt.annotate(
+                        label,
+                        xy=(x, y), xycoords='data', xytext=(x-0.8, y+0.8), textcoords='data',
+                        arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
+                        weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
 
         # show the figure
         Fig.output_figure(plt, Fig.OutType.SHOW, title)
