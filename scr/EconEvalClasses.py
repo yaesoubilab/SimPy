@@ -32,7 +32,7 @@ class CEA:
 
     def __init__(self, strategies, if_paired):
         """
-        :param strategies: the list of strategies
+        :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
         """
         self._n = len(strategies)               # number of strategies
@@ -40,25 +40,26 @@ class CEA:
         self._strategiesOnFrontier = []         # list of strategies on the frontier
         self._strategiesNotOnFrontier = []      # list of strategies not on the frontier
 
-
-        # now shift them and store the result in strategies_shift
+        # now shift all strategies such as the base strategy (first in the list) lies on the origine
         # all the following data analysis are based on the shifted data
-        strategies_shift = []
+        shifted_strategies = []
+        # if observations are paired across strategies
         if if_paired:
-            e_cost=strategies[0].aveCost
-            e_effect=strategies[0].aveEffect
             for i in range(self._n):
-                temp_object = Strategy(strategies[i].name, strategies[i].costObs-e_cost,
-                                       strategies[i].effectObs-e_effect)
-                strategies_shift.append(temp_object)
-        else:
+                shifted_strategy = Strategy(strategies[i].name,
+                                            strategies[i].costObs-strategies[0].costObs,
+                                            strategies[i].effectObs-strategies[0].effectObs)
+                shifted_strategies.append(shifted_strategy)
+
+        else:  # if not paired
+            e_cost = strategies[0].aveCost
+            e_effect = strategies[0].aveEffect
             for i in range(self._n):
-                temp_object = Strategy(strategies[i].name, strategies[i].costObs-strategies[0].costObs,
-                                       strategies[i].effectObs-strategies[0].effectObs)
-                strategies_shift.append(temp_object)
-        self._strategies_shift = strategies_shift       # list of shifted strategies
-
-
+                shifted_strategy = Strategy(strategies[i].name,
+                                            strategies[i].costObs - e_cost,
+                                            strategies[i].effectObs - e_effect)
+                shifted_strategies.append(shifted_strategy)
+        self._shifted_strategies = shifted_strategies       # list of shifted strategies
 
         # create a data frame for all strategies' expected outcomes
         self._dfStrategies = pd.DataFrame(
@@ -67,10 +68,10 @@ class CEA:
 
         # populate the data frame
         for j in range(self._n):
-            self._dfStrategies.loc[j, 'Name'] = strategies_shift[j].name
-            self._dfStrategies.loc[j, 'E[Cost]'] = strategies_shift[j].aveCost
-            self._dfStrategies.loc[j, 'E[Effect]'] = strategies_shift[j].aveEffect
-            self._dfStrategies.loc[j, 'Dominated'] = strategies_shift[j].ifDominated
+            self._dfStrategies.loc[j, 'Name'] = shifted_strategies[j].name
+            self._dfStrategies.loc[j, 'E[Cost]'] = shifted_strategies[j].aveCost
+            self._dfStrategies.loc[j, 'E[Effect]'] = shifted_strategies[j].aveEffect
+            self._dfStrategies.loc[j, 'Dominated'] = shifted_strategies[j].ifDominated
             self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
         # find the CE frontier
@@ -173,7 +174,7 @@ class CEA:
         # show observation clouds for strategies
         if show_clouds:
             plt.figure(figsize=(figure_size, figure_size))
-            for strategy_i, color in zip(self._strategies_shift, cm.rainbow(np.linspace(0, 1, self._n))):
+            for strategy_i, color in zip(self._shifted_strategies, cm.rainbow(np.linspace(0, 1, self._n))):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
