@@ -28,6 +28,8 @@ class Strategy:
 
 
 class CEA:
+    """ class for doing cost-effectiveness analysis """
+
     def __init__(self, strategies):
         """
         :param strategies: the list of strategies
@@ -191,54 +193,61 @@ class CEA:
         :return: output csv file called "CETable.csv" in local environment
         """
 
-        data = self._dfStrategies
-        data['E[dCost]'] = "-"
-        data['E[dEffect]'] = "-"
-        data['ICER'] = "Dominated"
-        not_Dominated_points = data.loc[data["Dominated"] == False].sort_values('E[Cost]')
+        # initialize the table
+        table = self._dfStrategies
+        table['E[dCost]'] = "-"
+        table['E[dEffect]'] = "-"
+        table['ICER'] = "Dominated"
 
-        n_not_Dominated = not_Dominated_points.shape[0]
+        # get strategies on the frontier
+        frontier_strategies = table.loc[table["Dominated"] == False].sort_values('E[Cost]')
+        # number of strategies on the frontier
+        n_frontier_strategies = frontier_strategies.shape[0]
 
+        incr_cost = []      # list of incremental costs
+        incr_effect = []    # list of incremental effects
+        ICER = []           # list of ICER estimates
 
-        incre_cost = []
-        incre_Effect = []
-        ICER = []
-        for i in range(1, n_not_Dominated):
-            temp_num = not_Dominated_points["E[Cost]"].iloc[i]-not_Dominated_points["E[Cost]"].iloc[i-1]
-            incre_cost = np.append(incre_cost, temp_num)
-
-            temp_den = not_Dominated_points["E[Effect]"].iloc[i]-not_Dominated_points["E[Effect]"].iloc[i-1]
-            if temp_den == 0:
+        # calculate incremental costs, incremental effects and ICER
+        for i in range(1, n_frontier_strategies):
+            # incremental cost
+            d_cost = frontier_strategies["E[Cost]"].iloc[i]-frontier_strategies["E[Cost]"].iloc[i-1]
+            incr_cost = np.append(incr_cost, d_cost)
+            # incremental effect
+            d_effect = frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1]
+            if d_effect == 0:
                 raise ValueError('invalid value of E[dEffect], the ratio is not computable')
-            incre_Effect = np.append(incre_Effect, temp_den)
+            incr_effect = np.append(incr_effect, d_effect)
+            # ICER
+            ICER = np.append(ICER, d_cost/d_effect)
 
-            ICER = np.append(ICER, temp_num/temp_den)
-
-        ind_change = not_Dominated_points.index[1:]
-        data.loc[ind_change, 'E[dCost]'] = incre_cost.astype(float).round(cost_digits)
-        data.loc[ind_change, 'E[dEffect]'] = incre_Effect.astype(float).round(effect_digits)
-        data.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
-        data.loc[not_Dominated_points.index[0], 'ICER'] = '-'
+        # format the numbers
+        ind_change = frontier_strategies.index[1:]
+        table.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
+        table.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
+        table.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
+        table.loc[frontier_strategies.index[0], 'ICER'] = '-'
 
         # create output dataframe
         # python round will leave trailing 0 for 0 decimal
         if cost_digits == 0:
-            output_cost = data['E[Cost]'].astype(int)
+            output_cost = table['E[Cost]'].astype(int)
         else:
-            output_cost = data['E[Cost]'].astype(float).round(cost_digits)
+            output_cost = table['E[Cost]'].astype(float).round(cost_digits)
 
         if effect_digits == 0:
-            output_effect = data['E[Effect]'].astype(int)
+            output_effect = table['E[Effect]'].astype(int)
         else:
-            output_effect = data['E[Effect]'].astype(float).round(effect_digits)
+            output_effect = table['E[Effect]'].astype(float).round(effect_digits)
 
+        # output table
         output = pd.DataFrame(
-            {'Name': data['Name'],
+            {'Name': table['Name'],
              'E[Cost]': output_cost,
              'E[Effect]': output_effect,
-             'E[dCost]': data['E[dCost]'],
-             'E[dEffect]': data['E[dEffect]'],
-             'ICER': data['ICER']
+             'E[dCost]': table['E[dCost]'],
+             'E[dEffect]': table['E[dEffect]'],
+             'ICER': table['ICER']
              })
 
         output = output[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]

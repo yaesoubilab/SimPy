@@ -5,20 +5,19 @@ import numpy as np
 np.random.seed(573)
 s_center = np.random.normal(0, 5, (10, 2))
 
-s0 = ce.Strategy('s0',0, 0)
-s1 = ce.Strategy("s1",s_center[0,0]+np.random.normal(0, 0.5, 10), s_center[0,1]+np.random.normal(0, 0.5, 10))
-s2 = ce.Strategy("s2",s_center[1,0]+np.random.normal(0, 0.5, 10), s_center[1,1]+np.random.normal(0, 0.5, 10))
-s3 = ce.Strategy("s3",s_center[2,0]+np.random.normal(0, 0.5, 10), s_center[2,1]+np.random.normal(0, 0.5, 10))
-s4 = ce.Strategy("s4",s_center[3,0]+np.random.normal(0, 0.5, 10), s_center[3,1]+np.random.normal(0, 0.5, 10))
-s5 = ce.Strategy("s5",s_center[4,0]+np.random.normal(0, 0.5, 10), s_center[4,1]+np.random.normal(0, 0.5, 10))
-s6 = ce.Strategy("s6",s_center[5,0]+np.random.normal(0, 0.5, 10), s_center[5,1]+np.random.normal(0, 0.5, 10))
-s7 = ce.Strategy("s7",s_center[6,0]+np.random.normal(0, 0.5, 10), s_center[6,1]+np.random.normal(0, 0.5, 10))
-s8 = ce.Strategy("s8",s_center[7,0]+np.random.normal(0, 0.5, 10), s_center[7,1]+np.random.normal(0, 0.5, 10))
-s9 = ce.Strategy("s9",s_center[8,0]+np.random.normal(0, 0.5, 10), s_center[8,1]+np.random.normal(0, 0.5, 10))
-s10 = ce.Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+np.random.normal(0, 0.5, 10))
+s0 = ce.Strategy("s1",s_center[0,0]+np.random.normal(0, 0.5, 10), s_center[0,1]+np.random.normal(0, 0.5, 10))
+s1 = ce.Strategy("s2",s_center[1,0]+np.random.normal(0, 0.5, 10), s_center[1,1]+np.random.normal(0, 0.5, 10))
+s2 = ce.Strategy("s3",s_center[2,0]+np.random.normal(0, 0.5, 10), s_center[2,1]+np.random.normal(0, 0.5, 10))
+s3 = ce.Strategy("s4",s_center[3,0]+np.random.normal(0, 0.5, 10), s_center[3,1]+np.random.normal(0, 0.5, 10))
+s4 = ce.Strategy("s5",s_center[4,0]+np.random.normal(0, 0.5, 10), s_center[4,1]+np.random.normal(0, 0.5, 10))
+s5 = ce.Strategy("s6",s_center[5,0]+np.random.normal(0, 0.5, 10), s_center[5,1]+np.random.normal(0, 0.5, 10))
+s6 = ce.Strategy("s7",s_center[6,0]+np.random.normal(0, 0.5, 10), s_center[6,1]+np.random.normal(0, 0.5, 10))
+s7 = ce.Strategy("s8",s_center[7,0]+np.random.normal(0, 0.5, 10), s_center[7,1]+np.random.normal(0, 0.5, 10))
+s8 = ce.Strategy("s9",s_center[8,0]+np.random.normal(0, 0.5, 10), s_center[8,1]+np.random.normal(0, 0.5, 10))
+s9 = ce.Strategy("s10",s_center[9,0]+np.random.normal(0, 0.5, 10), s_center[9,1]+np.random.normal(0, 0.5, 10))
 
 # create a CEA object
-myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10])
+myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9])
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('CE Plane with labels', 'E[Effect]', 'E[Cost]', show_names=True, show_clouds=True, figure_size=6)
@@ -27,7 +26,7 @@ myCEA.show_CE_plane('CE Plane with labels', 'E[Effect]', 'E[Cost]', show_names=T
 myCEA.show_CE_plane('CE Plane with legend', 'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=5)
 
 # plot with no label and sample cloud
-myCEA.show_CE_plane('CE Plane','E[Effect]','E[Cost]', show_clouds=True)
+myCEA.show_CE_plane('CE Plane with no clouds','E[Effect]','E[Cost]', show_clouds=False, show_names=True)
 
 # table
 print('')
