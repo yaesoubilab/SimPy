@@ -6,7 +6,7 @@ This library includes classes to support the following analyses and operations.
 1. identify strategies on the cost-effectiveness frontier
 2. produce the table summarizing the result of the cost-effectiveness analysis 
 3. produce cost-effectiveness planes,
-4. calcualte the confidence intervals and projection intervals for ICER estmates
+4. calculate confidence intervals and projection intervals for ICER estimates
 
 --RandomVariateGenerators.py-- 
 To generate (thread-safe) realizations from various probability distributions. 
