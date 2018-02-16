@@ -30,15 +30,35 @@ class Strategy:
 class CEA:
     """ class for doing cost-effectiveness analysis """
 
-    def __init__(self, strategies):
+    def __init__(self, strategies, if_paired):
         """
         :param strategies: the list of strategies
+        :param if_paired: indicate whether the strategies are paired
         """
-
         self._n = len(strategies)               # number of strategies
         self._strategies = strategies           # list of strategies
         self._strategiesOnFrontier = []         # list of strategies on the frontier
         self._strategiesNotOnFrontier = []      # list of strategies not on the frontier
+
+
+        # now shift them and store the result in strategies_shift
+        # all the following data analysis are based on the shifted data
+        strategies_shift = []
+        if if_paired:
+            e_cost=strategies[0].aveCost
+            e_effect=strategies[0].aveEffect
+            for i in range(self._n):
+                temp_object = Strategy(strategies[i].name, strategies[i].costObs-e_cost,
+                                       strategies[i].effectObs-e_effect)
+                strategies_shift.append(temp_object)
+        else:
+            for i in range(self._n):
+                temp_object = Strategy(strategies[i].name, strategies[i].costObs-strategies[0].costObs,
+                                       strategies[i].effectObs-strategies[0].effectObs)
+                strategies_shift.append(temp_object)
+        self._strategies_shift = strategies_shift       # list of shifted strategies
+
+
 
         # create a data frame for all strategies' expected outcomes
         self._dfStrategies = pd.DataFrame(
@@ -46,12 +66,12 @@ class CEA:
             columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
 
         # populate the data frame
-        for i in range(len(strategies)):
-            self._dfStrategies.loc[i, 'Name'] = strategies[i].name
-            self._dfStrategies.loc[i, 'E[Cost]'] = strategies[i].aveCost
-            self._dfStrategies.loc[i, 'E[Effect]'] = strategies[i].aveEffect
-            self._dfStrategies.loc[i, 'Dominated'] = strategies[i].ifDominated
-            self._dfStrategies.loc[i, 'Color'] = "k"  # not Dominated black, Dominated blue
+        for j in range(self._n):
+            self._dfStrategies.loc[j, 'Name'] = strategies_shift[j].name
+            self._dfStrategies.loc[j, 'E[Cost]'] = strategies_shift[j].aveCost
+            self._dfStrategies.loc[j, 'E[Effect]'] = strategies_shift[j].aveEffect
+            self._dfStrategies.loc[j, 'Dominated'] = strategies_shift[j].ifDominated
+            self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
         # find the CE frontier
         self.__find_frontier()
@@ -153,7 +173,7 @@ class CEA:
         # show observation clouds for strategies
         if show_clouds:
             plt.figure(figsize=(figure_size, figure_size))
-            for strategy_i, color in zip(self._strategies, cm.rainbow(np.linspace(0, 1, self._n))):
+            for strategy_i, color in zip(self._strategies_shift, cm.rainbow(np.linspace(0, 1, self._n))):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
