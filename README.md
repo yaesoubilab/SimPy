@@ -2,7 +2,7 @@
 
 This library includes classes to support the following analyses and operations.
 
-~EconEvalClasses.py~
+-- EconEvalClasses.py --
 1. identify strategies on the cost-effectiveness frontier
 2. produce the table summarizing the result of the cost-effectiveness analysis 
 3. produce cost-effectiveness planes,
