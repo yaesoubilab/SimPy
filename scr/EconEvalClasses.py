@@ -292,15 +292,15 @@ class ComparativeEconMeasure():
         :param name: descrition
         :param cost_new: (list or numpy.array) cost data for the new strategy
         :param health_new: (list or numpy.array) health data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for teh base line
+        :param cost_base: (list or numpy.array) cost data for the base line
         :param health_base: (list or numpy.array) health data for the base line
         """
 
         self._name = name
-        self._costNew = None        # cost data for the new strategy
-        self._healthNew = None      # health data for the new strategy
-        self._costBase = None      # cost data for teh base line
-        self._healthBase = None    # health data for the base line
+        self._costNew = cost_new          # cost data for the new strategy
+        self._healthNew = health_new      # health data for the new strategy
+        self._costBase = cost_base        # cost data for teh base line
+        self._healthBase = health_base    # health data for the base line
 
         # convert input data to numpy.array if needed
         if type(cost_new) == list:
@@ -350,7 +350,7 @@ class ICER_paired(ICER):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         # initialize the base class
-        ICER.__init__(name, cost_new, health_new, cost_base, health_base)
+        ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
         # incremental observations
         self._deltaCost = self._costNew - self._costBase
@@ -364,8 +364,14 @@ class ICER_paired(ICER):
         # bootstrap algorithm
         ICERs = np.zeros(num_bootstrap_samples)
         for i in range(num_bootstrap_samples):
-            d_cost = np.random.choice(self._deltaCost, size=len(self._deltaCost), replace=True)
-            d_health = np.random.choice(self._deltaHealth, size=len(self._deltaHealth), replace=True)
+            # because cost and health are paired as one observation in natural,
+            # so do delta cost and delta health, should sample them together
+            index = np.random.choice(range(len(self._deltaCost)), size=len(self._deltaCost), replace=True)
+            d_cost = self._deltaCost[index]
+            d_health = self._deltaHealth[index]
+
+            # d_cost = np.random.choice(self._deltaCost, size=len(self._deltaCost), replace=True)
+            # d_health = np.random.choice(self._deltaHealth, size=len(self._deltaHealth), replace=True)
 
             ave_d_cost = np.average(d_cost)
             ave_d_health = np.average(d_health)
@@ -386,13 +392,53 @@ class ICER_indp(ICER):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         # initialize the base class
-        ICER.__init__(name, cost_new, health_new, cost_base, health_base)
+        ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
+
+        self._n = len(cost_new)
+
+        # generate 1 random sample for new and base
+        # calculate element-wise ratio as sample of ICER
+        index_new_0 = np.random.choice(range(self._n), size=self._n, replace=True)
+        cost_new_0 = self._costNew[index_new_0]
+        health_new_0 = self._healthNew[index_new_0]
+
+        index_base_0 = np.random.choice(range(self._n), size=self._n, replace=True)
+        cost_base_0 = self._costBase[index_base_0]
+        health_base_0 = self._healthBase[index_base_0]
+
+        sample = np.divide((cost_new_0-cost_base_0),(health_new_0/health_base_0))
+
+        self.sum_stat_sample_ratio = Stat.SummaryStat(name, sample)
+
 
     def get_CI(self, alpha, num_bootstrap_samples):
-        pass
+        """
+        :param alpha: significance level, a value from [0, 1]
+        :param num_bootstrap_samples: number of bootstrap samples
+        :return: confidence interval in the format of list [l, u]
+        """
+        ICERs = np.zeros(num_bootstrap_samples)
+
+        for i in range(num_bootstrap_samples):
+            index_new_i = np.random.choice(range(self._n), size=self._n, replace=True)
+            cost_new_i = self._costNew[index_new_i]
+            health_new_i = self._healthNew[index_new_i]
+
+            index_base_i = np.random.choice(range(self._n), size=self._n, replace=True)
+            cost_base_i = self._costBase[index_base_i]
+            health_base_i = self._healthBase[index_base_i]
+
+            # for each random sample of (c2,h2), (c1,h1)
+            # calculate ICER = (E(c2)-E(c1))/(E(h2)-E(h1))
+            r_temp = np.mean(cost_new_i-cost_base_i)/np.mean(health_new_i-health_base_i)
+            ICERs[i] = np.mean(r_temp)
+
+        return np.percentile(ICERs, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
     def get_PI(self, alpha):
-        pass
+        # CI is for mean values
+        # PI is for observation data points
+        return self.sum_stat_sample_ratio.get_PI(alpha)
 
 
 class NMB(ComparativeEconMeasure):
