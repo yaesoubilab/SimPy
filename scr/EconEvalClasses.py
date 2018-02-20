@@ -370,9 +370,6 @@ class ICER_paired(ICER):
             d_cost = self._deltaCost[index]
             d_health = self._deltaHealth[index]
 
-            # d_cost = np.random.choice(self._deltaCost, size=len(self._deltaCost), replace=True)
-            # d_health = np.random.choice(self._deltaHealth, size=len(self._deltaHealth), replace=True)
-
             ave_d_cost = np.average(d_cost)
             ave_d_health = np.average(d_health)
 
