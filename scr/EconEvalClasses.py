@@ -357,7 +357,7 @@ class ICER_paired(ICER):
         self._deltaHealth = self._healthNew - self._healthBase
 
         # create a ratio stat
-        self._ratio_stat = Stat.RatioStatPaired(name, self._deltaCost, self._deltaHealth)
+        self._ratio_stat = np.divide(self._deltaCost, self._deltaHealth)
 
     def get_CI(self, alpha, num_bootstrap_samples):
 
@@ -382,7 +382,7 @@ class ICER_paired(ICER):
         return self._ICER - np.percentile(ICERs, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
 
     def get_PI(self, alpha):
-        return self._ratio_stat.get_PI(alpha)
+        return np.percentile(self._ratio_stat, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
 
 class ICER_indp(ICER):
@@ -403,9 +403,7 @@ class ICER_indp(ICER):
         cost_base_0 = self._costBase[index_base_0]
         health_base_0 = self._healthBase[index_base_0]
 
-        sample = np.divide((cost_new_0-cost_base_0),(health_new_0-health_base_0))
-
-        self.sum_stat_sample_ratio = Stat.SummaryStat(name, sample)
+        self.sum_stat_sample_ratio = np.divide((cost_new_0-cost_base_0),(health_new_0-health_base_0))
 
 
     def get_CI(self, alpha, num_bootstrap_samples):
@@ -427,7 +425,7 @@ class ICER_indp(ICER):
 
             # for each random sample of (c2,h2), (c1,h1)
             # calculate ICER = (E(c2)-E(c1))/(E(h2)-E(h1))
-            r_temp = np.mean(np.divide(cost_new_i - cost_base_i, health_new_i - health_base_i))
+            r_temp = np.mean(cost_new_i - cost_base_i)/np.mean(health_new_i - health_base_i)
             ICERs[i] = np.mean(r_temp)
 
         return np.percentile(ICERs, [100*alpha/2.0, 100*(1-alpha/2.0)])
@@ -435,7 +433,8 @@ class ICER_indp(ICER):
     def get_PI(self, alpha):
         # CI is for mean values
         # PI is for observation data points
-        return self.sum_stat_sample_ratio.get_PI(alpha)
+        return np.percentile(self.sum_stat_sample_ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
+
 
 
 class NMB(ComparativeEconMeasure):
