@@ -295,6 +295,7 @@ class ComparativeEconMeasure():
         :param cost_base: (list or numpy.array) cost data for the base line
         :param health_base: (list or numpy.array) health data for the base line
         """
+        np.random.seed(1)
 
         self._name = name
         self._costNew = cost_new          # cost data for the new strategy
