@@ -403,7 +403,7 @@ class ICER_indp(ICER):
         cost_base_0 = self._costBase[index_base_0]
         health_base_0 = self._healthBase[index_base_0]
 
-        sample = np.divide((cost_new_0-cost_base_0),(health_new_0/health_base_0))
+        sample = np.divide((cost_new_0-cost_base_0),(health_new_0-health_base_0))
 
         self.sum_stat_sample_ratio = Stat.SummaryStat(name, sample)
 
@@ -427,7 +427,7 @@ class ICER_indp(ICER):
 
             # for each random sample of (c2,h2), (c1,h1)
             # calculate ICER = (E(c2)-E(c1))/(E(h2)-E(h1))
-            r_temp = np.mean(cost_new_i-cost_base_i)/np.mean(health_new_i-health_base_i)
+            r_temp = np.mean(np.divide(cost_new_i - cost_base_i, health_new_i - health_base_i))
             ICERs[i] = np.mean(r_temp)
 
         return np.percentile(ICERs, [100*alpha/2.0, 100*(1-alpha/2.0)])
