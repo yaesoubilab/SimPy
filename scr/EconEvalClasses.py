@@ -1,9 +1,16 @@
+from enum import Enum
 import numpy as np
 import scr.StatisticalClasses as Stat
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
 from scr import FigureSupport as Fig
+
+
+class CETableInterval(Enum):
+    NO_INTERVAL = 0
+    CONFIDENCE = 1
+    PREDICTION = 2
 
 
 class Strategy:
@@ -227,8 +234,14 @@ class CEA:
         # show the figure
         Fig.output_figure(plt, Fig.OutType.SHOW, title)
 
-    def build_CE_table(self, cost_digits=0, effect_digits=2, icer_digits=1):
+    def build_CE_table(self,
+                       interval=CETableInterval.NO_INTERVAL, alpha=0.05,
+                       cost_digits=0, effect_digits=2, icer_digits=1):
         """
+        :param interval: type of interval to report for the cost, effecti and ICER estimates,
+                        can take values from
+                        CETableInterval.NO_INTERVAL, CETableInterval.CONFIDENCE, CETableInterval.PREDICTION
+        :param alpha: significance level
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
         :param icer_digits: digits to round ICER estimates to
