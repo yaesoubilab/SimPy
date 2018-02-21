@@ -42,7 +42,7 @@ def graph_histogram(observations, title, x_label, y_label, output_type=OutType.S
              bins='auto',  #numpy.linspace(0, max(patient_survival_times), num_bins),
              edgecolor='black',
              linewidth=1)
-    plt.xlim([0, max(observations)])
+    plt.xlim([min(observations), max(observations)])
 
     # add legend if provided
     if not (legend is None):
