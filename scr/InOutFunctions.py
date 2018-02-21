@@ -2,13 +2,14 @@ import csv
 import numpy as numpy
 
 
-def write_csv(file_name, rows):
+def write_csv(file_name, rows, delimiter='\t'):
     """ write a list to a csv file
     :param file_name: the file name to be given to the csv file
     :param rows: list of lists to be imported to the csv file
+    :param delimiter: to separate by comma, use ',' and by tab, use '\t'
     """
     with open(file_name, "w", newline='') as file:
-        csv_file = csv.writer(file, delimiter='\t')  # use '\t' for tab
+        csv_file = csv.writer(file, delimiter=delimiter)  # use '\t' for tab
 
         for row in rows:
             csv_file.writerow(row)
@@ -16,15 +17,16 @@ def write_csv(file_name, rows):
         file.close()
 
 
-def read_csv_rows(file_name, if_del_first_row, if_convert_float):
+def read_csv_rows(file_name, if_del_first_row, delimiter='\t', if_convert_float=False):
     """ reads the rows of a csv file
     :param file_name: the csv file name
     :param if_del_first_row: set true to delete the first row
-    :param if_convert_float: set true to convert row values to numbers
+    :param delimiter: to separate by comma, use ',' and by tab, use '\t'
+    :param if_convert_float: set true to convert row values to numbers (otherwise, the values are stored as string)
     :returns a list containing the rows of the csv file
     """
     with open(file_name, "r") as file:
-        csv_file = csv.reader(file, delimiter='\t')  # use '\t' for tab
+        csv_file = csv.reader(file, delimiter=delimiter)  # use '\t' for tab
 
         # read rows
         rows = []
