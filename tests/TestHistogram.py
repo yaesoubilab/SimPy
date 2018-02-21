@@ -8,4 +8,5 @@ cls.graph_histogram(
     title='Histogram',
     x_label='Values',
     y_label='Counts',
+    x_range=[-5,20],
     legend='Number of patients')

@@ -24,12 +24,13 @@ def output_figure(plt, output_type, title):
         plt.savefig(title+".pdf")
 
 
-def graph_histogram(observations, title, x_label, y_label, output_type=OutType.SHOW, legend=None):
+def graph_histogram(observations, title, x_label, y_label, x_range=None, output_type=OutType.SHOW, legend=None):
     """ graphs the histogram of observations
     :param observations: list of observations
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
+    :param x_range: (list with 2 elements) minimum and maximum of x-axis
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     :param legend: string for the legend
     """
@@ -42,7 +43,8 @@ def graph_histogram(observations, title, x_label, y_label, output_type=OutType.S
              bins='auto',  #numpy.linspace(0, max(patient_survival_times), num_bins),
              edgecolor='black',
              linewidth=1)
-    #plt.xlim([min(observations), max(observations)])
+    if not (x_range is None):
+        plt.xlim(x_range)
 
     # add legend if provided
     if not (legend is None):
