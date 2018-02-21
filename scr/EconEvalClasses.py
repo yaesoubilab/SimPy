@@ -1,9 +1,16 @@
+from enum import Enum
 import numpy as np
 import scr.StatisticalClasses as Stat
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
 from scr import FigureSupport as Fig
+
+
+class CETableInterval(Enum):
+    NO_INTERVAL = 0
+    CONFIDENCE = 1
+    PREDICTION = 2
 
 
 class Strategy:
@@ -40,6 +47,20 @@ class CEA:
         self._strategiesOnFrontier = []         # list of strategies on the frontier
         self._strategiesNotOnFrontier = []      # list of strategies not on the frontier
 
+        # create a data frame for all strategies' expected outcomes
+        self._dfStrategies = pd.DataFrame(
+            index=range(self._n),
+            columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated'])
+
+        # populate the data frame
+        for j in range(self._n):
+            self._dfStrategies.loc[j, 'Name'] = strategies[j].name
+            self._dfStrategies.loc[j, 'E[Cost]'] = strategies[j].aveCost
+            self._dfStrategies.loc[j, 'E[Effect]'] = strategies[j].aveEffect
+            self._dfStrategies.loc[j, 'Dominated'] = strategies[j].ifDominated
+            self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
+
+
         # now shift all strategies such as the base strategy (first in the list) lies on the origine
         # all the following data analysis are based on the shifted data
         shifted_strategies = []
@@ -61,18 +82,18 @@ class CEA:
                 shifted_strategies.append(shifted_strategy)
         self._shifted_strategies = shifted_strategies       # list of shifted strategies
 
-        # create a data frame for all strategies' expected outcomes
-        self._dfStrategies = pd.DataFrame(
+        # create a data frame for all strategies' shifted expected outcomes
+        self._dfStrategies_shifted = pd.DataFrame(
             index=range(self._n),
             columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
 
         # populate the data frame
         for j in range(self._n):
-            self._dfStrategies.loc[j, 'Name'] = shifted_strategies[j].name
-            self._dfStrategies.loc[j, 'E[Cost]'] = shifted_strategies[j].aveCost
-            self._dfStrategies.loc[j, 'E[Effect]'] = shifted_strategies[j].aveEffect
-            self._dfStrategies.loc[j, 'Dominated'] = shifted_strategies[j].ifDominated
-            self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
+            self._dfStrategies_shifted.loc[j, 'Name'] = shifted_strategies[j].name
+            self._dfStrategies_shifted.loc[j, 'E[Cost]'] = shifted_strategies[j].aveCost
+            self._dfStrategies_shifted.loc[j, 'E[Effect]'] = shifted_strategies[j].aveEffect
+            self._dfStrategies_shifted.loc[j, 'Dominated'] = shifted_strategies[j].ifDominated
+            self._dfStrategies_shifted.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
         # find the CE frontier
         self.__find_frontier()
@@ -166,7 +187,7 @@ class CEA:
         """
         # plots
         # operate on local variable data rather than self attribute
-        data = self._dfStrategies
+        data = self._dfStrategies_shifted
 
         # re-sorted according to Effect to draw line
         line_plot = data.loc[data["Dominated"] == False].sort_values('E[Effect]')
@@ -213,8 +234,14 @@ class CEA:
         # show the figure
         Fig.output_figure(plt, Fig.OutType.SHOW, title)
 
-    def build_CE_table(self, cost_digits=0, effect_digits=2, icer_digits=1):
+    def build_CE_table(self,
+                       interval=CETableInterval.NO_INTERVAL, alpha=0.05,
+                       cost_digits=0, effect_digits=2, icer_digits=1):
         """
+        :param interval: type of interval to report for the cost, effecti and ICER estimates,
+                        can take values from
+                        CETableInterval.NO_INTERVAL, CETableInterval.CONFIDENCE, CETableInterval.PREDICTION
+        :param alpha: significance level
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
         :param icer_digits: digits to round ICER estimates to
