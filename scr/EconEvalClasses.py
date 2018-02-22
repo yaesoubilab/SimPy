@@ -46,6 +46,7 @@ class CEA:
         self._strategies = strategies           # list of strategies
         self._strategiesOnFrontier = []         # list of strategies on the frontier
         self._strategiesNotOnFrontier = []      # list of strategies not on the frontier
+        self._ifPaired = if_paired
 
         # create a data frame for all strategies' expected outcomes
         self._dfStrategies = pd.DataFrame(
@@ -60,8 +61,7 @@ class CEA:
             self._dfStrategies.loc[j, 'Dominated'] = strategies[j].ifDominated
             self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
-
-        # now shift all strategies such as the base strategy (first in the list) lies on the origine
+        # now shift all strategies such that the base strategy (first in the list) lies on the origin
         # all the following data analysis are based on the shifted data
         shifted_strategies = []
         # if observations are paired across strategies
@@ -295,8 +295,28 @@ class CEA:
         else:
             output_effect = table['E[Effect]'].astype(float).round(effect_digits)
 
+
+
+
+        # decide about what to return and put in the csv file
+        if interval == CETableInterval.NO_INTERVAL:
+            ...
+        elif interval == CETableInterval.CONFIDENCE:
+            ...
+        else:
+
+
+
+        self.out_estimates  # dataframe for estimates
+        self.out_intervals  # dataframe for intervals
+
+        out_table           # dataframe to populate the table that includes both estimates and intervals in each cell
+
+        out_table.to_csv    #
+
+
         # output table
-        output = pd.DataFrame(
+        output_estimates = pd.DataFrame(
             {'Name': table['Name'],
              'E[Cost]': output_cost,
              'E[Effect]': output_effect,
@@ -305,12 +325,12 @@ class CEA:
              'ICER': table['ICER']
              })
 
-        output = output[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]
+        output_estimates = output_estimates[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]
 
         # write csv
-        output.to_csv("CETable.csv", encoding='utf-8', index=False)
+        output_estimates.to_csv("CETable.csv", encoding='utf-8', index=False)
 
-        return output
+        return out_table
 
 
 class ComparativeEconMeasure():
