@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
 from scr import FigureSupport as Fig
+from scr import FormatFunctions as ff
 
 
 class CETableInterval(Enum):
@@ -188,9 +189,10 @@ class CEA:
         # plots
         # operate on local variable data rather than self attribute
         data = self._dfStrategies_shifted
+        data["Dominated_result"] = self._dfStrategies["Dominated"]
 
         # re-sorted according to Effect to draw line
-        line_plot = data.loc[data["Dominated"] == False].sort_values('E[Effect]')
+        line_plot = data.loc[data["Dominated_result"] == False].sort_values('E[Effect]')
 
         # show observation clouds for strategies
         if show_clouds:
@@ -295,27 +297,6 @@ class CEA:
         else:
             output_effect = table['E[Effect]'].astype(float).round(effect_digits)
 
-
-
-
-        # decide about what to return and put in the csv file
-        if interval == CETableInterval.NO_INTERVAL:
-            ...
-        elif interval == CETableInterval.CONFIDENCE:
-            ...
-        else:
-
-
-
-        self.out_estimates  # dataframe for estimates
-        self.out_intervals  # dataframe for intervals
-
-        out_table           # dataframe to populate the table that includes both estimates and intervals in each cell
-
-        out_table.to_csv    #
-
-
-        # output table
         output_estimates = pd.DataFrame(
             {'Name': table['Name'],
              'E[Cost]': output_cost,
@@ -324,13 +305,199 @@ class CEA:
              'E[dEffect]': table['E[dEffect]'],
              'ICER': table['ICER']
              })
+        self.output_estimates = output_estimates[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]
 
-        output_estimates = output_estimates[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]
 
-        # write csv
-        output_estimates.to_csv("CETable.csv", encoding='utf-8', index=False)
+        # decide about what interval to return and create table self.out_intervals
+        if interval == CETableInterval.PREDICTION:
+            out_intervals_PI = pd.DataFrame(index=table.index,
+                columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
+            out_intervals_PI['dCost_I'] = '-'
+            out_intervals_PI['dEffect_I'] = '-'
+            out_intervals_PI['ICER_I'] = '-'
 
-        return out_table
+            for i in table.index:
+                # populated name, dominated, cost and effect PI columns
+                out_intervals_PI.loc[i, 'Name'] = self._strategies[i].name
+                out_intervals_PI.loc[i, 'Dominated'] = table.loc[i, 'Dominated']
+
+                temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_PI(alpha)
+                out_intervals_PI.loc[i, 'Cost_I'] = temp_c
+
+                temp_e = Stat.SummaryStat("",self._strategies[i].effectObs).get_PI(alpha)
+                out_intervals_PI.loc[i, 'Effect_I'] = temp_e
+
+            if self._ifPaired:
+                # paired: populated dcost, deffect and ICER PI columns
+                for i in range(1, n_frontier_strategies):
+                    temp_d_c = Stat.DifferenceStatPaired("",
+                        self._strategies[frontier_strategies.index[i]].costObs,
+                        self._strategies[frontier_strategies.index[i-1]].costObs).get_PI(alpha)
+
+                    out_intervals_PI.loc[frontier_strategies.index[i], 'dCost_I'] = \
+                        temp_d_c
+
+                    temp_d_e = Stat.DifferenceStatPaired("",
+                        self._strategies[frontier_strategies.index[i]].effectObs,
+                        self._strategies[frontier_strategies.index[i-1]].effectObs).get_PI(alpha)
+
+                    out_intervals_PI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
+                        temp_d_e
+
+                    temp_icer = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
+                                            self._strategies[frontier_strategies.index[i]].effectObs,
+                                            self._strategies[frontier_strategies.index[i-1]].costObs,
+                                            self._strategies[frontier_strategies.index[i-1]].effectObs)
+
+                    out_intervals_PI.loc[frontier_strategies.index[i], 'ICER_I'] = \
+                        temp_icer.get_PI(alpha)
+
+            else:
+                # indp: populated dcost, deffect and ICER PI columns
+                for i in range(1, n_frontier_strategies):
+                    temp_d_c = Stat.DifferenceStatIndp("",
+                        self._strategies[frontier_strategies.index[i]].costObs,
+                        self._strategies[frontier_strategies.index[i - 1]].costObs).get_PI(alpha)
+
+                    out_intervals_PI.loc[frontier_strategies.index[i], 'dCost_I'] = \
+                        temp_d_c
+
+                    temp_d_e = Stat.DifferenceStatIndp("",
+                        self._strategies[frontier_strategies.index[i]].effectObs,
+                        self._strategies[frontier_strategies.index[i - 1]].effectObs).get_PI(alpha)
+
+                    out_intervals_PI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
+                        temp_d_e
+
+                    temp_icer = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
+                                            self._strategies[frontier_strategies.index[i]].effectObs,
+                                            self._strategies[frontier_strategies.index[i - 1]].costObs,
+                                            self._strategies[frontier_strategies.index[i - 1]].effectObs)
+
+                    out_intervals_PI.loc[frontier_strategies.index[i], 'ICER_I'] = \
+                        temp_icer.get_PI(alpha)
+
+            self.out_intervals = out_intervals_PI[['Name', 'Cost_I', 'Effect_I', 'dCost_I',
+                                                   'dEffect_I', 'ICER_I']]
+
+        elif interval == CETableInterval.CONFIDENCE:
+            out_intervals_CI = pd.DataFrame(index=table.index,
+                columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
+            out_intervals_CI['dCost_I'] = '-'
+            out_intervals_CI['dEffect_I'] = '-'
+            out_intervals_CI['ICER_I'] = '-'
+
+            for i in table.index:
+                # populated name, dominated, cost and effect CI columns
+                out_intervals_CI.loc[i, 'Name'] = self._strategies[i].name
+                out_intervals_CI.loc[i, 'Dominated'] = table.loc[i, 'Dominated']
+
+                temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_t_CI(alpha)
+                out_intervals_CI.loc[i, 'Cost_I'] = temp_c
+
+                temp_e = Stat.SummaryStat("",self._strategies[i].effectObs).get_t_CI(alpha)
+                out_intervals_CI.loc[i, 'Effect_I'] = temp_e
+
+            if self._ifPaired:
+                # paired: populated dcost, deffect and ICER CI columns
+                # for difference statatistics, and CI are using t_CI
+                # for ratio, using bootstrap with 1000 number of samples
+                for i in range(1, n_frontier_strategies):
+                    temp_d_c = Stat.SummaryStat("",
+                        self._strategies[frontier_strategies.index[i]].costObs -
+                        self._strategies[frontier_strategies.index[i-1]].costObs).get_t_CI(alpha)
+
+                    out_intervals_CI.loc[frontier_strategies.index[i], 'dCost_I'] = \
+                        temp_d_c
+
+                    temp_d_e = Stat.SummaryStat("",
+                        self._strategies[frontier_strategies.index[i]].effectObs -
+                        self._strategies[frontier_strategies.index[i-1]].effectObs).get_t_CI(alpha)
+
+                    out_intervals_CI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
+                        temp_d_e
+
+                    temp_icer = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
+                                            self._strategies[frontier_strategies.index[i]].effectObs,
+                                            self._strategies[frontier_strategies.index[i-1]].costObs,
+                                            self._strategies[frontier_strategies.index[i-1]].effectObs)
+
+                    out_intervals_CI.loc[frontier_strategies.index[i], 'ICER_I'] = \
+                        temp_icer.get_CI(alpha, 1000)
+
+            else:
+                # indp: populated dcost, deffect and ICER CI columns
+                for i in range(1, n_frontier_strategies):
+                    temp_d_c = Stat.DifferenceStatIndp("",
+                        self._strategies[frontier_strategies.index[i]].costObs,
+                        self._strategies[frontier_strategies.index[i - 1]].costObs).get_t_CI(alpha)
+
+                    out_intervals_CI.loc[frontier_strategies.index[i], 'dCost_I'] = \
+                        temp_d_c
+
+                    temp_d_e = Stat.DifferenceStatIndp("",
+                        self._strategies[frontier_strategies.index[i]].effectObs,
+                        self._strategies[frontier_strategies.index[i - 1]].effectObs).get_t_CI(alpha)
+
+                    out_intervals_CI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
+                        temp_d_e
+
+                    temp_icer = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
+                                            self._strategies[frontier_strategies.index[i]].effectObs,
+                                            self._strategies[frontier_strategies.index[i - 1]].costObs,
+                                            self._strategies[frontier_strategies.index[i - 1]].effectObs)
+
+                    out_intervals_CI.loc[frontier_strategies.index[i], 'ICER_I'] = \
+                        temp_icer.get_CI(alpha, 1000)
+
+            self.out_intervals = out_intervals_CI[['Name', 'Cost_I', 'Effect_I', 'dCost_I',
+                                                   'dEffect_I', 'ICER_I']]
+
+        else:
+            self.out_intervals = None
+
+
+        # merge estimates and intervals together
+        out_table = pd.DataFrame(
+            {'Name': table['Name'],
+             'E[Cost]': output_estimates['E[Cost]'],
+             'E[Effect]': output_estimates['E[Effect]'],
+             'E[dCost]': output_estimates['E[dCost]'],
+             'E[dEffect]': output_estimates['E[dEffect]'],
+             'ICER': output_estimates['ICER']
+             })
+
+        for i in table.index:
+            out_table.loc[i, 'E[Cost]'] = \
+                ff.format_estimate_interval(output_estimates.loc[i,'E[Cost]'],
+                                            self.out_intervals.loc[i,'Cost_I'],
+                                            cost_digits)
+            out_table.loc[i, 'E[Effect]'] = \
+                ff.format_estimate_interval(output_estimates.loc[i,'E[Effect]'],
+                                            self.out_intervals.loc[i,'Effect_I'],
+                                            effect_digits)
+
+        for i in range(1, n_frontier_strategies):
+
+            out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
+                ff.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i],'E[dCost]'],
+                                            self.out_intervals.loc[frontier_strategies.index[i],'dCost_I'],
+                                            cost_digits)
+
+            out_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
+                ff.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i],'E[dEffect]'],
+                                            self.out_intervals.loc[frontier_strategies.index[i],'dEffect_I'],
+                                            effect_digits)
+
+            out_table.loc[frontier_strategies.index[i], 'ICER'] = \
+                ff.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i],'ICER'],
+                                            self.out_intervals.loc[frontier_strategies.index[i],'ICER_I'],
+                                            icer_digits)
+
+        # define column order and write csv
+        out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
+            "CETable.csv", encoding='utf-8', index=False)
+
 
 
 class ComparativeEconMeasure():

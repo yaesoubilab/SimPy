@@ -17,7 +17,7 @@ s8 = ce.Strategy("s9", s_center[8, 0]+np.random.normal(0, 0.5, 10), s_center[8, 
 s9 = ce.Strategy("s10", s_center[9, 0]+np.random.normal(0, 0.5, 10), s_center[9, 1]+np.random.normal(0, 0.5, 10))
 
 # create a CEA object -- unpaired
-myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=False)
+myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('CE plane with unpaired observations and showing labels',
@@ -33,7 +33,8 @@ myCEA.show_CE_plane('CE Plane with unpaired observations and no clouds',
 
 # table
 print('')
-print(myCEA.build_CE_table(cost_digits=2, effect_digits=1, icer_digits=2))
+print(myCEA.build_CE_table(ce.CETableInterval.PREDICTION))
+
 
 # frontier results
 print('')
@@ -57,10 +58,6 @@ myCEA2.show_CE_plane('CE Plane with paired observations and showing legend',
 # plot with no label and sample cloud
 myCEA2.show_CE_plane('CE Plane with paired observations and no clouds',
                      'E[Effect]','E[Cost]', show_clouds=False, show_names=True)
-
-# table
-print('')
-print(myCEA2.build_CE_table(cost_digits=2, effect_digits=1, icer_digits=2))
 
 # frontier results
 print('')
