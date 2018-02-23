@@ -499,7 +499,6 @@ class CEA:
             "CETable.csv", encoding='utf-8', index=False)
 
 
-
 class ComparativeEconMeasure():
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
