@@ -502,7 +502,6 @@ class CEA:
 class ComparativeEconMeasure():
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
-        :param name: descrition
         :param cost_new: (list or numpy.array) cost data for the new strategy
         :param health_new: (list or numpy.array) health data for the new strategy
         :param cost_base: (list or numpy.array) cost data for the base line
@@ -533,6 +532,12 @@ class ComparativeEconMeasure():
 
 class ICER(ComparativeEconMeasure):
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
+        """
+        :param cost_new: (list or numpy.array) cost data for the new strategy
+        :param health_new: (list or numpy.array) health data for the new strategy
+        :param cost_base: (list or numpy.array) cost data for the base line
+        :param health_base: (list or numpy.array) health data for the base line
+        """
         # initialize the base class
         ComparativeEconMeasure.__init__(self, name, cost_new, health_new, cost_base, health_base)
         # calcualte ICER
@@ -563,6 +568,12 @@ class ICER(ComparativeEconMeasure):
 class ICER_paired(ICER):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
+        """
+        :param cost_new: (list or numpy.array) cost data for the new strategy
+        :param health_new: (list or numpy.array) health data for the new strategy
+        :param cost_base: (list or numpy.array) cost data for the base line
+        :param health_base: (list or numpy.array) health data for the base line
+        """
         # initialize the base class
         ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
@@ -602,6 +613,12 @@ class ICER_paired(ICER):
 class ICER_indp(ICER):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
+        """
+        :param cost_new: (list or numpy.array) cost data for the new strategy
+        :param health_new: (list or numpy.array) health data for the new strategy
+        :param cost_base: (list or numpy.array) cost data for the base line
+        :param health_base: (list or numpy.array) health data for the base line
+        """
         # initialize the base class
         ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
@@ -618,7 +635,6 @@ class ICER_indp(ICER):
         health_base_0 = self._healthBase[index_base_0]
 
         self.sum_stat_sample_ratio = np.divide((cost_new_0-cost_base_0),(health_new_0-health_base_0))
-
 
     def get_CI(self, alpha, num_bootstrap_samples):
         """
@@ -650,9 +666,14 @@ class ICER_indp(ICER):
         return np.percentile(self.sum_stat_sample_ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
 
-
 class NMB(ComparativeEconMeasure):
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
+        """
+        :param cost_new: (list or numpy.array) cost data for the new strategy
+        :param health_new: (list or numpy.array) health data for the new strategy
+        :param cost_base: (list or numpy.array) cost data for the base line
+        :param health_base: (list or numpy.array) health data for the base line
+        """
         # initialize the base class
         ComparativeEconMeasure.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
@@ -685,6 +706,12 @@ class NMB(ComparativeEconMeasure):
 class NMB_paired(NMB):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
+        """
+        :param cost_new: (list or numpy.array) cost data for the new strategy
+        :param health_new: (list or numpy.array) health data for the new strategy
+        :param cost_base: (list or numpy.array) cost data for the base line
+        :param health_base: (list or numpy.array) health data for the base line
+        """
         NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
         # incremental observations
@@ -693,7 +720,7 @@ class NMB_paired(NMB):
 
     def get_CI(self, wtp, alpha):
 
-        # create a sumary statistics
+        # create a summary statistics
         stat = Stat.SummaryStat(self._name, wtp * self._deltaHealth - self._deltaCost)
         return stat.get_t_CI(alpha)
 
@@ -707,6 +734,12 @@ class NMB_paired(NMB):
 class NMB_indp(NMB):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
+        """
+        :param cost_new: (list or numpy.array) cost data for the new strategy
+        :param health_new: (list or numpy.array) health data for the new strategy
+        :param cost_base: (list or numpy.array) cost data for the base line
+        :param health_base: (list or numpy.array) health data for the base line
+        """
         NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
     def get_CI(self, wtp, alpha):

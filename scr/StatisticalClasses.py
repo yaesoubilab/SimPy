@@ -293,12 +293,20 @@ class ComparativeStat(Statistics):
 class DifferenceStat(ComparativeStat):
 
     def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
         ComparativeStat.__init__(self, name, x, y)
 
 
 class DifferenceStatPaired(DifferenceStat):
 
     def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
         DifferenceStat.__init__(self, name, x, y)
         # create a summary statistics for the element-wise difference
 
@@ -332,12 +340,16 @@ class DifferenceStatPaired(DifferenceStat):
 class DifferenceStatIndp(DifferenceStat):
 
     def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
         DifferenceStat.__init__(self, name, x, y)
 
         # generate random realizations for random variable X - Y
         numpy.random.seed(1)
-        x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-        y_i = numpy.random.choice(self._y, size=self._n, replace=True)
+        x_i = numpy.random.choice(self._x, size=max(self._n, 1000), replace=True)
+        y_i = numpy.random.choice(self._y, size=max(self._n, 1000), replace=True)
         self.sum_stat_sample_delta = SummaryStat(name, x_i - y_i)
 
     def get_mean(self):
@@ -374,7 +386,7 @@ class DifferenceStatIndp(DifferenceStat):
         """
         :param alpha: confidence level
         :param num_samples: number of samples
-        :return: bootstrap confidence interval
+        :return: empirical bootstrap confidence interval
         """
         # set random number generator seed
         numpy.random.seed(1)
@@ -431,6 +443,10 @@ class DifferenceStatIndp(DifferenceStat):
 class RatioStat(ComparativeStat):
 
     def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
         ComparativeStat.__init__(self, name, x, y)
         # make sure no 0 in the denominator variable
         if not (self._y != 0).all():
@@ -440,6 +456,10 @@ class RatioStat(ComparativeStat):
 class RatioStatPaired(RatioStat):
 
     def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
         RatioStat.__init__(self, name, x, y)
 
         if len(self._x) != len(self._y):
@@ -474,6 +494,10 @@ class RatioStatPaired(RatioStat):
 class RatioStatIndp(RatioStat):
 
     def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
         RatioStat.__init__(self, name, x, y)
 
         # generate random realizations for random variable X/Y
@@ -521,7 +545,7 @@ class RatioStatIndp(RatioStat):
         """
         :param alpha: confidence level
         :param num_samples: number of samples
-        :return: bootstrap confidence interval
+        :return: empirical bootstrap confidence interval
         """
         # set random number generator seed
         numpy.random.seed(1)
