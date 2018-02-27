@@ -33,6 +33,7 @@ myCEA.show_CE_plane('CE Plane with unpaired observations and no clouds',
 
 # table
 print('')
+# return none and write result into csv
 print(myCEA.build_CE_table(ce.CETableInterval.PREDICTION))
 
 
