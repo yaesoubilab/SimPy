@@ -65,3 +65,16 @@ print('Strategies on the frontier:')
 frontier = myCEA2.get_frontier()
 for s in frontier:
     print(s.name)
+
+# try NMB
+a = ce.NMB_indp("test", s1.costObs, s1.effectObs, s0.costObs, s0.effectObs)
+print(a.get_PI(2,0.05))
+print(a.get_CI(2,0.05))
+
+b = ce.NMB_paired("test", s1.costObs, s1.effectObs, s0.costObs, s0.effectObs)
+print(b.get_CI(2, 0.05))
+print(b.get_PI(2, 0.05))
+
+
+
+

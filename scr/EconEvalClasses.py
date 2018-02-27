@@ -685,7 +685,7 @@ class NMB(ComparativeEconMeasure):
 class NMB_paired(NMB):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
-        NMB.__init__(name, cost_new, health_new, cost_base, health_base)
+        NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
         # incremental observations
         self._deltaCost = self._costNew - self._costBase
@@ -707,10 +707,21 @@ class NMB_paired(NMB):
 class NMB_indp(NMB):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
-        NMB.__init__(name, cost_new, health_new, cost_base, health_base)
+        NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
     def get_CI(self, wtp, alpha):
-        pass
+        # reform 2 independent variables to pass in DifferenceStatIndp class
+        stat_new = wtp * self._healthNew - self._costNew
+        stat_base = wtp * self._healthBase - self._costBase
+        # to get CI for stat_new - stat_base
+        diff_stat = Stat.DifferenceStatIndp(self._name, stat_new, stat_base)
+        return diff_stat.get_t_CI(alpha)
 
     def get_PI(self, wtp, alpha):
-        pass
+        # reform 2 independent variables to pass in DifferenceStatIndp class
+        stat_new = wtp * self._healthNew - self._costNew
+        stat_base = wtp * self._healthBase - self._costBase
+
+        # to get PI for stat_new - stat_base
+        diff_stat = Stat.DifferenceStatIndp(self._name, stat_new, stat_base)
+        return diff_stat.get_PI(alpha)
