@@ -4,11 +4,11 @@ from scr import FormatFunctions as Support
 
 
 def print_results(stat):
-    print('   Average =', Support.format_number(stat.get_mean(), digits=3))
-    print('   St Dev =', Support.format_number(stat.get_stdev(), digits=3))
-    print('   Min =', Support.format_number(stat.get_min(), digits=3))
-    print('   Max =', Support.format_number(stat.get_max(), digits=3))
-    print('   Median =', Support.format_number(stat.get_percentile(50), digits=3))
+    print('   Average =', Support.format_number(stat.get_mean(), deci=3))
+    print('   St Dev =', Support.format_number(stat.get_stdev(), deci=3))
+    print('   Min =', Support.format_number(stat.get_min(), deci=3))
+    print('   Max =', Support.format_number(stat.get_max(), deci=3))
+    print('   Median =', Support.format_number(stat.get_percentile(50), deci=3))
     print('   95% Mean Confidence Interval (t-based) =',
           Support.format_interval(stat.get_t_CI(0.05), 3))
     print('   95% Mean Confidence Interval (bootstrap) =',
