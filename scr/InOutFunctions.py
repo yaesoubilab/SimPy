@@ -9,7 +9,7 @@ def write_csv(file_name, rows, delimiter='\t'):
     :param delimiter: to separate by comma, use ',' and by tab, use '\t'
     """
     with open(file_name, "w", newline='') as file:
-        csv_file = csv.writer(file, delimiter=delimiter)  # use '\t' for tab
+        csv_file = csv.writer(file, delimiter=delimiter)
 
         for row in rows:
             csv_file.writerow(row)
@@ -26,7 +26,7 @@ def read_csv_rows(file_name, if_del_first_row, delimiter='\t', if_convert_float=
     :returns a list containing the rows of the csv file
     """
     with open(file_name, "r") as file:
-        csv_file = csv.reader(file, delimiter=delimiter)  # use '\t' for tab
+        csv_file = csv.reader(file, delimiter=delimiter)
 
         # read rows
         rows = []
@@ -45,16 +45,17 @@ def read_csv_rows(file_name, if_del_first_row, delimiter='\t', if_convert_float=
         return rows
 
 
-def read_csv_cols(file_name, n_cols, if_ignore_first_row, if_convert_float):
+def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter='\t', if_convert_float=False):
     """ reads the columns of a csv file
     :param file_name: the csv file name
     :param n_cols: number of columns in the csv file
     :param if_ignore_first_row: set True to ignore the first row
+    :param delimiter: to separate by comma, use ',' and by tab, use '\t'
     :param if_convert_float: set True to convert column values to numbers
     :returns a list containing the columns of the csv file
     """
     with open(file_name, "r") as file:
-        csv_file = csv.reader(file, delimiter='\t')  # use '\t' for tab
+        csv_file = csv.reader(file, delimiter=delimiter)
 
         # initialize the list to store column values
         cols = []
