@@ -8,7 +8,7 @@ from scr import FigureSupport as Fig
 from scr import FormatFunctions as ff
 
 
-class CETableInterval(Enum):
+class Interval(Enum):
     NO_INTERVAL = 0
     CONFIDENCE = 1
     PREDICTION = 2
@@ -35,18 +35,18 @@ class Strategy:
         self.ifDominated = False
 
 
-class CEA:
-    """ class for doing cost-effectiveness analysis """
+class EconEval:
+    """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
     def __init__(self, strategies, if_paired):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
         """
-        self._n = len(strategies)               # number of strategies
-        self._strategies = strategies           # list of strategies
-        self._strategiesOnFrontier = []         # list of strategies on the frontier
-        self._strategiesNotOnFrontier = []      # list of strategies not on the frontier
+        self._n = len(strategies)  # number of strategies
+        self._strategies = strategies  # list of strategies
+        self._strategiesOnFrontier = []  # list of strategies on the frontier
+        self._strategiesNotOnFrontier = []  # list of strategies not on the frontier
         self._ifPaired = if_paired
 
         # create a data frame for all strategies' expected outcomes
@@ -69,8 +69,8 @@ class CEA:
         if if_paired:
             for i in range(self._n):
                 shifted_strategy = Strategy(strategies[i].name,
-                                            strategies[i].costObs-strategies[0].costObs,
-                                            strategies[i].effectObs-strategies[0].effectObs)
+                                            strategies[i].costObs - strategies[0].costObs,
+                                            strategies[i].effectObs - strategies[0].effectObs)
                 shifted_strategies.append(shifted_strategy)
 
         else:  # if not paired
@@ -81,7 +81,7 @@ class CEA:
                                             strategies[i].costObs - e_cost,
                                             strategies[i].effectObs - e_effect)
                 shifted_strategies.append(shifted_strategy)
-        self._shifted_strategies = shifted_strategies       # list of shifted strategies
+        self._shifted_strategies = shifted_strategies  # list of shifted strategies
 
         # create a data frame for all strategies' shifted expected outcomes
         self._dfStrategies_shifted = pd.DataFrame(
@@ -96,6 +96,17 @@ class CEA:
             self._dfStrategies_shifted.loc[j, 'Dominated'] = shifted_strategies[j].ifDominated
             self._dfStrategies_shifted.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
+
+class CEA(EconEval):
+    """ class for doing cost-effectiveness analysis """
+
+    def __init__(self, strategies, if_paired):
+        """
+        :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param if_paired: indicate whether the strategies are paired
+        """
+        EconEval.__init__(self, strategies, if_paired)
+
         # find the CE frontier
         self.__find_frontier()
 
@@ -103,7 +114,7 @@ class CEA:
         """ :return list of strategies on the frontier"""
         return self._strategiesOnFrontier
 
-    def get_none_frontier(self):
+    def get_not_on_frontier(self):
         """ :return list of strategies that are not on the frontier """
         return self._strategiesNotOnFrontier
 
@@ -237,7 +248,7 @@ class CEA:
         Fig.output_figure(plt, Fig.OutType.SHOW, title)
 
     def build_CE_table(self,
-                       interval=CETableInterval.NO_INTERVAL, alpha=0.05,
+                       interval=Interval.NO_INTERVAL, alpha=0.05,
                        cost_digits=0, effect_digits=2, icer_digits=1):
         """
         :param interval: type of interval to report for the cost, effecti and ICER estimates,
@@ -309,7 +320,7 @@ class CEA:
 
 
         # decide about what interval to return and create table self.out_intervals
-        if interval == CETableInterval.PREDICTION:
+        if interval == Interval.PREDICTION:
             out_intervals_PI = pd.DataFrame(index=table.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
             out_intervals_PI['dCost_I'] = '-'
@@ -380,7 +391,7 @@ class CEA:
             self.out_intervals = out_intervals_PI[['Name', 'Cost_I', 'Effect_I', 'dCost_I',
                                                    'dEffect_I', 'ICER_I']]
 
-        elif interval == CETableInterval.CONFIDENCE:
+        elif interval == Interval.CONFIDENCE:
             out_intervals_CI = pd.DataFrame(index=table.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
             out_intervals_CI['dCost_I'] = '-'
@@ -497,6 +508,20 @@ class CEA:
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
             "CETable.csv", encoding='utf-8', index=False)
+
+
+class CBA(EconEval):
+    """ class for doing cost-benefit analysis """
+
+    def __init__(self, strategies, if_paired):
+        """
+        :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param if_paired: indicate whether the strategies are paired
+        """
+        EconEval.__init__(self, strategies, if_paired)
+
+    def show_NMB_lines(self):
+        pass
 
 
 class ComparativeEconMeasure():
