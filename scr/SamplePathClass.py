@@ -144,11 +144,9 @@ def graph_sample_path(sample_path, title, x_label, y_label,
     Fig.output_figure(plt, output_type, title)
 
 
-def graph_sample_paths\
-                (sample_paths, title, x_label, y_label, output_type=Fig.OutType.SHOW,
-                 legends=None, transparency=1, common_color_code=None,
-                 if_same_color=False):
-    """
+def graph_sample_paths(sample_paths, title, x_label, y_label, output_type=Fig.OutType.SHOW,
+                       legends=None, transparency=1, common_color_code=None, if_same_color=False):
+    """ graphs multiple sample paths
     :param sample_paths: a list of sample paths
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
@@ -194,7 +192,6 @@ def graph_sample_paths\
             plt.legend(legends)
         else:
             plt.legend([legends])
-
 
     # set the minimum of y-axis to zero
     plt.ylim(ymin=0)  # the minimum has to be set after plotting the values

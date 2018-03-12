@@ -1,5 +1,6 @@
 from enum import Enum
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class OutType(Enum):
@@ -7,6 +8,7 @@ class OutType(Enum):
     SHOW = 1    # show
     JPG = 2     # save the figure as a jpg file
     PDF = 3     # save the figure as a pdf file
+
 
 def output_figure(plt, output_type, title):
     """
@@ -24,12 +26,14 @@ def output_figure(plt, output_type, title):
         plt.savefig(title+".pdf")
 
 
-def graph_histogram(observations, title, x_label, y_label, x_range=None, output_type=OutType.SHOW, legend=None):
-    """ graphs the histogram of observations
-    :param observations: list of observations
+def graph_histogram(data, title, x_label, y_label,
+                    bin_width=None, x_range=None, output_type=OutType.SHOW, legend=None):
+    """ graphs the histogram of the provided data
+    :param data: list of observations
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
+    :param bin_width: bin width
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     :param legend: string for the legend
@@ -39,16 +43,76 @@ def graph_histogram(observations, title, x_label, y_label, x_range=None, output_
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.hist(observations,
-             bins='auto',  #numpy.linspace(0, max(patient_survival_times), num_bins),
-             edgecolor='black',
-             linewidth=1)
+
+    if bin_width is None:
+        plt.hist(data,
+                 bins='auto',
+                 edgecolor='black',
+                 linewidth=1)
+    else:
+        plt.hist(data,
+                 bins=np.arange(min(data), max(data) + bin_width, bin_width),
+                 edgecolor='black',
+                 linewidth=1)
+
     if not (x_range is None):
         plt.xlim(x_range)
 
     # add legend if provided
     if not (legend is None):
         plt.legend([legend])
+
+    # output figure
+    output_figure(plt, output_type, title)
+
+
+def graph_histograms(data_sets, title, x_label, y_label,
+                     bin_width=None, x_range=None, output_type=OutType.SHOW, legend=None, transparency=1):
+    """
+
+    :param data_sets:
+    :param title:
+    :param x_label:
+    :param y_label:
+    :param bin_width:
+    :param x_range:
+    :param output_type:
+    :param legend:
+    :param transparency:
+    :return:
+    """
+
+    fig = plt.figure(title)
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+
+    for data in data_sets:
+        if bin_width is None:
+            plt.hist(data,
+                     bins='auto',
+                     edgecolor='black',
+                     alpha=transparency,
+                     linewidth=1)
+        else:
+            l = min(data)
+            u = max(data) + bin_width
+            if not (x_range is None):
+                l = x_range[0]
+                u = x_range[1]
+                
+            plt.hist(data,
+                     bins=np.arange(l, u, bin_width),
+                     edgecolor='black',
+                     alpha=transparency,
+                     linewidth=1)
+
+    if not (x_range is None):
+        plt.xlim(x_range)
+
+    # add legend if provided
+    if not (legend is None):
+        plt.legend(legend)
 
     # output figure
     output_figure(plt, output_type, title)
