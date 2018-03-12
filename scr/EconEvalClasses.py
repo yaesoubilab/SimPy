@@ -5,7 +5,16 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
 from scr import FigureSupport as Fig
-from scr import FormatFunctions as ff
+from scr import FormatFunctions as FormatFunc
+
+
+def pv(payment, annual_discount_rate, discount_period):
+    """ calculates the present value of a payment
+    :param payment: payment to calculate the present value for
+    :param annual_discount_rate: annual discount rate
+    :param discount_period: number of periods to discount the payment
+    :return: payment/(1+annual_discount_rate)^discount_period    """
+    return payment * pow(1 + annual_discount_rate, -discount_period)
 
 
 class Interval(Enum):
@@ -480,30 +489,30 @@ class CEA(EconEval):
 
         for i in table.index:
             out_table.loc[i, 'E[Cost]'] = \
-                ff.format_estimate_interval(output_estimates.loc[i,'E[Cost]'],
-                                            self.out_intervals.loc[i,'Cost_I'],
-                                            cost_digits)
+                FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Cost]'],
+                                                    self.out_intervals.loc[i,'Cost_I'],
+                                                    cost_digits)
             out_table.loc[i, 'E[Effect]'] = \
-                ff.format_estimate_interval(output_estimates.loc[i,'E[Effect]'],
-                                            self.out_intervals.loc[i,'Effect_I'],
-                                            effect_digits)
+                FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Effect]'],
+                                                    self.out_intervals.loc[i,'Effect_I'],
+                                                    effect_digits)
 
         for i in range(1, n_frontier_strategies):
 
             out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
-                ff.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i],'E[dCost]'],
-                                            self.out_intervals.loc[frontier_strategies.index[i],'dCost_I'],
-                                            cost_digits)
+                FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dCost]'],
+                                                    self.out_intervals.loc[frontier_strategies.index[i],'dCost_I'],
+                                                    cost_digits)
 
             out_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
-                ff.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i],'E[dEffect]'],
-                                            self.out_intervals.loc[frontier_strategies.index[i],'dEffect_I'],
-                                            effect_digits)
+                FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dEffect]'],
+                                                    self.out_intervals.loc[frontier_strategies.index[i],'dEffect_I'],
+                                                    effect_digits)
 
             out_table.loc[frontier_strategies.index[i], 'ICER'] = \
-                ff.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i],'ICER'],
-                                            self.out_intervals.loc[frontier_strategies.index[i],'ICER_I'],
-                                            icer_digits)
+                FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'ICER'],
+                                                    self.out_intervals.loc[frontier_strategies.index[i],'ICER_I'],
+                                                    icer_digits)
 
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
