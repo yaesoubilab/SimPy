@@ -1,13 +1,20 @@
 import scipy.stats as scipy
 import numpy as np
+from numpy.random import RandomState
+
+
+class RNG(RandomState):
+    def __init__(self, seed):
+        RandomState.__init__(self, seed)
+
 
 class RVG(object):
     def __init__(self):
         pass
 
-    def sample(self, numpy_rnd):
+    def sample(self, rng):
         """
-        :param numpy_rnd: numpy .random object
+        :param rng: and instant of RNG class
         :returns one realization from the defined probability distribution """
 
         # abstract method to be overridden in derived classes to process an event
@@ -23,8 +30,8 @@ class Exponential(RVG):
         RVG.__init__(self)
         self.mean = mean
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.exponential(self.mean)
+    def sample(self, rng):
+        return rng.exponential(self.mean)
 
 
 class Bernoulli(RVG):
@@ -36,9 +43,9 @@ class Bernoulli(RVG):
         RVG.__init__(self)
         self.p = p
 
-    def sample(self, numpy_rnd):
+    def sample(self, rng):
         sample = 0
-        if numpy_rnd.sample() <= self.p:
+        if rng.random_sample() <= self.p:
             sample = 1
         return sample
 
@@ -53,8 +60,8 @@ class Beta(RVG):
         self.a = a
         self.b = b
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.beta(self.a, self.b)
+    def sample(self, rng):
+        return rng.beta(self.a, self.b)
 
 
 class BetaBinomial(RVG):
@@ -68,14 +75,14 @@ class BetaBinomial(RVG):
         self.a = a
         self.b = b
 
-    def sample(self, numpy_rnd):
+    def sample(self, rng):
         """
         ref: https://blogs.sas.com/content/iml/2017/11/20/simulate-beta-binomial-sas.html
-        :param numpy_rnd: numpy.random object
+        :param rng: numpy.random object
         :return: a realization from the Beta Binomial distribution
         """
-        sample_p = numpy_rnd.beta(self.a, self.b)
-        sample = numpy_rnd.binomial(self.n, sample_p)
+        sample_p = rng.beta(self.a, self.b)
+        sample = rng.binomial(self.n, sample_p)
 
         return sample
 
@@ -90,8 +97,8 @@ class Binomial(RVG):
         self.N = N
         self.p = p
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.binomial(self.N, self.p)
+    def sample(self, rng):
+        return rng.binomial(self.N, self.p)
 
 
 class Dirichlet(RVG):
@@ -104,12 +111,12 @@ class Dirichlet(RVG):
         RVG.__init__(self)
         self.a = a
 
-    def sample(self, numpy_rnd):
+    def sample(self, rng):
         """
-        :param numpy_rnd: numpy .random object
+        :param rng: numpy .random object
         :return: a realization from the Dirichlet distribution, length K.
         """
-        return numpy_rnd.dirichlet(self.a)
+        return rng.dirichlet(self.a)
 
 
 class Empirical(RVG):
@@ -128,10 +135,10 @@ class Empirical(RVG):
             raise ValueError('Probabilities should sum to 1.')
         self.prob = probabilities
 
-    def sample(self, numpy_rnd):
+    def sample(self, rng):
         # this works for both numpy array and list
         # ref:https://stackoverflow.com/questions/4265988/generate-random-numbers-with-a-given-numerical-distribution
-        return numpy_rnd.choice(range(self.nOutcomes), size=1, p=self.prob)
+        return rng.choice(range(self.nOutcomes), size=1, p=self.prob)
 
 
 class Gamma(RVG):
@@ -144,8 +151,8 @@ class Gamma(RVG):
         self.shape = shape
         self.scale = scale
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.gamma(self.shape, self.scale)
+    def sample(self, rng):
+        return rng.gamma(self.shape, self.scale)
 
 
 class GammaPoisson(RVG):
@@ -161,10 +168,10 @@ class GammaPoisson(RVG):
         self.shape = shape
         self.scale = scale
 
-    def sample(self, numpy_rnd):
-        sample_rate = Gamma(self.shape, self.scale).sample(numpy_rnd)
+    def sample(self, rng):
+        sample_rate = Gamma(self.shape, self.scale).sample(rng)
         sample_poisson = Poisson(sample_rate)
-        return sample_poisson.sample(numpy_rnd)
+        return sample_poisson.sample(rng)
 
 
 class Geometric(RVG):
@@ -176,8 +183,8 @@ class Geometric(RVG):
         RVG.__init__(self)
         self.p = p
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.geometric(self.p)
+    def sample(self, rng):
+        return rng.geometric(self.p)
 
 
 class JohnsonSb(RVG):
@@ -193,8 +200,8 @@ class JohnsonSb(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, numpy_rnd):
-        return scipy.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=numpy_rnd)
+    def sample(self, rng):
+        return scipy.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
 
 class JohnsonSu(RVG):
@@ -210,8 +217,8 @@ class JohnsonSu(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, numpy_rnd):
-        return scipy.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=numpy_rnd)
+    def sample(self, rng):
+        return scipy.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
 
 class LogNormal(RVG):
@@ -224,8 +231,8 @@ class LogNormal(RVG):
         self.mean = mean
         self.sigma = sigma
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.lognormal(self.mean, self.sigma)
+    def sample(self, rng):
+        return rng.lognormal(self.mean, self.sigma)
 
 
 class Multinomial(RVG):
@@ -238,8 +245,8 @@ class Multinomial(RVG):
         self.N = N
         self.pvals = pvals
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.multinomial(self.N, self.pvals)
+    def sample(self, rng):
+        return rng.multinomial(self.N, self.pvals)
 
 
 class NegativeBinomial(RVG):
@@ -254,12 +261,12 @@ class NegativeBinomial(RVG):
         self.n = r
         self.p = 1-p
 
-    def sample(self, numpy_rnd):
+    def sample(self, rng):
         """
         :return: a realization from the NegativeBinomial distribution
         (the number of successes before a specified number of failures, r, occurs.)
         """
-        return numpy_rnd.negative_binomial(self.n, self.p)
+        return rng.negative_binomial(self.n, self.p)
 
 
 class Normal(RVG):
@@ -272,8 +279,8 @@ class Normal(RVG):
         self.mean = mean
         self.stDev = st_dev
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.normal(self.mean, self.stDev)
+    def sample(self, rng):
+        return rng.normal(self.mean, self.stDev)
 
 
 class Poisson(RVG):
@@ -285,8 +292,8 @@ class Poisson(RVG):
         RVG.__init__(self)
         self.rate = rate
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.poisson(self.rate)
+    def sample(self, rng):
+        return rng.poisson(self.rate)
 
 
 class Triangular(RVG):
@@ -300,8 +307,8 @@ class Triangular(RVG):
         self.mode = mode
         self.u = u
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.triangular(self.l, self.mode, self.u)
+    def sample(self, rng):
+        return rng.triangular(self.l, self.mode, self.u)
 
 
 class Uniform(RVG):
@@ -314,8 +321,8 @@ class Uniform(RVG):
         self.l = l
         self.r = r
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.uniform(self.l, self.r)
+    def sample(self, rng):
+        return rng.uniform(self.l, self.r)
 
 
 class UniformDiscrete(RVG):
@@ -330,8 +337,8 @@ class UniformDiscrete(RVG):
         self.l = l
         self.r = r
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.randint(low=self.l, high=self.r+1)
+    def sample(self, rng):
+        return rng.randint(low=self.l, high=self.r + 1)
 
 
 class Weibull(RVG):
@@ -343,5 +350,5 @@ class Weibull(RVG):
         RVG.__init__(self)
         self.a = a
 
-    def sample(self, numpy_rnd):
-        return numpy_rnd.weibull(self.a)
+    def sample(self, rng):
+        return rng.weibull(self.a)
