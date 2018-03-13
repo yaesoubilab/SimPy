@@ -131,7 +131,7 @@ class Empirical(RVG):
         self.prob = np.array(probabilities)
         self.nOutcomes = len(self.prob)
 
-        if self.prob.sum() != 1:
+        if self.prob.sum() < 0.99999 or self.prob.sum() > 1.00001:
             raise ValueError('Probabilities should sum to 1.')
         self.prob = probabilities
 
