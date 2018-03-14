@@ -105,6 +105,11 @@ class EconEval:
             self._dfStrategies_shifted.loc[j, 'Dominated'] = shifted_strategies[j].ifDominated
             self._dfStrategies_shifted.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
+    def get_shifted_strategies(self):
+        """
+        :return: the list of strategies after being shifted so that the first strategy falls on the origin
+        """
+        return self._shifted_strategies
 
 class CEA(EconEval):
     """ class for doing cost-effectiveness analysis """
@@ -221,7 +226,7 @@ class CEA(EconEval):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
-                plt.scatter(x_values, y_values, c=color, alpha=0.5, s=25, label=strategy_i.name)
+                plt.scatter(x_values, y_values, c=color, alpha=0.4, s=25, label=strategy_i.name)
             if show_legend:
                 plt.legend() # to customize legend: loc='lower right', numpoints=1, ncol=3, fontsize=8)
             plt.scatter(data['E[Effect]'], data['E[Cost]'], marker='x', c='k', s=50, linewidths=2)
@@ -243,7 +248,7 @@ class CEA(EconEval):
                 for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
                     plt.annotate(
                         label, xy=(x, y), xycoords='data', xytext=(x - 0.6, y + 0.3),
-                        textcoords='data',weight='bold')
+                        textcoords='data', weight='bold')
 
             elif show_clouds:
                 for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
