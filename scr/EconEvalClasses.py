@@ -125,11 +125,11 @@ class CEA(EconEval):
         # find the CE frontier
         self.__find_frontier()
 
-    def get_frontier(self):
+    def get_strategies_on_frontier(self):
         """ :return list of strategies on the frontier"""
         return self._strategiesOnFrontier
 
-    def get_not_on_frontier(self):
+    def get_strategies_not_on_frontier(self):
         """ :return list of strategies that are not on the frontier """
         return self._strategiesNotOnFrontier
 

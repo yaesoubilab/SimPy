@@ -40,7 +40,7 @@ print(myCEA.build_CE_table(ce.Interval.PREDICTION))
 # frontier results
 print('')
 print('Strategies on the frontier:')
-frontier = myCEA.get_frontier()
+frontier = myCEA.get_strategies_on_frontier()
 for s in frontier:
     print(s.name)
 
@@ -63,7 +63,7 @@ myCEA2.show_CE_plane('CE Plane with paired observations and no clouds',
 # frontier results
 print('')
 print('Strategies on the frontier:')
-frontier = myCEA2.get_frontier()
+frontier = myCEA2.get_strategies_on_frontier()
 for s in frontier:
     print(s.name)
 
