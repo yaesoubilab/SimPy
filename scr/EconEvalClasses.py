@@ -111,6 +111,7 @@ class EconEval:
         """
         return self._shifted_strategies
 
+
 class CEA(EconEval):
     """ class for doing cost-effectiveness analysis """
 
