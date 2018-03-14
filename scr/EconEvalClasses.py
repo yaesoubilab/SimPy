@@ -201,7 +201,8 @@ class CEA(EconEval):
         for j in not_on_frontier_index:
             self._strategiesNotOnFrontier.append(self._strategies[j])
 
-    def show_CE_plane(self, title, x_label, y_label, show_names=False, show_clouds=False,
+    def show_CE_plane(self, title, x_label, y_label,
+                      show_names=False, show_clouds=False, transparency=0.4,
                       show_legend=False, figure_size=6):
         """
         :param title: title of the figure
@@ -209,6 +210,7 @@ class CEA(EconEval):
         :param y_label: (string) y-axis label
         :param show_names: logical, show strategy names
         :param show_clouds: logical, show true sample observation of strategies
+        :param transparency: transparency of clouds (0.0 transparent through 1.0 opaque)
         :param show_legend: shows the legend of strategies, would only be used when show_clouds is true
         :param figure_size: int, specify the figure size
         """
@@ -227,7 +229,7 @@ class CEA(EconEval):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
-                plt.scatter(x_values, y_values, c=color, alpha=0.4, s=25, label=strategy_i.name)
+                plt.scatter(x_values, y_values, c=color, alpha=transparency, s=25, label=strategy_i.name)
             if show_legend:
                 plt.legend() # to customize legend: loc='lower right', numpoints=1, ncol=3, fontsize=8)
             plt.scatter(data['E[Effect]'], data['E[Cost]'], marker='x', c='k', s=50, linewidths=2)
@@ -266,9 +268,9 @@ class CEA(EconEval):
                        interval=Interval.NO_INTERVAL, alpha=0.05,
                        cost_digits=0, effect_digits=2, icer_digits=1):
         """
-        :param interval: type of interval to report for the cost, effecti and ICER estimates,
+        :param interval: type of interval to report for the cost, effect and ICER estimates,
                         can take values from
-                        CETableInterval.NO_INTERVAL, CETableInterval.CONFIDENCE, CETableInterval.PREDICTION
+                        Interval.NO_INTERVAL, Interval.CONFIDENCE, Interval.PREDICTION
         :param alpha: significance level
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
@@ -535,11 +537,25 @@ class CBA(EconEval):
         """
         EconEval.__init__(self, strategies, if_paired)
 
-    def show_NMB_lines(self):
+    def graph_NMB_lines(self, min_wtp, max_wtp, title,
+                        x_label, y_label, interval=Interval.NO_INTERVAL, transparency=0.4,
+                        show_legend=False, figure_size=6):
+        """
+        :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
+        :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
+        :param title: title
+        :param x_label: x-axis label
+        :param y_label: y-axis label
+        :param interval: type of interval to show. Can take values from
+                Interval.NO_INTERVAL, Interval.CONFIDENCE, Interval.PREDICTION
+        :param transparency: transparency of intervals (0.0 transparent through 1.0 opaque)
+        :param show_legend: set true to show legend
+        :param figure_size: size of the figure
+        """
         pass
 
 
-class ComparativeEconMeasure():
+class ComparativeEconMeasure:
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
         :param cost_new: (list or numpy.array) cost data for the new strategy
