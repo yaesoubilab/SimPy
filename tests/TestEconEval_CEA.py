@@ -36,15 +36,6 @@ print('')
 # return none and write result into csv
 print(myCEA.build_CE_table(ce.Interval.PREDICTION))
 
-
-# frontier results
-print('')
-print('Strategies on the frontier:')
-frontier = myCEA.get_strategies_on_frontier()
-for s in frontier:
-    print(s.name)
-
-
 # create a CEA object -- paired
 myCEA2 = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)
 
@@ -66,8 +57,15 @@ print('Strategies on the frontier:')
 frontier = myCEA2.get_strategies_on_frontier()
 for s in frontier:
     print(s.name)
+    print(s.aveCost)
 
-
+# frontier results for shifted data
+print('')
+print('Shifted Strategies on the frontier:')
+frontier = myCEA2.get_shifted_strategies_on_frontier()
+for s in frontier:
+    print(s.name)
+    print(s.aveCost)
 
 
 

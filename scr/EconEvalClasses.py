@@ -56,6 +56,8 @@ class EconEval:
         self._strategies = strategies  # list of strategies
         self._strategiesOnFrontier = []  # list of strategies on the frontier
         self._strategiesNotOnFrontier = []  # list of strategies not on the frontier
+        self._shifted_strategiesOnFrontier = []  # list of shifted strategies on the frontier
+        self._shifted_strategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
         self._ifPaired = if_paired
 
         # create a data frame for all strategies' expected outcomes
@@ -133,6 +135,15 @@ class CEA(EconEval):
         """ :return list of strategies that are not on the frontier """
         return self._strategiesNotOnFrontier
 
+    def get_shifted_strategies_on_frontier(self):
+        """ :return list of shifted strategies on the frontier"""
+        return self._shifted_strategiesOnFrontier
+
+    def get_shifted_strategies_not_on_frontier(self):
+        """ :return list of shifted strategies not on the frontier"""
+        return self._shifted_strategiesNotOnFrontier
+
+
     def __find_frontier(self):
         """ find the cost-effectiveness frontier """
 
@@ -195,11 +206,15 @@ class CEA(EconEval):
         on_frontier_index = df1[df1['Dominated'] == False].index
         for i in on_frontier_index:
             self._strategiesOnFrontier.append(self._strategies[i])
+            self._shifted_strategiesOnFrontier.append(self._shifted_strategies[i])
 
         # create list of strategies not on frontier
         not_on_frontier_index = df1[df1['Dominated'] == True].index
         for j in not_on_frontier_index:
             self._strategiesNotOnFrontier.append(self._strategies[j])
+            self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
+
+
 
     def show_CE_plane(self, title, x_label, y_label,
                       show_names=False, show_clouds=False, transparency=0.4,
@@ -244,7 +259,7 @@ class CEA(EconEval):
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
-        
+
         vals, labs = plt.yticks()
         plt.yticks(vals, ['{:,.{prec}f}'.format(x, prec=0) for x in vals])
 
