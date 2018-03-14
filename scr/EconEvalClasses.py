@@ -245,6 +245,9 @@ class CEA(EconEval):
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
+        vals, labs = plt.yticks()
+        plt.yticks(vals, ['{:,.{prec}f}'.format(x, prec=0) for x in vals])
+
         # show names of strategies
         if show_names:
             if not show_clouds:
