@@ -244,7 +244,7 @@ class CEA(EconEval):
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
-
+        
         vals, labs = plt.yticks()
         plt.yticks(vals, ['{:,.{prec}f}'.format(x, prec=0) for x in vals])
 
