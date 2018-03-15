@@ -260,22 +260,27 @@ class CEA(EconEval):
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
-        vals, labs = plt.yticks()
-        plt.yticks(vals, ['{:,.{prec}f}'.format(x, prec=0) for x in vals])
+        vals_y, labs_y = plt.yticks()
+        vals_x, labs_x = plt.xticks()
+        plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+
+        # get ranges of x, y axis
+        Lx = np.ptp(vals_x)
+        Ly = np.ptp(vals_y)
 
         # show names of strategies
         if show_names:
             if not show_clouds:
                 for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
                     plt.annotate(
-                        label, xy=(x, y), xycoords='data', xytext=(x - 0.6, y + 0.3),
+                        label, xy=(x, y), xycoords='data', xytext=(x - 0.04 * Lx, y + 0.03 * Ly),
                         textcoords='data', weight='bold')
 
             elif show_clouds:
                 for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
                     plt.annotate(
                         label,
-                        xy=(x, y), xycoords='data', xytext=(x-0.8, y+0.8), textcoords='data',
+                        xy=(x, y), xycoords='data', xytext=(x - 0.04 * Lx, y + 0.04 * Ly), textcoords='data',
                         arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
                         weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
 

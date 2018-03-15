@@ -27,7 +27,7 @@ myCEA.show_CE_plane('CE plane with unpaired observations and showing labels',
 myCEA.show_CE_plane('CE Plane with unpaired observations and showing legend',
                     'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=5)
 
-# plot with no label and sample cloud
+# plot with label and sample cloud
 myCEA.show_CE_plane('CE Plane with unpaired observations and no clouds',
                     'E[Effect]','E[Cost]', show_clouds=False, show_names=True)
 
