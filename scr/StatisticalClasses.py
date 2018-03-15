@@ -499,12 +499,7 @@ class RatioStatIndp(RatioStat):
         :param y: list or numpy.array of second set of observations
         """
         RatioStat.__init__(self, name, x, y)
-
-        # generate random realizations for random variable X/Y
-        numpy.random.seed(1)
-        x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-        y_i = numpy.random.choice(self._y, size=self._n, replace=True)
-        self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(x_i, y_i))
+        self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(self._x, self._y))
 
     def get_mean(self):
         return self.sum_stat_sample_ratio.get_mean()
