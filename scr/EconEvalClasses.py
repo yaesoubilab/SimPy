@@ -281,8 +281,8 @@ class CEA(EconEval):
                         df_shifted_strategies['E[Effect]'],
                         df_shifted_strategies['E[Cost]']):
                     plt.annotate(
-                        label, xy=(x, y), xycoords='data', xytext=(x - 0.1 * Lx, y + 0.03 * Ly),
-                        textcoords='data', weight='bold')
+                        label, xy=(x, y), xycoords='data', xytext=(x - 0.05 * Lx, y + 0.03 * Ly),
+                        textcoords='data', weight='bold', ha='center')
 
             elif show_clouds:
                 for label, x, y in zip(
@@ -290,7 +290,7 @@ class CEA(EconEval):
                         df_shifted_strategies['E[Effect]'],
                         df_shifted_strategies['E[Cost]']):
                     plt.annotate(
-                        label,
+                        label, ha='center',
                         xy=(x, y), xycoords='data', xytext=(x - 0.05 * Lx, y + 0.04 * Ly), textcoords='data',
                         arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
                         weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
