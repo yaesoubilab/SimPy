@@ -6,7 +6,7 @@ import math
 from scr import FormatFunctions as Support
 
 
-class Statistics(object):
+class _Statistics(object):
     def __init__(self, name):
         """ abstract method to be overridden in derived classes"""
         self._name = name        # name of this statistics
@@ -88,11 +88,11 @@ class Statistics(object):
                 Support.format_number(self.get_max(), digits)]
 
 
-class SummaryStat(Statistics):
+class SummaryStat(_Statistics):
     def __init__(self, name, data):
         """:param data: a list or numpy.array of data points"""
 
-        Statistics.__init__(self, name)
+        _Statistics.__init__(self, name)
         # convert data to numpy array if needed
         if type(data) == list:
             self._data = numpy.array(data)
@@ -151,10 +151,10 @@ class SummaryStat(Statistics):
         return [self.get_percentile(100*alpha/2), self.get_percentile(100*(1-alpha/2))]
 
 
-class DiscreteTimeStat(Statistics):
+class DiscreteTimeStat(_Statistics):
     """ to calculate statistics on observations accumulating over time """
     def __init__(self, name):
-        Statistics.__init__(self, name)
+        _Statistics.__init__(self, name)
         self._total = 0
         self._sumSquared = 0
 
@@ -202,13 +202,13 @@ class DiscreteTimeStat(Statistics):
         return None
 
 
-class ContinuousTimeStat(Statistics):
+class ContinuousTimeStat(_Statistics):
     """ to calculate statistics on the area-under-the-curve for observations accumulating over time """
     def __init__(self, name,  initial_time):
         """
         :param initial_time: it is assumed that the value of this sample path is zero at the initial time
         """
-        Statistics.__init__(self, name)
+        _Statistics.__init__(self, name)
         self._initialTime = initial_time
         self._area = 0
         self._areaSquared = 0
@@ -269,13 +269,13 @@ class ContinuousTimeStat(Statistics):
         return None
 
 
-class ComparativeStat(Statistics):
+class ComparativeStat(_Statistics):
     def __init__(self, name, x, y):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        Statistics.__init__(self, name)
+        _Statistics.__init__(self, name)
 
         if type(x) == list:
             self._x = numpy.array(x)
@@ -290,7 +290,7 @@ class ComparativeStat(Statistics):
         self._n = len(self._x)   # number of observations
 
 
-class DifferenceStat(ComparativeStat):
+class _DifferenceStat(ComparativeStat):
 
     def __init__(self, name, x, y):
         """
@@ -300,14 +300,14 @@ class DifferenceStat(ComparativeStat):
         ComparativeStat.__init__(self, name, x, y)
 
 
-class DifferenceStatPaired(DifferenceStat):
+class DifferenceStatPaired(_DifferenceStat):
 
     def __init__(self, name, x, y):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        DifferenceStat.__init__(self, name, x, y)
+        _DifferenceStat.__init__(self, name, x, y)
         # create a summary statistics for the element-wise difference
 
         if len(self._x) != len(self._y):
@@ -337,14 +337,14 @@ class DifferenceStatPaired(DifferenceStat):
         return self.dStat.get_PI(alpha)
 
 
-class DifferenceStatIndp(DifferenceStat):
+class DifferenceStatIndp(_DifferenceStat):
 
     def __init__(self, name, x, y):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        DifferenceStat.__init__(self, name, x, y)
+        _DifferenceStat.__init__(self, name, x, y)
 
         # generate random realizations for random variable X - Y
         numpy.random.seed(1)
@@ -440,7 +440,7 @@ class DifferenceStatIndp(DifferenceStat):
         return self.sum_stat_sample_delta.get_PI(alpha)
 
 
-class RatioStat(ComparativeStat):
+class _RatioStat(ComparativeStat):
 
     def __init__(self, name, x, y):
         """
@@ -453,14 +453,14 @@ class RatioStat(ComparativeStat):
             raise ValueError('invalid value of y, the ratio is not computable')
 
 
-class RatioStatPaired(RatioStat):
+class RatioStatPaired(_RatioStat):
 
     def __init__(self, name, x, y):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        RatioStat.__init__(self, name, x, y)
+        _RatioStat.__init__(self, name, x, y)
 
         if len(self._x) != len(self._y):
             raise ValueError('Two samples should have the same size.')
@@ -491,14 +491,14 @@ class RatioStatPaired(RatioStat):
         return self.ratioStat.get_PI(alpha)
 
 
-class RatioStatIndp(RatioStat):
+class RatioStatIndp(_RatioStat):
 
     def __init__(self, name, x, y):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        RatioStat.__init__(self, name, x, y)
+        _RatioStat.__init__(self, name, x, y)
         self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(self._x, self._y))
 
     def get_mean(self):
