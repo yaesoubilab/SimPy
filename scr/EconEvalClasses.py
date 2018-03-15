@@ -143,7 +143,6 @@ class CEA(EconEval):
         """ :return list of shifted strategies not on the frontier"""
         return self._shifted_strategiesNotOnFrontier
 
-
     def __find_frontier(self):
         """ find the cost-effectiveness frontier """
 
@@ -214,8 +213,6 @@ class CEA(EconEval):
             self._strategiesNotOnFrontier.append(self._strategies[j])
             self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
 
-
-
     def show_CE_plane(self, title, x_label, y_label,
                       show_names=False, show_clouds=False, transparency=0.4,
                       show_legend=False, figure_size=6):
@@ -231,11 +228,12 @@ class CEA(EconEval):
         """
         # plots
         # operate on local variable data rather than self attribute
-        data = self._dfStrategies_shifted
-        data["Dominated_result"] = self._dfStrategies["Dominated"]
+        df_shifted_strategies = self._dfStrategies_shifted
+        # find the dominated strategies
+        df_shifted_strategies["Dominated_result"] = self._dfStrategies["Dominated"]
 
         # re-sorted according to Effect to draw line
-        line_plot = data.loc[data["Dominated_result"] == False].sort_values('E[Effect]')
+        frontier_plot = df_shifted_strategies.loc[df_shifted_strategies["Dominated_result"] == False].sort_values('E[Effect]')
 
         # show observation clouds for strategies
         if show_clouds:
@@ -247,15 +245,16 @@ class CEA(EconEval):
                 plt.scatter(x_values, y_values, c=color, alpha=transparency, s=25, label=strategy_i.name)
             if show_legend:
                 plt.legend() # to customize legend: loc='lower right', numpoints=1, ncol=3, fontsize=8)
-            plt.scatter(data['E[Effect]'], data['E[Cost]'], marker='x', c='k', s=50, linewidths=2)
+            plt.scatter(df_shifted_strategies['E[Effect]'], df_shifted_strategies['E[Cost]'], marker='x', c='k', s=50, linewidths=2)
 
         else:
             plt.figure(figsize=(figure_size, figure_size))
-            plt.scatter(data['E[Effect]'], data['E[Cost]'], c=list(data['Color']), s=50)
+            plt.scatter(df_shifted_strategies['E[Effect]'], df_shifted_strategies['E[Cost]'], c=list(df_shifted_strategies['Color']), s=50)
 
-        plt.plot(line_plot['E[Effect]'], line_plot['E[Cost]'], c='k')
-        plt.axhline(y=0, c='k',linewidth=0.5)
-        plt.axvline(x=0, c='k',linewidth=0.5)
+        # draw the fontier
+        plt.plot(frontier_plot['E[Effect]'], frontier_plot['E[Cost]'], c='k', alpha=0.6, linewidth=2)
+        plt.axhline(y=0, c='k', linewidth=0.5)
+        plt.axvline(x=0, c='k', linewidth=0.5)
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
@@ -271,16 +270,16 @@ class CEA(EconEval):
         # show names of strategies
         if show_names:
             if not show_clouds:
-                for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
+                for label, x, y in zip(df_shifted_strategies['Name'], df_shifted_strategies['E[Effect]'], df_shifted_strategies['E[Cost]']):
                     plt.annotate(
-                        label, xy=(x, y), xycoords='data', xytext=(x - 0.04 * Lx, y + 0.03 * Ly),
+                        label, xy=(x, y), xycoords='data', xytext=(x - 0.1 * Lx, y + 0.03 * Ly),
                         textcoords='data', weight='bold')
 
             elif show_clouds:
-                for label, x, y in zip(data['Name'], data['E[Effect]'], data['E[Cost]']):
+                for label, x, y in zip(df_shifted_strategies['Name'], df_shifted_strategies['E[Effect]'], df_shifted_strategies['E[Cost]']):
                     plt.annotate(
                         label,
-                        xy=(x, y), xycoords='data', xytext=(x - 0.04 * Lx, y + 0.04 * Ly), textcoords='data',
+                        xy=(x, y), xycoords='data', xytext=(x - 0.05 * Lx, y + 0.04 * Ly), textcoords='data',
                         arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
                         weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
 
