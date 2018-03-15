@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as scs
-from scipy.misc import factorial
-from scipy.optimize import curve_fit
 
 # simulate some data
 np.random.seed(1)
