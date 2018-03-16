@@ -561,4 +561,23 @@ class RatioStatIndp(_RatioStat):
         return self.sum_stat_sample_ratio.get_PI(alpha)
 
 
+class _RelativeDifference(ComparativeStat):
+    """ class to make inference about (X-Y)/X"""
 
+    def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
+        ComparativeStat.__init__(self, name, x, y)
+        # make sure no 0 in the denominator variable
+        if not (self._x != 0).all():
+            raise ValueError('invalid value of x, the ratio is not computable')
+
+
+class RelativeDifferencePaired(_RelativeDifference):
+    pass
+
+
+class RelativeDifferenceIndp(_RelativeDifference):
+    pass
