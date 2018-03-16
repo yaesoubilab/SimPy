@@ -576,8 +576,109 @@ class _RelativeDifference(ComparativeStat):
 
 
 class RelativeDifferencePaired(_RelativeDifference):
-    pass
+
+    def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
+        _RelativeDifference.__init__(self, name, x, y)
+
+        if len(self._x) != len(self._y):
+            raise ValueError('Two samples should have the same size.')
+
+        # add element-wise ratio
+        ratio = numpy.divide(self._x, self._y)
+        self.relativeDiffStat = SummaryStat(name, 1-ratio)
+
+    def get_mean(self):
+        return self.relativeDiffStat.get_mean()
+
+    def get_stdev(self):
+        return self.relativeDiffStat.get_stdev()
+
+    def get_min(self):
+        return self.relativeDiffStat.get_min()
+
+    def get_max(self):
+        return self.relativeDiffStat.get_max()
+
+    def get_percentile(self, q):
+        return self.relativeDiffStat.get_percentile(q)
+
+    def get_bootstrap_CI(self, alpha, num_samples):
+        return self.relativeDiffStat.get_bootstrap_CI(alpha, num_samples)
+
+    def get_PI(self, alpha):
+        return self.relativeDiffStat.get_PI(alpha)
+
 
 
 class RelativeDifferenceIndp(_RelativeDifference):
-    pass
+    def __init__(self, name, x, y):
+        """
+        :param x: list or numpy.array of first set of observations
+        :param y: list or numpy.array of second set of observations
+        """
+        _RelativeDifference.__init__(self, name, x, y)
+        self.sum_stat_sample_relativeRatio = SummaryStat(name, 1 - numpy.divide(self._x, self._y))
+
+    def get_mean(self):
+        return self.sum_stat_sample_relativeRatio.get_mean()
+
+    def get_stdev(self):
+        """
+        for independent variable x and y, var(x/y) = E(x^2)*E(1/y^2)-E(x)^2*(E(1/y)^2)
+        and var(1 - x/y) = var(x/y)
+        :return: std(x/y)
+        """
+        if self._y.mean() == 0:
+            raise ValueError('invalid value of mean of y, the ratio is not computable')
+
+        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y ** 2) - \
+              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y) ** 2)
+        return numpy.sqrt(var)
+
+    def get_min(self):
+        return None
+
+    def get_max(self):
+        return None
+
+    def get_percentile(self, q):
+        """
+        for independent variable x and y, percentiles are given after re-sampling
+        :param q: the percentile want to return, in [0,100]
+        :return: qth percentile of sample (y-x)/y
+        """
+        return self.sum_stat_sample_relativeRatio.get_percentile(q)
+
+    def get_t_half_length(self, alpha):
+        return self.sum_stat_sample_relativeRatio.get_t_half_length(alpha)
+
+    def get_t_CI(self, alpha):
+        return self.sum_stat_sample_relativeRatio.get_t_CI(alpha)
+
+    def get_bootstrap_CI(self, alpha, num_samples):
+        """
+        :param alpha: confidence level
+        :param num_samples: number of samples
+        :return: empirical bootstrap confidence interval
+        """
+        # set random number generator seed
+        numpy.random.seed(1)
+
+        # initialize ratio array
+        ratio = numpy.zeros(num_samples)
+
+        # obtain bootstrap samples
+        for i in range(num_samples):
+            x_i = numpy.random.choice(self._x, size=self._n, replace=True)
+            y_i = numpy.random.choice(self._y, size=self._n, replace=True)
+            r_temp = 1 - numpy.divide(x_i, y_i)
+            ratio[i] = numpy.mean(r_temp)
+
+        return numpy.percentile(ratio, [alpha/2.0, 100-alpha/2.0])
+
+    def get_PI(self, alpha):
+        return self.sum_stat_sample_relativeRatio.get_PI(alpha)
