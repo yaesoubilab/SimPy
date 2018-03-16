@@ -63,8 +63,7 @@ def fit_poisson(data, x_label):
 
     # plot poisson-deviation with fitted parameter
     x_plot = np.arange(scs.poisson.ppf(0.0001, lamb), scs.poisson.ppf(0.9999, lamb))
-    ax.plot(x_plot, scs.poisson.pmf(x_plot, lamb), COLOR_DISCRETE_FIT+'o', ms=8, label='Poisson')
-    #ax.vlines(x_plot, 0, scs.poisson.pmf(x_plot, lamb), colors='k', lw=6, alpha=0.5)
+    ax.step(x_plot, scs.poisson.pmf(x_plot, lamb), COLOR_DISCRETE_FIT, ms=8, label='Poisson')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
