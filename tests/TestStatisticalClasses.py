@@ -103,8 +103,8 @@ ratio = numpy.random.normal(2, 1, 1000)
 y_ratio_paired = numpy.divide(x, ratio)
 
 relative_ratio = numpy.random.normal(0.5, 0.1, 1000)
-y_relativeRatio_paired = numpy.divide(x, 1-relative_ratio)
-y_relativeRatio_ind = numpy.random.normal(20, 2, 1000)
+y_relativeRatio_paired = numpy.divide(x, 1+relative_ratio)
+
 
 # populate a data set to test continuous-time statistics
 sampleT = []
@@ -133,4 +133,4 @@ mytest_ratio_stat_paied(x, y_ratio_paired)
 # test statistics for the relative ratio of two paired samples
 mytest_relativeDiff_stat_paied(x, y_relativeRatio_paired)
 # test statistics for the relative ratio of two independent samples
-mytest_relativeDiff_stat_indp(x, y_relativeRatio_ind)
+mytest_relativeDiff_stat_indp(x, y_ind)
