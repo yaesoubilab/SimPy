@@ -562,14 +562,14 @@ class RatioStatIndp(_RatioStat):
 
 
 class _RelativeDifference(ComparativeStat):
-    """ class to make inference about (X-Y)/X"""
+    """ class to make inference about (X-Y_reference)/Y_reference"""
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_reference):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_reference: list or numpy.array of second set of observations used as the reference values
         """
-        ComparativeStat.__init__(self, name, x, y)
+        ComparativeStat.__init__(self, name, x, y_reference)
         # make sure no 0 in the denominator variable
         if not (self._x != 0).all():
             raise ValueError('invalid value of x, the ratio is not computable')
