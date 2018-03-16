@@ -571,24 +571,25 @@ class _RelativeDifference(ComparativeStat):
         """
         ComparativeStat.__init__(self, name, x, y_reference)
         # make sure no 0 in the denominator variable Y_reference
-        if not (self._y != 0).all():
+        self._y_reference = y_reference
+        if not (self._y_reference != 0).all():
             raise ValueError('invalid value of x, the ratio is not computable')
 
 
 class RelativeDifferencePaired(_RelativeDifference):
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_reference):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        _RelativeDifference.__init__(self, name, x, y)
+        _RelativeDifference.__init__(self, name, x, y_reference)
 
-        if len(self._x) != len(self._y):
+        if len(self._x) != len(self._y_reference):
             raise ValueError('Two samples should have the same size.')
 
         # add element-wise ratio
-        ratio = numpy.divide(self._x, self._y)
+        ratio = numpy.divide(self._x, self._y_reference)
         self.relativeDiffStat = SummaryStat(name, ratio - 1)
 
     def get_mean(self):
@@ -615,13 +616,13 @@ class RelativeDifferencePaired(_RelativeDifference):
 
 
 class RelativeDifferenceIndp(_RelativeDifference):
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_reference):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        _RelativeDifference.__init__(self, name, x, y)
-        self.sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(self._x, self._y) - 1)
+        _RelativeDifference.__init__(self, name, x, y_reference)
+        self.sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(self._x, self._y_reference) - 1)
 
     def get_mean(self):
         return self.sum_stat_sample_relativeRatio.get_mean()
@@ -632,11 +633,11 @@ class RelativeDifferenceIndp(_RelativeDifference):
         and var(x/y - 1) = var(x/y)
         :return: std(x/y - 1)
         """
-        if self._y.mean() == 0:
+        if self._y_reference.mean() == 0:
             raise ValueError('invalid value of mean of y, the ratio is not computable')
 
-        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y ** 2) - \
-              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y) ** 2)
+        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_reference ** 2) - \
+              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_reference) ** 2)
         return numpy.sqrt(var)
 
     def get_min(self):
@@ -674,7 +675,7 @@ class RelativeDifferenceIndp(_RelativeDifference):
         # obtain bootstrap samples
         for i in range(num_samples):
             x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self._y, size=self._n, replace=True)
+            y_i = numpy.random.choice(self._y_reference, size=self._n, replace=True)
             r_temp = numpy.divide(x_i, y_i) - 1
             ratio[i] = numpy.mean(r_temp)
 
