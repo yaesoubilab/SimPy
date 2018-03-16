@@ -80,6 +80,19 @@ def mytest_ratio_stat_paied(x, y):
     print('Testing RatioStatPaired:')
     print_results(stat)
 
+def mytest_relativeDiff_stat_paied(x, y):
+    # define
+    stat = Stat.RelativeDifferencePaired('Test RelativeDifferencePaired', x, y)
+
+    print('Testing RelativeDifferencePaired:')
+    print_results(stat)
+
+def mytest_relativeDiff_stat_indp(x, y):
+    # define
+    stat = Stat.RelativeDifferenceIndp('Test RelativeDifferenceIndp', x, y)
+
+    print('Testing RelativeDifferenceIndp:')
+    print_results(stat)
 
 # generate sample data
 x = numpy.random.normal(10, 4, 1000)
@@ -89,6 +102,9 @@ y_diff_paired = x - delta
 ratio = numpy.random.normal(2, 1, 1000)
 y_ratio_paired = numpy.divide(x, ratio)
 
+relative_ratio = numpy.random.normal(0.5, 0.1, 1000)
+y_relativeRatio_paired = numpy.divide(x, 1-relative_ratio)
+y_relativeRatio_ind = numpy.random.normal(20, 2, 1000)
 
 # populate a data set to test continuous-time statistics
 sampleT = []
@@ -113,3 +129,8 @@ mytest_diff_stat_paired(x, y_diff_paired)
 mytest_ratio_stat_indp(x, y_ind)
 # test statistics for the ratio of two paired samples
 mytest_ratio_stat_paied(x, y_ratio_paired)
+
+# test statistics for the relative ratio of two paired samples
+mytest_relativeDiff_stat_paied(x, y_relativeRatio_paired)
+# test statistics for the relative ratio of two independent samples
+mytest_relativeDiff_stat_indp(x, y_relativeRatio_ind)
