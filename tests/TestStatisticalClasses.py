@@ -94,6 +94,7 @@ def mytest_relativeDiff_stat_indp(x, y):
     print('Testing RelativeDifferenceIndp:')
     print_results(stat)
 
+
 # generate sample data
 x = numpy.random.normal(10, 4, 1000)
 y_ind = numpy.random.normal(5, 2, 1000)
@@ -129,8 +130,7 @@ mytest_diff_stat_paired(x, y_diff_paired)
 mytest_ratio_stat_indp(x, y_ind)
 # test statistics for the ratio of two paired samples
 mytest_ratio_stat_paied(x, y_ratio_paired)
-
-# test statistics for the relative ratio of two paired samples
+# test statistics for the relative difference of two paired samples
 mytest_relativeDiff_stat_paied(x, y_relativeRatio_paired)
-# test statistics for the relative ratio of two independent samples
+# test statistics for the relative difference of two independent samples
 mytest_relativeDiff_stat_indp(x, y_ind)

@@ -270,10 +270,10 @@ class ContinuousTimeStat(_Statistics):
 
 
 class ComparativeStat(_Statistics):
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations (the reference) 
         """
         _Statistics.__init__(self, name)
 
@@ -282,38 +282,38 @@ class ComparativeStat(_Statistics):
         else:
             self._x = x
 
-        if type(y) == list:
-            self._y = numpy.array(y)
+        if type(y_ref) == list:
+            self._y_ref = numpy.array(y_ref)
         else:
-            self._y = y
+            self._y_ref = y_ref
 
         self._n = len(self._x)   # number of observations
 
 
 class _DifferenceStat(ComparativeStat):
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         """
-        ComparativeStat.__init__(self, name, x, y)
+        ComparativeStat.__init__(self, name, x, y_ref)
 
 
 class DifferenceStatPaired(_DifferenceStat):
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         """
-        _DifferenceStat.__init__(self, name, x, y)
+        _DifferenceStat.__init__(self, name, x, y_ref)
         # create a summary statistics for the element-wise difference
 
-        if len(self._x) != len(self._y):
+        if len(self._x) != len(self._y_ref):
             raise ValueError('Two samples should have the same size.')
 
-        self.dStat = SummaryStat(name, self._x - self._y)
+        self.dStat = SummaryStat(name, self._x - self._y_ref)
 
     def get_mean(self):
         return self.dStat.get_mean()
@@ -339,17 +339,17 @@ class DifferenceStatPaired(_DifferenceStat):
 
 class DifferenceStatIndp(_DifferenceStat):
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         """
-        _DifferenceStat.__init__(self, name, x, y)
+        _DifferenceStat.__init__(self, name, x, y_ref)
 
         # generate random realizations for random variable X - Y
         numpy.random.seed(1)
         x_i = numpy.random.choice(self._x, size=max(self._n, 1000), replace=True)
-        y_i = numpy.random.choice(self._y, size=max(self._n, 1000), replace=True)
+        y_i = numpy.random.choice(self._y_ref, size=max(self._n, 1000), replace=True)
         self.sum_stat_sample_delta = SummaryStat(name, x_i - y_i)
 
     def get_mean(self):
@@ -357,7 +357,7 @@ class DifferenceStatIndp(_DifferenceStat):
         for independent variable x and y, E(x-y) = E(x) - E(y)
         :return: sample mean of (x-y)
         """
-        return numpy.mean(self._x) - numpy.mean(self._y)
+        return numpy.mean(self._x) - numpy.mean(self._y_ref)
 
     def get_stdev(self):
         """
@@ -365,7 +365,7 @@ class DifferenceStatIndp(_DifferenceStat):
         :returns: sample standard deviation
         """
         var_x = numpy.var(self._x)
-        var_y = numpy.var(self._y)
+        var_y = numpy.var(self._y_ref)
         return numpy.sqrt(var_x + var_y)
 
     def get_min(self):
@@ -397,7 +397,7 @@ class DifferenceStatIndp(_DifferenceStat):
         # obtain bootstrap samples
         for i in range(num_samples):
             x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self._y, size=self._n, replace=True)
+            y_i = numpy.random.choice(self._y_ref, size=self._n, replace=True)
             d_temp = x_i - y_i
             diff[i] = numpy.mean(d_temp)
 
@@ -412,9 +412,9 @@ class DifferenceStatIndp(_DifferenceStat):
         """
 
         n = len(self._x)
-        m = len(self._y)
+        m = len(self._y_ref)
         sig_x = numpy.std(self._x)
-        sig_y = numpy.std(self._y)
+        sig_y = numpy.std(self._y_ref)
 
         alpha = alpha / 100.0
 
@@ -432,7 +432,7 @@ class DifferenceStatIndp(_DifferenceStat):
     def get_t_CI(self, alpha):
 
         interval = self.get_t_half_length(alpha)
-        diff = numpy.mean(self._x) - numpy.mean(self._y)
+        diff = numpy.mean(self._x) - numpy.mean(self._y_ref)
 
         return [diff - interval, diff + interval]
 
@@ -442,31 +442,31 @@ class DifferenceStatIndp(_DifferenceStat):
 
 class _RatioStat(ComparativeStat):
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         """
-        ComparativeStat.__init__(self, name, x, y)
+        ComparativeStat.__init__(self, name, x, y_ref)
         # make sure no 0 in the denominator variable
-        if not (self._y != 0).all():
+        if not (self._y_ref != 0).all():
             raise ValueError('invalid value of y, the ratio is not computable')
 
 
 class RatioStatPaired(_RatioStat):
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         """
-        _RatioStat.__init__(self, name, x, y)
+        _RatioStat.__init__(self, name, x, y_ref)
 
-        if len(self._x) != len(self._y):
+        if len(self._x) != len(self._y_ref):
             raise ValueError('Two samples should have the same size.')
 
         # add element-wise ratio
-        ratio = numpy.divide(self._x, self._y)
+        ratio = numpy.divide(self._x, self._y_ref)
         self.ratioStat = SummaryStat(name, ratio)
 
     def get_mean(self):
@@ -493,13 +493,13 @@ class RatioStatPaired(_RatioStat):
 
 class RatioStatIndp(_RatioStat):
 
-    def __init__(self, name, x, y):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         """
-        _RatioStat.__init__(self, name, x, y)
-        self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(self._x, self._y))
+        _RatioStat.__init__(self, name, x, y_ref)
+        self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(self._x, self._y_ref))
 
     def get_mean(self):
         return self.sum_stat_sample_ratio.get_mean()
@@ -509,11 +509,11 @@ class RatioStatIndp(_RatioStat):
         for independent variable x and y, var(x/y) = E(x^2)*E(1/y^2)-E(x)^2*(E(1/y)^2)
         :return: std(x/y)
         """
-        if self._y.mean() == 0:
+        if self._y_ref.mean() == 0:
             raise ValueError('invalid value of mean of y, the ratio is not computable')
 
-        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y ** 2) - \
-              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y) ** 2)
+        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_ref ** 2) - \
+              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_ref) ** 2)
         return numpy.sqrt(var)
 
     def get_min(self):
@@ -551,7 +551,7 @@ class RatioStatIndp(_RatioStat):
         # obtain bootstrap samples
         for i in range(num_samples):
             x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self._y, size=self._n, replace=True)
+            y_i = numpy.random.choice(self._y_ref, size=self._n, replace=True)
             r_temp = numpy.divide(x_i, y_i)
             ratio[i] = numpy.mean(r_temp)
 
@@ -562,34 +562,34 @@ class RatioStatIndp(_RatioStat):
 
 
 class _RelativeDifference(ComparativeStat):
-    """ class to make inference about (X-Y_reference)/Y_reference"""
+    """ class to make inference about (X-Y_ref)/Y_ref"""
 
-    def __init__(self, name, x, y_reference):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y_reference: list or numpy.array of second set of observations used as the reference values
+        :param y_ref: list or numpy.array of second set of observations used as the reference values
         """
-        ComparativeStat.__init__(self, name, x, y_reference)
-        # make sure no 0 in the denominator variable Y_reference
-        self._y_reference = y_reference
-        if not (self._y_reference != 0).all():
+        ComparativeStat.__init__(self, name, x, y_ref)
+
+        # make sure no 0 in the denominator variable y
+        if not (self._y_ref != 0).all():
             raise ValueError('invalid value of x, the ratio is not computable')
 
 
 class RelativeDifferencePaired(_RelativeDifference):
 
-    def __init__(self, name, x, y_reference):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         """
-        _RelativeDifference.__init__(self, name, x, y_reference)
+        _RelativeDifference.__init__(self, name, x, y_ref)
 
-        if len(self._x) != len(self._y_reference):
+        if len(self._x) != len(self._y_ref):
             raise ValueError('Two samples should have the same size.')
 
         # add element-wise ratio
-        ratio = numpy.divide(self._x, self._y_reference)
+        ratio = numpy.divide(self._x, self._y_ref)
         self.relativeDiffStat = SummaryStat(name, ratio - 1)
 
     def get_mean(self):
@@ -614,15 +614,14 @@ class RelativeDifferencePaired(_RelativeDifference):
         return self.relativeDiffStat.get_PI(alpha)
 
 
-
 class RelativeDifferenceIndp(_RelativeDifference):
-    def __init__(self, name, x, y_reference):
+    def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
         """
-        _RelativeDifference.__init__(self, name, x, y_reference)
-        self.sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(self._x, self._y_reference) - 1)
+        _RelativeDifference.__init__(self, name, x, y_ref)
+        self.sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(self._x, self._y_ref) - 1)
 
     def get_mean(self):
         return self.sum_stat_sample_relativeRatio.get_mean()
@@ -633,11 +632,11 @@ class RelativeDifferenceIndp(_RelativeDifference):
         and var(x/y - 1) = var(x/y)
         :return: std(x/y - 1)
         """
-        if self._y_reference.mean() == 0:
+        if self._y_ref.mean() == 0:
             raise ValueError('invalid value of mean of y, the ratio is not computable')
 
-        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_reference ** 2) - \
-              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_reference) ** 2)
+        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_ref ** 2) - \
+              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_ref) ** 2)
         return numpy.sqrt(var)
 
     def get_min(self):
@@ -675,7 +674,7 @@ class RelativeDifferenceIndp(_RelativeDifference):
         # obtain bootstrap samples
         for i in range(num_samples):
             x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self._y_reference, size=self._n, replace=True)
+            y_i = numpy.random.choice(self._y_ref, size=self._n, replace=True)
             r_temp = numpy.divide(x_i, y_i) - 1
             ratio[i] = numpy.mean(r_temp)
 
