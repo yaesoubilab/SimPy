@@ -5,8 +5,9 @@ import scipy.stats as scs
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
 
-# In most distributions with Location and Scale parameters, floc=0 is applied
+# In most functions with Location parameter, floc=0 is applied
 # (fix location at 0), since if not, estimated parameters are not unique
+# for example Exponential distribution only has one parameter lambda, k=1
 
 def AIC(k, log_likelihood):
     """ :returns Akaike information criterion"""
@@ -47,6 +48,40 @@ def fit_exp(data, x_label):
     return {"loc": loc, "scale": scale, "AIC": aic}
 
 # 2 Beta
+def fit_beta(data, x_label, min=None, max=None):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :param min:
+    :param max:
+    :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+    """
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # estimate the parameters
+    a, b, loc, scale = scs.beta.fit(data, floc=0)
+
+    # plot the estimated distribution
+    x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
+                           scs.beta.ppf(0.9999, a, b, loc, scale), 200)
+    rv = scs.beta(a, b, loc, scale)
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Beta')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=3,
+        log_likelihood=np.sum(scs.beta.logpdf(data, a, b, loc, scale))
+    )
+
+    # report results in the form of a dictionary
+    return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
 
 # 3 BetaBinomial
 # 4 Binomial

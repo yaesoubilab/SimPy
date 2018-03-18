@@ -6,6 +6,10 @@ import scipy.stats as scs
 # simulate some data
 np.random.seed(1)
 
+# In most functions with Location parameter, floc=0 is applied
+# (fix location at 0), since if not, estimated parameters are not unique
+# for example Exponential distribution only has one parameter lambda, k=1
+
 # 1 fitting a exponential distribution
 dat_exp = np.random.exponential(5, 1000)            # generate data
 dictResults=Fit.fit_exp(dat_exp, 'Data')        # fit
