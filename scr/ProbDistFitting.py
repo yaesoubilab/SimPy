@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as scs
+import scipy as sp
 
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
@@ -52,10 +53,23 @@ def fit_beta(data, x_label, min=None, max=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
-    :param min:
-    :param max:
+    :param min: minimum of data, given or calculated from data
+    :param max: maximum of data, given or calculated from data
     :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
     """
+    # transform data into [0,1]
+    if min==None:
+        L = np.min(data)
+    else:
+        L = min
+
+    if max==None:
+        U = np.max(data)
+    else:
+        U = max
+
+    data = (data-L)/(U-L)
+
     # plot histogram
     fig, ax = plt.subplots(1, 1)
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
@@ -84,6 +98,59 @@ def fit_beta(data, x_label, min=None, max=None):
     return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
 
 # 3 BetaBinomial
+def fit_beta(data, x_label, min=None, max=None):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :param min: minimum of data, given or calculated from data
+    :param max: maximum of data, given or calculated from data
+    :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+    """
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # define log_likelihood
+    # ref: http://www.channelgrubb.com/blog/2015/2/27/beta-binomial-in-python
+    def BetaBinom(a, b, n, k):
+        part_1 = sp.misc.comb(n, k)
+        part_2 = sp.special.betaln(k + a, n - k + b)
+        part_3 = sp.special.betaln(a, b)
+        result = (np.log(part_1) + part_2) - part_3
+        return result
+
+    def loglik(x):
+        a, b, n = x[0], x[1],x[2]
+        result = 0
+        for i in range(len(data)):
+            result += BetaBinom(a, b, n, data[i])
+        return result
+
+    # estimate the parameters
+
+    a, b, loc, scale = scs.beta.fit(data, floc=0)
+
+    # plot the estimated distribution
+    x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
+                           scs.beta.ppf(0.9999, a, b, loc, scale), 200)
+    rv = scs.beta(a, b, loc, scale)
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Beta')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=3,
+        log_likelihood=np.sum(scs.beta.logpdf(data, a, b, loc, scale))
+    )
+
+    # report results in the form of a dictionary
+    return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
+
 # 4 Binomial
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
 

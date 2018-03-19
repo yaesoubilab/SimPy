@@ -1,6 +1,7 @@
 import scr.ProbDistFitting as Fit
 import numpy as np
 import scr.RandomVariantGenerators as RVGs
+from tests.RVGtests import get_samples
 import scipy.stats as scs
 
 # simulate some data
@@ -15,6 +16,14 @@ dat_exp = np.random.exponential(5, 1000)            # generate data
 dictResults=Fit.fit_exp(dat_exp, 'Data')        # fit
 print("Fitting Exponential:", dictResults)
 
+# 2 fitting a beta distribution
+dat_beta = 5 * np.random.beta(2, 3, 1000)            # generate data
+dictResults=Fit.fit_beta(dat_beta, 'Data', min=None, max=None) # fit
+print("Fitting Exponential:", dictResults)
+
+# 3 fitting a beta-binomial distribution
+betabinomial_dist = RVGs.BetaBinomial(100, 2, 3) # n, a, b
+dat_betabinomial = np.array(get_samples(betabinomial_dist, np.random))
 
 
 
