@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from scr import FigureSupport as Fig
 
 
-class SamplePath(object):
+class _SamplePath(object):
 
     def __init__(self, name, index, initial_size):
         self._name = name
@@ -27,11 +27,14 @@ class SamplePath(object):
         """" returns the value of this sample path at times when changes occured """
         raise NotImplementedError("Abstract method not implemented.")
 
+    def get_name(self):
+        """ :returns the name of this sample path"""
+        return self._name
 
-class SamplePathRealTimeUpdate(SamplePath):
+class SamplePathRealTimeUpdate(_SamplePath):
     """ a sample path where observations are recorded in real-time (over the simulation) """
     def __init__(self, name, index, initial_size):
-        SamplePath.__init__(self, name, index, initial_size)
+        _SamplePath.__init__(self, name, index, initial_size)
 
     def record(self, time, increment):
 
@@ -55,10 +58,10 @@ class SamplePathRealTimeUpdate(SamplePath):
         return self._values
 
 
-class SamplePathBatchUpdate(SamplePath):
+class SamplePathBatchUpdate(_SamplePath):
     """ a sample path where observations are recorded at the end of the simulation """
     def __init__(self, name, index, initial_size):
-        SamplePath.__init__(self, name, index, initial_size)
+        _SamplePath.__init__(self, name, index, initial_size)
 
         self._samplePath = SamplePathRealTimeUpdate(name, index, initial_size)
         self._ifProcessed = False
