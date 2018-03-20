@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as scs
 import scipy as sp
+import pyjags
 
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
@@ -13,6 +14,30 @@ COLOR_DISCRETE_FIT = 'r'
 def AIC(k, log_likelihood):
     """ :returns Akaike information criterion"""
     return 2 * k - 2 * log_likelihood
+
+def MCMC(num_samples, var_names, model, data):
+    """
+    :param num_samples: number of steps in sample path
+    :param var: list of parameter names
+    :param model: the JAGS code for model defining
+    :return: return MCMC sample path and Maximum Likelihood Estimation of parameters
+    """
+    mc = pyjags.Model(model, data=dict(y=data, N=len(data), n=100))
+    samples = mc.sample(num_samples, vars=var_names)
+
+    for varname in var_names:
+        print(varname, np.mean(samples[varname]))
+
+MCMC_model = '''
+model {
+    for (i in 1:N) {
+        y[i] ~ dbin(p, n)
+    }
+    p ~ dbeta(a,b)
+    a ~ dunif(0, 1e2)
+    b ~ dunif(0, 1e2)
+}
+'''
 
 # 1 Exponential
 def fit_exp(data, x_label):
