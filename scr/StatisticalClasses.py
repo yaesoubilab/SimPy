@@ -314,28 +314,28 @@ class DifferenceStatPaired(_DifferenceStat):
         if len(self._x) != len(self._y_ref):
             raise ValueError('Two samples should have the same size.')
 
-        self.dStat = SummaryStat(name, self._x - self._y_ref)
+        self._dStat = SummaryStat(name, self._x - self._y_ref)
 
     def get_mean(self):
-        return self.dStat.get_mean()
+        return self._dStat.get_mean()
 
     def get_stdev(self):
-        return self.dStat.get_stdev()
+        return self._dStat.get_stdev()
 
     def get_min(self):
-        return self.dStat.get_min()
+        return self._dStat.get_min()
 
     def get_max(self):
-        return self.dStat.get_max()
+        return self._dStat.get_max()
 
     def get_percentile(self, q):
-        return self.dStat.get_percentile(q)
+        return self._dStat.get_percentile(q)
 
     def get_bootstrap_CI(self, alpha, num_samples):
-        return self.dStat.get_bootstrap_CI(alpha, num_samples)
+        return self._dStat.get_bootstrap_CI(alpha, num_samples)
 
     def get_PI(self, alpha):
-        return self.dStat.get_PI(alpha)
+        return self._dStat.get_PI(alpha)
 
 
 class DifferenceStatIndp(_DifferenceStat):
