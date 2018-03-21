@@ -10,7 +10,7 @@ class _Statistics(object):
     def __init__(self, name):
         """ abstract method to be overridden in derived classes"""
         self._name = name        # name of this statistics
-        self._n = 0              # number of data points
+        self._y_n = 0              # number of data points
         self._mean = 0           # sample mean
         self._stDev = 0          # sample standard deviation
         self._max = -sys.float_info.max  # maximum
@@ -47,7 +47,7 @@ class _Statistics(object):
         :param alpha: significance level (between 0 and 1)
         :returns half-length of 100(1-alpha)% t-confidence interval """
 
-        return stat.t.ppf(1 - alpha / 2, self._n - 1) * self.get_stdev() / numpy.sqrt(self._n)
+        return stat.t.ppf(1 - alpha / 2, self._y_n - 1) * self.get_stdev() / numpy.sqrt(self._y_n)
 
     def get_t_CI(self, alpha):
         """ calculates t-based confidence interval for population mean
@@ -162,23 +162,23 @@ class DiscreteTimeStat(_Statistics):
         """ gets the next observation and update the current information"""
         self._total += obs
         self._sumSquared += obs ** 2
-        self._n += 1
+        self._y_n += 1
         if obs > self._max:
             self._max = obs
         if obs < self._min:
             self._min = obs
 
     def get_mean(self):
-        if self._n > 0:
-            return self._total / self._n
+        if self._y_n > 0:
+            return self._total / self._y_n
         else:
             return 0
 
     def get_stdev(self):
-        if self._n>1:
+        if self._y_n>1:
             return math.sqrt(
-                (self._sumSquared - self._total ** 2 / self._n)
-                / (self._n - 1)
+                (self._sumSquared - self._total ** 2 / self._y_n)
+                / (self._y_n - 1)
             )
         else:
             return 0
@@ -231,7 +231,7 @@ class ContinuousTimeStat(_Statistics):
         elif self._lastObsValue < self._min:
             self._min = self._lastObsValue
 
-        self._n += 1
+        self._y_n += 1
         self._area += self._lastObsValue * (time - self._lastObsTime)
         self._areaSquared += (self._lastObsValue ** 2) * (time - self._lastObsTime)
         self._lastObsTime = time
@@ -287,7 +287,8 @@ class ComparativeStat(_Statistics):
         else:
             self._y_ref = y_ref
 
-        self._n = len(self._x)   # number of observations
+        self._x_n = len(self._x)  # number of observations for x
+        self._y_n = len(self._y_ref)    # number of observations for y_ref
 
 
 class _DifferenceStat(ComparativeStat):
@@ -347,10 +348,13 @@ class DifferenceStatIndp(_DifferenceStat):
         _DifferenceStat.__init__(self, name, x, y_ref)
 
         # generate random realizations for random variable X - Y
+        # this will be used for calculating the projection interval
         numpy.random.seed(1)
-        x_i = numpy.random.choice(self._x, size=max(self._n, 1000), replace=True)
-        y_i = numpy.random.choice(self._y_ref, size=max(self._n, 1000), replace=True)
-        self.sum_stat_sample_delta = SummaryStat(name, x_i - y_i)
+        # find the maximum of the number of observations
+        max_n = max(self._x_n, self._y_n, 1000)
+        x_i = numpy.random.choice(self._x, size=max_n, replace=True)
+        y_i = numpy.random.choice(self._y_ref, size=max_n, replace=True)
+        self._sum_stat_sample_delta = SummaryStat(name, x_i - y_i)
 
     def get_mean(self):
         """
@@ -380,7 +384,7 @@ class DifferenceStatIndp(_DifferenceStat):
         :param q: the percentile want to return, in [0, 100]
         :return: qth percentile of sample (x-y)
         """
-        return self.sum_stat_sample_delta.get_percentile(q)
+        return self._sum_stat_sample_delta.get_percentile(q)
 
     def get_bootstrap_CI(self, alpha, num_samples):
         """
@@ -396,8 +400,8 @@ class DifferenceStatIndp(_DifferenceStat):
 
         # obtain bootstrap samples
         for i in range(num_samples):
-            x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self._y_ref, size=self._n, replace=True)
+            x_i = numpy.random.choice(self._x, size=self._y_n, replace=True)
+            y_i = numpy.random.choice(self._y_ref, size=self._y_n, replace=True)
             d_temp = x_i - y_i
             diff[i] = numpy.mean(d_temp)
 
@@ -411,21 +415,20 @@ class DifferenceStatIndp(_DifferenceStat):
         :return: confidence interval of x_bar - y_bar
         """
 
-        n = len(self._x)
-        m = len(self._y_ref)
         sig_x = numpy.std(self._x)
         sig_y = numpy.std(self._y_ref)
 
         alpha = alpha / 100.0
 
         # calculate CI using formula: Welch's t-interval
-        df_n = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 2.0
-        df_d = (sig_x ** 2.0 / n) ** 2 / (n - 1) + (sig_y ** 2.0 / m) ** 2 / (m - 1)
+        df_n = (sig_x ** 2.0 / self._x_n + sig_y ** 2.0 / self._y_n) ** 2.0
+        df_d = (sig_x ** 2.0 / self._x_n) ** 2 / (self._x_n - 1) \
+               + (sig_y ** 2.0 / self._y_n) ** 2 / (self._y_n - 1)
         df = round(df_n / df_d, 0)
 
         # t distribution quantile
         t_q = stat.t.ppf(1 - (alpha / 2), df)
-        st_dev = (sig_x ** 2.0 / n + sig_y ** 2.0 / m) ** 0.5
+        st_dev = (sig_x ** 2.0 / self._x_n + sig_y ** 2.0 / self._y_n) ** 0.5
 
         return t_q*st_dev
 
@@ -437,7 +440,7 @@ class DifferenceStatIndp(_DifferenceStat):
         return [diff - interval, diff + interval]
 
     def get_PI(self, alpha):
-        return self.sum_stat_sample_delta.get_PI(alpha)
+        return self._sum_stat_sample_delta.get_PI(alpha)
 
 
 class _RatioStat(ComparativeStat):
@@ -496,13 +499,22 @@ class RatioStatIndp(_RatioStat):
     def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
-        :param y_ref: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations (reference)
         """
+
         _RatioStat.__init__(self, name, x, y_ref)
-        self.sum_stat_sample_ratio = SummaryStat(name, numpy.divide(self._x, self._y_ref))
+
+        # generate random realizations for random variable X/Y
+        numpy.random.seed(1)
+        # find the maximum of the number of observations
+        max_n = max(self._x_n, self._y_n, 1000)
+        x_resample = numpy.random.choice(self._x, size=max_n, replace=True)
+        y_resample = numpy.random.choice(self._y_ref, size=max_n, replace=True)
+
+        self._sum_stat_sample_ratio = SummaryStat(name, numpy.divide(x_resample, y_resample))
 
     def get_mean(self):
-        return self.sum_stat_sample_ratio.get_mean()
+        return self._sum_stat_sample_ratio.get_mean()
 
     def get_stdev(self):
         """
@@ -517,10 +529,10 @@ class RatioStatIndp(_RatioStat):
         return numpy.sqrt(var)
 
     def get_min(self):
-        return None
+        return self._sum_stat_sample_ratio.get_min()
 
     def get_max(self):
-        return None
+        return self._sum_stat_sample_ratio.get_max()
 
     def get_percentile(self, q):
         """
@@ -528,13 +540,13 @@ class RatioStatIndp(_RatioStat):
         :param q: the percentile want to return, in [0,100]
         :return: qth percentile of sample (x/y)
         """
-        return self.sum_stat_sample_ratio.get_percentile(q)
+        return self._sum_stat_sample_ratio.get_percentile(q)
 
     def get_t_half_length(self, alpha):
-        return self.sum_stat_sample_ratio.get_t_half_length(alpha)
+        return self._sum_stat_sample_ratio.get_t_half_length(alpha)
 
     def get_t_CI(self, alpha):
-        return self.sum_stat_sample_ratio.get_t_CI(alpha)
+        return self._sum_stat_sample_ratio.get_t_CI(alpha)
 
     def get_bootstrap_CI(self, alpha, num_samples):
         """
@@ -549,16 +561,17 @@ class RatioStatIndp(_RatioStat):
         ratio = numpy.zeros(num_samples)
 
         # obtain bootstrap samples
+        n = max(self._x_n, self._y_n)
         for i in range(num_samples):
-            x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self._y_ref, size=self._n, replace=True)
+            x_i = numpy.random.choice(self._x, size=n, replace=True)
+            y_i = numpy.random.choice(self._y_ref, size=n, replace=True)
             r_temp = numpy.divide(x_i, y_i)
             ratio[i] = numpy.mean(r_temp)
 
-        return numpy.percentile(ratio, [alpha/2.0, 100-alpha/2.0])
+        return numpy.percentile(ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
     def get_PI(self, alpha):
-        return self.sum_stat_sample_ratio.get_PI(alpha)
+        return self._sum_stat_sample_ratio.get_PI(alpha)
 
 
 class _RelativeDifference(ComparativeStat):
@@ -621,10 +634,18 @@ class RelativeDifferenceIndp(_RelativeDifference):
         :param y: list or numpy.array of second set of observations
         """
         _RelativeDifference.__init__(self, name, x, y_ref)
-        self.sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(self._x, self._y_ref) - 1)
+
+        # generate random realizations for random variable (X-Y)/Y
+        numpy.random.seed(1)
+        # find the maximum of the number of observations
+        max_n = max(self._x_n, self._y_n, 1000)
+        x_resample = numpy.random.choice(self._x, size=max_n, replace=True)
+        y_resample = numpy.random.choice(self._y_ref, size=max_n, replace=True)
+
+        self._sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(x_resample, y_resample) - 1)
 
     def get_mean(self):
-        return self.sum_stat_sample_relativeRatio.get_mean()
+        return self._sum_stat_sample_relativeRatio.get_mean()
 
     def get_stdev(self):
         """
@@ -640,10 +661,10 @@ class RelativeDifferenceIndp(_RelativeDifference):
         return numpy.sqrt(var)
 
     def get_min(self):
-        return None
+        return self._sum_stat_sample_relativeRatio.get_min()
 
     def get_max(self):
-        return None
+        return self._sum_stat_sample_relativeRatio.get_max()
 
     def get_percentile(self, q):
         """
@@ -651,13 +672,13 @@ class RelativeDifferenceIndp(_RelativeDifference):
         :param q: the percentile want to return, in [0,100]
         :return: qth percentile of sample (x-y)/y
         """
-        return self.sum_stat_sample_relativeRatio.get_percentile(q)
+        return self._sum_stat_sample_relativeRatio.get_percentile(q)
 
     def get_t_half_length(self, alpha):
-        return self.sum_stat_sample_relativeRatio.get_t_half_length(alpha)
+        return self._sum_stat_sample_relativeRatio.get_t_half_length(alpha)
 
     def get_t_CI(self, alpha):
-        return self.sum_stat_sample_relativeRatio.get_t_CI(alpha)
+        return self._sum_stat_sample_relativeRatio.get_t_CI(alpha)
 
     def get_bootstrap_CI(self, alpha, num_samples):
         """
@@ -672,13 +693,14 @@ class RelativeDifferenceIndp(_RelativeDifference):
         ratio = numpy.zeros(num_samples)
 
         # obtain bootstrap samples
+        n = max(self._x_n, self._y_n)
         for i in range(num_samples):
-            x_i = numpy.random.choice(self._x, size=self._n, replace=True)
-            y_i = numpy.random.choice(self._y_ref, size=self._n, replace=True)
+            x_i = numpy.random.choice(self._x, size=n, replace=True)
+            y_i = numpy.random.choice(self._y_ref, size=n, replace=True)
             r_temp = numpy.divide(x_i, y_i) - 1
             ratio[i] = numpy.mean(r_temp)
 
-        return numpy.percentile(ratio, [alpha/2.0, 100-alpha/2.0])
+        return numpy.percentile(ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
     def get_PI(self, alpha):
-        return self.sum_stat_sample_relativeRatio.get_PI(alpha)
+        return self._sum_stat_sample_relativeRatio.get_PI(alpha)
