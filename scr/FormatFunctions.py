@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Format(Enum):
+class FormatNumber(Enum):
     NUMBER = 0          # 1,234
     CURRENCY = 1        # $1,234
     PERCENTAGE = 2      # 1.23%
@@ -20,11 +20,11 @@ def format_number(number, deci, form=None):
     else:
         if form is None:
             return '{:.{prec}f}'.format(number, prec=deci)
-        elif form == Format.NUMBER:
+        elif form == FormatNumber.NUMBER:
             return '{:,.{prec}f}'.format(number, prec=deci)
-        elif form == Format.CURRENCY:
+        elif form == FormatNumber.CURRENCY:
             return '${:,.{prec}f}'.format(number, prec=deci)
-        elif form == Format.PERCENTAGE:
+        elif form == FormatNumber.PERCENTAGE:
             return '{:.{prec}f}%'.format(100*number, prec=deci)
 
 
@@ -42,13 +42,13 @@ def format_interval(interval, deci, form=None):
         if form is None:
             return '({low:.{prec}f}, {up:.{prec}f})' \
                 .format(low=interval[0], up=interval[1], prec=deci)
-        elif form == Format.NUMBER:
+        elif form == FormatNumber.NUMBER:
             return '({low:,.{prec}f}, {up:,.{prec}f})' \
                 .format(low=interval[0], up=interval[1], prec=deci)
-        elif form == Format.CURRENCY:
+        elif form == FormatNumber.CURRENCY:
             return '(${low:,.{prec}f}, ${up:,.{prec}f})' \
                 .format(low=interval[0], up=interval[1], prec=deci)
-        elif form == Format.PERCENTAGE:
+        elif form == FormatNumber.PERCENTAGE:
             return '({low:.{prec}f}%, {up:.{prec}f}%)' \
                 .format(low=interval[0]*100, up=interval[1]*100, prec=deci)
 

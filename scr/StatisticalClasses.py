@@ -10,7 +10,7 @@ class _Statistics(object):
     def __init__(self, name):
         """ abstract method to be overridden in derived classes"""
         self._name = name        # name of this statistics
-        self._y_n = 0              # number of data points
+        self._n = 0              # number of data points
         self._mean = 0           # sample mean
         self._stDev = 0          # sample standard deviation
         self._max = -sys.float_info.max  # maximum
@@ -47,7 +47,7 @@ class _Statistics(object):
         :param alpha: significance level (between 0 and 1)
         :returns half-length of 100(1-alpha)% t-confidence interval """
 
-        return stat.t.ppf(1 - alpha / 2, self._y_n - 1) * self.get_stdev() / numpy.sqrt(self._y_n)
+        return stat.t.ppf(1 - alpha / 2, self._n - 1) * self.get_stdev() / numpy.sqrt(self._n)
 
     def get_t_CI(self, alpha):
         """ calculates t-based confidence interval for population mean
@@ -169,13 +169,13 @@ class DiscreteTimeStat(_Statistics):
             self._min = obs
 
     def get_mean(self):
-        if self._y_n > 0:
-            return self._total / self._y_n
+        if self._n > 0:
+            return self._total / self._n
         else:
             return 0
 
     def get_stdev(self):
-        if self._y_n>1:
+        if self._n>1:
             return math.sqrt(
                 (self._sumSquared - self._total ** 2 / self._y_n)
                 / (self._y_n - 1)
