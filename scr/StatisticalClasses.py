@@ -269,7 +269,7 @@ class ContinuousTimeStat(_Statistics):
         return None
 
 
-class ComparativeStat(_Statistics):
+class _ComparativeStat(_Statistics):
     def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
@@ -291,14 +291,14 @@ class ComparativeStat(_Statistics):
         self._y_n = len(self._y_ref)    # number of observations for y_ref
 
 
-class _DifferenceStat(ComparativeStat):
+class _DifferenceStat(_ComparativeStat):
 
     def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         """
-        ComparativeStat.__init__(self, name, x, y_ref)
+        _ComparativeStat.__init__(self, name, x, y_ref)
 
 
 class DifferenceStatPaired(_DifferenceStat):
@@ -399,9 +399,10 @@ class DifferenceStatIndp(_DifferenceStat):
         diff = numpy.zeros(num_samples)
 
         # obtain bootstrap samples
+        n = max(self._x_n, self._y_n, 1000)
         for i in range(num_samples):
-            x_i = numpy.random.choice(self._x, size=self._y_n, replace=True)
-            y_i = numpy.random.choice(self._y_ref, size=self._y_n, replace=True)
+            x_i = numpy.random.choice(self._x, size=n, replace=True)
+            y_i = numpy.random.choice(self._y_ref, size=n, replace=True)
             d_temp = x_i - y_i
             diff[i] = numpy.mean(d_temp)
 
@@ -443,14 +444,14 @@ class DifferenceStatIndp(_DifferenceStat):
         return self._sum_stat_sample_delta.get_PI(alpha)
 
 
-class _RatioStat(ComparativeStat):
+class _RatioStat(_ComparativeStat):
 
     def __init__(self, name, x, y_ref):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         """
-        ComparativeStat.__init__(self, name, x, y_ref)
+        _ComparativeStat.__init__(self, name, x, y_ref)
         # make sure no 0 in the denominator variable
         if not (self._y_ref != 0).all():
             raise ValueError('invalid value of y, the ratio is not computable')
@@ -574,7 +575,7 @@ class RatioStatIndp(_RatioStat):
         return self._sum_stat_sample_ratio.get_PI(alpha)
 
 
-class _RelativeDifference(ComparativeStat):
+class _RelativeDifference(_ComparativeStat):
     """ class to make inference about (X-Y_ref)/Y_ref"""
 
     def __init__(self, name, x, y_ref):
@@ -582,7 +583,7 @@ class _RelativeDifference(ComparativeStat):
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations used as the reference values
         """
-        ComparativeStat.__init__(self, name, x, y_ref)
+        _ComparativeStat.__init__(self, name, x, y_ref)
 
         # make sure no 0 in the denominator variable y
         if not (self._y_ref != 0).all():
