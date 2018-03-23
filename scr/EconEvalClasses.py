@@ -268,6 +268,7 @@ class CEA(EconEval):
         vals_y, labs_y = plt.yticks()
         vals_x, labs_x = plt.xticks()
         plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+        plt.xticks(vals_x, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
         # get ranges of x, y axis
         Lx = np.ptp(vals_x)
