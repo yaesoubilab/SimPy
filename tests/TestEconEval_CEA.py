@@ -3,7 +3,7 @@ import numpy as np
 
 
 np.random.seed(573)
-s_center = np.random.normal(0, 5, (10, 2))
+s_center = np.random.normal(0, 5000, (10, 2))
 
 s0 = ce.Strategy("s1", s_center[0, 0]+np.random.normal(0, 0.5, 10), s_center[0, 1]+np.random.normal(0, 0.5, 10))
 s1 = ce.Strategy("s2", s_center[1, 0]+np.random.normal(0, 0.5, 10), s_center[1, 1]+np.random.normal(0, 0.5, 10))
