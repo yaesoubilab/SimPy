@@ -236,9 +236,18 @@ class CEA(EconEval):
         frontier_plot = df_shifted_strategies.loc[df_shifted_strategies["Dominated_result"] == False]\
             .sort_values('E[Effect]')
 
+        # draw the fontier
+        plt.figure(figsize=(figure_size, figure_size))
+        plt.plot(frontier_plot['E[Effect]'], frontier_plot['E[Cost]'], c='k', alpha=0.6, linewidth=2,
+                 label="Frontier")
+        plt.axhline(y=0, c='k', linewidth=0.5)
+        plt.axvline(x=0, c='k', linewidth=0.5)
+        plt.title(title)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+
         # show observation clouds for strategies
         if show_clouds:
-            plt.figure(figsize=(figure_size, figure_size))
             for strategy_i, color in zip(self._shifted_strategies, cm.rainbow(np.linspace(0, 1, self._n))):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
@@ -251,19 +260,10 @@ class CEA(EconEval):
                         marker='x', c='k', s=50, linewidths=2)
 
         else:
-            plt.figure(figsize=(figure_size, figure_size))
             plt.scatter(df_shifted_strategies['E[Effect]'],
                         df_shifted_strategies['E[Cost]'],
                         c=list(df_shifted_strategies['Color']),
                         s=50)
-
-        # draw the fontier
-        plt.plot(frontier_plot['E[Effect]'], frontier_plot['E[Cost]'], c='k', alpha=0.6, linewidth=2)
-        plt.axhline(y=0, c='k', linewidth=0.5)
-        plt.axvline(x=0, c='k', linewidth=0.5)
-        plt.title(title)
-        plt.xlabel(x_label)
-        plt.ylabel(y_label)
 
         vals_y, labs_y = plt.yticks()
         vals_x, labs_x = plt.xticks()
