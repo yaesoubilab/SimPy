@@ -346,6 +346,7 @@ class CEA(EconEval):
         table.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
         table.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
         table.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
+
         table.loc[frontier_strategies.index[0], 'ICER'] = '-'
 
         # create output dataframe
@@ -368,6 +369,10 @@ class CEA(EconEval):
              'E[dEffect]': table['E[dEffect]'],
              'ICER': table['ICER']
              })
+        # format thousand separator
+        # output_estimates['E[Cost]'] = output_estimates.apply(lambda x: "{:,}".format(x['E[Cost]']), axis=1)
+        # output_estimates['E[Effect]'] = output_estimates.apply(lambda x: "{:,}".format(x['E[Effect]']), axis=1)
+
         self.output_estimates = output_estimates[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]
 
 
@@ -519,6 +524,7 @@ class CEA(EconEval):
         else:
             self.out_intervals = None
 
+        #
 
         # merge estimates and intervals together
         out_table = pd.DataFrame(
@@ -534,33 +540,32 @@ class CEA(EconEval):
             out_table.loc[i, 'E[Cost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Cost]'],
                                                     self.out_intervals.loc[i,'Cost_I'],
-                                                    cost_digits)
+                                                    cost_digits, form=FormatFunc.FormatNumber.NUMBER)
             out_table.loc[i, 'E[Effect]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Effect]'],
                                                     self.out_intervals.loc[i,'Effect_I'],
-                                                    effect_digits)
+                                                    effect_digits, form=FormatFunc.FormatNumber.NUMBER)
 
         for i in range(1, n_frontier_strategies):
 
             out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dCost]'],
                                                     self.out_intervals.loc[frontier_strategies.index[i],'dCost_I'],
-                                                    cost_digits)
+                                                    cost_digits, form=FormatFunc.FormatNumber.NUMBER)
 
             out_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dEffect]'],
                                                     self.out_intervals.loc[frontier_strategies.index[i],'dEffect_I'],
-                                                    effect_digits)
+                                                    effect_digits, form=FormatFunc.FormatNumber.NUMBER)
 
             out_table.loc[frontier_strategies.index[i], 'ICER'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'ICER'],
                                                     self.out_intervals.loc[frontier_strategies.index[i],'ICER_I'],
-                                                    icer_digits)
+                                                    icer_digits, form=FormatFunc.FormatNumber.NUMBER)
 
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
             "CETable.csv", encoding='utf-8', index=False)
-
 
 class CBA(EconEval):
     """ class for doing cost-benefit analysis """
