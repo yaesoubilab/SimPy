@@ -254,7 +254,10 @@ class CEA(EconEval):
                 # plot clouds
                 plt.scatter(x_values, y_values, c=color, alpha=transparency, s=25, label=strategy_i.name)
             if show_legend:
-                plt.legend() # to customize legend: loc='lower right', numpoints=1, ncol=3, fontsize=8)
+                handles, labels = plt.gca().get_legend_handles_labels()
+                order = np.append(range(len(handles))[1:], 0)
+                plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
+                # to customize legend: loc='lower right', numpoints=1, ncol=3, fontsize=8)
             plt.scatter(df_shifted_strategies['E[Effect]'],
                         df_shifted_strategies['E[Cost]'],
                         marker='x', c='k', s=50, linewidths=2)
