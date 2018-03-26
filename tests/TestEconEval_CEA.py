@@ -17,7 +17,7 @@ s8 = ce.Strategy("s9", s_center[8, 0]+np.random.normal(0, 200, 10), s_center[8, 
 s9 = ce.Strategy("s10", s_center[9, 0]+np.random.normal(0, 200, 10), s_center[9, 1]+np.random.normal(0, 200, 10))
 
 # create a CEA object -- unpaired
-myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)
+myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=False)
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('CE plane with unpaired observations and showing labels',
@@ -25,7 +25,7 @@ myCEA.show_CE_plane('CE plane with unpaired observations and showing labels',
 
 # plot with sample cloud and legend
 myCEA.show_CE_plane('CE Plane with unpaired observations and showing legend',
-                    'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=5)
+                    'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=6)
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('CE Plane with unpaired observations and no clouds',
@@ -45,7 +45,7 @@ myCEA2.show_CE_plane('CE plane with paired observations and showing labels',
 
 # plot with sample cloud and legend
 myCEA2.show_CE_plane('CE Plane with paired observations and showing legend',
-                     'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=5)
+                     'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=6)
 
 # plot with no label and sample cloud
 myCEA2.show_CE_plane('CE Plane with paired observations and no clouds',
