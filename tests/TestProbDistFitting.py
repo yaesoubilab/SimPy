@@ -28,6 +28,9 @@ dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
 dictResults=Fit.fit_betaBinomial(dat_betabin, 'Data', n=100) # fit
 print("Fitting BetaBinomial:", dictResults)
 
+# 4 Binomial
+
+# 5 Empirical
 
 
 

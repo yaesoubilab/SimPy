@@ -197,8 +197,9 @@ def fit_betaBinomial(data, x_label, n=None):
     # report results in the form of a dictionary
     return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
 
-
 # 4 Binomial
+
+
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
 
 
