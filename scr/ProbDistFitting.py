@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as scs
 import scipy as sp
 import pyjags
+from scipy.optimize import fmin_slsqp
 
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
@@ -15,9 +16,11 @@ def AIC(k, log_likelihood):
     """ :returns Akaike information criterion"""
     return 2 * k - 2 * log_likelihood
 
-def MCMC(num_samples, var_names, model, data):
+# JAGS Monte-Carlo simulation for parameter estimation
+# with uniform prior, equivalent to MLE
+def MCMC_JAGS(num_samples, var_names, model, data):
     """
-    :param num_samples: number of steps in sample path
+    :param num_samples: number of steps in sample path, real steps = num_samples*4
     :param var: list of parameter names
     :param model: the JAGS code for model defining
     :return: return MCMC sample path and Maximum Likelihood Estimation of parameters
@@ -28,16 +31,9 @@ def MCMC(num_samples, var_names, model, data):
     for varname in var_names:
         print(varname, np.mean(samples[varname]))
 
-MCMC_model = '''
-model {
-    for (i in 1:N) {
-        y[i] ~ dbin(p, n)
-    }
-    p ~ dbeta(a,b)
-    a ~ dunif(0, 1e2)
-    b ~ dunif(0, 1e2)
-}
-'''
+    return samples
+
+
 
 # 1 Exponential
 def fit_exp(data, x_label):
@@ -123,14 +119,15 @@ def fit_beta(data, x_label, min=None, max=None):
     return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
 
 # 3 BetaBinomial
-def fit_beta(data, x_label, min=None, max=None):
+def fit_betaBinomial(data, x_label, n=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
-    :param min: minimum of data, given or calculated from data
-    :param max: maximum of data, given or calculated from data
-    :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+    :param n: the number of trials in the Binomial distribution
+    :returns: dictionary with keys "a", "b", "n" and "AIC"
     """
+    if n==None:
+        n = np.max(data)
 
     # plot histogram
     fig, ax = plt.subplots(1, 1)
@@ -138,29 +135,53 @@ def fit_beta(data, x_label, min=None, max=None):
 
     # define log_likelihood
     # ref: http://www.channelgrubb.com/blog/2015/2/27/beta-binomial-in-python
-    def BetaBinom(a, b, n, k):
+    def BetaBinom(a, b, n, k): # log(pmf) of beta binomial
         part_1 = sp.misc.comb(n, k)
         part_2 = sp.special.betaln(k + a, n - k + b)
         part_3 = sp.special.betaln(a, b)
         result = (np.log(part_1) + part_2) - part_3
         return result
 
-    def loglik(x):
-        a, b, n = x[0], x[1],x[2]
+    def loglik(theta):
+        a, b = theta[0], theta[1]
         result = 0
         for i in range(len(data)):
             result += BetaBinom(a, b, n, data[i])
         return result
 
-    # estimate the parameters
+    def neg_loglik(theta):
+        return -loglik(theta)
 
-    a, b, loc, scale = scs.beta.fit(data, floc=0)
+    # estimate the parameters by minimize -loglik
+    theta0 = [1, 1]
+    paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, 10.0)] * len(theta0),
+                              disp=False, full_output=True)
+
+    ##########################
+    # JAGS Model
+    # jags_model = '''
+    # model {
+    #     for (i in 1:N) {
+    #         p[i] ~ dbeta(a,b)
+    #         y[i] ~ dbin(p[i], n)
+    #     }
+    #     a ~ dunif(0, 10)
+    #     b ~ dunif(0, 10)
+    # }
+    # '''
+    # # 1000 samples
+    # sample_path = MCMC_JAGS(250, ['a', 'b'], jags_model, data)
+    # a, b = np.mean(sample_path['a']), np.mean(sample_path['b'])
+    ##########################
 
     # plot the estimated distribution
-    x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
-                           scs.beta.ppf(0.9999, a, b, loc, scale), 200)
-    rv = scs.beta(a, b, loc, scale)
-    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Beta')
+    # get PMF
+    x_values = np.arange(0, n, step=1)
+    pmf = np.zeros(len(x_values))
+    for i in x_values:
+        pmf[i] = np.exp(BetaBinom(paras[0], paras[1], n, i))
+    # plot
+    ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='BetaBinomial')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -170,11 +191,12 @@ def fit_beta(data, x_label, min=None, max=None):
     # calculate AIC
     aic = AIC(
         k=3,
-        log_likelihood=np.sum(scs.beta.logpdf(data, a, b, loc, scale))
+        log_likelihood=loglik([paras[0], paras[1], n])
     )
 
     # report results in the form of a dictionary
-    return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
+    return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
+
 
 # 4 Binomial
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
