@@ -100,8 +100,12 @@ class SummaryStat(_Statistics):
             self._data = data
 
         self._n = len(self._data)
+        self._total = numpy.sum(self._data)
         self._mean = numpy.mean(self._data)
         self._stDev = numpy.std(self._data, ddof=1)  # unbiased estimator of the standard deviation
+
+    def get_total(self):
+        return self._total
 
     def get_mean(self):
         return self._mean
@@ -167,6 +171,9 @@ class DiscreteTimeStat(_Statistics):
             self._max = obs
         if obs < self._min:
             self._min = obs
+
+    def get_total(self):
+        return self._total
 
     def get_mean(self):
         if self._n > 0:
