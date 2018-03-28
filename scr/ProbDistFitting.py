@@ -198,10 +198,70 @@ def fit_betaBinomial(data, x_label, n=None):
     return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
 
 # 4 Binomial
+def fit_binomial(data, x_label, n=None):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :param n: the number of trials in the Binomial distribution, set by experiment design
+    :returns: dictionary with keys "p" and "AIC"
+    """
+    if n==None:
+        n = np.max(data)
+
+    # fit Binomial distribution: the MLE of p is x/n
+    # if we have N data point with Xi~Bin(n,p), then sum(Xi)~Bin(n*N,p), p_hat = sum(xi)/(n*N)
+    # # https://onlinecourses.science.psu.edu/stat504/node/28
+    p=np.sum(data)*1.0/(len(data)*n)
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
+            edgecolor='black', alpha=0.5, label='Frequency')
+
+    # plot with fitted parameter
+    x_plot = np.arange(0, n, step=1)
+    ax.step(x_plot, scs.binom.pmf(x_plot, n, p), COLOR_DISCRETE_FIT, ms=8, label='Binomial')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=1,
+        log_likelihood=np.sum(scs.binom.logpmf(data, n, p))
+    )
+
+    # report results in the form of a dictionary
+    return {"p": p, "AIC": aic}
 
 
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
+def fit_empirical(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: frequency of unique observations
+    """
+    unique, counts = np.unique(data, return_counts=True)
+    freq = counts*1.0/len(data)
 
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
+            edgecolor='black', alpha=0.5, label='Frequency')
+
+    # plot with fitted parameter
+    x_plot = unique
+    ax.step(unique, freq, COLOR_DISCRETE_FIT, ms=8, label='Empirical')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    return unique,freq
 
 # 6 Gamma
 def fit_gamma(data, x_label):
@@ -240,6 +300,8 @@ def fit_gamma(data, x_label):
 
 # 7 GammaPoisson
 # 8 Geometric
+
+
 
 # 9 JohnsonSb
 def fit_johnsonSb(data, x_label):
@@ -312,8 +374,40 @@ def fit_johnsonSu(data, x_label):
     return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
 
 
-
 # 11 LogNormal
+def fit_lognorm(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "s", "loc", "scale", and "AIC", s = sigma and scale = exp(mu)
+    """
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # estimate the parameters
+    s, loc, scale = scs.lognorm.fit(data, floc=0)
+
+    # plot the estimated gamma distribution
+    x_values = np.linspace(scs.lognorm.ppf(0.0001, s, loc, scale), scs.lognorm.ppf(0.9999, s, loc, scale), 200)
+    rv = scs.lognorm(s, loc, scale)
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='LogNormal')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=2,
+        log_likelihood=np.sum(scs.lognorm.logpdf(data, s, loc, scale))
+    )
+
+    # report results in the form of a dictionary
+    return {"s": s, "loc": loc, "scale": scale, "AIC": aic}
+
 # 12 NegativeBinomial
 # 13 Normal
 # 14 Triangular

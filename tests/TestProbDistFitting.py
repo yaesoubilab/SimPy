@@ -29,10 +29,14 @@ dictResults=Fit.fit_betaBinomial(dat_betabin, 'Data', n=100) # fit
 print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
+dat_bin = np.random.binomial(100, 0.3, 1000)
+dictResults=Fit.fit_binomial(dat_bin, 'Data', n=100) # fit
+print("Fitting Binomial:", dictResults)
 
-# 5 Empirical
-
-
+# 5 Empirical (for int data)
+dat_em = np.random.poisson(30, 1000)
+dictResults=Fit.fit_empirical(dat_em, 'Data') # fit
+print("Fitting Empirical:", dictResults)
 
 # 6 fitting a gamma distribution
 dat_gamma = np.random.gamma(10, 2,1000)     # generate data
@@ -48,6 +52,12 @@ print("Fitting johnsonSb:", dictResults)
 dat_JohnsonSu = scs.johnsonsu.rvs(a=10, b=3, loc=0, scale=1, size=1000)    # generate data
 dictResults=Fit.fit_johnsonSu(dat_JohnsonSu, 'Data')    # fit
 print("Fitting johnsonSu:", dictResults)
+
+# 11 LogNormal
+dat_lognorm = np.random.lognormal(0, 1, 1000)    # mean, sigma
+dictResults=Fit.fit_lognorm(dat_lognorm, 'Data')    # fit (scale=exp(mean))
+print("Fitting LogNormal:", dictResults)
+
 
 # 17 fitting a Weibull distribution
 dat_weibull = np.random.weibull(5, 1000)    # generate data
