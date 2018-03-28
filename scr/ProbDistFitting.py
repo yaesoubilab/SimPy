@@ -69,6 +69,7 @@ def fit_exp(data, x_label):
     # report results in the form of a dictionary
     return {"loc": loc, "scale": scale, "AIC": aic}
 
+
 # 2 Beta
 def fit_beta(data, x_label, min=None, max=None):
     """
@@ -117,6 +118,7 @@ def fit_beta(data, x_label, min=None, max=None):
 
     # report results in the form of a dictionary
     return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
+
 
 # 3 BetaBinomial
 def fit_betaBinomial(data, x_label, n=None):
@@ -197,6 +199,7 @@ def fit_betaBinomial(data, x_label, n=None):
     # report results in the form of a dictionary
     return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
 
+
 # 4 Binomial
 def fit_binomial(data, x_label, n=None):
     """
@@ -263,6 +266,7 @@ def fit_empirical(data, x_label):
 
     return unique,freq
 
+
 # 6 Gamma
 def fit_gamma(data, x_label):
     """
@@ -276,6 +280,7 @@ def fit_gamma(data, x_label):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of gamma
+    # alpha = a, beta = 1/scale
     a, loc, scale = scs.gamma.fit(data)
 
     # plot the estimated gamma distribution
@@ -299,8 +304,96 @@ def fit_gamma(data, x_label):
 
 
 # 7 GammaPoisson
-# 8 Geometric
+def fit_GammaPoisson(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "a", "scale" and "AIC"
+    """
 
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # define log_likelihood
+    # ref: http://people.stat.sc.edu/Hitchcock/slides535day5spr2014.pdf
+    # gamma is a Conjugate prior for poisson distribution, the likelihood is gamma distributed
+
+    n=len(data)
+    def loglik(theta):
+        a, b = theta[0], theta[1]
+        post_a = np.sum(data)+a
+        post_b = n + b
+        result = 0
+        for i in range(len(data)):
+            result += scs.gamma.logpdf(data[i], post_a, 1/post_b)
+        return result
+
+    def neg_loglik(theta):
+        return -loglik(theta)
+
+    # estimate the parameters by minimize -loglik
+    # alpha=a, beta=1/scale
+    theta0 = [1, 1]
+    paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, 10.0)] * len(theta0),
+                              disp=False, full_output=True)
+
+    # plot the estimated distribution
+    # get PMF
+    x_values = np.arange(0, n, step=1)
+
+    ax.step(x_values, scs.gamma.logpdf(x_values, np.sum(data)+paras[0], (n + 1.0/paras[1])**(-1)),
+            color=COLOR_CONTINUOUS_FIT, lw=2, label='BetaBinomial')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=3,
+        log_likelihood=loglik([paras[0], paras[1]])
+    )
+
+    # report results in the form of a dictionary
+    return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
+
+
+
+# 8 Geometric
+def fit_geometric(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "p" and "AIC"
+    """
+
+    # https://www.projectrhea.org/rhea/index.php/MLE_Examples:_Exponential_and_Geometric_Distributions_Old_Kiwi
+    p = len(data)*1.0/np.sum(data)
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins=np.max(data)+1, range=[0.5, np.max(data)+0.5],
+            edgecolor='black', alpha=0.5, label='Frequency')
+
+    # plot poisson-deviation with fitted parameter
+    x_plot = np.arange(scs.geom.ppf(0.0001, p), scs.geom.ppf(0.9999, p))
+    ax.step(x_plot, scs.geom.pmf(x_plot, p), COLOR_DISCRETE_FIT, ms=8, label='Geometric')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=1,
+        log_likelihood=np.sum(scs.geom.logpmf(data, p))
+    )
+
+    # report results in the form of a dictionary
+    return {"p": p, "AIC": aic}
 
 
 # 9 JohnsonSb
@@ -337,6 +430,7 @@ def fit_johnsonSb(data, x_label):
 
     # report results in the form of a dictionary
     return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
+
 
 # 10 JohnsonSu
 def fit_johnsonSu(data, x_label):
@@ -389,7 +483,7 @@ def fit_lognorm(data, x_label):
     # estimate the parameters
     s, loc, scale = scs.lognorm.fit(data, floc=0)
 
-    # plot the estimated gamma distribution
+    # plot the estimated distribution
     x_values = np.linspace(scs.lognorm.ppf(0.0001, s, loc, scale), scs.lognorm.ppf(0.9999, s, loc, scale), 200)
     rv = scs.lognorm(s, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='LogNormal')
@@ -408,11 +502,156 @@ def fit_lognorm(data, x_label):
     # report results in the form of a dictionary
     return {"s": s, "loc": loc, "scale": scale, "AIC": aic}
 
+
 # 12 NegativeBinomial
+
+
 # 13 Normal
+def fit_norm(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "loc", "scale", and "AIC"
+    """
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # estimate the parameters
+    loc, scale = scs.norm.fit(data)
+
+    # plot the estimated distribution
+    x_values = np.linspace(scs.norm.ppf(0.0001, loc, scale), scs.norm.ppf(0.9999, loc, scale), 200)
+    rv = scs.norm(loc, scale)
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Normal')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=2,
+        log_likelihood=np.sum(scs.norm.logpdf(data, loc, scale))
+    )
+
+    # report results in the form of a dictionary
+    return {"loc": loc, "scale": scale, "AIC": aic}
+
+
 # 14 Triangular
+def fit_triang(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "c", "loc", "scale", and "AIC"
+    """
+    # The triangular distribution can be represented with an up-sloping line from
+    # loc to (loc + c*scale) and then downsloping for (loc + c*scale) to (loc+scale).
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # estimate the parameters
+    c, loc, scale = scs.triang.fit(data)
+
+    # plot the estimated distribution
+    x_values = np.linspace(scs.triang.ppf(0.0001, c, loc, scale), scs.triang.ppf(0.9999, c, loc, scale), 200)
+    rv = scs.triang(c, loc, scale)
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Triangular')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=3,
+        log_likelihood=np.sum(scs.triang.logpdf(data, c, loc, scale))
+    )
+
+    # report results in the form of a dictionary
+    return {"c":c, "loc": loc, "scale": scale, "AIC": aic}
+
+
 # 15 Uniform
+def fit_uniform(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "loc", "scale", and "AIC"
+    """
+    # This distribution is constant between loc and loc + scale.
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # estimate the parameters
+    loc, scale = scs.uniform.fit(data)
+
+    # plot the estimated distribution
+    x_values = np.linspace(scs.uniform.ppf(0.0001, loc, scale), scs.uniform.ppf(0.9999, loc, scale), 200)
+    rv = scs.uniform(loc, scale)
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Uniform')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=2,
+        log_likelihood=np.sum(scs.uniform.logpdf(data, loc, scale))
+    )
+
+    # report results in the form of a dictionary
+    return {"loc": loc, "scale": scale, "AIC": aic}
+
+
 # 16 UniformDiscrete
+def fit_uniformDiscrete(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "low", "high", and "AIC"
+    """
+    # This distribution is constant between low and high.
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    # estimate the parameters
+    # as likelihood = 1/(high-low)^n, so the smaller the range, the higher the likelihood
+    # the MLE is
+    low = np.min(data)
+    high = np.max(data)
+
+    # plot the estimated distribution
+    x_values = np.arange(low, high, step=1)
+    rv = scs.randint(low, high)
+    ax.step(x_values, rv.pmf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='UniformDiscrete')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=2,
+        log_likelihood=np.sum(scs.randint.logpmf(data, low, high))
+    )
+
+    # report results in the form of a dictionary
+    return {"low": low, "high": high, "AIC": aic}
+
 
 # 17 Weibull
 def fit_weibull(data, x_label):
@@ -448,6 +687,7 @@ def fit_weibull(data, x_label):
 
     # report results in the form of a dictionary
     return {"a": a, "loc": loc, "scale": scale, "AIC": aic}
+
 
 # 18 Poisson
 def fit_poisson(data, x_label):

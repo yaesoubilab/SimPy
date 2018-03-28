@@ -21,7 +21,6 @@ dat_beta = 5 * np.random.beta(2, 3, 1000)            # generate data
 dictResults=Fit.fit_beta(dat_beta, 'Data', min=None, max=None) # fit
 print("Fitting Beta:", dictResults)
 
-
 # 3 fitting a beta-binomial distribution
 betabinomial_dist = RVGs.BetaBinomial(100, 2, 3) # n, a, b
 dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
@@ -43,6 +42,17 @@ dat_gamma = np.random.gamma(10, 2,1000)     # generate data
 dictResults=Fit.fit_gamma(dat_gamma, 'Data')        # fit
 print("Fitting Gamma:", dictResults)
 
+# 7 GammaPoisson
+gamma_poisson_dist = RVGs.GammaPoisson(shape=2, scale=4)
+dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
+dictResults=Fit.fit_GammaPoisson(dat_gamma_poisson, 'Data') # fit
+print("Fitting GammaPoisson:", dictResults)
+
+# 8 Geometric
+dat_geom = np.random.geometric(0.3, 1000)     # generate data
+dictResults=Fit.fit_geometric(dat_geom, 'Data')        # fit
+print("Fitting Geometric:", dictResults)
+
 # 9 fitting a JohnsonSb distribution
 dat_JohnsonSb = scs.johnsonsb.rvs(a=10, b=3, loc=0, scale=1, size=1000)    # generate data
 dictResults=Fit.fit_johnsonSb(dat_JohnsonSb, 'Data')    # fit
@@ -58,6 +68,29 @@ dat_lognorm = np.random.lognormal(0, 1, 1000)    # mean, sigma
 dictResults=Fit.fit_lognorm(dat_lognorm, 'Data')    # fit (scale=exp(mean))
 print("Fitting LogNormal:", dictResults)
 
+# 12 NegativeBinomial
+
+
+
+# 13 Normal
+dat_norm = np.random.normal(0, 1, 1000)    # mean, sigma
+dictResults=Fit.fit_norm(dat_norm, 'Data')    # fit (scale=exp(mean))
+print("Fitting Normal:", dictResults)
+
+# 14 Triangular
+dat_tri = scs.triang.rvs(c=0.5, loc=0, scale=1, size=1000)
+dictResults=Fit.fit_triang(dat_tri, 'Data')    # fit (scale=exp(mean))
+print("Fitting Triangular:", dictResults)
+
+# 15 Uniform
+dat_unif = np.random.uniform(0, 1, 1000)    # mean, sigma
+dictResults=Fit.fit_uniform(dat_unif, 'Data')    # fit (scale=exp(mean))
+print("Fitting Uniform:", dictResults)
+
+# 16 UniformDiscrete
+dat_unifDis = scs.randint.rvs(0,100,size=1000)
+dictResults=Fit.fit_uniformDiscrete(dat_unifDis, 'Data')    # fit (scale=exp(mean))
+print("Fitting UniformDiscrete:", dictResults)
 
 # 17 fitting a Weibull distribution
 dat_weibull = np.random.weibull(5, 1000)    # generate data
