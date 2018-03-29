@@ -69,27 +69,28 @@ dictResults=Fit.fit_lognorm(dat_lognorm, 'Data')    # fit (scale=exp(mean))
 print("Fitting LogNormal:", dictResults)
 
 # 12 NegativeBinomial
-
-
+dat_neg_bin = np.random.negative_binomial(3, 0.3, 1000)    # mean, sigma
+dictResults=Fit.fit_NegativeBinomial(dat_neg_bin, 'Data')
+print("Fitting NegativeBinomial:", dictResults)
 
 # 13 Normal
 dat_norm = np.random.normal(0, 1, 1000)    # mean, sigma
-dictResults=Fit.fit_norm(dat_norm, 'Data')    # fit (scale=exp(mean))
+dictResults=Fit.fit_norm(dat_norm, 'Data')    # fit
 print("Fitting Normal:", dictResults)
 
 # 14 Triangular
 dat_tri = scs.triang.rvs(c=0.5, loc=0, scale=1, size=1000)
-dictResults=Fit.fit_triang(dat_tri, 'Data')    # fit (scale=exp(mean))
+dictResults=Fit.fit_triang(dat_tri, 'Data')    # fit
 print("Fitting Triangular:", dictResults)
 
 # 15 Uniform
 dat_unif = np.random.uniform(0, 1, 1000)    # mean, sigma
-dictResults=Fit.fit_uniform(dat_unif, 'Data')    # fit (scale=exp(mean))
+dictResults=Fit.fit_uniform(dat_unif, 'Data')    # fit
 print("Fitting Uniform:", dictResults)
 
 # 16 UniformDiscrete
 dat_unifDis = scs.randint.rvs(0,100,size=1000)
-dictResults=Fit.fit_uniformDiscrete(dat_unifDis, 'Data')    # fit (scale=exp(mean))
+dictResults=Fit.fit_uniformDiscrete(dat_unifDis, 'Data')    # fit
 print("Fitting UniformDiscrete:", dictResults)
 
 # 17 fitting a Weibull distribution

@@ -316,34 +316,39 @@ def fit_GammaPoisson(data, x_label):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # define log_likelihood
-    # ref: http://people.stat.sc.edu/Hitchcock/slides535day5spr2014.pdf
-    # gamma is a Conjugate prior for poisson distribution, the likelihood is gamma distributed
-
+    # ref: https://en.wikipedia.org/wiki/Negative_binomial_distribution#Gamma%E2%80%93Poisson_mixture
     n=len(data)
-    def loglik(theta):
-        a, b = theta[0], theta[1]
-        post_a = np.sum(data)+a
-        post_b = n + b
+    def gamma_poisson(r,p,k):
+        part1 = 1.0*sp.special.gamma(r+k)/(sp.special.gamma(r) * sp.misc.factorial(k))
+        part2 = (p**k)*((1-p)**r)
+        return part1*part2
+
+    def log_lik(theta):
+        r, p = theta[0], theta[1]
         result = 0
-        for i in range(len(data)):
-            result += scs.gamma.logpdf(data[i], post_a, 1/post_b)
+        for i in range(n):
+            result += np.log(gamma_poisson(r,p,data[i]))
         return result
 
     def neg_loglik(theta):
-        return -loglik(theta)
+        return -log_lik(theta)
 
     # estimate the parameters by minimize -loglik
     # alpha=a, beta=1/scale
-    theta0 = [1, 1]
-    paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, 10.0)] * len(theta0),
+    theta0 = [2, 0.5]
+    paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, 10.0), (0,1)],
                               disp=False, full_output=True)
+
+    a = paras[0]
+    scale = paras[1]/(1.0-paras[1])
 
     # plot the estimated distribution
     # get PMF
-    x_values = np.arange(0, n, step=1)
-
-    ax.step(x_values, scs.gamma.logpdf(x_values, np.sum(data)+paras[0], (n + 1.0/paras[1])**(-1)),
-            color=COLOR_CONTINUOUS_FIT, lw=2, label='BetaBinomial')
+    x_values = np.arange(0, np.max(data), step=1)
+    pmf = np.zeros(len(x_values))
+    for i in x_values:
+        pmf[i] = gamma_poisson(paras[0], paras[1], i)
+    ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='GammaPoisson')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -352,13 +357,12 @@ def fit_GammaPoisson(data, x_label):
 
     # calculate AIC
     aic = AIC(
-        k=3,
-        log_likelihood=loglik([paras[0], paras[1]])
+        k=2,
+        log_likelihood=log_lik(paras)
     )
 
     # report results in the form of a dictionary
-    return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
-
+    return {"a": a, "scale": scale, "AIC": aic}
 
 
 # 8 Geometric
@@ -504,6 +508,54 @@ def fit_lognorm(data, x_label):
 
 
 # 12 NegativeBinomial
+def fit_NegativeBinomial(data, x_label):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "n", "p" and "AIC"
+    """
+    # n is the number of successes, p is the probability of a single success.
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+
+    M=np.max(data)
+    # define log_likelihood
+    def log_lik(theta):
+        n, p = theta[0], theta[1]
+        result = 0
+        for i in range(len(data)):
+            result += scs.nbinom.logpmf(data[i], n, p)
+        return result
+
+    def neg_loglik(theta):
+        return -log_lik(theta)
+
+    # estimate the parameters by minimize -loglik
+    theta0 = [2, 0.5]
+    paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, M), (0,1)],
+                              disp=False, full_output=True)
+
+    # plot the estimated distribution
+    # get PMF
+    x_values = np.arange(0, np.max(data), step=1)
+    rv = scs.nbinom(paras[0],paras[1])
+    ax.step(x_values, rv.pmf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='NegativeBinomial')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=2,
+        log_likelihood=log_lik(paras)
+    )
+
+    # report results in the form of a dictionary
+    return {"n": paras[0], "p": paras[1], "AIC": aic}
 
 
 # 13 Normal
