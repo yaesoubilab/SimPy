@@ -16,6 +16,11 @@ class _Statistics(object):
         self._max = -sys.float_info.max  # maximum
         self._min = sys.float_info.max   # minimum
 
+    def get_n(self):
+        """ abstract method to be overridden in derived classes
+        :returns mean (to be calculated in the subclass) """
+        raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
+
     def get_mean(self):
         """ abstract method to be overridden in derived classes
         :returns mean (to be calculated in the subclass) """
@@ -47,7 +52,7 @@ class _Statistics(object):
         :param alpha: significance level (between 0 and 1)
         :returns half-length of 100(1-alpha)% t-confidence interval """
 
-        return stat.t.ppf(1 - alpha / 2, self._n - 1) * self.get_stdev() / numpy.sqrt(self._n)
+        return stat.t.ppf(1 - alpha / 2, self.get_n() - 1) * self.get_stdev() / numpy.sqrt(self.get_n())
 
     def get_t_CI(self, alpha):
         """ calculates t-based confidence interval for population mean
@@ -103,6 +108,9 @@ class SummaryStat(_Statistics):
         self._total = numpy.sum(self._data)
         self._mean = numpy.mean(self._data)
         self._stDev = numpy.std(self._data, ddof=1)  # unbiased estimator of the standard deviation
+
+    def get_n(self):
+        return self._n
 
     def get_total(self):
         return self._total
@@ -166,11 +174,14 @@ class DiscreteTimeStat(_Statistics):
         """ gets the next observation and update the current information"""
         self._total += obs
         self._sumSquared += obs ** 2
-        self._y_n += 1
+        self._n += 1
         if obs > self._max:
             self._max = obs
         if obs < self._min:
             self._min = obs
+
+    def get_n(self):
+        return self._n
 
     def get_total(self):
         return self._total
@@ -184,8 +195,8 @@ class DiscreteTimeStat(_Statistics):
     def get_stdev(self):
         if self._n>1:
             return math.sqrt(
-                (self._sumSquared - self._total ** 2 / self._y_n)
-                / (self._y_n - 1)
+                (self._sumSquared - self._total ** 2 / self._n)
+                / (self._n - 1)
             )
         else:
             return 0
@@ -238,11 +249,14 @@ class ContinuousTimeStat(_Statistics):
         elif self._lastObsValue < self._min:
             self._min = self._lastObsValue
 
-        self._y_n += 1
+        self._n += 1
         self._area += self._lastObsValue * (time - self._lastObsTime)
         self._areaSquared += (self._lastObsValue ** 2) * (time - self._lastObsTime)
         self._lastObsTime = time
         self._lastObsValue += increment
+
+    def get_n(self):
+        return self._n
 
     def get_mean(self):
         if self._lastObsTime - self._initialTime > 0:
@@ -322,6 +336,9 @@ class DifferenceStatPaired(_DifferenceStat):
             raise ValueError('Two samples should have the same size.')
 
         self._dStat = SummaryStat(name, self._x - self._y_ref)
+
+    def get_n(self):
+        return self._dStat.get_n()
 
     def get_mean(self):
         return self._dStat.get_mean()
@@ -478,28 +495,31 @@ class RatioStatPaired(_RatioStat):
 
         # add element-wise ratio
         ratio = numpy.divide(self._x, self._y_ref)
-        self.ratioStat = SummaryStat(name, ratio)
+        self._ratioStat = SummaryStat(name, ratio)
+
+    def get_n(self):
+        return self._ratioStat.get_n()
 
     def get_mean(self):
-        return self.ratioStat.get_mean()
+        return self._ratioStat.get_mean()
 
     def get_stdev(self):
-        return self.ratioStat.get_stdev()
+        return self._ratioStat.get_stdev()
 
     def get_min(self):
-        return self.ratioStat.get_min()
+        return self._ratioStat.get_min()
 
     def get_max(self):
-        return self.ratioStat.get_max()
+        return self._ratioStat.get_max()
 
     def get_percentile(self, q):
-        return self.ratioStat.get_percentile(q)
+        return self._ratioStat.get_percentile(q)
 
     def get_bootstrap_CI(self, alpha, num_samples):
-        return self.ratioStat.get_bootstrap_CI(alpha, num_samples)
+        return self._ratioStat.get_bootstrap_CI(alpha, num_samples)
 
     def get_PI(self, alpha):
-        return self.ratioStat.get_PI(alpha)
+        return self._ratioStat.get_PI(alpha)
 
 
 class RatioStatIndp(_RatioStat):
@@ -611,28 +631,31 @@ class RelativeDifferencePaired(_RelativeDifference):
 
         # add element-wise ratio
         ratio = numpy.divide(self._x, self._y_ref)
-        self.relativeDiffStat = SummaryStat(name, ratio - 1)
+        self._relativeDiffStat = SummaryStat(name, ratio - 1)
+
+    def get_n(self):
+        return self._relativeDiffStat.get_n()
 
     def get_mean(self):
-        return self.relativeDiffStat.get_mean()
+        return self._relativeDiffStat.get_mean()
 
     def get_stdev(self):
-        return self.relativeDiffStat.get_stdev()
+        return self._relativeDiffStat.get_stdev()
 
     def get_min(self):
-        return self.relativeDiffStat.get_min()
+        return self._relativeDiffStat.get_min()
 
     def get_max(self):
-        return self.relativeDiffStat.get_max()
+        return self._relativeDiffStat.get_max()
 
     def get_percentile(self, q):
-        return self.relativeDiffStat.get_percentile(q)
+        return self._relativeDiffStat.get_percentile(q)
 
     def get_bootstrap_CI(self, alpha, num_samples):
-        return self.relativeDiffStat.get_bootstrap_CI(alpha, num_samples)
+        return self._relativeDiffStat.get_bootstrap_CI(alpha, num_samples)
 
     def get_PI(self, alpha):
-        return self.relativeDiffStat.get_PI(alpha)
+        return self._relativeDiffStat.get_PI(alpha)
 
 
 class RelativeDifferenceIndp(_RelativeDifference):
