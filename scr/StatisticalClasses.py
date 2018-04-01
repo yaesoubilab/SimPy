@@ -461,7 +461,7 @@ class _RatioStat(_ComparativeStat):
         _ComparativeStat.__init__(self, name, x, y_ref)
         # make sure no 0 in the denominator variable
         if not (self._y_ref != 0).all():
-            raise ValueError('invalid value of y, the ratio is not computable')
+            raise ValueError('invalid value of y_ref, the ratio is not computable')
 
 
 class RatioStatPaired(_RatioStat):
@@ -530,7 +530,7 @@ class RatioStatIndp(_RatioStat):
         :return: std(x/y)
         """
         if self._y_ref.mean() == 0:
-            raise ValueError('invalid value of mean of y, the ratio is not computable')
+            raise ValueError('invalid value of mean of y_ref, the ratio is not computable')
 
         var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_ref ** 2) - \
               (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_ref) ** 2)
@@ -594,7 +594,7 @@ class _RelativeDifference(_ComparativeStat):
 
         # make sure no 0 in the denominator variable y
         if not (self._y_ref != 0).all():
-            raise ValueError('invalid value of x, the ratio is not computable')
+            raise ValueError('invalid value of y_ref, the ratio is not computable')
 
 
 class RelativeDifferencePaired(_RelativeDifference):
@@ -662,7 +662,7 @@ class RelativeDifferenceIndp(_RelativeDifference):
         :return: std(x/y - 1)
         """
         if self._y_ref.mean() == 0:
-            raise ValueError('invalid value of mean of y, the ratio is not computable')
+            raise ValueError('invalid value of mean of y_ref, the ratio is not computable')
 
         var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_ref ** 2) - \
               (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_ref) ** 2)
