@@ -8,7 +8,7 @@ class RNG(RandomState):
         RandomState.__init__(self, seed)
 
 
-class RVG(object):
+class RVG:
     def __init__(self):
         pass
 
