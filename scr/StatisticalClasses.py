@@ -476,9 +476,6 @@ class _RatioStat(_ComparativeStat):
         :param y_ref: list or numpy.array of second set of observations
         """
         _ComparativeStat.__init__(self, name, x, y_ref)
-        # make sure no 0 in the denominator variable
-        if not (self._y_ref != 0).all():
-            raise ValueError('invalid value of y_ref, the ratio is not computable')
 
 
 class RatioStatPaired(_RatioStat):
@@ -494,7 +491,19 @@ class RatioStatPaired(_RatioStat):
             raise ValueError('Two samples should have the same size.')
 
         # add element-wise ratio
-        ratio = numpy.divide(self._x, self._y_ref)
+        ratio = numpy.zeros(len(self._x))
+        for i in range(len(self._x)):
+            # for 0 in the denominator variable, check whether numerator is also 0
+            if self._y_ref[i] == 0:
+                if self._x[i] == 0: # set 0/0 = 1
+                    ratio[i] = 1
+                else: # else raise error
+                    raise ValueError('invalid value of y_ref, the ratio is not computable')
+            else:
+                # for non-zero denominators, calculate ratio
+                ratio[i] = 1.0*self._x[i] / self._y_ref[i]
+
+        # create summary stat for element-wise ratio
         self._ratioStat = SummaryStat(name, ratio)
 
     def get_n(self):
@@ -531,6 +540,10 @@ class RatioStatIndp(_RatioStat):
         """
 
         _RatioStat.__init__(self, name, x, y_ref)
+
+        # make sure no 0 in the denominator variable
+        if not (self._y_ref != 0).all():
+            raise ValueError('invalid value of y_ref, the ratio is not computable')
 
         # generate random realizations for random variable X/Y
         numpy.random.seed(1)
@@ -612,10 +625,6 @@ class _RelativeDifference(_ComparativeStat):
         """
         _ComparativeStat.__init__(self, name, x, y_ref)
 
-        # make sure no 0 in the denominator variable y
-        if not (self._y_ref != 0).all():
-            raise ValueError('invalid value of y_ref, the ratio is not computable')
-
 
 class RelativeDifferencePaired(_RelativeDifference):
 
@@ -630,8 +639,22 @@ class RelativeDifferencePaired(_RelativeDifference):
             raise ValueError('Two samples should have the same size.')
 
         # add element-wise ratio
-        ratio = numpy.divide(self._x, self._y_ref)
+        ratio = numpy.zeros(len(self._x))
+
+        for i in range(len(self._x)):
+            # for 0 in the denominator variable, check whether numerator is also 0
+            if self._y_ref[i] == 0:
+                if self._x[i] == 0: # set 0/0 = 1
+                    ratio[i] = 1
+                else: # else raise error
+                    raise ValueError('invalid value of y_ref, the ratio is not computable')
+            # for non-zero denominators, calculate ratio
+            else:
+                ratio[i] = 1.0*self._x[i] / self._y_ref[i]
+
+        # create summary stat for element-wise ratio
         self._relativeDiffStat = SummaryStat(name, ratio - 1)
+
 
     def get_n(self):
         return self._relativeDiffStat.get_n()
@@ -665,6 +688,10 @@ class RelativeDifferenceIndp(_RelativeDifference):
         :param y: list or numpy.array of second set of observations
         """
         _RelativeDifference.__init__(self, name, x, y_ref)
+
+        # make sure no 0 in the denominator variable y
+        if not (self._y_ref != 0).all():
+            raise ValueError('invalid value of y_ref, the ratio is not computable')
 
         # generate random realizations for random variable (X-Y)/Y
         numpy.random.seed(1)
