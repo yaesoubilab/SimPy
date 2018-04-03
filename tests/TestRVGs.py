@@ -4,8 +4,6 @@ import scr.RandomVariantGenerators as rndSupport
 
 # use numpy random number generator
 rng = rndSupport.RNG(1)
-#rnd = np.random
-#rnd.seed(1)
 
 print('')
 
