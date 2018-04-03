@@ -37,7 +37,7 @@ def get_samples_multivariate(dist, rnd):
 def test_exponential(rnd, mean):
 
     # exponential random variate generator
-    exp_dist = RVGs.Exponential(mean)
+    exp_dist = RVGs.Exponential(scale=mean)
 
     # obtain samples
     samples = get_samples(exp_dist, rnd)

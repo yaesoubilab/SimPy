@@ -44,7 +44,7 @@ class Strategy:
         self.ifDominated = False
 
 
-class EconEval:
+class _EconEval:
     """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
     def __init__(self, strategies, if_paired):
@@ -114,7 +114,7 @@ class EconEval:
         return self._shifted_strategies
 
 
-class CEA(EconEval):
+class CEA(_EconEval):
     """ class for doing cost-effectiveness analysis """
 
     def __init__(self, strategies, if_paired):
@@ -122,7 +122,7 @@ class CEA(EconEval):
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
         """
-        EconEval.__init__(self, strategies, if_paired)
+        _EconEval.__init__(self, strategies, if_paired)
 
         # find the CE frontier
         self.__find_frontier()
@@ -317,13 +317,13 @@ class CEA(EconEval):
         """
 
         # initialize the table
-        table = self._dfStrategies
-        table['E[dCost]'] = "-"
-        table['E[dEffect]'] = "-"
-        table['ICER'] = "Dominated"
+        dfStrategies = self._dfStrategies
+        dfStrategies['E[dCost]'] = "-"
+        dfStrategies['E[dEffect]'] = "-"
+        dfStrategies['ICER'] = "Dominated"
 
         # get strategies on the frontier
-        frontier_strategies = table.loc[table["Dominated"] == False].sort_values('E[Cost]')
+        frontier_strategies = dfStrategies.loc[dfStrategies["Dominated"] == False].sort_values('E[Cost]')
         # number of strategies on the frontier
         n_frontier_strategies = frontier_strategies.shape[0]
 
@@ -346,122 +346,130 @@ class CEA(EconEval):
 
         # format the numbers
         ind_change = frontier_strategies.index[1:]
-        table.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
-        table.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
-        table.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
+        dfStrategies.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
+        dfStrategies.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
+        dfStrategies.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
 
-        table.loc[frontier_strategies.index[0], 'ICER'] = '-'
+        # put - for the ICER of the first strategy on the frontier
+        dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
+
+        # format cost column
+        if cost_digits == 0:
+            output_cost = dfStrategies['E[Cost]'].astype(int)
+        else:
+            output_cost = dfStrategies['E[Cost]'].astype(float).round(cost_digits)
+
+        # format effect column
+        if effect_digits == 0:
+            output_effect = dfStrategies['E[Effect]'].astype(int)
+        else:
+            output_effect = dfStrategies['E[Effect]'].astype(float).round(effect_digits)
 
         # create output dataframe
-        # python round will leave trailing 0 for 0 decimal
-        if cost_digits == 0:
-            output_cost = table['E[Cost]'].astype(int)
-        else:
-            output_cost = table['E[Cost]'].astype(float).round(cost_digits)
-
-        if effect_digits == 0:
-            output_effect = table['E[Effect]'].astype(int)
-        else:
-            output_effect = table['E[Effect]'].astype(float).round(effect_digits)
-
         output_estimates = pd.DataFrame(
-            {'Name': table['Name'],
+            {'Name': dfStrategies['Name'],
              'E[Cost]': output_cost,
              'E[Effect]': output_effect,
-             'E[dCost]': table['E[dCost]'],
-             'E[dEffect]': table['E[dEffect]'],
-             'ICER': table['ICER']
+             'E[dCost]': dfStrategies['E[dCost]'],
+             'E[dEffect]': dfStrategies['E[dEffect]'],
+             'ICER': dfStrategies['ICER']
              })
-        # format thousand separator
-        # output_estimates['E[Cost]'] = output_estimates.apply(lambda x: "{:,}".format(x['E[Cost]']), axis=1)
-        # output_estimates['E[Effect]'] = output_estimates.apply(lambda x: "{:,}".format(x['E[Effect]']), axis=1)
 
+        # dataframe of estimates (without intervals)
         self.output_estimates = output_estimates[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']]
-
 
         # decide about what interval to return and create table self.out_intervals
         if interval == Interval.PREDICTION:
-            out_intervals_PI = pd.DataFrame(index=table.index,
+            # create the datafram
+            out_intervals_PI = pd.DataFrame(index=dfStrategies.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
+            # iniitialize incremetal cost and health and ICER with -
             out_intervals_PI['dCost_I'] = '-'
             out_intervals_PI['dEffect_I'] = '-'
             out_intervals_PI['ICER_I'] = '-'
 
-            for i in table.index:
+            # calculate prediction intervals for cost and effect
+            for i in dfStrategies.index:
                 # populated name, dominated, cost and effect PI columns
                 out_intervals_PI.loc[i, 'Name'] = self._strategies[i].name
-                out_intervals_PI.loc[i, 'Dominated'] = table.loc[i, 'Dominated']
+                out_intervals_PI.loc[i, 'Dominated'] = dfStrategies.loc[i, 'Dominated']
 
+                # prediction interval of cost
                 temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_PI(alpha)
                 out_intervals_PI.loc[i, 'Cost_I'] = temp_c
 
+                # prediction interval of effect
                 temp_e = Stat.SummaryStat("",self._strategies[i].effectObs).get_PI(alpha)
                 out_intervals_PI.loc[i, 'Effect_I'] = temp_e
 
+            # calculate prediction intervals for incremetal cost and effect and ICER
             if self._ifPaired:
                 # paired: populated dcost, deffect and ICER PI columns
                 for i in range(1, n_frontier_strategies):
-                    temp_d_c = Stat.DifferenceStatPaired("",
+                    # calculate the prediction interval of incremental cost
+                    PI_PariedDiffCost = Stat.DifferenceStatPaired("",
                         self._strategies[frontier_strategies.index[i]].costObs,
                         self._strategies[frontier_strategies.index[i-1]].costObs).get_PI(alpha)
-
+                    # add the interval to the data frame
                     out_intervals_PI.loc[frontier_strategies.index[i], 'dCost_I'] = \
-                        temp_d_c
+                        PI_PariedDiffCost
 
-                    temp_d_e = Stat.DifferenceStatPaired("",
+                    # calculate the prediction interval of incremental effect
+                    PI_PariedDiffEffect = Stat.DifferenceStatPaired("",
                         self._strategies[frontier_strategies.index[i]].effectObs,
                         self._strategies[frontier_strategies.index[i-1]].effectObs).get_PI(alpha)
-
+                    # add the interval to the data frame
                     out_intervals_PI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
-                        temp_d_e
+                        PI_PariedDiffEffect
 
-                    temp_icer = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
+                    # calculate the prediction interval of ICER
+                    PI_PairedICER = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
                                             self._strategies[frontier_strategies.index[i]].effectObs,
                                             self._strategies[frontier_strategies.index[i-1]].costObs,
                                             self._strategies[frontier_strategies.index[i-1]].effectObs)
-
+                    # add the interval to the data frame
                     out_intervals_PI.loc[frontier_strategies.index[i], 'ICER_I'] = \
-                        temp_icer.get_PI(alpha)
+                        PI_PairedICER.get_PI(alpha)
 
-            else:
+            else: # if not paired
                 # indp: populated dcost, deffect and ICER PI columns
                 for i in range(1, n_frontier_strategies):
-                    temp_d_c = Stat.DifferenceStatIndp("",
+                    PI_indpDiffCost = Stat.DifferenceStatIndp("",
                         self._strategies[frontier_strategies.index[i]].costObs,
                         self._strategies[frontier_strategies.index[i - 1]].costObs).get_PI(alpha)
 
                     out_intervals_PI.loc[frontier_strategies.index[i], 'dCost_I'] = \
-                        temp_d_c
+                        PI_indpDiffCost
 
-                    temp_d_e = Stat.DifferenceStatIndp("",
+                    PI_indpDiffEffect = Stat.DifferenceStatIndp("",
                         self._strategies[frontier_strategies.index[i]].effectObs,
                         self._strategies[frontier_strategies.index[i - 1]].effectObs).get_PI(alpha)
 
                     out_intervals_PI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
-                        temp_d_e
+                        PI_indpDiffEffect
 
-                    temp_icer = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
+                    PI_indpICER = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
                                             self._strategies[frontier_strategies.index[i]].effectObs,
                                             self._strategies[frontier_strategies.index[i - 1]].costObs,
                                             self._strategies[frontier_strategies.index[i - 1]].effectObs)
 
                     out_intervals_PI.loc[frontier_strategies.index[i], 'ICER_I'] = \
-                        temp_icer.get_PI(alpha)
+                        PI_indpICER.get_PI(alpha)
 
             self.out_intervals = out_intervals_PI[['Name', 'Cost_I', 'Effect_I', 'dCost_I',
                                                    'dEffect_I', 'ICER_I']]
 
         elif interval == Interval.CONFIDENCE:
-            out_intervals_CI = pd.DataFrame(index=table.index,
+            out_intervals_CI = pd.DataFrame(index=dfStrategies.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
             out_intervals_CI['dCost_I'] = '-'
             out_intervals_CI['dEffect_I'] = '-'
             out_intervals_CI['ICER_I'] = '-'
 
-            for i in table.index:
+            for i in dfStrategies.index:
                 # populated name, dominated, cost and effect CI columns
                 out_intervals_CI.loc[i, 'Name'] = self._strategies[i].name
-                out_intervals_CI.loc[i, 'Dominated'] = table.loc[i, 'Dominated']
+                out_intervals_CI.loc[i, 'Dominated'] = dfStrategies.loc[i, 'Dominated']
 
                 temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_t_CI(alpha)
                 out_intervals_CI.loc[i, 'Cost_I'] = temp_c
@@ -474,52 +482,52 @@ class CEA(EconEval):
                 # for difference statatistics, and CI are using t_CI
                 # for ratio, using bootstrap with 1000 number of samples
                 for i in range(1, n_frontier_strategies):
-                    temp_d_c = Stat.SummaryStat("",
+                    PI_PariedDiffCost = Stat.SummaryStat("",
                         self._strategies[frontier_strategies.index[i]].costObs -
                         self._strategies[frontier_strategies.index[i-1]].costObs).get_t_CI(alpha)
 
                     out_intervals_CI.loc[frontier_strategies.index[i], 'dCost_I'] = \
-                        temp_d_c
+                        PI_PariedDiffCost
 
-                    temp_d_e = Stat.SummaryStat("",
+                    PI_PariedDiffEffect = Stat.SummaryStat("",
                         self._strategies[frontier_strategies.index[i]].effectObs -
                         self._strategies[frontier_strategies.index[i-1]].effectObs).get_t_CI(alpha)
 
                     out_intervals_CI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
-                        temp_d_e
+                        PI_PariedDiffEffect
 
-                    temp_icer = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
+                    PI_PairedICER = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
                                             self._strategies[frontier_strategies.index[i]].effectObs,
                                             self._strategies[frontier_strategies.index[i-1]].costObs,
                                             self._strategies[frontier_strategies.index[i-1]].effectObs)
 
                     out_intervals_CI.loc[frontier_strategies.index[i], 'ICER_I'] = \
-                        temp_icer.get_CI(alpha, 1000)
+                        PI_PairedICER.get_CI(alpha, 1000)
 
             else:
                 # indp: populated dcost, deffect and ICER CI columns
                 for i in range(1, n_frontier_strategies):
-                    temp_d_c = Stat.DifferenceStatIndp("",
+                    PI_PariedDiffCost = Stat.DifferenceStatIndp("",
                         self._strategies[frontier_strategies.index[i]].costObs,
                         self._strategies[frontier_strategies.index[i - 1]].costObs).get_t_CI(alpha)
 
                     out_intervals_CI.loc[frontier_strategies.index[i], 'dCost_I'] = \
-                        temp_d_c
+                        PI_PariedDiffCost
 
-                    temp_d_e = Stat.DifferenceStatIndp("",
+                    PI_PariedDiffEffect = Stat.DifferenceStatIndp("",
                         self._strategies[frontier_strategies.index[i]].effectObs,
                         self._strategies[frontier_strategies.index[i - 1]].effectObs).get_t_CI(alpha)
 
                     out_intervals_CI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
-                        temp_d_e
+                        PI_PariedDiffEffect
 
-                    temp_icer = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
+                    PI_PairedICER = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
                                             self._strategies[frontier_strategies.index[i]].effectObs,
                                             self._strategies[frontier_strategies.index[i - 1]].costObs,
                                             self._strategies[frontier_strategies.index[i - 1]].effectObs)
 
                     out_intervals_CI.loc[frontier_strategies.index[i], 'ICER_I'] = \
-                        temp_icer.get_CI(alpha, 1000)
+                        PI_PairedICER.get_CI(alpha, 1000)
 
             self.out_intervals = out_intervals_CI[['Name', 'Cost_I', 'Effect_I', 'dCost_I',
                                                    'dEffect_I', 'ICER_I']]
@@ -527,11 +535,9 @@ class CEA(EconEval):
         else:
             self.out_intervals = None
 
-        #
-
         # merge estimates and intervals together
         out_table = pd.DataFrame(
-            {'Name': table['Name'],
+            {'Name': dfStrategies['Name'],
              'E[Cost]': output_estimates['E[Cost]'],
              'E[Effect]': output_estimates['E[Effect]'],
              'E[dCost]': output_estimates['E[dCost]'],
@@ -539,7 +545,8 @@ class CEA(EconEval):
              'ICER': output_estimates['ICER']
              })
 
-        for i in table.index:
+        # put estimates and intervals together
+        for i in dfStrategies.index:
             out_table.loc[i, 'E[Cost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Cost]'],
                                                     self.out_intervals.loc[i,'Cost_I'],
@@ -549,6 +556,7 @@ class CEA(EconEval):
                                                     self.out_intervals.loc[i,'Effect_I'],
                                                     effect_digits, form=FormatFunc.FormatNumber.NUMBER)
 
+        # add the incremental and ICER estimates and intervals
         for i in range(1, n_frontier_strategies):
 
             out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
@@ -570,7 +578,8 @@ class CEA(EconEval):
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
             "CETable.csv", encoding='utf-8', index=False)
 
-class CBA(EconEval):
+
+class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
     def __init__(self, strategies, if_paired):
@@ -578,9 +587,9 @@ class CBA(EconEval):
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
         """
-        EconEval.__init__(self, strategies, if_paired)
+        _EconEval.__init__(self, strategies, if_paired)
 
-    def graph_NMB_lines(self, min_wtp, max_wtp, title,
+    def graph_deltaNMB_lines(self, min_wtp, max_wtp, title,
                         x_label, y_label, interval=Interval.NO_INTERVAL, transparency=0.4,
                         show_legend=False, figure_size=6):
         """
@@ -629,7 +638,7 @@ class ComparativeEconMeasure:
         self._delta_ave_health = np.average(self._healthNew) - np.average(self._healthBase)
 
 
-class ICER(ComparativeEconMeasure):
+class _ICER(ComparativeEconMeasure):
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
         :param cost_new: (list or numpy.array) cost data for the new strategy
@@ -664,7 +673,7 @@ class ICER(ComparativeEconMeasure):
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 
-class ICER_paired(ICER):
+class ICER_paired(_ICER):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
@@ -674,7 +683,7 @@ class ICER_paired(ICER):
         :param health_base: (list or numpy.array) health data for the base line
         """
         # initialize the base class
-        ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
+        _ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
         # incremental observations
         self._deltaCost = self._costNew - self._costBase
@@ -709,7 +718,7 @@ class ICER_paired(ICER):
         return np.percentile(self._ratio_stat, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
 
-class ICER_indp(ICER):
+class ICER_indp(_ICER):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
@@ -719,7 +728,7 @@ class ICER_indp(ICER):
         :param health_base: (list or numpy.array) health data for the base line
         """
         # initialize the base class
-        ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
+        _ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
         self._n = len(cost_new)
 
@@ -765,7 +774,7 @@ class ICER_indp(ICER):
         return np.percentile(self.sum_stat_sample_ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
 
-class NMB(ComparativeEconMeasure):
+class _NMB(ComparativeEconMeasure):
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
         :param cost_new: (list or numpy.array) cost data for the new strategy
@@ -802,7 +811,7 @@ class NMB(ComparativeEconMeasure):
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 
-class NMB_paired(NMB):
+class NMB_paired(_NMB):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
@@ -811,7 +820,7 @@ class NMB_paired(NMB):
         :param cost_base: (list or numpy.array) cost data for the base line
         :param health_base: (list or numpy.array) health data for the base line
         """
-        NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
+        _NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
         # incremental observations
         self._deltaCost = self._costNew - self._costBase
@@ -830,7 +839,7 @@ class NMB_paired(NMB):
         return stat.get_PI(alpha)
 
 
-class NMB_indp(NMB):
+class NMB_indp(_NMB):
 
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
@@ -839,7 +848,7 @@ class NMB_indp(NMB):
         :param cost_base: (list or numpy.array) cost data for the base line
         :param health_base: (list or numpy.array) health data for the base line
         """
-        NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
+        _NMB.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
     def get_CI(self, wtp, alpha):
         # reform 2 independent variables to pass in DifferenceStatIndp class

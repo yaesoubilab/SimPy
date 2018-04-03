@@ -22,16 +22,17 @@ class RVG:
 
 
 class Exponential(RVG):
-    def __init__(self, mean):
+    def __init__(self, scale, loc=0):
         """
-        E[X] = mean
-        Var[X] = mean**2
+        E[X] = scale
+        Var[X] = scale**2
         """
         RVG.__init__(self)
-        self.mean = mean
+        self.scale = scale
+        self.loc = loc
 
     def sample(self, rng):
-        return rng.exponential(self.mean)
+        return scipy.expon.rvs(loc=self.loc, scale=self.scale, random_state=rng)
 
 
 class Bernoulli(RVG):

@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as scs
 import scipy as sp
-import pyjags
 from scipy.optimize import fmin_slsqp
 
 COLOR_CONTINUOUS_FIT = 'r'
@@ -16,27 +15,8 @@ def AIC(k, log_likelihood):
     """ :returns Akaike information criterion"""
     return 2 * k - 2 * log_likelihood
 
-# JAGS Monte-Carlo simulation for parameter estimation
-# with uniform prior, equivalent to MLE
-def MCMC_JAGS(num_samples, var_names, model, data):
-    """
-    :param num_samples: number of steps in sample path, real steps = num_samples*4
-    :param var: list of parameter names
-    :param model: the JAGS code for model defining
-    :return: return MCMC sample path and Maximum Likelihood Estimation of parameters
-    """
-    mc = pyjags.Model(model, data=dict(y=data, N=len(data), n=100))
-    samples = mc.sample(num_samples, vars=var_names)
-
-    for varname in var_names:
-        print(varname, np.mean(samples[varname]))
-
-    return samples
-
-
-
 # 1 Exponential
-def fit_exp(data, x_label):
+def fit_exp(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -48,7 +28,7 @@ def fit_exp(data, x_label):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of exponential
-    loc, scale = scs.expon.fit(data, floc=0)
+    loc, scale = scs.expon.fit(data, floc=fixed_location)
 
     # plot the estimated exponential distribution
     x_values = np.linspace(scs.expon.ppf(0.0001, loc, scale), scs.expon.ppf(0.9999, loc, scale), 200)
@@ -722,7 +702,7 @@ def fit_weibull(data, x_label):
     a, loc, scale = scs.weibull_min.fit(data, floc=0)
 
     # plot the estimated gamma distribution
-    x_values = np.linspace(scs.weibull_min.ppf(0.01, a, loc, scale), scs.weibull_min.ppf(0.99, a, loc, scale), 100)
+    x_values = np.linspace(scs.weibull_min.ppf(0.001, a, loc, scale), scs.weibull_min.ppf(0.999, a, loc, scale), 100)
     rv = scs.weibull_min(a, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Weibull')
 
