@@ -705,6 +705,11 @@ class CBA(_EconEval):
         plt.ylabel(y_label)
         plt.xlim([min_wtp, max_wtp])
 
+        vals_y, labs_y = plt.yticks()
+        vals_x, labs_x = plt.xticks()
+        plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+        plt.xticks(vals_x, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
+
         plt.show()
 
 class ComparativeEconMeasure:
