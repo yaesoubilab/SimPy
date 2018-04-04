@@ -623,8 +623,87 @@ class CBA(_EconEval):
         :param show_legend: set true to show legend
         :param figure_size: size of the figure
         """
-        pass
+        # set x-axis
+        x_values = np.arange(min_wtp, max_wtp, (max_wtp-min_wtp)/100.0)
 
+        # initialize plot
+        plt.figure(figsize=(figure_size, figure_size))
+
+        # if paired
+        if self._ifPaired:
+            # nmb_paired = []
+            for strategy_i, color in zip(self._strategies[1:], cm.rainbow(np.linspace(0, 1, self._n-1))):
+                # create NMB_paired objects
+                nmbi = NMB_paired(strategy_i.name, strategy_i.costObs,
+                                  strategy_i.effectObs, self._strategies[0].costObs,
+                                  self._strategies[0].effectObs)
+
+                # nmb_paired.append(nmbi)
+
+                # get the NMB values for each wtp
+                y_values = [nmbi.get_NMB(x) for x in x_values]
+                # plot line
+                # plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
+
+                # get confidence interval and plot
+                if interval == Interval.CONFIDENCE:
+                    y_ci = [nmbi.get_CI(x, alpha=0.05) for x in x_values]
+                    # reshape confidence interval to plot
+                    xerr = np.array([p[1] for p in y_ci]) - y_values
+                    yerr = y_values - np.array([p[0] for p in y_ci])
+                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
+                                 alpha=transparency, label=strategy_i.name)
+
+                # get prediction interval and plot
+                if interval == Interval.PREDICTION:
+                    y_ci = [nmbi.get_PI(x, alpha=0.05) for x in x_values]
+                    # reshape confidence interval to plot
+                    xerr = np.array([p[1] for p in y_ci]) - y_values
+                    yerr = y_values - np.array([p[0] for p in y_ci])
+                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
+                                 alpha=transparency, label=strategy_i.name)
+
+        # if unpaired
+        elif self._ifPaired==False:
+            # nmb_indp = []
+            for strategy_i, color in zip(self._strategies[1:], cm.rainbow(np.linspace(0, 1, self._n-1))):
+                # create NMB_indp objects
+                nmbi = NMB_indp(strategy_i.name, strategy_i.costObs,
+                                  strategy_i.effectObs, self._strategies[0].costObs,
+                                  self._strategies[0].effectObs)
+
+                # nmb_indp.append(nmbi)
+
+                # get the NMB values for each wtp
+                y_values = [nmbi.get_NMB(x) for x in x_values]
+                # plot line
+                # plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
+
+                # get confidence interval and plot
+                if interval == Interval.CONFIDENCE:
+                    y_ci = [nmbi.get_CI(x, alpha=0.05) for x in x_values]
+                    # reshape confidence interval to plot
+                    xerr = np.array([p[1] for p in y_ci]) - y_values
+                    yerr = y_values - np.array([p[0] for p in y_ci])
+                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
+                                 alpha=transparency, label=strategy_i.name)
+
+                # get prediction interval and plot
+                if interval == Interval.PREDICTION:
+                    y_ci = [nmbi.get_PI(x, alpha=0.05) for x in x_values]
+                    # reshape confidence interval to plot
+                    xerr = np.array([p[1] for p in y_ci]) - y_values
+                    yerr = y_values - np.array([p[0] for p in y_ci])
+                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
+                                 alpha=transparency, label=strategy_i.name)
+
+        plt.xlim([min_wtp, max_wtp])
+
+        if show_legend:
+            plt.legend()
+
+
+        plt.show()
 
 class ComparativeEconMeasure:
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
