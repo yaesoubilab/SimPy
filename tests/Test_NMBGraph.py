@@ -22,10 +22,10 @@ nmb_paired = ce.CBA(myCEA.get_strategies_on_frontier(), if_paired=True) # list o
 nmb_indp = ce.CBA(myCEA.get_strategies_on_frontier(), if_paired=False) # list of frontier strategies as input
 
 # Try NMB_Lines figure
-nmb_paired.graph_deltaNMB_lines(1,10,"","","",interval=ce.Interval.CONFIDENCE,
+nmb_paired.graph_deltaNMB_lines(1,10,"deltaNMB lines","wtp values","NMB values",interval=ce.Interval.CONFIDENCE,
                              show_legend=True, figure_size=8)
 
-nmb_indp.graph_deltaNMB_lines(1,10,"","","",interval=ce.Interval.PREDICTION,
+nmb_indp.graph_deltaNMB_lines(1,10,"deltaNMB lines","wtp values","NMB values",interval=ce.Interval.PREDICTION,
                              show_legend=True, figure_size=8)
 
 

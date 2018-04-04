@@ -697,11 +697,13 @@ class CBA(_EconEval):
                     plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
                                  alpha=transparency, label=strategy_i.name)
 
-        plt.xlim([min_wtp, max_wtp])
-
         if show_legend:
             plt.legend()
 
+        plt.title(title)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.xlim([min_wtp, max_wtp])
 
         plt.show()
 
