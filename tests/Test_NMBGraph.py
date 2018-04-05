@@ -8,7 +8,7 @@ s_center = np.array([[10000, 0.2],[20000, 0.3],[50000, 0.35]])
 
 s0 = ce.Strategy("s1", s_center[0, 0]+np.random.normal(0, 1000, 10), s_center[0, 1]+np.random.normal(0, 0.01, 10))
 s1 = ce.Strategy("s1", s_center[1, 0]+np.random.normal(0, 1000, 10), s_center[1, 1]+np.random.normal(0, 0.01, 10))
-s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, 10), s_center[2, 1]+np.random.normal(0, 0.01, 10))
+s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, 10), s_center[2, 1]+np.random.normal(0, 0.05, 10))
 
 
 nmb_paired = ce.CBA([s0, s1, s2], if_paired=True) # list of frontier strategies as input
