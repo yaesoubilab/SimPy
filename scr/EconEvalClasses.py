@@ -643,7 +643,7 @@ class CBA(_EconEval):
                 # get the NMB values for each wtp
                 y_values = [nmbi.get_NMB(x) for x in x_values]
                 # plot line
-                # plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
+                plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
 
                 # get confidence interval and plot
                 if interval == Interval.CONFIDENCE:
@@ -651,8 +651,9 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
-                                 alpha=transparency, label=strategy_i.name)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
+                    #plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
+                    #             alpha=transparency, label=strategy_i.name)
 
                 # get prediction interval and plot
                 if interval == Interval.PREDICTION:
@@ -660,8 +661,7 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
-                                 alpha=transparency, label=strategy_i.name)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
 
         # if unpaired
         elif self._ifPaired==False:
@@ -677,7 +677,7 @@ class CBA(_EconEval):
                 # get the NMB values for each wtp
                 y_values = [nmbi.get_NMB(x) for x in x_values]
                 # plot line
-                # plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
+                plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
 
                 # get confidence interval and plot
                 if interval == Interval.CONFIDENCE:
@@ -685,8 +685,7 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
-                                 alpha=transparency, label=strategy_i.name)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
 
                 # get prediction interval and plot
                 if interval == Interval.PREDICTION:
@@ -694,8 +693,7 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
-                                 alpha=transparency, label=strategy_i.name)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
 
         if show_legend:
             plt.legend()
@@ -709,6 +707,9 @@ class CBA(_EconEval):
         vals_x, labs_x = plt.xticks()
         plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
         plt.xticks(vals_x, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
+
+        plt.axhline(y=0, c='k', ls='--', linewidth=0.5)
+        plt.axvline(x=0, c='k', ls='--', linewidth=0.5)
 
         plt.show()
 
