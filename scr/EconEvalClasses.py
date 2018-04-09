@@ -713,6 +713,7 @@ class CBA(_EconEval):
 
         plt.show()
 
+
 class ComparativeEconMeasure:
     def __init__(self, name, cost_new, health_new, cost_base, health_base):
         """
@@ -836,20 +837,6 @@ class ICER_indp(_ICER):
         # initialize the base class
         _ICER.__init__(self, name, cost_new, health_new, cost_base, health_base)
 
-        self._n = len(cost_new)
-
-        # generate 1 random sample for new and base
-        # calculate element-wise ratio as sample of ICER
-        index_new_0 = np.random.choice(range(self._n), size=self._n, replace=True)
-        cost_new_0 = self._costNew[index_new_0]
-        health_new_0 = self._healthNew[index_new_0]
-
-        index_base_0 = np.random.choice(range(self._n), size=self._n, replace=True)
-        cost_base_0 = self._costBase[index_base_0]
-        health_base_0 = self._healthBase[index_base_0]
-
-        self.sum_stat_sample_ratio = np.divide((cost_new_0-cost_base_0),(health_new_0-health_base_0))
-
     def get_CI(self, alpha, num_bootstrap_samples):
         """
         :param alpha: significance level, a value from [0, 1]
@@ -858,12 +845,14 @@ class ICER_indp(_ICER):
         """
         ICERs = np.zeros(num_bootstrap_samples)
 
+        n_new = len(self._costNew)
+        n_base = len(self._costBase)
         for i in range(num_bootstrap_samples):
-            index_new_i = np.random.choice(range(self._n), size=self._n, replace=True)
+            index_new_i = np.random.choice(range(n_new), size=n_new, replace=True)
             cost_new_i = self._costNew[index_new_i]
             health_new_i = self._healthNew[index_new_i]
 
-            index_base_i = np.random.choice(range(self._n), size=self._n, replace=True)
+            index_base_i = np.random.choice(range(n_base), size=n_base, replace=True)
             cost_base_i = self._costBase[index_base_i]
             health_base_i = self._healthBase[index_base_i]
 
@@ -875,9 +864,25 @@ class ICER_indp(_ICER):
         return np.percentile(ICERs, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
     def get_PI(self, alpha):
-        # CI is for mean values
-        # PI is for observation data points
-        return np.percentile(self.sum_stat_sample_ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        """
+        :param alpha: significance level, a value from [0, 1]
+        :return: prediction interval in the format of list [l, u]
+        """
+
+        n = max(len(self._costNew), len(self._costBase))
+
+        # calculate element-wise ratio as sample of ICER
+        index_new_0 = np.random.choice(range(n), size=n, replace=True)
+        cost_new_0 = self._costNew[index_new_0]
+        health_new_0 = self._healthNew[index_new_0]
+
+        index_base_0 = np.random.choice(range(n), size=n, replace=True)
+        cost_base_0 = self._costBase[index_base_0]
+        health_base_0 = self._healthBase[index_base_0]
+
+        sum_stat_sample_ratio = np.divide((cost_new_0 - cost_base_0), (health_new_0 - health_base_0))
+
+        return np.percentile(sum_stat_sample_ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
 
 class _NMB(ComparativeEconMeasure):
