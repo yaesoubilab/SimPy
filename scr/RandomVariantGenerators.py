@@ -178,8 +178,8 @@ class GammaPoisson(RVG):
         self.scale = scale
 
     def sample(self, rng):
-        sample_rate = Gamma(self.a, scale = self.gamma_scale).sample(rng)
-        sample_poisson = Poisson(sample_rate)
+        sample_rate = Gamma(a=self.a, scale=self.gamma_scale).sample(rng)
+        sample_poisson = Poisson(mu=sample_rate)
         return sample_poisson.sample(rng) * self.scale + self.loc
 
 
@@ -234,9 +234,9 @@ class JohnsonSu(RVG):
 class LogNormal(RVG):
     def __init__(self, s, loc=0, scale=1):
         """
-        s = sigma and scale = exp(mu)
-        E[X] = exp(mean +sigma**2/2)
-        Var[X] = [exp(sigma**2-1)]exp(2*mean + sigma**2)
+        s = sigma and scale = exp(mean)
+        E[X] = exp(1/2 * s**2)
+        Var[X] = (exp(s**2)-1)*exp(s**2)
         """
         RVG.__init__(self)
         self.s = s

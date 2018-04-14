@@ -34,18 +34,18 @@ def get_samples_multivariate(dist, rnd):
     return samples
 
 
-def test_exponential(rnd, mean):
+def test_exponential(rnd, scale, loc=0):
 
     # exponential random variate generator
-    exp_dist = RVGs.Exponential(scale=mean)
+    exp_dist = RVGs.Exponential(scale, loc)
 
     # obtain samples
     samples = get_samples(exp_dist, rnd)
 
     # report mean and variance
     print_test_results('Exponential', samples,
-                       expectation=mean,
-                       variance=mean**2)
+                       expectation=scale+loc,
+                       variance=scale**2)
 
 
 def test_bernoulli(rnd, p):
@@ -62,45 +62,45 @@ def test_bernoulli(rnd, p):
                        variance=p*(1-p))
 
 
-def test_beta(rnd, a, b):
+def test_beta(rnd, a, b, loc=0, scale=1):
 
     # beta random variate generator
-    beta_dist = RVGs.Beta(a, b)
+    beta_dist = RVGs.Beta(a, b, loc, scale)
 
     # obtain samples
     samples = get_samples(beta_dist, rnd)
 
     # report mean and variance
     print_test_results('Beta', samples,
-                       expectation=a/(a + b),
-                       variance=(a*b)/((a+b+1)*(a+b)**2))
+                       expectation=(a*1.0/(a + b))*scale + loc,
+                       variance=((a*b)/((a+b+1)*(a+b)**2.0))* scale**2)
 
 
-def test_betabinomial(rnd, n, a, b):
+def test_betabinomial(rnd, n, a, b, loc=0, scale=1):
 
     # beta random variate generator
-    betabinomial_dist = RVGs.BetaBinomial(n, a, b)
+    betabinomial_dist = RVGs.BetaBinomial(n, a, b, loc, scale)
 
     # obtain samples
     samples = get_samples(betabinomial_dist, rnd)
 
     # report mean and variance
     print_test_results('BetaBinomial', samples,
-                       expectation=a*n/(a + b),
-                       variance=(n*a*b*(a+b+n))/((a+b)**2*(a+b+1)))
+                       expectation=(a*n/(a + b))*scale + loc,
+                       variance=((n*a*b*(a+b+n))/((a+b)**2*(a+b+1)))*scale**2.0)
 
 
-def test_binomial(rnd, n, p):
+def test_binomial(rnd, n, p, loc=0):
 
     # bimonial random variate generator
-    binomial_dist = RVGs.Binomial(n, p)
+    binomial_dist = RVGs.Binomial(n, p, loc)
 
     # obtain samples
     samples = get_samples(binomial_dist, rnd)
 
     # report mean and variance
     print_test_results('Binomial', samples,
-                       expectation=n*p,
+                       expectation=n*p + loc,
                        variance=n*p*(1-p))
 
 
@@ -146,42 +146,42 @@ def test_empirical(rnd, prob):
                        variance=var)
 
 
-def test_gamma(rnd, shape, scale):
+def test_gamma(rnd, a, loc=0, scale=1):
     # gamma random variate generator
-    gamma_dist = RVGs.Gamma(shape, scale)
+    gamma_dist = RVGs.Gamma(a, loc, scale)
 
     # obtain samples
     samples = get_samples(gamma_dist, rnd)
 
     # report mean and variance
     print_test_results('Gamma', samples,
-                       expectation=shape*scale,
-                       variance=shape*scale**2)
+                       expectation=a*scale + loc,
+                       variance=a*scale**2)
 
 
-def test_gammapoisson(rnd, shape, scale):
+def test_gammapoisson(rnd, a, gamma_scale, loc=0, scale=1):
     # gamma-poisson random variate generator
-    gammapoisson_dist = RVGs.GammaPoisson(shape, scale)
+    gammapoisson_dist = RVGs.GammaPoisson(a, gamma_scale, loc, scale)
 
     # obtain samples
     samples = get_samples(gammapoisson_dist, rnd)
 
     # report mean and variance
     print_test_results('GammaPoisson', samples,
-                       expectation=shape*scale,
-                       variance=shape*scale + shape*(scale**2))
+                       expectation=(a*gamma_scale)*scale + loc,
+                       variance=(a*gamma_scale + a*(gamma_scale**2))*scale**2)
 
 
-def test_geometric(rnd, p):
+def test_geometric(rnd, p, loc=0):
     # geometric random variate generator
-    geometric_dist = RVGs.Geometric(p)
+    geometric_dist = RVGs.Geometric(p, loc)
 
     # obtain samples
     samples = get_samples(geometric_dist, rnd)
 
     # report mean and variance
     print_test_results('Geometric', samples,
-                       expectation=1/p,
+                       expectation=1/p + loc,
                        variance=(1-p)/(p**2))
 
 
@@ -217,17 +217,17 @@ def test_johnsonsu(rnd, a, b, loc, scale):
                        variance=var)
 
 
-def test_lognormal(rnd, mean, sigma):
+def test_lognormal(rnd, s, loc=0, scale=1):
     #lognormal random variate generator
-    lognormal_dist = RVGs.LogNormal(mean, sigma)
+    lognormal_dist = RVGs.LogNormal(s, loc, scale)
 
     # obtain samples
     samples = get_samples(lognormal_dist, rnd)
 
     # report mean and variance
     print_test_results('LogNormal', samples,
-                       expectation=math.exp(mean +sigma**2/2),
-                       variance=(math.exp(sigma**2-1))*math.exp(2*mean + sigma**2)
+                       expectation=np.exp(0.5*s**2)*scale+loc,
+                       variance=(np.exp(s**2)-1.0)*np.exp(s**2) * scale**2
                        )
 
 
@@ -245,74 +245,84 @@ def test_multinomial(rnd, n, pvals):
                        )
 
 
-def test_negativebinomial(rnd, n, p):
+def test_negativebinomial(rnd, n, p, loc=0):
 
     # negative bimonial random variate generator
-    negativebinomial_dist = RVGs.NegativeBinomial(n, p)
+    negativebinomial_dist = RVGs.NegativeBinomial(n, p, loc)
 
     # obtain samples
     samples = get_samples(negativebinomial_dist, rnd)
 
+    # get theoretical mean and variance
+    mean = scipy.nbinom.stats(n, p, loc, moments='m')
+    mean = np.asarray(mean).item()
+    var = scipy.nbinom.stats(n, p, loc, moments='v')
+    var = np.asarray(var).item()
+
     # report mean and variance
     print_test_results('Negative Binomial', samples,
-                       expectation=(n*p)/(1-p),
-                       variance=(n*p)/((1-p)**2)
+                       expectation=mean,
+                       variance=var
                        )
 
 
-def test_normal(rnd, mean, sigma):
+def test_normal(rnd, loc=0, scale=1):
     #normal random variate generator
-    normal_dist = RVGs.Normal(mean, sigma)
+    normal_dist = RVGs.Normal(loc, scale)
 
     # obtain samples
     samples = get_samples(normal_dist, rnd)
 
     # report mean and variance
     print_test_results('Normal', samples,
-                       expectation=mean,
-                       variance=sigma**2
+                       expectation=loc,
+                       variance=scale**2
                        )
 
 
-def test_poisson(rnd, lam):
+def test_poisson(rnd, mu, loc=0):
     # poisson random variate generator
-    poisson_dist = RVGs.Poisson(lam)
+    poisson_dist = RVGs.Poisson(mu, loc)
 
     # obtain samples
     samples = get_samples(poisson_dist, rnd)
 
     # report mean and variance
     print_test_results('Poisson', samples,
-                       expectation=lam,
-                       variance=lam
+                       expectation=mu+loc,
+                       variance=mu
                        )
 
 
-def test_triangular(rnd, l, m, r):
+def test_triangular(rnd, c, loc=0, scale=1):
     # triangular random variate generator
-    triangular_dist = RVGs.Triangular(l, m, r)
+    triangular_dist = RVGs.Triangular(c, loc, scale)
 
     # obtain samples
     samples = get_samples(triangular_dist, rnd)
 
+    # get theoretical variance
+    var = scipy.triang.stats(c, loc, scale, moments='v')
+    var = np.asarray(var).item()
+
     # report mean and variance
     print_test_results('Triangular', samples,
-                       expectation=(l+m+r)/3,
-                       variance=(l**2 + m**2 + r**2 -l*r - l*m - r*m)/18
+                       expectation=(3*loc + scale+ c*scale)/3.0,
+                       variance=var
                        )
 
 
-def test_uniform(rnd, l, r):
+def test_uniform(rnd, loc=0, scale=1):
     # uniform random variate generator
-    uniform_dist = RVGs.Uniform(l, r)
+    uniform_dist = RVGs.Uniform(loc, scale)
 
     # obtain samples
     samples = get_samples(uniform_dist, rnd)
 
     # report mean and variance
     print_test_results('Uniform', samples,
-                       expectation=(l + r) / 2,
-                       variance=(r-l)**2/12
+                       expectation=(2*loc + scale) / 2.0,
+                       variance=scale**2/12.0
                        )
 
 
@@ -330,15 +340,19 @@ def test_uniformdiscrete(rnd, l, r):
                        )
 
 
-def test_weibull(rnd, a):
+def test_weibull(rnd, c, loc=0, scale=1):
     # weibull random variate generator
-    weibull_dist = RVGs.Weibull(a)
+    weibull_dist = RVGs.Weibull(c, loc, scale)
 
     # obtain samples
     samples = get_samples(weibull_dist, rnd)
 
+    # get theoretical variance
+    var = scipy.weibull_min.stats(c, loc, scale, moments='v')
+    var = np.asarray(var).item()
+
     # report mean and variance
     print_test_results('Weibull', samples,
-                       expectation=math.gamma(1 + 1/a),
-                       variance=math.gamma(1 + 2/a) - (math.gamma(1 + 1/a)**2)
+                       expectation=math.gamma(1.0 + 1/c)* scale + loc,
+                       variance=var
                        )
