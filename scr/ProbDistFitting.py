@@ -7,19 +7,23 @@ from scipy.optimize import fmin_slsqp
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
 
-# In most functions with Location parameter, floc=0 is applied
-# (fix location at 0), since if not, estimated parameters are not unique
-# for example Exponential distribution only has one parameter lambda, k=1
+# fixed_location: specify location, False by default
+
+# for continuous distributions, estimate location if fixed_location = False
+# can also take fixed_location given by users, fixed_location = 0 means floc=0
+
+# for discrete distribution,  need specify location by users, only take numeric values
 
 def AIC(k, log_likelihood):
     """ :returns Akaike information criterion"""
     return 2 * k - 2 * log_likelihood
 
 # 1 Exponential
-def fit_exp(data, x_label, fixed_location=0):
+def fit_exp(data, x_label, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
+    :param fixed_location: specify location, 0 by default
     :returns: dictionary with keys "loc", "scale", and "AIC"
     """
 
@@ -28,7 +32,10 @@ def fit_exp(data, x_label, fixed_location=0):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of exponential
-    loc, scale = scs.expon.fit(data, floc=fixed_location)
+    if fixed_location==False:
+        loc, scale = scs.expon.fit(data)
+    else:
+        loc, scale = scs.expon.fit(data, floc=fixed_location)
 
     # plot the estimated exponential distribution
     x_values = np.linspace(scs.expon.ppf(0.0001, loc, scale), scs.expon.ppf(0.9999, loc, scale), 200)
@@ -42,7 +49,7 @@ def fit_exp(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=1, # lambda = 1/scale
+        k=1 + np.mean(fixed_location==False),
         log_likelihood=np.sum(scs.expon.logpdf(data, loc, scale))
     )
 
@@ -51,7 +58,7 @@ def fit_exp(data, x_label, fixed_location=0):
 
 
 # 2 Beta
-def fit_beta(data, x_label, min=None, max=None):
+def fit_beta(data, x_label, min=None, max=None, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -77,7 +84,10 @@ def fit_beta(data, x_label, min=None, max=None):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    a, b, loc, scale = scs.beta.fit(data, floc=0)
+    if fixed_location == False:
+        a, b, loc, scale = scs.beta.fit(data)
+    else:
+        a, b, loc, scale = scs.beta.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
     x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
@@ -92,7 +102,7 @@ def fit_beta(data, x_label, min=None, max=None):
 
     # calculate AIC
     aic = AIC(
-        k=3,
+        k=3+np.mean(fixed_location==False),
         log_likelihood=np.sum(scs.beta.logpdf(data, a, b, loc, scale))
     )
 
@@ -101,6 +111,7 @@ def fit_beta(data, x_label, min=None, max=None):
 
 
 # 3 BetaBinomial
+'''
 def fit_betaBinomial(data, x_label, n=None):
     """
     :param data: (numpy.array) observations
@@ -139,23 +150,6 @@ def fit_betaBinomial(data, x_label, n=None):
     paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, 10.0)] * len(theta0),
                               disp=False, full_output=True)
 
-    ##########################
-    # JAGS Model
-    # jags_model = '''
-    # model {
-    #     for (i in 1:N) {
-    #         p[i] ~ dbeta(a,b)
-    #         y[i] ~ dbin(p[i], n)
-    #     }
-    #     a ~ dunif(0, 10)
-    #     b ~ dunif(0, 10)
-    # }
-    # '''
-    # # 1000 samples
-    # sample_path = MCMC_JAGS(250, ['a', 'b'], jags_model, data)
-    # a, b = np.mean(sample_path['a']), np.mean(sample_path['b'])
-    ##########################
-
     # plot the estimated distribution
     # get PMF
     x_values = np.arange(0, n, step=1)
@@ -178,22 +172,27 @@ def fit_betaBinomial(data, x_label, n=None):
 
     # report results in the form of a dictionary
     return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
-
+'''
 
 # 4 Binomial
-def fit_binomial(data, x_label, n=None):
+def fit_binomial(data, x_label, fixed_location, n=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param n: the number of trials in the Binomial distribution, set by experiment design
+    :param fixed_location: given by users, fixed_location = 0 means floc=0
     :returns: dictionary with keys "p" and "AIC"
     """
-    if n==None:
-        n = np.max(data)
 
     # fit Binomial distribution: the MLE of p is x/n
     # if we have N data point with Xi~Bin(n,p), then sum(Xi)~Bin(n*N,p), p_hat = sum(xi)/(n*N)
     # # https://onlinecourses.science.psu.edu/stat504/node/28
+
+    data = data - fixed_location
+
+    if n==None:
+        n = np.max(data)
+
     p=np.sum(data)*1.0/(len(data)*n)
 
     # plot histogram
@@ -217,7 +216,7 @@ def fit_binomial(data, x_label, n=None):
     )
 
     # report results in the form of a dictionary
-    return {"p": p, "AIC": aic}
+    return {"p": p, "AIC": aic, "loc": fixed_location}
 
 
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
@@ -248,7 +247,7 @@ def fit_empirical(data, x_label):
 
 
 # 6 Gamma
-def fit_gamma(data, x_label):
+def fit_gamma(data, x_label, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -261,7 +260,10 @@ def fit_gamma(data, x_label):
 
     # estimate the parameters of gamma
     # alpha = a, beta = 1/scale
-    a, loc, scale = scs.gamma.fit(data)
+    if fixed_location==False:
+        a, loc, scale = scs.gamma.fit(data)
+    else:
+        a, loc, scale = scs.gamma.fit(data,floc=fixed_location)
 
     # plot the estimated gamma distribution
     x_values = np.linspace(scs.gamma.ppf(0.0001, a, loc, scale), scs.gamma.ppf(0.9999, a, loc, scale), 200)
@@ -275,14 +277,14 @@ def fit_gamma(data, x_label):
 
     # calculate AIC
     aic = AIC(
-        k=3,
+        k=2+np.mean(fixed_location==False),
         log_likelihood=np.sum(scs.gamma.logpdf(data, a, loc, scale))
     )
 
     # report results in the form of a dictionary
     return {"a": a, "loc": loc, "scale": scale, "AIC": aic}
 
-
+'''
 # 7 GammaPoisson
 def fit_GammaPoisson(data, x_label):
     """
@@ -343,10 +345,10 @@ def fit_GammaPoisson(data, x_label):
 
     # report results in the form of a dictionary
     return {"a": a, "scale": scale, "AIC": aic}
-
+'''
 
 # 8 Geometric
-def fit_geometric(data, x_label):
+def fit_geometric(data, x_label, fixed_location):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -354,6 +356,7 @@ def fit_geometric(data, x_label):
     """
 
     # https://www.projectrhea.org/rhea/index.php/MLE_Examples:_Exponential_and_Geometric_Distributions_Old_Kiwi
+    data = data-fixed_location
     p = len(data)*1.0/np.sum(data)
 
     # plot histogram
@@ -377,11 +380,11 @@ def fit_geometric(data, x_label):
     )
 
     # report results in the form of a dictionary
-    return {"p": p, "AIC": aic}
+    return {"p": p, "AIC": aic, "loc": fixed_location}
 
 
 # 9 JohnsonSb
-def fit_johnsonSb(data, x_label):
+def fit_johnsonSb(data, x_label, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -393,7 +396,10 @@ def fit_johnsonSb(data, x_label):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    a, b, loc, scale = scs.johnsonsb.fit(data, floc=0)
+    if fixed_location==False:
+        a, b, loc, scale = scs.johnsonsb.fit(data)
+    else:
+        a, b, loc, scale = scs.johnsonsb.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSb distribution
     x_values = np.linspace(scs.johnsonsb.ppf(0.01, a, b, loc, scale),
@@ -408,7 +414,7 @@ def fit_johnsonSb(data, x_label):
 
     # calculate AIC
     aic = AIC(
-        k=3, # loc is fixed at 0, so 3 parameters
+        k=3+np.mean(fixed_location==False),
         log_likelihood=np.sum(scs.johnsonsb.logpdf(data, a, b, loc, scale))
     )
 
@@ -417,7 +423,7 @@ def fit_johnsonSb(data, x_label):
 
 
 # 10 JohnsonSu
-def fit_johnsonSu(data, x_label):
+def fit_johnsonSu(data, x_label, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -429,7 +435,10 @@ def fit_johnsonSu(data, x_label):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    a, b, loc, scale = scs.johnsonsu.fit(data, floc=0)
+    if fixed_location == False:
+        a, b, loc, scale = scs.johnsonsu.fit(data)
+    else:
+        a, b, loc, scale = scs.johnsonsu.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSu distribution
     x_values = np.linspace(scs.johnsonsu.ppf(0.01, a, b, loc, scale),
@@ -444,7 +453,7 @@ def fit_johnsonSu(data, x_label):
 
     # calculate AIC
     aic = AIC(
-        k=3, # loc is fixed at 0, so 3 parameters
+        k=3+np.mean(fixed_location==False),
         log_likelihood=np.sum(scs.johnsonsu.logpdf(data, a, b, loc, scale))
     )
 
@@ -453,7 +462,7 @@ def fit_johnsonSu(data, x_label):
 
 
 # 11 LogNormal
-def fit_lognorm(data, x_label):
+def fit_lognorm(data, x_label, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -465,7 +474,10 @@ def fit_lognorm(data, x_label):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    s, loc, scale = scs.lognorm.fit(data, floc=0)
+    if fixed_location==False:
+        s, loc, scale = scs.lognorm.fit(data)
+    else:
+        s, loc, scale = scs.lognorm.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
     x_values = np.linspace(scs.lognorm.ppf(0.0001, s, loc, scale), scs.lognorm.ppf(0.9999, s, loc, scale), 200)
@@ -479,14 +491,14 @@ def fit_lognorm(data, x_label):
 
     # calculate AIC
     aic = AIC(
-        k=2,
+        k=2+np.mean(fixed_location==False),
         log_likelihood=np.sum(scs.lognorm.logpdf(data, s, loc, scale))
     )
 
     # report results in the form of a dictionary
     return {"s": s, "loc": loc, "scale": scale, "AIC": aic}
 
-
+'''
 # 12 NegativeBinomial
 def fit_NegativeBinomial(data, x_label):
     """
@@ -536,7 +548,7 @@ def fit_NegativeBinomial(data, x_label):
 
     # report results in the form of a dictionary
     return {"n": paras[0], "p": paras[1], "AIC": aic}
-
+'''
 
 # 13 Normal
 def fit_norm(data, x_label):
@@ -574,7 +586,7 @@ def fit_norm(data, x_label):
 
 
 # 14 Triangular
-def fit_triang(data, x_label):
+def fit_triang(data, x_label, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -588,7 +600,10 @@ def fit_triang(data, x_label):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    c, loc, scale = scs.triang.fit(data)
+    if fixed_location==False:
+        c, loc, scale = scs.triang.fit(data)
+    else:
+        c, loc, scale = scs.triang.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
     x_values = np.linspace(scs.triang.ppf(0.0001, c, loc, scale), scs.triang.ppf(0.9999, c, loc, scale), 200)
@@ -602,7 +617,7 @@ def fit_triang(data, x_label):
 
     # calculate AIC
     aic = AIC(
-        k=3,
+        k=2+np.mean(fixed_location==False),
         log_likelihood=np.sum(scs.triang.logpdf(data, c, loc, scale))
     )
 
@@ -686,7 +701,7 @@ def fit_uniformDiscrete(data, x_label):
 
 
 # 17 Weibull
-def fit_weibull(data, x_label):
+def fit_weibull(data, x_label, fixed_location=False):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -699,11 +714,14 @@ def fit_weibull(data, x_label):
 
     # estimate the parameters of weibull
     # location is fixed at 0
-    a, loc, scale = scs.weibull_min.fit(data, floc=0)
+    if fixed_location == False:
+        c, loc, scale = scs.weibull_min.fit(data)
+    else:
+        c, loc, scale = scs.weibull_min.fit(data, floc=fixed_location)
 
     # plot the estimated gamma distribution
-    x_values = np.linspace(scs.weibull_min.ppf(0.001, a, loc, scale), scs.weibull_min.ppf(0.999, a, loc, scale), 100)
-    rv = scs.weibull_min(a, loc, scale)
+    x_values = np.linspace(scs.weibull_min.ppf(0.001, c, loc, scale), scs.weibull_min.ppf(0.999, c, loc, scale), 100)
+    rv = scs.weibull_min(c, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Weibull')
 
     ax.set_xlabel(x_label)
@@ -713,16 +731,16 @@ def fit_weibull(data, x_label):
 
     # calculate AIC
     aic = AIC(
-        k=2, # as location is fixed, only 2 parameters estimated
-        log_likelihood=np.sum(scs.weibull_min.logpdf(data, a, loc, scale))
+        k=2+np.mean(fixed_location==False),
+        log_likelihood=np.sum(scs.weibull_min.logpdf(data, c, loc, scale))
     )
 
     # report results in the form of a dictionary
-    return {"a": a, "loc": loc, "scale": scale, "AIC": aic}
+    return {"c": c, "loc": loc, "scale": scale, "AIC": aic}
 
 
 # 18 Poisson
-def fit_poisson(data, x_label):
+def fit_poisson(data, x_label, fixed_location):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -731,7 +749,8 @@ def fit_poisson(data, x_label):
 
     # fit poisson distribution: the MLE of lambda is the sample mean
     # https://en.wikipedia.org/wiki/Poisson_distribution#Maximum_likelihood
-    lamb = data.mean()
+    data = data-fixed_location
+    mu = data.mean()
 
     # plot histogram
     fig, ax = plt.subplots(1, 1)
@@ -739,8 +758,8 @@ def fit_poisson(data, x_label):
             edgecolor='black', alpha=0.5, label='Frequency')
 
     # plot poisson-deviation with fitted parameter
-    x_plot = np.arange(scs.poisson.ppf(0.0001, lamb), scs.poisson.ppf(0.9999, lamb))
-    ax.step(x_plot, scs.poisson.pmf(x_plot, lamb), COLOR_DISCRETE_FIT, ms=8, label='Poisson')
+    x_plot = np.arange(scs.poisson.ppf(0.0001, mu), scs.poisson.ppf(0.9999, mu))
+    ax.step(x_plot, scs.poisson.pmf(x_plot, mu), COLOR_DISCRETE_FIT, ms=8, label='Poisson')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -750,8 +769,8 @@ def fit_poisson(data, x_label):
     # calculate AIC
     aic = AIC(
         k=1,
-        log_likelihood=np.sum(scs.poisson.logpmf(data, lamb))
+        log_likelihood=np.sum(scs.poisson.logpmf(data, mu))
     )
 
     # report results in the form of a dictionary
-    return {"lambda": lamb, "AIC": aic}
+    return {"mu": mu, "AIC": aic, "loc": fixed_location}

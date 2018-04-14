@@ -7,10 +7,6 @@ import scipy.stats as scs
 # simulate some data
 np.random.seed(1)
 
-# In most functions with Location parameter, floc=0 is applied
-# (fix location at 0), since if not, estimated parameters are not unique
-# for example Exponential distribution only has one parameter lambda, k=1
-
 # 1 fitting a exponential distribution
 dat_exp = np.random.exponential(5, 1000)            # generate data
 dictResults=Fit.fit_exp(dat_exp, 'Data')        # fit
@@ -29,7 +25,7 @@ print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
 dat_bin = np.random.binomial(100, 0.3, 1000)
-dictResults=Fit.fit_binomial(dat_bin, 'Data', n=100) # fit
+dictResults=Fit.fit_binomial(dat_bin, 'Data', n=100, fixed_location=0) # fit
 print("Fitting Binomial:", dictResults)
 
 # 5 Empirical (for int data)
@@ -38,7 +34,7 @@ dictResults=Fit.fit_empirical(dat_em, 'Data') # fit
 print("Fitting Empirical:", dictResults)
 
 # 6 fitting a gamma distribution
-dat_gamma = np.random.gamma(10, 2,1000)     # generate data
+dat_gamma = np.random.gamma(10, 2, 1000)     # generate data
 dictResults=Fit.fit_gamma(dat_gamma, 'Data')        # fit
 print("Fitting Gamma:", dictResults)
 
@@ -50,7 +46,7 @@ print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric
 dat_geom = np.random.geometric(0.3, 1000)     # generate data
-dictResults=Fit.fit_geometric(dat_geom, 'Data')        # fit
+dictResults=Fit.fit_geometric(dat_geom, 'Data', fixed_location=0)        # fit
 print("Fitting Geometric:", dictResults)
 
 # 9 fitting a JohnsonSb distribution
@@ -100,5 +96,5 @@ print("Fitting Weibull:", dictResults)
 
 # 18 fitting a Poisson distribution
 dat_poisson = np.random.poisson(30, 1000)    # generate data
-dictResults=Fit.fit_poisson(dat_poisson, 'Data')    # fit
+dictResults=Fit.fit_poisson(dat_poisson, 'Data', fixed_location=0)    # fit
 print("Fitting Poisson:", dictResults)
