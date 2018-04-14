@@ -66,17 +66,19 @@ class Beta(RVG):
     def sample(self, rng):
         return scipy.beta.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
-'''
+
 class BetaBinomial(RVG):
-    def __init__(self, n, a, b):
+    def __init__(self, n, a, b, loc=0, scale=1):
         """
-        E[X] = na/(a+b)
-        Var[X] = (nab(a+b+n))/((a+b)**2(a+b+1))
+        E[X] = (na/(a+b))*scale + loc
+        Var[X] = [(nab(a+b+n))/((a+b)**2(a+b+1))] * scale**2
         """
         RVG.__init__(self)
         self.n = n
         self.a = a
         self.b = b
+        self.loc = loc
+        self.scale = scale
 
     def sample(self, rng):
         """
@@ -87,8 +89,8 @@ class BetaBinomial(RVG):
         sample_p = rng.beta(self.a, self.b)
         sample = rng.binomial(self.n, sample_p)
 
-        return sample
-'''
+        return sample * self.scale + self.loc
+
 
 class Binomial(RVG):
     def __init__(self, N, p, loc=0):
@@ -148,8 +150,8 @@ class Empirical(RVG):
 class Gamma(RVG):
     def __init__(self, a, loc=0, scale=1):
         """
-        E[X] = shape*scale
-        Var[X] = shape*scale**2
+        E[X] = a*scale
+        Var[X] = a*scale**2
         """
         RVG.__init__(self)
         self.a = a
@@ -159,25 +161,27 @@ class Gamma(RVG):
     def sample(self, rng):
         return scipy.gamma.rvs(self.a, self.loc, self.scale, random_state=rng)
 
-'''
+
 class GammaPoisson(RVG):
     # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
     # in this article shape is beta, scale is alpha, change to Wiki version below
     # with shape-alpha, scale-theta
-    def __init__(self, shape, scale):
+    def __init__(self, a, gamma_scale, loc=0, scale=1):
         """
-        E[X] = shape*scale
-        Var[X] = shape*scale + shape*(scale**2)
+        E[X] = (a*gamma_scale)*scale + loc
+        Var[X] = [a*gamma_scale + a*(gamma_scale**2)] * scale **2
         """
         RVG.__init__(self)
-        self.shape = shape
+        self.a = a
+        self.gamma_scale = gamma_scale
+        self.loc = loc
         self.scale = scale
 
     def sample(self, rng):
-        sample_rate = Gamma(self.shape, self.scale).sample(rng)
+        sample_rate = Gamma(self.a, scale = self.gamma_scale).sample(rng)
         sample_poisson = Poisson(sample_rate)
-        return sample_poisson.sample(rng)
-'''
+        return sample_poisson.sample(rng) * self.scale + self.loc
+
 
 class Geometric(RVG):
     def __init__(self, p, loc=0):
@@ -256,26 +260,28 @@ class Multinomial(RVG):
     def sample(self, rng):
         return rng.multinomial(self.N, self.pvals)
 
-'''
+
 class NegativeBinomial(RVG):
-    def __init__(self, r, p):
+    def __init__(self, n, p, loc=0):
         """
-        :param r: number of failures until the experiment is stopped
-        :param p: success probability in each trial
+        The probability distribution for number of failure before n successes
+        :param n: number of the number of successes
+        :param p: p is the probability of a single success
         E[X] = (n*p)/(1-p)
         Var[X] = (n*p)/((1-p)**2)
         """
         RVG.__init__(self)
-        self.n = r
-        self.p = 1-p
+        self.n = n
+        self.p = p
+        self.loc = loc
 
     def sample(self, rng):
         """
         :return: a realization from the NegativeBinomial distribution
-        (the number of successes before a specified number of failures, r, occurs.)
+        (the number of failure before a specified number of successes, n, occurs.)
         """
-        return rng.negative_binomial(self.n, self.p)
-'''
+        return scipy.nbinom.rvs(self.n, self.p, self.loc, random_state=rng)
+
 
 class Normal(RVG):
     def __init__(self, loc=0, scale=1):
