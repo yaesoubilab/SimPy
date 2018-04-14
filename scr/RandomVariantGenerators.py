@@ -52,7 +52,7 @@ class Bernoulli(RVG):
 
 
 class Beta(RVG):
-    def __init__(self, a, b):
+    def __init__(self, a, b, loc=0, scale=1):
         """
         E[X] = a/(a + b)
         Var[X] = ab/[(a + b)**2(a + b + 1)]
@@ -60,11 +60,13 @@ class Beta(RVG):
         RVG.__init__(self)
         self.a = a
         self.b = b
+        self.scale = scale
+        self.loc = loc
 
     def sample(self, rng):
-        return rng.beta(self.a, self.b)
+        return scipy.beta.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
-
+'''
 class BetaBinomial(RVG):
     def __init__(self, n, a, b):
         """
@@ -86,10 +88,10 @@ class BetaBinomial(RVG):
         sample = rng.binomial(self.n, sample_p)
 
         return sample
-
+'''
 
 class Binomial(RVG):
-    def __init__(self, N, p):
+    def __init__(self, N, p, loc=0):
         """
         E[X] = Np
         Var[X] = Np(1-p)
@@ -97,9 +99,10 @@ class Binomial(RVG):
         RVG.__init__(self)
         self.N = N
         self.p = p
+        self.loc=loc
 
     def sample(self, rng):
-        return rng.binomial(self.N, self.p)
+        return scipy.binom.rvs(self.N, self.p, self.loc, random_state=rng)
 
 
 class Dirichlet(RVG):
@@ -143,19 +146,20 @@ class Empirical(RVG):
 
 
 class Gamma(RVG):
-    def __init__(self, shape, scale):
+    def __init__(self, a, loc=0, scale=1):
         """
         E[X] = shape*scale
         Var[X] = shape*scale**2
         """
         RVG.__init__(self)
-        self.shape = shape
+        self.a = a
+        self.loc = loc
         self.scale = scale
 
     def sample(self, rng):
-        return rng.gamma(self.shape, self.scale)
+        return scipy.gamma.rvs(self.a, self.loc, self.scale, random_state=rng)
 
-
+'''
 class GammaPoisson(RVG):
     # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
     # in this article shape is beta, scale is alpha, change to Wiki version below
@@ -173,19 +177,20 @@ class GammaPoisson(RVG):
         sample_rate = Gamma(self.shape, self.scale).sample(rng)
         sample_poisson = Poisson(sample_rate)
         return sample_poisson.sample(rng)
-
+'''
 
 class Geometric(RVG):
-    def __init__(self, p):
+    def __init__(self, p, loc=0):
         """
         E[X] = 1/p
         Var[X] = (1-p)/p**2
         """
         RVG.__init__(self)
         self.p = p
+        self.loc = loc
 
     def sample(self, rng):
-        return rng.geometric(self.p)
+        return scipy.geom.rvs(self.p, self.loc, random_state=rng)
 
 
 class JohnsonSb(RVG):
@@ -223,17 +228,19 @@ class JohnsonSu(RVG):
 
 
 class LogNormal(RVG):
-    def __init__(self, mean, sigma):
+    def __init__(self, s, loc=0, scale=1):
         """
+        s = sigma and scale = exp(mu)
         E[X] = exp(mean +sigma**2/2)
         Var[X] = [exp(sigma**2-1)]exp(2*mean + sigma**2)
         """
         RVG.__init__(self)
-        self.mean = mean
-        self.sigma = sigma
+        self.s = s
+        self.loc = loc
+        self.scale = scale
 
     def sample(self, rng):
-        return rng.lognormal(self.mean, self.sigma)
+        return scipy.lognorm.rvs(self.s, self.loc, self.scale, random_state=rng)
 
 
 class Multinomial(RVG):
@@ -249,7 +256,7 @@ class Multinomial(RVG):
     def sample(self, rng):
         return rng.multinomial(self.N, self.pvals)
 
-
+'''
 class NegativeBinomial(RVG):
     def __init__(self, r, p):
         """
@@ -268,62 +275,66 @@ class NegativeBinomial(RVG):
         (the number of successes before a specified number of failures, r, occurs.)
         """
         return rng.negative_binomial(self.n, self.p)
-
+'''
 
 class Normal(RVG):
-    def __init__(self, mean, st_dev):
+    def __init__(self, loc=0, scale=1):
         """
+        loc = mean, scale = sigma
         E[X] = mean
         Var[X] = st_dev**2
         """
         RVG.__init__(self)
-        self.mean = mean
-        self.stDev = st_dev
+        self.loc = loc
+        self.scale = scale
 
     def sample(self, rng):
-        return rng.normal(self.mean, self.stDev)
+        return scipy.norm.rvs(self.loc, self.scale, random_state=rng)
 
 
 class Poisson(RVG):
-    def __init__(self, rate):
+    def __init__(self, mu, loc=0):
         """
-        E[X] = rate
-        Var[X] = rate
+        E[X] = mu
+        Var[X] = mu
         """
         RVG.__init__(self)
-        self.rate = rate
+        self.mu = mu
+        self.loc = loc
 
     def sample(self, rng):
-        return rng.poisson(self.rate)
+        return scipy.poisson.rvs(self.mu, self.loc, random_state=rng)
 
 
 class Triangular(RVG):
-    def __init__(self, l, mode, u):
+    def __init__(self, c, loc=0, scale=1):
         """
+        l = loc, u = loc+scale, mode = loc + c*scale
         E[X] = (l+mode+u)/3
         Var[X] = (l**2 + mode**2 + u**2 -l*u - l*mode - u*mode)/18
         """
         RVG.__init__(self)
-        self.l = l
-        self.mode = mode
-        self.u = u
+        self.c = c
+        self.loc = loc
+        self.scale = scale
 
     def sample(self, rng):
-        return rng.triangular(self.l, self.mode, self.u)
+        return scipy.triang.rvs(self.c, self.loc, self.scale, random_state=rng)
 
 
 class Uniform(RVG):
-    def __init__(self, l, r):
+    def __init__(self, loc=0, scale=1):
         """
+        l = loc, r = loc + scale
         E[X] = (l+r)/2
         Var[X] = (r-l)**2/12
         """
         RVG.__init__(self)
-        self.l = l
-        self.r = r
+        self.loc = loc
+        self.scale = scale
 
     def sample(self, rng):
-        return rng.uniform(self.l, self.r)
+        return scipy.uniform.rvs(self.loc, self.scale, random_state=rng)
 
 
 class UniformDiscrete(RVG):
@@ -343,13 +354,16 @@ class UniformDiscrete(RVG):
 
 
 class Weibull(RVG):
-    def __init__(self, a):
+    def __init__(self, c, loc=0, scale=1):
         """
-        E[X] = math.gamma(1 + 1/a)
-        Var[X] = math.gamma(1 + 2/a) - (math.gamma(1 + 1/a)**2)
+        k = c, lambda = scale
+        E[X] = math.gamma(1 + 1/c) * scale + loc
+        Var[X] = [math.gamma(1 + 2/c) - (math.gamma(1 + 1/c)**2)] * scale**2
         """
         RVG.__init__(self)
-        self.a = a
+        self.c = c
+        self.loc = loc
+        self.scale = scale
 
     def sample(self, rng):
-        return rng.weibull(self.a)
+        return scipy.weibull_min.rvs(self.c, self.loc, self.scale, random_state=rng)
