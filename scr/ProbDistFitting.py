@@ -14,9 +14,11 @@ COLOR_DISCRETE_FIT = 'r'
 
 # for discrete distribution,  need specify location by users, only take numeric values
 
+
 def AIC(k, log_likelihood):
     """ :returns Akaike information criterion"""
     return 2 * k - 2 * log_likelihood
+
 
 # 1 Exponential
 def fit_exp(data, x_label, fixed_location=False):

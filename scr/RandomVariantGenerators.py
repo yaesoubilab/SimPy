@@ -14,7 +14,7 @@ class RVG:
 
     def sample(self, rng):
         """
-        :param rng: and instant of RNG class
+        :param rng: an instant of RNG class
         :returns one realization from the defined probability distribution """
 
         # abstract method to be overridden in derived classes to process an event
