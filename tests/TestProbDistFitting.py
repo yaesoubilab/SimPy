@@ -39,7 +39,7 @@ dictResults=Fit.fit_gamma(dat_gamma, 'Data')        # fit
 print("Fitting Gamma:", dictResults)
 
 # 7 GammaPoisson
-gamma_poisson_dist = RVGs.GammaPoisson(shape=2, scale=4)
+gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4)
 dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
 dictResults=Fit.fit_GammaPoisson(dat_gamma_poisson, 'Data') # fit
 print("Fitting GammaPoisson:", dictResults)

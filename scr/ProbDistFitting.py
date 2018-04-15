@@ -4,6 +4,9 @@ import scipy.stats as scs
 import scipy as sp
 from scipy.optimize import fmin_slsqp
 
+import warnings
+warnings.filterwarnings("ignore")
+
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
 
@@ -104,14 +107,15 @@ def fit_beta(data, x_label, min=None, max=None, fixed_location=0):
 
 
 # 3 BetaBinomial
-'''
-def fit_betaBinomial(data, x_label, n=None):
+def fit_betaBinomial(data, x_label, n=None, fixed_location=0, fixed_scale=1):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param n: the number of trials in the Binomial distribution
     :returns: dictionary with keys "a", "b", "n" and "AIC"
     """
+    data=1.0*(data - fixed_location)/fixed_scale
+
     if n==None:
         n = np.max(data)
 
@@ -164,8 +168,8 @@ def fit_betaBinomial(data, x_label, n=None):
     )
 
     # report results in the form of a dictionary
-    return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic}
-'''
+    return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic, "loc":fixed_location, "scale":fixed_scale}
+
 
 # 4 Binomial
 def fit_binomial(data, x_label, fixed_location=0, n=None):
@@ -274,14 +278,15 @@ def fit_gamma(data, x_label, fixed_location=0):
     # report results in the form of a dictionary
     return {"a": a, "loc": loc, "scale": scale, "AIC": aic}
 
-'''
+
 # 7 GammaPoisson
-def fit_GammaPoisson(data, x_label):
+def fit_GammaPoisson(data, x_label, fixed_location=0, fixed_scale=1):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :returns: dictionary with keys "a", "scale" and "AIC"
     """
+    data = 1 * (data - fixed_location) / fixed_scale
 
     # plot histogram
     fig, ax = plt.subplots(1, 1)
@@ -334,8 +339,8 @@ def fit_GammaPoisson(data, x_label):
     )
 
     # report results in the form of a dictionary
-    return {"a": a, "scale": scale, "AIC": aic}
-'''
+    return {"a": a, "gamma_scale": scale, "AIC": aic, "loc": fixed_location, "scale": fixed_scale}
+
 
 # 8 Geometric
 def fit_geometric(data, x_label, fixed_location=0):
@@ -479,15 +484,17 @@ def fit_lognorm(data, x_label, fixed_location=0):
     # report results in the form of a dictionary
     return {"s": s, "loc": loc, "scale": scale, "AIC": aic}
 
-'''
+
 # 12 NegativeBinomial
-def fit_NegativeBinomial(data, x_label):
+def fit_NegativeBinomial(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :returns: dictionary with keys "n", "p" and "AIC"
     """
     # n is the number of successes, p is the probability of a single success.
+
+    data = data-fixed_location
 
     # plot histogram
     fig, ax = plt.subplots(1, 1)
@@ -528,8 +535,8 @@ def fit_NegativeBinomial(data, x_label):
     )
 
     # report results in the form of a dictionary
-    return {"n": paras[0], "p": paras[1], "AIC": aic}
-'''
+    return {"n": paras[0], "p": paras[1], "AIC": aic, "loc": fixed_location}
+
 
 # 13 Normal
 def fit_norm(data, x_label):
@@ -675,7 +682,7 @@ def fit_uniformDiscrete(data, x_label):
     )
 
     # report results in the form of a dictionary
-    return {"low": low, "high": high, "AIC": aic}
+    return {"l": low, "r": high, "AIC": aic}
 
 
 # 17 Weibull
