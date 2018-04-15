@@ -48,7 +48,7 @@ def fit_exp(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=1 + np.mean(fixed_location==False),
+        k=1,
         log_likelihood=np.sum(scs.expon.logpdf(data, loc, scale))
     )
 
@@ -57,7 +57,7 @@ def fit_exp(data, x_label, fixed_location=0):
 
 
 # 2 Beta
-def fit_beta(data, x_label, min=None, max=None, fixed_location=0):
+def fit_beta(data, x_label, min=None, max=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -83,7 +83,7 @@ def fit_beta(data, x_label, min=None, max=None, fixed_location=0):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    a, b, loc, scale = scs.beta.fit(data, floc=fixed_location)
+    a, b, loc, scale = scs.beta.fit(data, floc=0)
 
     # plot the estimated distribution
     x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
@@ -98,12 +98,12 @@ def fit_beta(data, x_label, min=None, max=None, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=3+np.mean(fixed_location==False),
+        k=3,
         log_likelihood=np.sum(scs.beta.logpdf(data, a, b, loc, scale))
     )
 
     # report results in the form of a dictionary
-    return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
+    return {"a": a, "b": b, "loc": L, "scale": U-L, "AIC": aic}
 
 
 # 3 BetaBinomial
@@ -271,7 +271,7 @@ def fit_gamma(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=2+np.mean(fixed_location==False),
+        k=2,
         log_likelihood=np.sum(scs.gamma.logpdf(data, a, loc, scale))
     )
 
@@ -406,7 +406,7 @@ def fit_johnsonSb(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=3+np.mean(fixed_location==False),
+        k=3,
         log_likelihood=np.sum(scs.johnsonsb.logpdf(data, a, b, loc, scale))
     )
 
@@ -442,7 +442,7 @@ def fit_johnsonSu(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=3+np.mean(fixed_location==False),
+        k=3,
         log_likelihood=np.sum(scs.johnsonsu.logpdf(data, a, b, loc, scale))
     )
 
@@ -477,7 +477,7 @@ def fit_lognorm(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=2+np.mean(fixed_location==False),
+        k=2,
         log_likelihood=np.sum(scs.lognorm.logpdf(data, s, loc, scale))
     )
 
@@ -602,7 +602,7 @@ def fit_triang(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=2+np.mean(fixed_location==False),
+        k=2,
         log_likelihood=np.sum(scs.triang.logpdf(data, c, loc, scale))
     )
 
@@ -713,7 +713,7 @@ def fit_weibull(data, x_label, fixed_location=0):
 
     # calculate AIC
     aic = AIC(
-        k=2+np.mean(fixed_location==False),
+        k=2,
         log_likelihood=np.sum(scs.weibull_min.logpdf(data, c, loc, scale))
     )
 
