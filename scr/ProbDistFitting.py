@@ -7,12 +7,9 @@ from scipy.optimize import fmin_slsqp
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
 
-# fixed_location: specify location, False by default
+# fixed_location: specify location, 0 by default
+# can also take fixed_location given by users, fixed_location = 1 means floc=1
 
-# for continuous distributions, estimate location if fixed_location = False
-# can also take fixed_location given by users, fixed_location = 0 means floc=0
-
-# for discrete distribution,  need specify location by users, only take numeric values
 
 
 def AIC(k, log_likelihood):
@@ -21,7 +18,7 @@ def AIC(k, log_likelihood):
 
 
 # 1 Exponential
-def fit_exp(data, x_label, fixed_location=False):
+def fit_exp(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -34,10 +31,7 @@ def fit_exp(data, x_label, fixed_location=False):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of exponential
-    if fixed_location==False:
-        loc, scale = scs.expon.fit(data)
-    else:
-        loc, scale = scs.expon.fit(data, floc=fixed_location)
+    loc, scale = scs.expon.fit(data, floc=fixed_location)
 
     # plot the estimated exponential distribution
     x_values = np.linspace(scs.expon.ppf(0.0001, loc, scale), scs.expon.ppf(0.9999, loc, scale), 200)
@@ -60,7 +54,7 @@ def fit_exp(data, x_label, fixed_location=False):
 
 
 # 2 Beta
-def fit_beta(data, x_label, min=None, max=None, fixed_location=False):
+def fit_beta(data, x_label, min=None, max=None, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -86,10 +80,7 @@ def fit_beta(data, x_label, min=None, max=None, fixed_location=False):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    if fixed_location == False:
-        a, b, loc, scale = scs.beta.fit(data)
-    else:
-        a, b, loc, scale = scs.beta.fit(data, floc=fixed_location)
+    a, b, loc, scale = scs.beta.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
     x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
@@ -177,7 +168,7 @@ def fit_betaBinomial(data, x_label, n=None):
 '''
 
 # 4 Binomial
-def fit_binomial(data, x_label, fixed_location, n=None):
+def fit_binomial(data, x_label, fixed_location=0, n=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -249,7 +240,7 @@ def fit_empirical(data, x_label):
 
 
 # 6 Gamma
-def fit_gamma(data, x_label, fixed_location=False):
+def fit_gamma(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -262,10 +253,7 @@ def fit_gamma(data, x_label, fixed_location=False):
 
     # estimate the parameters of gamma
     # alpha = a, beta = 1/scale
-    if fixed_location==False:
-        a, loc, scale = scs.gamma.fit(data)
-    else:
-        a, loc, scale = scs.gamma.fit(data,floc=fixed_location)
+    a, loc, scale = scs.gamma.fit(data,floc=fixed_location)
 
     # plot the estimated gamma distribution
     x_values = np.linspace(scs.gamma.ppf(0.0001, a, loc, scale), scs.gamma.ppf(0.9999, a, loc, scale), 200)
@@ -350,7 +338,7 @@ def fit_GammaPoisson(data, x_label):
 '''
 
 # 8 Geometric
-def fit_geometric(data, x_label, fixed_location):
+def fit_geometric(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -386,7 +374,7 @@ def fit_geometric(data, x_label, fixed_location):
 
 
 # 9 JohnsonSb
-def fit_johnsonSb(data, x_label, fixed_location=False):
+def fit_johnsonSb(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -398,10 +386,7 @@ def fit_johnsonSb(data, x_label, fixed_location=False):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    if fixed_location==False:
-        a, b, loc, scale = scs.johnsonsb.fit(data)
-    else:
-        a, b, loc, scale = scs.johnsonsb.fit(data, floc=fixed_location)
+    a, b, loc, scale = scs.johnsonsb.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSb distribution
     x_values = np.linspace(scs.johnsonsb.ppf(0.01, a, b, loc, scale),
@@ -425,7 +410,7 @@ def fit_johnsonSb(data, x_label, fixed_location=False):
 
 
 # 10 JohnsonSu
-def fit_johnsonSu(data, x_label, fixed_location=False):
+def fit_johnsonSu(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -437,10 +422,7 @@ def fit_johnsonSu(data, x_label, fixed_location=False):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    if fixed_location == False:
-        a, b, loc, scale = scs.johnsonsu.fit(data)
-    else:
-        a, b, loc, scale = scs.johnsonsu.fit(data, floc=fixed_location)
+    a, b, loc, scale = scs.johnsonsu.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSu distribution
     x_values = np.linspace(scs.johnsonsu.ppf(0.01, a, b, loc, scale),
@@ -464,7 +446,7 @@ def fit_johnsonSu(data, x_label, fixed_location=False):
 
 
 # 11 LogNormal
-def fit_lognorm(data, x_label, fixed_location=False):
+def fit_lognorm(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -476,10 +458,7 @@ def fit_lognorm(data, x_label, fixed_location=False):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    if fixed_location==False:
-        s, loc, scale = scs.lognorm.fit(data)
-    else:
-        s, loc, scale = scs.lognorm.fit(data, floc=fixed_location)
+    s, loc, scale = scs.lognorm.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
     x_values = np.linspace(scs.lognorm.ppf(0.0001, s, loc, scale), scs.lognorm.ppf(0.9999, s, loc, scale), 200)
@@ -588,7 +567,7 @@ def fit_norm(data, x_label):
 
 
 # 14 Triangular
-def fit_triang(data, x_label, fixed_location=False):
+def fit_triang(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -602,10 +581,7 @@ def fit_triang(data, x_label, fixed_location=False):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
-    if fixed_location==False:
-        c, loc, scale = scs.triang.fit(data)
-    else:
-        c, loc, scale = scs.triang.fit(data, floc=fixed_location)
+    c, loc, scale = scs.triang.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
     x_values = np.linspace(scs.triang.ppf(0.0001, c, loc, scale), scs.triang.ppf(0.9999, c, loc, scale), 200)
@@ -703,7 +679,7 @@ def fit_uniformDiscrete(data, x_label):
 
 
 # 17 Weibull
-def fit_weibull(data, x_label, fixed_location=False):
+def fit_weibull(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -716,10 +692,7 @@ def fit_weibull(data, x_label, fixed_location=False):
 
     # estimate the parameters of weibull
     # location is fixed at 0
-    if fixed_location == False:
-        c, loc, scale = scs.weibull_min.fit(data)
-    else:
-        c, loc, scale = scs.weibull_min.fit(data, floc=fixed_location)
+    c, loc, scale = scs.weibull_min.fit(data, floc=fixed_location)
 
     # plot the estimated gamma distribution
     x_values = np.linspace(scs.weibull_min.ppf(0.001, c, loc, scale), scs.weibull_min.ppf(0.999, c, loc, scale), 100)
@@ -742,7 +715,7 @@ def fit_weibull(data, x_label, fixed_location=False):
 
 
 # 18 Poisson
-def fit_poisson(data, x_label, fixed_location):
+def fit_poisson(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
