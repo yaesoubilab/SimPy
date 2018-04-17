@@ -332,23 +332,24 @@ class CEA(_EconEval):
         ICER = []           # list of ICER estimates
 
         # calculate incremental costs, incremental effects and ICER
-        for i in range(1, n_frontier_strategies):
-            # incremental cost
-            d_cost = frontier_strategies["E[Cost]"].iloc[i]-frontier_strategies["E[Cost]"].iloc[i-1]
-            incr_cost = np.append(incr_cost, d_cost)
-            # incremental effect
-            d_effect = frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1]
-            if d_effect == 0:
-                raise ValueError('invalid value of E[dEffect], the ratio is not computable')
-            incr_effect = np.append(incr_effect, d_effect)
-            # ICER
-            ICER = np.append(ICER, d_cost/d_effect)
+        if n_frontier_strategies > 1:
+            for i in range(1, n_frontier_strategies):
+                # incremental cost
+                d_cost = frontier_strategies["E[Cost]"].iloc[i]-frontier_strategies["E[Cost]"].iloc[i-1]
+                incr_cost = np.append(incr_cost, d_cost)
+                # incremental effect
+                d_effect = frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1]
+                if d_effect == 0:
+                    raise ValueError('invalid value of E[dEffect], the ratio is not computable')
+                incr_effect = np.append(incr_effect, d_effect)
+                # ICER
+                ICER = np.append(ICER, d_cost/d_effect)
 
-        # format the numbers
-        ind_change = frontier_strategies.index[1:]
-        dfStrategies.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
-        dfStrategies.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
-        dfStrategies.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
+            # format the numbers
+            ind_change = frontier_strategies.index[1:]
+            dfStrategies.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
+            dfStrategies.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
+            dfStrategies.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
 
         # put - for the ICER of the first strategy on the frontier
         dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
