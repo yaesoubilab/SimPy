@@ -93,9 +93,8 @@ def get_gamma_parameters(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
-    :param fixed_location: specify location, 0 by default
-    :return: shape and scale of the gamma distribution with mean and standard deviation matching the
-    provided sample mean and sample st_dev
+    :param fixed_location: location, 0 by default
+    :return: dictionary with keys "a", "loc" and "scale"
     """
     mean = mean - fixed_location
 
@@ -114,9 +113,9 @@ def get_gamma_poisson_paras(mean, st_dev, fixed_location=0, fixed_scale=1):
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
     :param n: the number of trials in the Binomial distribution
-    :param fixed_location: specify location, 0 by default
-    :param fixed_scale: specify scale, 1 by default
-    :return: dictionary with keys "a", "gamma_scale" and fixed parameters
+    :param fixed_location: location, 0 by default
+    :param fixed_scale: scale, 1 by default
+    :return: dictionary with keys "a", "gamma_scale", "loc" and "scale"
     """
     mean = 1.0*(mean - fixed_location)/fixed_scale
     variance = (st_dev/fixed_scale)**2.0
@@ -131,8 +130,8 @@ def get_gamma_poisson_paras(mean, st_dev, fixed_location=0, fixed_scale=1):
 def get_geomertic_paras(mean, fixed_location=0):
     """
     :param mean: sample mean of an observation set
-    :param fixed_location:
-    :return: probability p and location
+    :param fixed_location: location, 0 by default
+    :return: dictionary with keys "p", "loc"
     """
     mean = mean - fixed_location
     p = 1.0/mean
@@ -155,8 +154,8 @@ def get_log_normal_parameters(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
-    :return: mu and sigma the lognormal distribution with mean and standard deviation matching the
-    provided sample mean and sample st_dev
+    :param fixed_location: location, 0 by default
+    :return: dictionary with keys "n", "p" and "loc"
     """
 
     mean = mean-fixed_location
@@ -176,7 +175,8 @@ def get_negative_binomial_paras(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
-    :returns: dictionary with keys "n", "p"
+    :param fixed_location: location, 0 by default
+    :returns: dictionary with keys "n", "p" and "loc"
     """
     # in Scipy, n is the number of successes, p is the probability of a single success.
     # in Wiki, r is the number of failure, p is success probability
@@ -194,8 +194,7 @@ def get_normal_param(mean, st_dev):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
-    :param fixed_location: specify location, 0 by default
-    :return: location and scale of the normal distribution
+    :return: dictionary with keys "loc" and "scale"
     """
 
     return {"loc": mean, "scale": st_dev}
