@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -190,7 +191,7 @@ def get_negative_binomial_paras(mean, st_dev, fixed_location=0):
 
 
 # 13 Normal
-def get_normal_param(mean, st_dev):
+def get_normal_paras(mean, st_dev):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
@@ -213,13 +214,61 @@ def get_normal_param(mean, st_dev):
 
 
 # 15 Uniform
+def get_uniform_paras(mean, st_dev):
+    """
+    :param mean: sample mean of an observation set
+    :param st_dev: sample standard deviation of an observation set
+    :return: dictionary with keys "loc" and "scale"
+    """
+
+    b = 0.5*(2*mean + np.sqrt(12)*st_dev)
+    a = 2.0*mean - b
+
+    loc = a
+    scale = b-a
+
+    return {"loc": loc, "scale": scale}
 
 
 # 16 UniformDiscrete
+# ref: https://en.wikipedia.org/wiki/Discrete_uniform_distribution
+def get_uniform_discrete_paras(mean, st_dev):
+    """
+    :param mean: sample mean of an observation set
+    :param st_dev: sample standard deviation of an observation set
+    :return: dictionary with keys "l" and "r"
+    """
+    variance = st_dev**2
+    b = (np.sqrt(12.0*variance + 1) + 2.0*mean-1)*0.5
+    a = (-np.sqrt(12.0*variance + 1) + 2.0*mean+1)*0.5
+
+    return {"l": a, "r": b}
 
 
 # 17 Weibull
+# ref: https://stats.stackexchange.com/questions/159452/how-can-i-recreate-a-weibull-distribution-given-mean-and-standard-deviation-and
+def get_weibull_paras(mean, st_dev, fixed_location=0):
+    """
+    :param mean: sample mean of an observation set
+    :param st_dev: sample standard deviation of an observation set
+    :param fixed_location: location, 0 by default
+    :returns: dictionary with keys "c", "loc" and "scale"
+    """
+    mean = mean - fixed_location
 
+    c = (st_dev*1.0/mean)**(-1.086)
+    scale = mean/scipy.special.gamma(1 + 1.0/c)
+
+    return {"c": c, "loc": fixed_location, "scale": scale}
 
 # 18 Poisson
+def get_poisson_paras(mean, fixed_location=0):
+    """
+    :param mean: sample mean of an observation set
+    :param fixed_location: location, 0 by default
+    :returns: dictionary with keys "mu" and "loc"
+    """
 
+    mu = mean - fixed_location
+
+    return {"mu": mu, "loc": fixed_location}

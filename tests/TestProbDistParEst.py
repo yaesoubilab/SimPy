@@ -30,7 +30,7 @@ print("Fitting Binomial:", dictResults)
 
 # 5 Empirical (for int data)
 dat_em = np.random.poisson(30, 1000)
-dictResults=Est.get_empirical_parameters(dat_em, 'Data') # fit
+dictResults=Est.get_empirical_parameters(dat_em) # fit
 print("Fitting Empirical:", dictResults)
 
 # 6 fitting a Gamma distribution
@@ -53,12 +53,12 @@ print("Fitting Geometric:", dictResults)
 # dat_JohnsonSb = scs.johnsonsb.rvs(a=10, b=3, loc=0, scale=1, size=1000)    # generate data
 # dictResults=Est.fit_johnsonSb(dat_JohnsonSb, 'Data')    # fit
 # print("Fitting johnsonSb:", dictResults)
-#
+
 # # 10 fitting a JohnsonSu distribution
 # dat_JohnsonSu = scs.johnsonsu.rvs(a=10, b=3, loc=0, scale=1, size=1000)    # generate data
 # dictResults=Est.fit_johnsonSu(dat_JohnsonSu, 'Data')    # fit
 # print("Fitting johnsonSu:", dictResults)
-#
+
 # # 11 LogNormal
 dat_lognorm = np.random.lognormal(0, 1, 1000)    # mean, sigma
 dictResults=Est.get_log_normal_parameters(np.mean(dat_lognorm), np.std(dat_lognorm))    # fit (scale=exp(mean))
@@ -70,30 +70,30 @@ dictResults=Est.get_negative_binomial_paras(np.mean(dat_neg_bin),np.std(dat_neg_
 print("Fitting NegativeBinomial:", dictResults)
 
 # 13 Normal
-dictResults=Est.get_normal_param(5, 2)    # fit
+dictResults=Est.get_normal_paras(5, 2)    # fit
 print("Fitting Normal:", dictResults)
 
 # # 14 Triangular
 # dat_tri = scs.triang.rvs(c=0.5, loc=0, scale=1, size=1000)
 # dictResults=Est.fit_triang(dat_tri, 'Data')    # fit
 # print("Fitting Triangular:", dictResults)
-#
-# # 15 Uniform
-# dat_unif = np.random.uniform(0, 1, 1000)    # mean, sigma
-# dictResults=Est.fit_uniform(dat_unif, 'Data')    # fit
-# print("Fitting Uniform:", dictResults)
-#
-# # 16 UniformDiscrete
-# dat_unifDis = scs.randint.rvs(0,100,size=1000)
-# dictResults=Est.fit_uniformDiscrete(dat_unifDis, 'Data')    # fit
-# print("Fitting UniformDiscrete:", dictResults)
-#
-# # 17 fitting a Weibull distribution
-# dat_weibull = np.random.weibull(5, 1000)    # generate data
-# dictResults=Est.fit_weibull(dat_weibull, 'Data')    # fit
-# print("Fitting Weibull:", dictResults)
-#
-# # 18 fitting a Poisson distribution
-# dat_poisson = np.random.poisson(30, 1000)    # generate data
-# dictResults=Est.fit_poisson(dat_poisson, 'Data', fixed_location=0)    # fit
-# print("Fitting Poisson:", dictResults)
+
+# 15 Uniform
+dat_unif = np.random.uniform(0, 1, 1000)    # mean, sigma
+dictResults=Est.get_uniform_paras(np.mean(dat_unif), np.std(dat_unif))    # fit
+print("Fitting Uniform:", dictResults)
+
+# 16 UniformDiscrete
+dat_unifDis = scs.randint.rvs(0,100,size=1000)
+dictResults=Est.get_uniform_discrete_paras(np.mean(dat_unifDis), np.std(dat_unifDis))    # fit
+print("Fitting UniformDiscrete:", dictResults)
+
+# 17 fitting a Weibull distribution
+dat_weibull = np.random.weibull(5, 1000)    # generate data
+dictResults=Est.get_weibull_paras(np.mean(dat_weibull), np.std(dat_weibull))    # fit
+print("Fitting Weibull:", dictResults)
+
+# 18 fitting a Poisson distribution
+dat_poisson = np.random.poisson(30, 1000)    # generate data
+dictResults=Est.get_poisson_paras(np.mean(dat_poisson))    # fit
+print("Fitting Poisson:", dictResults)

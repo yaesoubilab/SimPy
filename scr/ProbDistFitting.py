@@ -698,7 +698,7 @@ def fit_weibull(data, x_label, fixed_location=0):
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: fixed location
-    :returns: dictionary with keys "a", "loc", "scale", and "AIC"
+    :returns: dictionary with keys "c", "loc", "scale", and "AIC"
     """
 
     # plot histogram
