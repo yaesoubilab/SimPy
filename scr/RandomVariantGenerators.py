@@ -24,7 +24,7 @@ class RVG:
 class Exponential(RVG):
     def __init__(self, scale, loc=0):
         """
-        E[X] = scale
+        E[X] = scale + loc
         Var[X] = scale**2
         """
         RVG.__init__(self)
@@ -54,8 +54,10 @@ class Bernoulli(RVG):
 class Beta(RVG):
     def __init__(self, a, b, loc=0, scale=1):
         """
-        E[X] = a/(a + b)
-        Var[X] = ab/[(a + b)**2(a + b + 1)]
+        E[X] = a/(a + b) + loc
+        Var[X] = (scale**2) ab/[(a + b)**2(a + b + 1)]
+        min[X] = loc
+        max[x] = min[X] + scale
         """
         RVG.__init__(self)
         self.a = a
@@ -95,13 +97,13 @@ class BetaBinomial(RVG):
 class Binomial(RVG):
     def __init__(self, N, p, loc=0):
         """
-        E[X] = Np
+        E[X] = Np + loc
         Var[X] = Np(1-p)
         """
         RVG.__init__(self)
         self.N = N
         self.p = p
-        self.loc=loc
+        self.loc = loc
 
     def sample(self, rng):
         return scipy.binom.rvs(self.N, self.p, self.loc, random_state=rng)
@@ -111,7 +113,7 @@ class Dirichlet(RVG):
     def __init__(self, a):
         """
         E[Xi] = ai/a0
-        Var[Xi] = (ai(a0-ai))/((a0)**2(a0+1)) where a0 = sum all ai.
+        Var[Xi] = (ai(a0-ai))/((a0)**2(a0+1)) where a0 = sum of ai's.
         :param a: array or list
         """
         RVG.__init__(self)
@@ -120,7 +122,7 @@ class Dirichlet(RVG):
     def sample(self, rng):
         """
         :param rng: numpy .random object
-        :return: a realization from the Dirichlet distribution, length K.
+        :return: (array) a realization from the Dirichlet distribution
         """
         return rng.dirichlet(self.a)
 
@@ -150,7 +152,7 @@ class Empirical(RVG):
 class Gamma(RVG):
     def __init__(self, a, loc=0, scale=1):
         """
-        E[X] = a*scale
+        E[X] = a*scale + loc
         Var[X] = a*scale**2
         """
         RVG.__init__(self)
@@ -186,7 +188,7 @@ class GammaPoisson(RVG):
 class Geometric(RVG):
     def __init__(self, p, loc=0):
         """
-        E[X] = 1/p
+        E[X] = 1/p+loc
         Var[X] = (1-p)/p**2
         """
         RVG.__init__(self)
@@ -234,9 +236,8 @@ class JohnsonSu(RVG):
 class LogNormal(RVG):
     def __init__(self, s, loc=0, scale=1):
         """
-        s = sigma and scale = exp(mean)
-        E[X] = exp(1/2 * s**2)
-        Var[X] = (exp(s**2)-1)*exp(s**2)
+        E[X] = exp(scale + 1/2 * s**2)
+        Var[X] = (exp(s**2)-1)*exp(2*loc+s**2)
         """
         RVG.__init__(self)
         self.s = s
@@ -252,6 +253,8 @@ class Multinomial(RVG):
         """
         E[X_i] = N*p_i
         Var[X] = N*p_i(1-p_i)
+        :param N: (int) number of trials
+        :param pvals: (array) probabilities of success for each category
         """
         RVG.__init__(self)
         self.N = N
@@ -267,7 +270,7 @@ class NegativeBinomial(RVG):
         The probability distribution for number of failure before n successes
         :param n: number of the number of successes
         :param p: p is the probability of a single success
-        E[X] = (n*p)/(1-p)
+        E[X] = (n*p)/(1-p) + loc
         Var[X] = (n*p)/((1-p)**2)
         """
         RVG.__init__(self)
@@ -286,9 +289,8 @@ class NegativeBinomial(RVG):
 class Normal(RVG):
     def __init__(self, loc=0, scale=1):
         """
-        loc = mean, scale = sigma
-        E[X] = mean
-        Var[X] = st_dev**2
+        E[X] = loc
+        Var[X] = scale**2
         """
         RVG.__init__(self)
         self.loc = loc
@@ -301,7 +303,7 @@ class Normal(RVG):
 class Poisson(RVG):
     def __init__(self, mu, loc=0):
         """
-        E[X] = mu
+        E[X] = mu + loc
         Var[X] = mu
         """
         RVG.__init__(self)
@@ -331,9 +333,9 @@ class Triangular(RVG):
 class Uniform(RVG):
     def __init__(self, loc=0, scale=1):
         """
-        l = loc, r = loc + scale
-        E[X] = (l+r)/2
-        Var[X] = (r-l)**2/12
+        setting l = loc, u = loc + scale
+        E[X] = (l+u)/2
+        Var[X] = (u-l)**2/12
         """
         RVG.__init__(self)
         self.loc = loc
@@ -344,32 +346,31 @@ class Uniform(RVG):
 
 
 class UniformDiscrete(RVG):
-    def __init__(self, l, r):
+    def __init__(self, l, u):
         """
-        E[X] = (l+r)/2
-        Var[X] = ((r-l+1)**2 - 1)/12
-        :param l: int
-        :param r: int
+        E[X] = (l+u)/2
+        Var[X] = ((r-u+1)**2 - 1)/12
+        :param l: (int) inclusive lower bound
+        :param u: (int) inclusive upper bound
         """
         RVG.__init__(self)
         self.l = l
-        self.r = r
+        self.u = u
 
     def sample(self, rng):
-        return rng.randint(low=self.l, high=self.r + 1)
+        return rng.randint(low=self.l, high=self.u + 1)
 
 
 class Weibull(RVG):
-    def __init__(self, c, loc=0, scale=1):
+    def __init__(self, a, loc=0, scale=1):
         """
-        k = c, lambda = scale
-        E[X] = math.gamma(1 + 1/c) * scale + loc
-        Var[X] = [math.gamma(1 + 2/c) - (math.gamma(1 + 1/c)**2)] * scale**2
+        E[X] = math.gamma(1 + 1/a) * scale + loc
+        Var[X] = [math.gamma(1 + 2/a) - (math.gamma(1 + 1/a)**2)] * scale**2
         """
         RVG.__init__(self)
-        self.c = c
+        self.a = a
         self.loc = loc
         self.scale = scale
 
     def sample(self, rng):
-        return scipy.weibull_min.rvs(self.c, self.loc, self.scale, random_state=rng)
+        return scipy.weibull_min.rvs(self.a, self.loc, self.scale, random_state=rng)
