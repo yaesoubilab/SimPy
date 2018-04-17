@@ -6,7 +6,7 @@ def continuous_to_discrete(rate_matrix, delta_t):
     :param rate_matrix: (list of lists) transition rate matrix
     :param delta_t: cycle length
     :return: transition probability matrix (list of lists)
-             and the upper bound for the probability of wo transitions within delta_t (float)
+             and the upper bound for the probability of two transitions within delta_t (float)
     """
 
     # list of rates out of each row
