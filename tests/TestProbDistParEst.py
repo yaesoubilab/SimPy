@@ -18,10 +18,10 @@ dictResults=Est.get_beta_params(np.mean(dat_beta), np.std(dat_beta)) # fit
 print("Fitting Beta:", dictResults)
 
 # 3 fitting a beta-binomial distribution
-# betabinomial_dist = RVGs.BetaBinomial(100, 2, 3) # n, a, b
-# dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
-# dictResults=Est.fit_betaBinomial(dat_betabin, 'Data', n=100) # fit
-# print("Fitting BetaBinomial:", dictResults)
+betabinomial_dist = RVGs.BetaBinomial(100, 2, 3) # n, a, b
+dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
+dictResults=Est.get_beta_binomial_paras(np.mean(dat_betabin),np.std(dat_betabin), n=100) # fit
+print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
 dat_bin = np.random.binomial(100, 0.3, 1000)
@@ -39,10 +39,10 @@ dictResults=Est.get_gamma_parameters(np.mean(dat_gamma), np.std(dat_gamma))     
 print("Fitting Gamma:", dictResults)
 
 # 7 GammaPoisson
-# gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4)
-# dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
-# dictResults=Est.fit_GammaPoisson(dat_gamma_poisson, 'Data') # fit
-# print("Fitting GammaPoisson:", dictResults)
+gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4)
+dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
+dictResults=Est.get_gamma_poisson_paras(np.mean(dat_gamma_poisson),np.std(dat_gamma_poisson)) # fit
+print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric
 dat_geom = np.random.geometric(0.3, 1000)     # generate data
@@ -63,12 +63,12 @@ print("Fitting Geometric:", dictResults)
 dat_lognorm = np.random.lognormal(0, 1, 1000)    # mean, sigma
 dictResults=Est.get_log_normal_parameters(np.mean(dat_lognorm), np.std(dat_lognorm))    # fit (scale=exp(mean))
 print("Fitting LogNormal:", dictResults)
-#
-# # 12 NegativeBinomial
-# dat_neg_bin = np.random.negative_binomial(3, 0.3, 1000)    # mean, sigma
-# dictResults=Est.fit_NegativeBinomial(dat_neg_bin, 'Data')
-# print("Fitting NegativeBinomial:", dictResults)
-#
+
+# 12 NegativeBinomial
+dat_neg_bin = np.random.negative_binomial(3, 0.3, 1000)    # mean, sigma
+dictResults=Est.get_negative_binomial_paras(np.mean(dat_neg_bin),np.std(dat_neg_bin))
+print("Fitting NegativeBinomial:", dictResults)
+
 # 13 Normal
 dictResults=Est.get_normal_param(5, 2)    # fit
 print("Fitting Normal:", dictResults)
