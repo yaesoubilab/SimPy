@@ -201,6 +201,15 @@ def get_normal_param(mean, st_dev):
 
 
 # 14 Triangular
+# there are at least 3 parameters, s.t. need min, max and mean to estimate
+# def get_triangular_paras(mean, st_dev, fixed_location=0):
+#     """
+#     :param mean: sample mean of an observation set
+#     :param st_dev: sample standard deviation of an observation set
+#     :param fixed_location: location, 0 by default
+#     :returns: dictionary with keys "c", "loc" and "scale"
+#     """
+#     pass
 
 
 # 15 Uniform
