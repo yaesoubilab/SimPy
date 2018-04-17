@@ -41,7 +41,7 @@ print("Fitting Gamma:", dictResults)
 # 7 GammaPoisson
 gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4)
 dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
-dictResults=Fit.fit_GammaPoisson(dat_gamma_poisson, 'Data') # fit
+#dictResults=Fit.fit_GammaPoisson(dat_gamma_poisson, 'Data') # fit
 print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric
@@ -66,7 +66,7 @@ print("Fitting LogNormal:", dictResults)
 
 # 12 NegativeBinomial
 dat_neg_bin = np.random.negative_binomial(3, 0.3, 1000)    # mean, sigma
-dictResults=Fit.fit_NegativeBinomial(dat_neg_bin, 'Data')
+dictResults=Fit.fit_negativeBinomial(dat_neg_bin, 'Data')
 print("Fitting NegativeBinomial:", dictResults)
 
 # 13 Normal

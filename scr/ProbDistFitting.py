@@ -14,7 +14,6 @@ COLOR_DISCRETE_FIT = 'r'
 # can also take fixed_location given by users, fixed_location = 1 means floc=1
 
 
-
 def AIC(k, log_likelihood):
     """ :returns Akaike information criterion"""
     return 2 * k - 2 * log_likelihood
@@ -112,9 +111,12 @@ def fit_betaBinomial(data, x_label, n=None, fixed_location=0, fixed_scale=1):
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param n: the number of trials in the Binomial distribution
+    :param fixed_location: fixed location
+    :param fixed_scale: fixed scale
     :returns: dictionary with keys "a", "b", "n" and "AIC"
     """
-    data=1.0*(data - fixed_location)/fixed_scale
+
+    data = 1.0*(data - fixed_location)/fixed_scale
 
     if n==None:
         n = np.max(data)
@@ -168,7 +170,7 @@ def fit_betaBinomial(data, x_label, n=None, fixed_location=0, fixed_scale=1):
     )
 
     # report results in the form of a dictionary
-    return {"a": paras[0], "b": paras[1], "n": n, "AIC": aic, "loc":fixed_location, "scale":fixed_scale}
+    return {"a": paras[0], "b": paras[1], "n": n, "loc": fixed_location, "scale": fixed_scale, "AIC": aic}
 
 
 # 4 Binomial
@@ -176,8 +178,8 @@ def fit_binomial(data, x_label, fixed_location=0, n=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
-    :param n: the number of trials in the Binomial distribution, set by experiment design
-    :param fixed_location: given by users, fixed_location = 0 means floc=0
+    :param n: the number of trials
+    :param fixed_location: fixed location
     :returns: dictionary with keys "p" and "AIC"
     """
 
@@ -190,7 +192,7 @@ def fit_binomial(data, x_label, fixed_location=0, n=None):
     if n==None:
         n = np.max(data)
 
-    p=np.sum(data)*1.0/(len(data)*n)
+    p = np.sum(data)*1.0/(len(data)*n)
 
     # plot histogram
     fig, ax = plt.subplots(1, 1)
@@ -213,7 +215,7 @@ def fit_binomial(data, x_label, fixed_location=0, n=None):
     )
 
     # report results in the form of a dictionary
-    return {"p": p, "AIC": aic, "loc": fixed_location}
+    return {"p": p, "loc": fixed_location, "AIC": aic}
 
 
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
@@ -240,7 +242,7 @@ def fit_empirical(data, x_label):
     ax.legend()
     plt.show()
 
-    return unique,freq
+    return unique, freq
 
 
 # 6 Gamma
@@ -248,6 +250,7 @@ def fit_gamma(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
+    :param fixed_location: fixed location
     :returns: dictionary with keys "a", "loc", "scale", and "AIC"
     """
 
@@ -347,6 +350,7 @@ def fit_geometric(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
+    :param fixed_location: fixed location
     :returns: dictionary with keys "p" and "AIC"
     """
 
@@ -486,10 +490,11 @@ def fit_lognorm(data, x_label, fixed_location=0):
 
 
 # 12 NegativeBinomial
-def fit_NegativeBinomial(data, x_label, fixed_location=0):
+def fit_negativeBinomial(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
+    :param fixed_location: fixed location
     :returns: dictionary with keys "n", "p" and "AIC"
     """
     # n is the number of successes, p is the probability of a single success.
@@ -501,6 +506,7 @@ def fit_NegativeBinomial(data, x_label, fixed_location=0):
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     M=np.max(data)
+
     # define log_likelihood
     def log_lik(theta):
         n, p = theta[0], theta[1]
@@ -578,6 +584,7 @@ def fit_triang(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
+    :param fixed_location: fixed location
     :returns: dictionary with keys "c", "loc", "scale", and "AIC"
     """
     # The triangular distribution can be represented with an up-sloping line from
@@ -690,6 +697,7 @@ def fit_weibull(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
+    :param fixed_location: fixed location
     :returns: dictionary with keys "a", "loc", "scale", and "AIC"
     """
 
@@ -701,7 +709,7 @@ def fit_weibull(data, x_label, fixed_location=0):
     # location is fixed at 0
     c, loc, scale = scs.weibull_min.fit(data, floc=fixed_location)
 
-    # plot the estimated gamma distribution
+    # plot the fitted Weibull distribution
     x_values = np.linspace(scs.weibull_min.ppf(0.001, c, loc, scale), scs.weibull_min.ppf(0.999, c, loc, scale), 100)
     rv = scs.weibull_min(c, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Weibull')

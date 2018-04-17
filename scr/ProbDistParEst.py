@@ -8,8 +8,8 @@ warnings.filterwarnings("ignore")
 def get_expon_params(mean, fixed_location=0):
     """
     :param mean: sample mean of an observation set
-    :param fixed_location: specify location, 0 by default
-    :return: scale and location
+    :param fixed_location: minimum of the exponential distribution, set to 0 by defaul
+    :return: dictionary with keys "loc" and "scale"
     """
     mean = mean - fixed_location
     scale = mean
@@ -18,33 +18,34 @@ def get_expon_params(mean, fixed_location=0):
 
 
 # 2 Beta
-def get_beta_params(mean, st_dev, min=0, max=1):
+def get_beta_params(mean, st_dev, minimum=0, maximum=1):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
-    :return: alpha and beta of the gamma distribution with mean and standard deviation matching the
-    provided sample mean and sample st_dev
+    :param minimum: fixed minimum
+    :param maximum: fixed maximum
+    :return: dictionary with keys "a", "b", "loc" and "scale"
     """
     # shift the distribution by loc and scale
-    mean = mean-min
-    st_dev = st_dev/(max-min)*1.0
+    mean = mean - minimum
+    st_dev = st_dev / (maximum - minimum) * 1.0
 
-    aPlusB = mean*(1-mean)/st_dev**2 - 1
-    a = mean*aPlusB
+    a_plus_b = mean*(1-mean)/st_dev**2 - 1
+    a = mean*a_plus_b
 
-    return {"a": a, "b": aPlusB - a, "loc": min, "scale": max-min}
+    return {"a": a, "b": a_plus_b - a, "loc": minimum, "scale": maximum - minimum}
 
 
 # 3 BetaBinomial
-# ref: https://en.wikipedia.org/wiki/Beta-binomial_distribution
 def get_beta_binomial_paras(mean, st_dev, n, fixed_location=0, fixed_scale=1):
     """
+    # ref: https://en.wikipedia.org/wiki/Beta-binomial_distribution
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
     :param n: the number of trials in the Binomial distribution
-    :param fixed_location: specify location, 0 by default
-    :param fixed_scale: specify scale, 1 by default
-    :return: dictionary with keys "a", "b", "n" and fixed parameters
+    :param fixed_location: location, 0 by default
+    :param fixed_scale: scale, 1 by default
+    :return: dictionary with keys "a", "b", "n", "loc", and "scale"
     """
     mean = 1.0*(mean - fixed_location)/fixed_scale
     variance = (st_dev/fixed_scale)**2.0
@@ -65,8 +66,8 @@ def get_binomial_parameters(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
-    :param fixed_location: specify location, 0 by default
-    :return: success probability p and location
+    :param fixed_location: fixed location, 0 by default
+    :return: dictionary with keys "p" and "loc"
     """
     mean = mean-fixed_location
     p = 1.0 - (st_dev**2)/mean
@@ -74,8 +75,8 @@ def get_binomial_parameters(mean, st_dev, fixed_location=0):
     return {"p": p, "loc": fixed_location}
 
 
-# 5 Empirical (I guess for this, we just need to return the frequency of each observation)
-def get_empirical_parameters(data, x_label):
+# 5 Empirical
+def get_empirical_parameters(data):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -84,7 +85,7 @@ def get_empirical_parameters(data, x_label):
     unique, counts = np.unique(data, return_counts=True)
     freq = counts*1.0/len(data)
 
-    return unique,freq
+    return unique, freq
 
 
 # 6 Gamma
