@@ -66,12 +66,12 @@ print("Fitting LogNormal:", dictResults)
 
 # 12 NegativeBinomial
 dat_neg_bin = np.random.negative_binomial(3, 0.3, 1000)    # mean, sigma
-dictResults=Fit.fit_negativeBinomial(dat_neg_bin, 'Data')
+dictResults=Fit.fit_negative_binomial(dat_neg_bin, 'Data')
 print("Fitting NegativeBinomial:", dictResults)
 
 # 13 Normal
 dat_norm = np.random.normal(0, 1, 1000)    # mean, sigma
-dictResults=Fit.fit_norm(dat_norm, 'Data')    # fit
+dictResults=Fit.fit_normal(dat_norm, 'Data')    # fit
 print("Fitting Normal:", dictResults)
 
 # 14 Triangular

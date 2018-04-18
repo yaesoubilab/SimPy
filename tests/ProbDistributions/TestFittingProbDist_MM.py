@@ -46,7 +46,7 @@ print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric
 dat_geom = np.random.geometric(0.3, 1000)     # generate data
-dictResults=Est.get_geomertic_paras(np.mean(dat_geom), fixed_location=0)        # fit
+dictResults=Est.get_geomertic_parameters(np.mean(dat_geom), fixed_location=0)        # fit
 print("Fitting Geometric:", dictResults)
 
 # # 9 fitting a JohnsonSb distribution
@@ -61,16 +61,16 @@ print("Fitting Geometric:", dictResults)
 
 # # 11 LogNormal
 dat_lognorm = np.random.lognormal(0, 1, 1000)    # mean, sigma
-dictResults=Est.get_log_normal_parameters(np.mean(dat_lognorm), np.std(dat_lognorm))    # fit (scale=exp(mean))
+dictResults=Est.get_lognormal_parameters(np.mean(dat_lognorm), np.std(dat_lognorm))    # fit (scale=exp(mean))
 print("Fitting LogNormal:", dictResults)
 
 # 12 NegativeBinomial
 dat_neg_bin = np.random.negative_binomial(3, 0.3, 1000)    # mean, sigma
-dictResults=Est.get_negative_binomial_paras(np.mean(dat_neg_bin),np.std(dat_neg_bin))
+dictResults=Est.get_negative_binomial_parameters(np.mean(dat_neg_bin), np.std(dat_neg_bin))
 print("Fitting NegativeBinomial:", dictResults)
 
 # 13 Normal
-dictResults=Est.get_normal_paras(5, 2)    # fit
+dictResults=Est.get_normal_parameters(5, 2)    # fit
 print("Fitting Normal:", dictResults)
 
 # # 14 Triangular
@@ -80,20 +80,20 @@ print("Fitting Normal:", dictResults)
 
 # 15 Uniform
 dat_unif = np.random.uniform(0, 1, 1000)    # mean, sigma
-dictResults=Est.get_uniform_paras(np.mean(dat_unif), np.std(dat_unif))    # fit
+dictResults=Est.get_uniform_parameters(np.mean(dat_unif), np.std(dat_unif))    # fit
 print("Fitting Uniform:", dictResults)
 
 # 16 UniformDiscrete
 dat_unifDis = scs.randint.rvs(0,100,size=1000)
-dictResults=Est.get_uniform_discrete_paras(np.mean(dat_unifDis), np.std(dat_unifDis))    # fit
+dictResults=Est.get_uniform_discrete_parameters(np.mean(dat_unifDis), np.std(dat_unifDis))    # fit
 print("Fitting UniformDiscrete:", dictResults)
 
 # 17 fitting a Weibull distribution
 dat_weibull = np.random.weibull(5, 1000)    # generate data
-dictResults=Est.get_weibull_paras(np.mean(dat_weibull), np.std(dat_weibull))    # fit
+dictResults=Est.get_weibull_parameters(np.mean(dat_weibull), np.std(dat_weibull))    # fit
 print("Fitting Weibull:", dictResults)
 
 # 18 fitting a Poisson distribution
 dat_poisson = np.random.poisson(30, 1000)    # generate data
-dictResults=Est.get_poisson_paras(np.mean(dat_poisson))    # fit
+dictResults=Est.get_poisson_parameters(np.mean(dat_poisson))    # fit
 print("Fitting Poisson:", dictResults)

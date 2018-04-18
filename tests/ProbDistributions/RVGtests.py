@@ -250,13 +250,13 @@ def test_multinomial(rnd, n, pvals):
                        )
 
 
-def test_negativebinomial(rnd, n, p, loc=0):
+def test_negative_binomial(rnd, n, p, loc=0):
 
     # negative bimonial random variate generator
-    negativebinomial_dist = RVGs.NegativeBinomial(n, p, loc)
+    negative_binomial_dist = RVGs.NegativeBinomial(n, p, loc)
 
     # obtain samples
-    samples = get_samples(negativebinomial_dist, rnd)
+    samples = get_samples(negative_binomial_dist, rnd)
 
     # get theoretical mean and variance
     mean = scipy.nbinom.stats(n, p, loc, moments='m')
@@ -331,7 +331,7 @@ def test_uniform(rnd, loc=0, scale=1):
                        )
 
 
-def test_uniformdiscrete(rnd, l, r):
+def test_uniform_discrete(rnd, l, r):
     # uniform discrete random variate generator
     uniformdiscrete_dist = RVGs.UniformDiscrete(l, r)
 

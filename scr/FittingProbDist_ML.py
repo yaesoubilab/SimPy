@@ -382,7 +382,7 @@ def fit_geometric(data, x_label, fixed_location=0):
     )
 
     # report results in the form of a dictionary
-    return {"p": p, "AIC": aic, "loc": fixed_location}
+    return {"p": p, "loc": fixed_location, "AIC": aic}
 
 
 # 9 JohnsonSb
@@ -493,7 +493,7 @@ def fit_lognorm(data, x_label, fixed_location=0):
 
 
 # 12 NegativeBinomial
-def fit_negativeBinomial(data, x_label, fixed_location=0):
+def fit_negative_binomial(data, x_label, fixed_location=0):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -544,11 +544,11 @@ def fit_negativeBinomial(data, x_label, fixed_location=0):
     )
 
     # report results in the form of a dictionary
-    return {"n": paras[0], "p": paras[1], "AIC": aic, "loc": fixed_location}
+    return {"n": paras[0], "p": paras[1], "loc": fixed_location, "AIC": aic}
 
 
 # 13 Normal
-def fit_norm(data, x_label):
+def fit_normal(data, x_label):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
@@ -580,6 +580,43 @@ def fit_norm(data, x_label):
 
     # report results in the form of a dictionary
     return {"loc": loc, "scale": scale, "AIC": aic}
+
+
+# 18 Poisson
+def fit_poisson(data, x_label, fixed_location=0):
+    """
+    :param data: (numpy.array) observations
+    :param x_label: label to show on the x-axis of the histogram
+    :returns: dictionary with keys "lambda" and "AIC"
+    """
+
+    # fit poisson distribution: the MLE of lambda is the sample mean
+    # https://en.wikipedia.org/wiki/Poisson_distribution#Maximum_likelihood
+    data = data-fixed_location
+    mu = data.mean()
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1)
+    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
+            edgecolor='black', alpha=0.5, label='Frequency')
+
+    # plot poisson-deviation with fitted parameter
+    x_plot = np.arange(scs.poisson.ppf(0.0001, mu), scs.poisson.ppf(0.9999, mu))
+    ax.step(x_plot, scs.poisson.pmf(x_plot, mu), COLOR_DISCRETE_FIT, ms=8, label='Poisson')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
+
+    # calculate AIC
+    aic = AIC(
+        k=1,
+        log_likelihood=np.sum(scs.poisson.logpmf(data, mu))
+    )
+
+    # report results in the form of a dictionary
+    return {"mu": mu, "AIC": aic, "loc": fixed_location}
 
 
 # 14 Triangular
@@ -617,7 +654,7 @@ def fit_triang(data, x_label, fixed_location=0):
     )
 
     # report results in the form of a dictionary
-    return {"c":c, "loc": loc, "scale": scale, "AIC": aic}
+    return {"c": c, "loc": loc, "scale": scale, "AIC": aic}
 
 
 # 15 Uniform
@@ -730,40 +767,3 @@ def fit_weibull(data, x_label, fixed_location=0):
 
     # report results in the form of a dictionary
     return {"c": c, "loc": loc, "scale": scale, "AIC": aic}
-
-
-# 18 Poisson
-def fit_poisson(data, x_label, fixed_location=0):
-    """
-    :param data: (numpy.array) observations
-    :param x_label: label to show on the x-axis of the histogram
-    :returns: dictionary with keys "lambda" and "AIC"
-    """
-
-    # fit poisson distribution: the MLE of lambda is the sample mean
-    # https://en.wikipedia.org/wiki/Poisson_distribution#Maximum_likelihood
-    data = data-fixed_location
-    mu = data.mean()
-
-    # plot histogram
-    fig, ax = plt.subplots(1, 1)
-    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
-            edgecolor='black', alpha=0.5, label='Frequency')
-
-    # plot poisson-deviation with fitted parameter
-    x_plot = np.arange(scs.poisson.ppf(0.0001, mu), scs.poisson.ppf(0.9999, mu))
-    ax.step(x_plot, scs.poisson.pmf(x_plot, mu), COLOR_DISCRETE_FIT, ms=8, label='Poisson')
-
-    ax.set_xlabel(x_label)
-    ax.set_ylabel("Frequency")
-    ax.legend()
-    plt.show()
-
-    # calculate AIC
-    aic = AIC(
-        k=1,
-        log_likelihood=np.sum(scs.poisson.logpmf(data, mu))
-    )
-
-    # report results in the form of a dictionary
-    return {"mu": mu, "AIC": aic, "loc": fixed_location}
