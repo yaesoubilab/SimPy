@@ -120,7 +120,6 @@ class Dirichlet(RVG):
 
     def sample(self, rng):
         """
-        :param rng: numpy .random object
         :return: (array) a realization from the Dirichlet distribution
         """
         return rng.dirichlet(self.a)

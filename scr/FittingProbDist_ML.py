@@ -286,7 +286,7 @@ def fit_gamma(data, x_label, fixed_location=0):
 
 
 # 7 GammaPoisson
-def fit_GammaPoisson(data, x_label, fixed_location=0, fixed_scale=1):
+def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
