@@ -1,4 +1,4 @@
-import scr.ProbDistFitting as Fit
+import scr.FittingProbDist_ML as Fit
 import numpy as np
 import scr.RandomVariantGenerators as RVGs
 from tests.ProbDistributions.RVGtests import get_samples

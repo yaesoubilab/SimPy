@@ -26,6 +26,7 @@ def get_samples(dist, rnd):
         samples.append(dist.sample(rnd))
     return samples
 
+
 def get_samples_multivariate(dist, rnd):
     samples = np.zeros([len(dist.a), 10000])
     for i in range(0, 10000):
