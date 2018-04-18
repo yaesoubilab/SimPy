@@ -1,7 +1,7 @@
 import scr.ProbDistParEst as Est
 import numpy as np
 import scr.RandomVariantGenerators as RVGs
-from tests.RVGtests import get_samples
+from tests.ProbDistributions.RVGtests import get_samples
 import scipy.stats as scs
 
 # simulate some data

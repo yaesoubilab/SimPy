@@ -1,7 +1,7 @@
 import scr.ProbDistFitting as Fit
 import numpy as np
 import scr.RandomVariantGenerators as RVGs
-from tests.RVGtests import get_samples
+from tests.ProbDistributions.RVGtests import get_samples
 import scipy.stats as scs
 
 # simulate some data
@@ -41,7 +41,7 @@ print("Fitting Gamma:", dictResults)
 # 7 GammaPoisson
 gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4)
 dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
-#dictResults=Fit.fit_GammaPoisson(dat_gamma_poisson, 'Data') # fit
+dictResults=Fit.fit_GammaPoisson(dat_gamma_poisson, 'Data') # fit
 print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric

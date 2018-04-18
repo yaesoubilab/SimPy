@@ -1,5 +1,4 @@
-import numpy as np
-from tests import RVGtests as Tests
+from tests.ProbDistributions import RVGtests as Tests
 import scr.RandomVariantGenerators as rndSupport
 
 # use numpy random number generator
