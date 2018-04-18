@@ -65,8 +65,8 @@ def get_beta_binomial_paras(mean, st_dev, n, fixed_location=0, fixed_scale=1):
 # 4 Binomial
 def get_binomial_parameters(mean, st_dev, fixed_location=0):
     """
-    :param mean: sample mean of an observation set
-    :param st_dev: sample standard deviation of an observation set
+    :param mean: sample mean
+    :param st_dev: sample standard deviation
     :param fixed_location: fixed location, 0 by default
     :return: dictionary with keys "p" and "loc"
     """

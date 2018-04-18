@@ -181,7 +181,7 @@ def fit_binomial(data, x_label, fixed_location=0, n=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
-    :param n: the number of trials
+    :param n: the number of trials (determined from data if not specified)
     :param fixed_location: fixed location
     :returns: dictionary with keys "p" and "AIC"
     """
@@ -192,7 +192,7 @@ def fit_binomial(data, x_label, fixed_location=0, n=None):
 
     data = data - fixed_location
 
-    if n==None:
+    if n is None:
         n = np.max(data)
 
     p = np.sum(data)*1.0/(len(data)*n)
