@@ -72,8 +72,9 @@ def get_binomial_parameters(mean, st_dev, fixed_location=0):
     """
     mean = mean-fixed_location
     p = 1.0 - (st_dev**2)/mean
+    n = mean/p
 
-    return {"p": p, "loc": fixed_location}
+    return {"p": p, "n": n, "loc": fixed_location}
 
 
 # 5 Empirical

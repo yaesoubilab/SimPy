@@ -330,7 +330,7 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1):
     x_values = np.arange(0, np.max(data), step=1)
     pmf = np.zeros(len(x_values))
     for i in x_values:
-        pmf[i] = gamma_poisson(paras[0], paras[1], i)
+        pmf[i] = gamma_poisson(np.array(paras[0]), np.array(paras[1]), i)
     ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='GammaPoisson')
 
     ax.set_xlabel(x_label)
