@@ -54,7 +54,7 @@ class Bernoulli(RVG):
 class Beta(RVG):
     def __init__(self, a, b, loc=0, scale=1):
         """
-        E[X] = a/(a + b) + loc
+        E[X] = a/(a + b)*scale + loc
         Var[X] = (scale**2) ab/[(a + b)**2(a + b + 1)]
         min[X] = loc
         max[x] = min[X] + scale
@@ -85,7 +85,6 @@ class BetaBinomial(RVG):
     def sample(self, rng):
         """
         ref: https://blogs.sas.com/content/iml/2017/11/20/simulate-beta-binomial-sas.html
-        :param rng: numpy.random object
         :return: a realization from the Beta Binomial distribution
         """
         sample_p = rng.beta(self.a, self.b)

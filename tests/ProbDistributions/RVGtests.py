@@ -20,6 +20,8 @@ def print_test_results_multivariate(dist_name, samples, expectation, variance):
 
 
 def get_samples(dist, rnd):
+    """ sampling from a uni-variate distribution """
+
     samples = []
     for i in range(0, 10000):
         # get 10000 samples
@@ -28,10 +30,12 @@ def get_samples(dist, rnd):
 
 
 def get_samples_multivariate(dist, rnd):
+    """ sampling from a multi-variate distribution """
+
     samples = np.zeros([len(dist.a), 10000])
     for i in range(0, 10000):
         # get 10000 samples
-        samples[:,i] = dist.sample(rnd)
+        samples[:, i] = dist.sample(rnd)
     return samples
 
 
@@ -74,16 +78,16 @@ def test_beta(rnd, a, b, loc=0, scale=1):
     # report mean and variance
     print_test_results('Beta', samples,
                        expectation=(a*1.0/(a + b))*scale + loc,
-                       variance=((a*b)/((a+b+1)*(a+b)**2.0))* scale**2)
+                       variance=((a*b)/((a+b+1)*(a+b)**2.0)) * scale**2)
 
 
-def test_betabinomial(rnd, n, a, b, loc=0, scale=1):
+def test_beta_binomial(rnd, n, a, b, loc=0, scale=1):
 
     # beta random variate generator
-    betabinomial_dist = RVGs.BetaBinomial(n, a, b, loc, scale)
+    beta_binomial_dist = RVGs.BetaBinomial(n, a, b, loc, scale)
 
     # obtain samples
-    samples = get_samples(betabinomial_dist, rnd)
+    samples = get_samples(beta_binomial_dist, rnd)
 
     # report mean and variance
     print_test_results('BetaBinomial', samples,

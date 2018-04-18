@@ -3,15 +3,18 @@ import matplotlib.pyplot as plt
 import scipy.stats as scs
 import scipy as sp
 from scipy.optimize import fmin_slsqp
-
 import warnings
 warnings.filterwarnings("ignore")
 
+# -------------------------------------------------------------------------------------------------
+# This module contains procedures to fit probability distributions to the data using maximum likelihood approaches
+# Functions to fit probability distributions of non-negative random variables (e.g. exponential and gamma) take an
+# fixed_location as an argument (with a default value set to 0). Specifying this argument allows for
+# fitting a shifted distribution to the data.
+# -------------------------------------------------------------------------------------------------
+
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
-
-# fixed_location: specify location, 0 by default
-# can also take fixed_location given by users, fixed_location = 1 means floc=1
 
 
 def AIC(k, log_likelihood):
@@ -56,24 +59,24 @@ def fit_exp(data, x_label, fixed_location=0):
 
 
 # 2 Beta
-def fit_beta(data, x_label, min=None, max=None):
+def fit_beta(data, x_label, minimum=None, maximum=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
-    :param min: minimum of data, given or calculated from data
-    :param max: maximum of data, given or calculated from data
+    :param minimum: minimum of data (calculated from data if not provided)
+    :param maximum: maximum of data (calculated from data if not provided)
     :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
     """
     # transform data into [0,1]
-    if min==None:
+    if minimum==None:
         L = np.min(data)
     else:
-        L = min
+        L = minimum
 
-    if max==None:
+    if maximum==None:
         U = np.max(data)
     else:
-        U = max
+        U = maximum
 
     data = (data-L)/(U-L)
 
@@ -106,7 +109,7 @@ def fit_beta(data, x_label, min=None, max=None):
 
 
 # 3 BetaBinomial
-def fit_betaBinomial(data, x_label, n=None, fixed_location=0, fixed_scale=1):
+def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram

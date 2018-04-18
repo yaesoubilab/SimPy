@@ -14,13 +14,13 @@ print("Fitting Exponential:", dictResults)
 
 # 2 fitting a beta distribution
 dat_beta = 5 * np.random.beta(2, 3, 1000)            # generate data
-dictResults=Fit.fit_beta(dat_beta, 'Data', min=None, max=None) # fit
+dictResults=Fit.fit_beta(dat_beta, 'Data', minimum=None, maximum=None) # fit
 print("Fitting Beta:", dictResults)
 
 # 3 fitting a beta-binomial distribution
 betabinomial_dist = RVGs.BetaBinomial(100, 2, 3) # n, a, b
 dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
-dictResults=Fit.fit_betaBinomial(dat_betabin, 'Data', n=100) # fit
+dictResults=Fit.fit_beta_binomial(dat_betabin, 'Data', n=100) # fit
 print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
