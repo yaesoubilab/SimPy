@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+import matplotlib.pyplot as plt
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -78,16 +79,18 @@ def get_binomial_parameters(mean, st_dev, fixed_location=0):
 
 
 # 5 Empirical
-def get_empirical_parameters(data):
+def get_empirical_parameters(data, bin_size=1):
     """
     :param data: (numpy.array) observations
-    :param x_label: label to show on the x-axis of the histogram
-    :returns: frequency of unique observations
+    :param bin_size: float, the width of histogram's bins
+    :returns: dictionary keys of "bins" and "freq"
     """
-    unique, counts = np.unique(data, return_counts=True)
-    freq = counts*1.0/len(data)
+    result = plt.hist(data, bins=range(np.min(data), np.max(data) + bin_size, bin_size))
 
-    return unique, freq
+    bins = result[1] # bins are in the form of [a,b)
+    freq = result[0]*1.0/len(data)
+
+    return {"bins": bins, "freq": freq}
 
 
 # 6 Gamma
