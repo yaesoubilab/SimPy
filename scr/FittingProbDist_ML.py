@@ -34,7 +34,7 @@ def fit_exp(data, x_label, fixed_location=0, figure_size=5):
     """
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of exponential
@@ -84,7 +84,7 @@ def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
     data = (data-L)/(U-L)
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -129,7 +129,7 @@ def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1, fi
         n = np.max(data)
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # define log_likelihood
@@ -202,7 +202,7 @@ def fit_binomial(data, x_label, fixed_location=0, figure_size=5):
     n = mean/p
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
             edgecolor='black', alpha=0.5, label='Frequency')
 
@@ -226,32 +226,30 @@ def fit_binomial(data, x_label, fixed_location=0, figure_size=5):
 
 
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
-def fit_empirical(data, x_label, figure_size=5):
+def fit_empirical(data, x_label, figure_size=5, bin_size=1):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
-    :returns: frequency of unique observations
+    :param bin_size: float, the width of histogram's bins
+    :returns: dictionary keys of "bins" and "freq"
     """
-    unique, counts = np.unique(data, return_counts=True)
-    freq = counts*1.0/len(data)
+    result = plt.hist(data, bins=range(np.min(data), np.max(data) + bin_size, bin_size))
+
+    bins = result[1] # bins are in the form of [a,b)
+    freq = result[0]*1.0/len(data)
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
-    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
+    ax.hist(data, normed=1, bins=range(np.min(data), np.max(data) + bin_size, bin_size),
             edgecolor='black', alpha=0.5, label='Frequency')
-
-    # plot with fitted parameter
-    x_plot = unique
-    ax.step(unique, freq, COLOR_DISCRETE_FIT, ms=8, label='Empirical')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
     plt.show()
 
-    return unique, freq
-
+    return {"bins": bins, "freq": freq}
 
 # 6 Gamma
 def fit_gamma(data, x_label, fixed_location=0, figure_size=5):
@@ -264,7 +262,7 @@ def fit_gamma(data, x_label, fixed_location=0, figure_size=5):
     """
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of gamma
@@ -302,7 +300,7 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     data = 1 * (data - fixed_location) / fixed_scale
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # define log_likelihood
@@ -370,7 +368,7 @@ def fit_geometric(data, x_label, fixed_location=0, figure_size=5):
     p = len(data)*1.0/np.sum(data)
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins=np.max(data)+1, range=[0.5, np.max(data)+0.5],
             edgecolor='black', alpha=0.5, label='Frequency')
 
@@ -403,7 +401,7 @@ def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5):
     """
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -440,7 +438,7 @@ def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5):
     """
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -477,7 +475,7 @@ def fit_lognorm(data, x_label, fixed_location=0, figure_size=5):
     """
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -517,7 +515,7 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
     data = data-fixed_location
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     M=np.max(data)
@@ -569,7 +567,7 @@ def fit_normal(data, x_label, figure_size=5):
     """
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -610,7 +608,7 @@ def fit_poisson(data, x_label, fixed_location=0, figure_size=5):
     mu = data.mean()
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
             edgecolor='black', alpha=0.5, label='Frequency')
 
@@ -646,7 +644,7 @@ def fit_triang(data, x_label, fixed_location=0, figure_size=5):
     # loc to (loc + c*scale) and then downsloping for (loc + c*scale) to (loc+scale).
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -683,7 +681,7 @@ def fit_uniform(data, x_label, figure_size=5):
     # This distribution is constant between loc and loc + scale.
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -720,7 +718,7 @@ def fit_uniformDiscrete(data, x_label, figure_size=5):
     # This distribution is constant between low and high.
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
@@ -760,7 +758,7 @@ def fit_weibull(data, x_label, fixed_location=0, figure_size=5):
     """
 
     # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
+    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of weibull
