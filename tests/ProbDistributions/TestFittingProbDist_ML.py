@@ -25,7 +25,7 @@ print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
 dat_bin = np.random.binomial(100, 0.3, 1000)
-dictResults=Fit.fit_binomial(dat_bin, 'Data', n=100, fixed_location=0) # fit
+dictResults=Fit.fit_binomial(dat_bin, 'Data', fixed_location=0) # fit
 print("Fitting Binomial:", dictResults)
 
 # 5 Empirical (for int data)

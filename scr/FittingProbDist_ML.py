@@ -181,14 +181,13 @@ def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1, fi
 
 
 # 4 Binomial
-def fit_binomial(data, x_label, fixed_location=0, n=None, figure_size=5):
+def fit_binomial(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
-    :param n: the number of trials (determined from data if not specified)
     :param fixed_location: fixed location
     :param figure_size: int, specify the figure size
-    :returns: dictionary with keys "p" and "AIC"
+    :returns: dictionary with keys "p", "n" and "AIC"
     """
 
     # fit Binomial distribution: the MLE of p is x/n
@@ -197,10 +196,10 @@ def fit_binomial(data, x_label, fixed_location=0, n=None, figure_size=5):
 
     data = data - fixed_location
 
-    if n is None:
-        n = np.max(data)
-
-    p = np.sum(data)*1.0/(len(data)*n)
+    mean = np.mean(data)
+    st_dev = np.std(data)
+    p = 1.0 - (st_dev**2)/mean
+    n = mean/p
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size, figure_size))
@@ -223,7 +222,7 @@ def fit_binomial(data, x_label, fixed_location=0, n=None, figure_size=5):
     )
 
     # report results in the form of a dictionary
-    return {"p": p, "loc": fixed_location, "AIC": aic}
+    return {"p": p, "n": n, "loc": fixed_location, "AIC": aic}
 
 
 # 5 Empirical (I guess for this, we just need to return the frequency of each observation)
