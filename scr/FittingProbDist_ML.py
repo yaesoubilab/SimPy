@@ -128,15 +128,17 @@ def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
-    # define log_likelihood
+    # Maximum-Likelihood Algorithm
     # ref: http://www.channelgrubb.com/blog/2015/2/27/beta-binomial-in-python
-    def BetaBinom(a, b, n, k): # log(pmf) of beta binomial
+    # define log_likelihood (log(pmf) of beta binomial)
+    def BetaBinom(a, b, n, k):
         part_1 = sp.misc.comb(n, k)
         part_2 = sp.special.betaln(k + a, n - k + b)
         part_3 = sp.special.betaln(a, b)
         result = (np.log(part_1) + part_2) - part_3
         return result
 
+    # define log_likelihood function: sum of log(pmf) for each data point
     def loglik(theta):
         a, b, n = theta[0], theta[1], theta[2]
         n = int(np.round(n, 0))
@@ -145,24 +147,28 @@ def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
             result += BetaBinom(a, b, n, data[i])
         return result
 
+    # define negative log-likelihood, the target function to minimize
     def neg_loglik(theta):
         return -loglik(theta)
 
-    # estimate the parameters by minimize -loglik
+    # estimate the parameters by minimize negative log-likelihood
+    # initialize parameters
     theta0 = [1, 1, np.max(data)]
+    # call Scipy optimizer to minimize the target function
+    # with bounds for a [0,10], b [0,10] and n [0,100+max(data)]
     paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0,
                             bounds=[(0.0, 10.0), (0.0, 10.0), (0, np.max(data)+100)],
                             disp=False, full_output=True)
 
     # plot the estimated distribution
-    # get PMF
+    # calculate PMF for each data point using newly estimated parameters
     x_values = np.arange(0, paras[2], step=1)
     pmf = np.zeros(len(x_values))
     for i in x_values:
         pmf[int(i)] = np.exp(BetaBinom(paras[0], paras[1], paras[2], i))
-    # plot
-    ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='BetaBinomial')
 
+    # plot PMF
+    ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='BetaBinomial')
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -301,14 +307,17 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
-    # define log_likelihood
+    # Maximum-Likelihood Algorithm
     # ref: https://en.wikipedia.org/wiki/Negative_binomial_distribution#Gamma%E2%80%93Poisson_mixture
-    n=len(data)
+    n = len(data)
+
+    # define density function of gamma-poisson
     def gamma_poisson(r,p,k):
         part1 = 1.0*sp.special.gamma(r+k)/(sp.special.gamma(r) * sp.misc.factorial(k))
         part2 = (p**k)*((1-p)**r)
         return part1*part2
 
+    # define log_likelihood function: sum of log(density) for each data point
     def log_lik(theta):
         r, p = theta[0], theta[1]
         result = 0
@@ -316,26 +325,31 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
             result += np.log(gamma_poisson(r,p,data[i]))
         return result
 
+    # define negative log-likelihood, the target function to minimize
     def neg_loglik(theta):
         return -log_lik(theta)
 
-    # estimate the parameters by minimize -loglik
-    # alpha=a, beta=1/scale
+    # estimate the parameters by minimize negative log-likelihood
+    # initialize parameters
     theta0 = [2, 0.5]
+    # call Scipy optimizer to minimize the target function
+    # with bounds for p [0,1] and r [0,10]
     paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, 10.0), (0,1)],
                               disp=False, full_output=True)
 
+    # get the Maximum-Likelihood estimators
     a = paras[0]
     scale = paras[1]/(1.0-paras[1])
 
     # plot the estimated distribution
-    # get PMF
+    # calculate PMF for each data point using newly estimated parameters
     x_values = np.arange(0, np.max(data), step=1)
     pmf = np.zeros(len(x_values))
     for i in x_values:
         pmf[int(i)] = gamma_poisson(paras[0], paras[1], i)
-    ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='GammaPoisson')
 
+    # plot PMF
+    ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='GammaPoisson')
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -516,9 +530,9 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
     ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
 
-    M=np.max(data)
-
-    # define log_likelihood
+    # Maximum-Likelihood Algorithm
+    M = np.max(data)  # bound
+    # define log_likelihood for negative-binomial, sum(log(pmf))
     def log_lik(theta):
         n, p = theta[0], theta[1]
         result = 0
@@ -526,20 +540,25 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
             result += scs.nbinom.logpmf(data[i], n, p)
         return result
 
+    # define negative log-likelihood, the target function to minimize
     def neg_loglik(theta):
         return -log_lik(theta)
 
-    # estimate the parameters by minimize -loglik
+    # estimate the parameters by minimize negative log-likelihood
+    # initialize parameters
     theta0 = [2, 0.5]
+    # call Scipy optimizer to minimize the target function
+    # with bounds for p [0,1] and n [0,M]
     paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, M), (0,1)],
                               disp=False, full_output=True)
 
     # plot the estimated distribution
-    # get PMF
+    # calculate PMF for each data point using newly estimated parameters
     x_values = np.arange(0, np.max(data), step=1)
     rv = scs.nbinom(paras[0],paras[1])
-    ax.step(x_values, rv.pmf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='NegativeBinomial')
 
+    # plot PMF
+    ax.step(x_values, rv.pmf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='NegativeBinomial')
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
