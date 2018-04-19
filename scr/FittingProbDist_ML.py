@@ -139,7 +139,7 @@ def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
 
     def loglik(theta):
         a, b, n = theta[0], theta[1], theta[2]
-        n = int(n)
+        n = int(np.round(n, 0))
         result = 0
         for i in range(len(data)):
             result += BetaBinom(a, b, n, data[i])
