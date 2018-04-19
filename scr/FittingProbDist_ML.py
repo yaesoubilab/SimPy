@@ -234,14 +234,14 @@ def fit_empirical(data, x_label, figure_size=5, bin_size=1):
     :param bin_size: float, the width of histogram's bins
     :returns: dictionary keys of "bins" and "freq"
     """
-    result = plt.hist(data, bins=range(np.min(data), np.max(data) + bin_size, bin_size))
+    result = plt.hist(data, bins=np.arange(np.min(data), np.max(data) + bin_size, bin_size))
 
     bins = result[1] # bins are in the form of [a,b)
     freq = result[0]*1.0/len(data)
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=range(np.min(data), np.max(data) + bin_size, bin_size),
+    ax.hist(data, normed=1, bins=np.arange(np.min(data), np.max(data) + bin_size, bin_size),
             edgecolor='black', alpha=0.5, label='Frequency')
 
     ax.set_xlabel(x_label)

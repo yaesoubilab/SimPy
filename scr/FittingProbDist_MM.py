@@ -85,7 +85,7 @@ def get_empirical_parameters(data, bin_size=1):
     :param bin_size: float, the width of histogram's bins
     :returns: dictionary keys of "bins" and "freq"
     """
-    result = plt.hist(data, bins=range(np.min(data), np.max(data) + bin_size, bin_size))
+    result = plt.hist(data, bins=np.arange(np.min(data), np.max(data) + bin_size, bin_size))
 
     bins = result[1] # bins are in the form of [a,b)
     freq = result[0]*1.0/len(data)
