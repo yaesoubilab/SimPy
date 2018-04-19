@@ -68,7 +68,7 @@ def get_binomial_parameters(mean, st_dev, fixed_location=0):
     :param mean: sample mean
     :param st_dev: sample standard deviation
     :param fixed_location: fixed location, 0 by default
-    :return: dictionary with keys "p" and "loc"
+    :return: dictionary with keys "p", "n" and "loc"
     """
     mean = mean-fixed_location
     p = 1.0 - (st_dev**2)/mean
