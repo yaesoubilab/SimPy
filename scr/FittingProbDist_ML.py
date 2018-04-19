@@ -112,11 +112,10 @@ def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
 
 
 # 3 BetaBinomial
-def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1, figure_size=5):
+def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
-    :param n: the number of trials in the Binomial distribution
     :param fixed_location: fixed location
     :param fixed_scale: fixed scale
     :param figure_size: int, specify the figure size
@@ -124,9 +123,6 @@ def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1, fi
     """
 
     data = 1.0*(data - fixed_location)/fixed_scale
-
-    if n==None:
-        n = np.max(data)
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
@@ -142,7 +138,8 @@ def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1, fi
         return result
 
     def loglik(theta):
-        a, b = theta[0], theta[1]
+        a, b, n = theta[0], theta[1], theta[2]
+        n = int(n)
         result = 0
         for i in range(len(data)):
             result += BetaBinom(a, b, n, data[i])
@@ -152,16 +149,17 @@ def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1, fi
         return -loglik(theta)
 
     # estimate the parameters by minimize -loglik
-    theta0 = [1, 1]
-    paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0, bounds=[(0.0, 10.0)] * len(theta0),
-                              disp=False, full_output=True)
+    theta0 = [1, 1, np.max(data)]
+    paras, value, iter, imode, smode = fmin_slsqp(neg_loglik, theta0,
+                            bounds=[(0.0, 10.0), (0.0, 10.0), (0, np.max(data)+100)],
+                            disp=False, full_output=True)
 
     # plot the estimated distribution
     # get PMF
-    x_values = np.arange(0, n, step=1)
+    x_values = np.arange(0, paras[2], step=1)
     pmf = np.zeros(len(x_values))
     for i in x_values:
-        pmf[i] = np.exp(BetaBinom(paras[0], paras[1], n, i))
+        pmf[int(i)] = np.exp(BetaBinom(paras[0], paras[1], paras[2], i))
     # plot
     ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='BetaBinomial')
 
@@ -173,11 +171,11 @@ def fit_beta_binomial(data, x_label, n=None, fixed_location=0, fixed_scale=1, fi
     # calculate AIC
     aic = AIC(
         k=3,
-        log_likelihood=loglik([paras[0], paras[1], n])
+        log_likelihood=loglik([paras[0], paras[1], paras[2]])
     )
 
     # report results in the form of a dictionary
-    return {"a": paras[0], "b": paras[1], "n": n, "loc": fixed_location, "scale": fixed_scale, "AIC": aic}
+    return {"a": paras[0], "b": paras[1], "n": paras[2], "loc": fixed_location, "scale": fixed_scale, "AIC": aic}
 
 
 # 4 Binomial
@@ -335,7 +333,7 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     x_values = np.arange(0, np.max(data), step=1)
     pmf = np.zeros(len(x_values))
     for i in x_values:
-        pmf[i] = gamma_poisson(np.array(paras[0]), np.array(paras[1]), i)
+        pmf[int(i)] = gamma_poisson(paras[0], paras[1], i)
     ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='GammaPoisson')
 
     ax.set_xlabel(x_label)

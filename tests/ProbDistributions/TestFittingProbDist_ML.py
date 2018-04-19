@@ -20,7 +20,7 @@ print("Fitting Beta:", dictResults)
 # 3 fitting a beta-binomial distribution
 betabinomial_dist = RVGs.BetaBinomial(100, 2, 3) # n, a, b
 dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
-dictResults=Fit.fit_beta_binomial(dat_betabin, 'Data', n=100) # fit
+dictResults=Fit.fit_beta_binomial(dat_betabin, 'Data') # fit
 print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
