@@ -29,8 +29,8 @@ def get_beta_params(mean, st_dev, minimum=0, maximum=1):
     :return: dictionary with keys "a", "b", "loc" and "scale"
     """
     # shift the distribution by loc and scale
-    mean = mean - minimum
-    st_dev = st_dev / (maximum - minimum) * 1.0
+    mean = (mean - minimum)*1.0/(maximum - minimum)
+    st_dev = st_dev*1.0/(maximum - minimum)
 
     a_plus_b = mean*(1-mean)/st_dev**2 - 1
     a = mean*a_plus_b

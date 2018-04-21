@@ -2,30 +2,33 @@ import scr.FittingProbDist_MM as Est
 import numpy as np
 import scr.RandomVariantGenerators as RVGs
 from tests.ProbDistributions.RVGtests import get_samples
-import scipy.stats as scs
+
 
 # simulate some data
 np.random.seed(1)
 
 # 1 fitting a exponential distribution
-dat_exp = np.random.exponential(5, 1000)            # generate data
-dictResults=Est.get_expon_params(np.mean(dat_exp))        # fit
+dist = RVGs.Exponential(5, 1)
+dat_exp = np.array(get_samples(dist, np.random))
+dictResults=Est.get_expon_params(np.mean(dat_exp), fixed_location=1)        # fit
 print("Fitting Exponential:", dictResults)
 
 # 2 fitting a beta distribution
-dat_beta = np.random.beta(2, 3, 1000)            # generate data
-dictResults=Est.get_beta_params(np.mean(dat_beta), np.std(dat_beta)) # fit
+dist = RVGs.Beta(2, 3, loc=1, scale=2)
+dat_beta = np.array(get_samples(dist, np.random))
+dictResults=Est.get_beta_params(np.mean(dat_beta), np.std(dat_beta), minimum=1, maximum=3) # fit
 print("Fitting Beta:", dictResults)
 
 # 3 fitting a beta-binomial distribution
-betabinomial_dist = RVGs.BetaBinomial(100, 2, 3) # n, a, b
+betabinomial_dist = RVGs.BetaBinomial(100, 2, 3, loc=1, scale=2) # n, a, b
 dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
-dictResults=Est.get_beta_binomial_paras(np.mean(dat_betabin),np.std(dat_betabin), n=100) # fit
+dictResults=Est.get_beta_binomial_paras(np.mean(dat_betabin),np.std(dat_betabin), n=100, fixed_location=1, fixed_scale=2) # fit
 print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
-dat_bin = np.random.binomial(100, 0.3, 1000)
-dictResults=Est.get_binomial_parameters(np.mean(dat_bin), np.std(dat_bin), fixed_location=0) # fit
+dist = RVGs.Binomial(100, 0.3, 1)
+dat_bin = np.array(get_samples(dist, np.random))
+dictResults=Est.get_binomial_parameters(np.mean(dat_bin), np.std(dat_bin), fixed_location=1) # fit
 print("Fitting Binomial:", dictResults)
 
 # 5 Empirical (for int data)
@@ -34,19 +37,22 @@ dictResults=Est.get_empirical_parameters(dat_em, bin_size=2.5) # fit
 print("Fitting Empirical:", dictResults)
 
 # 6 fitting a Gamma distribution
-dat_gamma = np.random.gamma(10, 2, 1000)     # generate data
-dictResults=Est.get_gamma_parameters(np.mean(dat_gamma), np.std(dat_gamma))        # fit
+dist = RVGs.Gamma(10, 1, 2)
+dat_gamma = np.array(get_samples(dist, np.random))    # generate data
+dictResults=Est.get_gamma_parameters(np.mean(dat_gamma), np.std(dat_gamma), fixed_location=1)        # fit
 print("Fitting Gamma:", dictResults)
 
 # 7 GammaPoisson
-gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4)
+gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4, loc=1, scale=2)
 dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
-dictResults=Est.get_gamma_poisson_paras(np.mean(dat_gamma_poisson),np.std(dat_gamma_poisson)) # fit
+dictResults=Est.get_gamma_poisson_paras(np.mean(dat_gamma_poisson),np.std(dat_gamma_poisson),
+                                        fixed_location=1, fixed_scale=2) # fit
 print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric
-dat_geom = np.random.geometric(0.3, 1000)     # generate data
-dictResults=Est.get_geomertic_parameters(np.mean(dat_geom), fixed_location=0)        # fit
+dist = RVGs.Geometric(0.3, 1)
+dat_geom = np.array(get_samples(dist, np.random))    # generate data
+dictResults=Est.get_geomertic_parameters(np.mean(dat_geom), fixed_location=1)        # fit
 print("Fitting Geometric:", dictResults)
 
 # # 9 fitting a JohnsonSb distribution
@@ -60,13 +66,15 @@ print("Fitting Geometric:", dictResults)
 # print("Fitting johnsonSu:", dictResults)
 
 # # 11 LogNormal
-dat_lognorm = np.random.lognormal(0, 1, 1000)    # mean, sigma
-dictResults=Est.get_lognormal_parameters(np.mean(dat_lognorm), np.std(dat_lognorm))    # fit (scale=exp(mean))
+dist = RVGs.LogNormal(s=1, loc=1, scale=2)
+dat_lognorm = np.array(get_samples(dist, np.random))    # mean, sigma
+dictResults=Est.get_lognormal_parameters(np.mean(dat_lognorm), np.std(dat_lognorm), fixed_location=1)    # fit (scale=exp(mean))
 print("Fitting LogNormal:", dictResults)
 
 # 12 NegativeBinomial
-dat_neg_bin = np.random.negative_binomial(3, 0.3, 1000)    # mean, sigma
-dictResults=Est.get_negative_binomial_parameters(np.mean(dat_neg_bin), np.std(dat_neg_bin))
+dist = RVGs.NegativeBinomial(3, 0.3, 1)
+dat_neg_bin = np.array(get_samples(dist, np.random))    # mean, sigma
+dictResults=Est.get_negative_binomial_parameters(np.mean(dat_neg_bin), np.std(dat_neg_bin), fixed_location=1)
 print("Fitting NegativeBinomial:", dictResults)
 
 # 13 Normal
@@ -79,21 +87,25 @@ print("Fitting Normal:", dictResults)
 # print("Fitting Triangular:", dictResults)
 
 # 15 Uniform
-dat_unif = np.random.uniform(0, 1, 1000)    # mean, sigma
+dist = RVGs.Uniform(0, 1)
+dat_unif = np.array(get_samples(dist, np.random))    # mean, sigma
 dictResults=Est.get_uniform_parameters(np.mean(dat_unif), np.std(dat_unif))    # fit
 print("Fitting Uniform:", dictResults)
 
 # 16 UniformDiscrete
-dat_unifDis = scs.randint.rvs(0,100,size=1000)
+dist = RVGs.UniformDiscrete(0, 100)
+dat_unifDis = np.array(get_samples(dist, np.random))
 dictResults=Est.get_uniform_discrete_parameters(np.mean(dat_unifDis), np.std(dat_unifDis))    # fit
 print("Fitting UniformDiscrete:", dictResults)
 
 # 17 fitting a Weibull distribution
-dat_weibull = np.random.weibull(5, 1000)    # generate data
-dictResults=Est.get_weibull_parameters(np.mean(dat_weibull), np.std(dat_weibull))    # fit
+dist = RVGs.Weibull(5, 1, 2)
+dat_weibull = np.array(get_samples(dist, np.random))    # generate data
+dictResults=Est.get_weibull_parameters(np.mean(dat_weibull), np.std(dat_weibull), fixed_location=1)    # fit
 print("Fitting Weibull:", dictResults)
 
 # 18 fitting a Poisson distribution
-dat_poisson = np.random.poisson(30, 1000)    # generate data
-dictResults=Est.get_poisson_parameters(np.mean(dat_poisson))    # fit
+dist = RVGs.Poisson(30, 1)
+dat_poisson = np.array(get_samples(dist, np.random))    # generate data
+dictResults=Est.get_poisson_parameters(np.mean(dat_poisson), fixed_location=1)    # fit
 print("Fitting Poisson:", dictResults)

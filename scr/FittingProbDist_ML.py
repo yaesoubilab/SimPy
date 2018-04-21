@@ -528,7 +528,8 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
+            edgecolor='black', alpha=0.5, label='Frequency')
 
     # Maximum-Likelihood Algorithm
     M = np.max(data)  # bound
