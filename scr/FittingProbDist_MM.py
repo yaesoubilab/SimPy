@@ -40,7 +40,7 @@ def get_beta_params(mean, st_dev, minimum=0, maximum=1):
 
 # 3 BetaBinomial
 # 3 parameters in total, won't be able to estimate if we only know mean and st_dev
-def get_beta_binomial_paras(mean, st_dev, n, fixed_location=0, fixed_scale=1):
+def get_beta_binomial_params(mean, st_dev, n, fixed_location=0, fixed_scale=1):
     """
     # ref: https://en.wikipedia.org/wiki/Beta-binomial_distribution
     :param mean: sample mean of an observation set
@@ -65,7 +65,7 @@ def get_beta_binomial_paras(mean, st_dev, n, fixed_location=0, fixed_scale=1):
 
 
 # 4 Binomial
-def get_binomial_parameters(mean, st_dev, fixed_location=0):
+def get_binomial_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean
     :param st_dev: sample standard deviation
@@ -80,7 +80,7 @@ def get_binomial_parameters(mean, st_dev, fixed_location=0):
 
 
 # 5 Empirical
-def get_empirical_parameters(data, bin_size=1):
+def get_empirical_params(data, bin_size=1):
     """
     :param data: (numpy.array) observations
     :param bin_size: float, the width of histogram's bins
@@ -95,7 +95,7 @@ def get_empirical_parameters(data, bin_size=1):
 
 
 # 6 Gamma
-def get_gamma_parameters(mean, st_dev, fixed_location=0):
+def get_gamma_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
@@ -114,7 +114,7 @@ def get_gamma_parameters(mean, st_dev, fixed_location=0):
 # 7 GammaPoisson
 # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
 # scale = 1/beta
-def get_gamma_poisson_paras(mean, st_dev, fixed_location=0, fixed_scale=1):
+def get_gamma_poisson_params(mean, st_dev, fixed_location=0, fixed_scale=1):
     """
     :param mean: sample mean
     :param st_dev: sample standard deviation
@@ -133,7 +133,7 @@ def get_gamma_poisson_paras(mean, st_dev, fixed_location=0, fixed_scale=1):
 
 
 # 8 Geometric
-def get_geomertic_parameters(mean, fixed_location=0):
+def get_geomertic_params(mean, fixed_location=0):
     """
     :param mean: sample mean
     :param fixed_location: location, 0 by default
@@ -156,7 +156,7 @@ def get_geomertic_parameters(mean, fixed_location=0):
 
 
 # 11 LogNormal
-def get_lognormal_parameters(mean, st_dev, fixed_location=0):
+def get_lognormal_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
@@ -177,7 +177,7 @@ def get_lognormal_parameters(mean, st_dev, fixed_location=0):
 
 
 # 12 NegativeBinomial
-def get_negative_binomial_parameters(mean, st_dev, fixed_location=0):
+def get_negative_binomial_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
@@ -196,7 +196,7 @@ def get_negative_binomial_parameters(mean, st_dev, fixed_location=0):
 
 
 # 13 Normal
-def get_normal_parameters(mean, st_dev):
+def get_normal_params(mean, st_dev):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
@@ -207,7 +207,7 @@ def get_normal_parameters(mean, st_dev):
 
 
 # 18 Poisson
-def get_poisson_parameters(mean, fixed_location=0):
+def get_poisson_params(mean, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param fixed_location: location, 0 by default
@@ -220,7 +220,7 @@ def get_poisson_parameters(mean, fixed_location=0):
 
 # 14 Triangular
 # there are at least 3 parameters, s.t. need min, max and mean to estimate
-# def get_triangular_paras(mean, st_dev, fixed_location=0):
+# def get_triangular_params(mean, st_dev, fixed_location=0):
 #     """
 #     :param mean: sample mean of an observation set
 #     :param st_dev: sample standard deviation of an observation set
@@ -231,7 +231,7 @@ def get_poisson_parameters(mean, fixed_location=0):
 
 
 # 15 Uniform
-def get_uniform_parameters(mean, st_dev):
+def get_uniform_params(mean, st_dev):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
@@ -249,7 +249,7 @@ def get_uniform_parameters(mean, st_dev):
 
 # 16 UniformDiscrete
 # ref: https://en.wikipedia.org/wiki/Discrete_uniform_distribution
-def get_uniform_discrete_parameters(mean, st_dev):
+def get_uniform_discrete_params(mean, st_dev):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
@@ -264,7 +264,7 @@ def get_uniform_discrete_parameters(mean, st_dev):
 
 # 17 Weibull
 # ref: https://stats.stackexchange.com/questions/159452/how-can-i-recreate-a-weibull-distribution-given-mean-and-standard-deviation-and
-def get_weibull_parameters(mean, st_dev, fixed_location=0):
+def get_weibull_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
     :param st_dev: sample standard deviation of an observation set
