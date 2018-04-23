@@ -8,13 +8,13 @@ from scr import FigureSupport as Fig
 from scr import FormatFunctions as FormatFunc
 
 
-def pv(payment, annual_discount_rate, discount_period):
+def pv(payment, discount_rate, discount_period):
     """ calculates the present value of a payment
     :param payment: payment to calculate the present value for
-    :param annual_discount_rate: annual discount rate
+    :param discount_rate: discount rate (per period)
     :param discount_period: number of periods to discount the payment
-    :return: payment/(1+annual_discount_rate)^discount_period    """
-    return payment * pow(1 + annual_discount_rate, -discount_period)
+    :return: payment/(1+discount_rate)^discount_period    """
+    return payment * pow(1 + discount_rate, -discount_period)
 
 
 class Interval(Enum):
@@ -381,10 +381,10 @@ class CEA(_EconEval):
 
         # decide about what interval to return and create table self.out_intervals
         if interval == Interval.PREDICTION:
-            # create the datafram
+            # create the dataframe
             out_intervals_PI = pd.DataFrame(index=dfStrategies.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
-            # iniitialize incremetal cost and health and ICER with -
+            # initialize incremental cost and health and ICER with -
             out_intervals_PI['dCost_I'] = '-'
             out_intervals_PI['dEffect_I'] = '-'
             out_intervals_PI['ICER_I'] = '-'

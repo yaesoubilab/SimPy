@@ -31,6 +31,7 @@ class _SamplePath(object):
         """ :returns the name of this sample path"""
         return self._name
 
+
 class SamplePathRealTimeUpdate(_SamplePath):
     """ a sample path where observations are recorded in real-time (over the simulation) """
     def __init__(self, name, index, initial_size):
