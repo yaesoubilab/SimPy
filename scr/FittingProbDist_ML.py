@@ -23,7 +23,7 @@ def AIC(k, log_likelihood):
     return 2 * k - 2 * log_likelihood
 
 
-# 1 Exponential
+# Exponential
 def fit_exp(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -60,7 +60,7 @@ def fit_exp(data, x_label, fixed_location=0, figure_size=5):
     return {"loc": loc, "scale": scale, "AIC": aic}
 
 
-# 2 Beta
+# Beta
 def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -111,7 +111,7 @@ def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
     return {"a": a, "b": b, "loc": L, "scale": U-L, "AIC": aic}
 
 
-# 3 BetaBinomial
+# BetaBinomial
 def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -184,7 +184,7 @@ def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     return {"a": paras[0], "b": paras[1], "n": paras[2], "loc": fixed_location, "scale": fixed_scale, "AIC": aic}
 
 
-# 4 Binomial
+# Binomial
 def fit_binomial(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -229,7 +229,7 @@ def fit_binomial(data, x_label, fixed_location=0, figure_size=5):
     return {"p": p, "n": n, "loc": fixed_location, "AIC": aic}
 
 
-# 5 Empirical (I guess for this, we just need to return the frequency of each observation)
+# Empirical (I guess for this, we just need to return the frequency of each observation)
 def fit_empirical(data, x_label, figure_size=5, bin_size=1):
     """
     :param data: (numpy.array) observations
@@ -255,7 +255,8 @@ def fit_empirical(data, x_label, figure_size=5, bin_size=1):
 
     return {"bins": bins, "freq": freq}
 
-# 6 Gamma
+
+# Gamma
 def fit_gamma(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -293,7 +294,7 @@ def fit_gamma(data, x_label, fixed_location=0, figure_size=5):
     return {"a": a, "loc": loc, "scale": scale, "AIC": aic}
 
 
-# 7 GammaPoisson
+# GammaPoisson
 def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -365,7 +366,7 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     return {"a": a, "gamma_scale": scale, "AIC": aic, "loc": fixed_location, "scale": fixed_scale}
 
 
-# 8 Geometric
+# Geometric
 def fit_geometric(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -403,7 +404,7 @@ def fit_geometric(data, x_label, fixed_location=0, figure_size=5):
     return {"p": p, "loc": fixed_location, "AIC": aic}
 
 
-# 9 JohnsonSb
+# JohnsonSb
 def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -440,7 +441,7 @@ def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5):
     return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
 
 
-# 10 JohnsonSu
+# JohnsonSu
 def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -477,7 +478,7 @@ def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5):
     return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
 
 
-# 11 LogNormal
+# LogNormal
 def fit_lognorm(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -513,7 +514,7 @@ def fit_lognorm(data, x_label, fixed_location=0, figure_size=5):
     return {"s": s, "loc": loc, "scale": scale, "AIC": aic}
 
 
-# 12 NegativeBinomial
+# NegativeBinomial
 def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -575,7 +576,7 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
     return {"n": paras[0], "p": paras[1], "loc": fixed_location, "AIC": aic}
 
 
-# 13 Normal
+# Normal
 def fit_normal(data, x_label, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -611,7 +612,7 @@ def fit_normal(data, x_label, figure_size=5):
     return {"loc": loc, "scale": scale, "AIC": aic}
 
 
-# 18 Poisson
+# Poisson
 def fit_poisson(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -649,7 +650,7 @@ def fit_poisson(data, x_label, fixed_location=0, figure_size=5):
     return {"mu": mu, "AIC": aic, "loc": fixed_location}
 
 
-# 14 Triangular
+# Triangular
 def fit_triang(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -688,7 +689,7 @@ def fit_triang(data, x_label, fixed_location=0, figure_size=5):
     return {"c": c, "loc": loc, "scale": scale, "AIC": aic}
 
 
-# 15 Uniform
+# Uniform
 def fit_uniform(data, x_label, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -725,7 +726,7 @@ def fit_uniform(data, x_label, figure_size=5):
     return {"loc": loc, "scale": scale, "AIC": aic}
 
 
-# 16 UniformDiscrete
+# UniformDiscrete
 def fit_uniformDiscrete(data, x_label, figure_size=5):
     """
     :param data: (numpy.array) observations
@@ -765,7 +766,7 @@ def fit_uniformDiscrete(data, x_label, figure_size=5):
     return {"l": low, "r": high, "AIC": aic}
 
 
-# 17 Weibull
+# Weibull
 def fit_weibull(data, x_label, fixed_location=0, figure_size=5):
     """
     :param data: (numpy.array) observations

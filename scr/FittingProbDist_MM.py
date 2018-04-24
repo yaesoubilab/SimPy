@@ -6,7 +6,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-# 1 Exponential
+# Exponential
 def get_expon_params(mean, fixed_location=0):
     """
     :param mean: sample mean
@@ -19,7 +19,7 @@ def get_expon_params(mean, fixed_location=0):
     return {"loc": fixed_location, "scale": scale}
 
 
-# 2 Beta
+# Beta
 def get_beta_params(mean, st_dev, minimum=0, maximum=1):
     """
     :param mean: sample mean
@@ -38,7 +38,7 @@ def get_beta_params(mean, st_dev, minimum=0, maximum=1):
     return {"a": a, "b": a_plus_b - a, "loc": minimum, "scale": maximum - minimum}
 
 
-# 3 BetaBinomial
+# BetaBinomial
 # 3 parameters in total, won't be able to estimate if we only know mean and st_dev
 def get_beta_binomial_params(mean, st_dev, n, fixed_location=0, fixed_scale=1):
     """
@@ -64,7 +64,7 @@ def get_beta_binomial_params(mean, st_dev, n, fixed_location=0, fixed_scale=1):
     return {"a": a, "b": b, "n": n, "loc": fixed_location, "scale": fixed_scale}
 
 
-# 4 Binomial
+# Binomial
 def get_binomial_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean
@@ -79,7 +79,7 @@ def get_binomial_params(mean, st_dev, fixed_location=0):
     return {"p": p, "n": n, "loc": fixed_location}
 
 
-# 5 Empirical
+# Empirical
 def get_empirical_params(data, bin_size=1):
     """
     :param data: (numpy.array) observations
@@ -94,7 +94,7 @@ def get_empirical_params(data, bin_size=1):
     return {"bins": bins, "freq": freq}
 
 
-# 6 Gamma
+# Gamma
 def get_gamma_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
@@ -111,7 +111,7 @@ def get_gamma_params(mean, st_dev, fixed_location=0):
     return {"a": shape, "loc": fixed_location, "scale": scale}
 
 
-# 7 GammaPoisson
+# GammaPoisson
 # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
 # scale = 1/beta
 def get_gamma_poisson_params(mean, st_dev, fixed_location=0, fixed_scale=1):
@@ -132,8 +132,8 @@ def get_gamma_poisson_params(mean, st_dev, fixed_location=0, fixed_scale=1):
     return {"a": a, "gamma_scale": gamma_scale, "loc": fixed_location, "scale": fixed_scale}
 
 
-# 8 Geometric
-def get_geomertic_params(mean, fixed_location=0):
+# Geometric
+def get_geometric_params(mean, fixed_location=0):
     """
     :param mean: sample mean
     :param fixed_location: location, 0 by default
@@ -145,17 +145,7 @@ def get_geomertic_params(mean, fixed_location=0):
     return {"p": p, "loc": fixed_location}
 
 
-# 9 JohnsonSb
-# need percentiles of data
-# ref: https://digitalcommons.wayne.edu/cgi/viewcontent.cgi?article=1326&context=jmasm
-
-
-# 10 JohnsonSu
-# need percentiles of data
-# ref: https://digitalcommons.wayne.edu/cgi/viewcontent.cgi?article=1326&context=jmasm
-
-
-# 11 LogNormal
+# LogNormal
 def get_lognormal_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
@@ -176,7 +166,7 @@ def get_lognormal_params(mean, st_dev, fixed_location=0):
     return {"s": sigma, "loc": fixed_location, "scale": np.exp(mu)}
 
 
-# 12 NegativeBinomial
+# NegativeBinomial
 def get_negative_binomial_params(mean, st_dev, fixed_location=0):
     """
     :param mean: sample mean of an observation set
@@ -195,7 +185,7 @@ def get_negative_binomial_params(mean, st_dev, fixed_location=0):
     return {"n": n, "p": p, "loc": fixed_location}
 
 
-# 13 Normal
+# Normal
 def get_normal_params(mean, st_dev):
     """
     :param mean: sample mean of an observation set
@@ -206,7 +196,7 @@ def get_normal_params(mean, st_dev):
     return {"loc": mean, "scale": st_dev}
 
 
-# 18 Poisson
+# Poisson
 def get_poisson_params(mean, fixed_location=0):
     """
     :param mean: sample mean of an observation set
@@ -218,19 +208,8 @@ def get_poisson_params(mean, fixed_location=0):
 
     return {"mu": mu, "loc": fixed_location}
 
-# 14 Triangular
-# there are at least 3 parameters, s.t. need min, max and mean to estimate
-# def get_triangular_params(mean, st_dev, fixed_location=0):
-#     """
-#     :param mean: sample mean of an observation set
-#     :param st_dev: sample standard deviation of an observation set
-#     :param fixed_location: location, 0 by default
-#     :returns: dictionary with keys "c", "loc" and "scale"
-#     """
-#     pass
 
-
-# 15 Uniform
+# Uniform
 def get_uniform_params(mean, st_dev):
     """
     :param mean: sample mean of an observation set
@@ -247,7 +226,7 @@ def get_uniform_params(mean, st_dev):
     return {"loc": loc, "scale": scale}
 
 
-# 16 UniformDiscrete
+# UniformDiscrete
 # ref: https://en.wikipedia.org/wiki/Discrete_uniform_distribution
 def get_uniform_discrete_params(mean, st_dev):
     """
@@ -262,7 +241,7 @@ def get_uniform_discrete_params(mean, st_dev):
     return {"l": a, "r": b}
 
 
-# 17 Weibull
+# Weibull
 # ref: https://stats.stackexchange.com/questions/159452/how-can-i-recreate-a-weibull-distribution-given-mean-and-standard-deviation-and
 def get_weibull_params(mean, st_dev, fixed_location=0):
     """

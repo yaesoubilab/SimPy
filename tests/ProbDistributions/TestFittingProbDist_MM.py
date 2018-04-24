@@ -52,7 +52,7 @@ print("Fitting GammaPoisson:", dictResults)
 # 8 Geometric
 dist = RVGs.Geometric(0.3, 1)
 dat_geom = np.array(get_samples(dist, np.random))    # generate data
-dictResults=Est.get_geomertic_params(np.mean(dat_geom), fixed_location=1)        # fit
+dictResults=Est.get_geometric_params(np.mean(dat_geom), fixed_location=1)        # fit
 print("Fitting Geometric:", dictResults)
 
 # # 9 fitting a JohnsonSb distribution
