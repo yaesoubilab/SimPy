@@ -28,7 +28,7 @@ def output_figure(plt, output_type, title):
 
 def graph_histogram(data, title, x_label, y_label,
                     bin_width=None, x_range=None, output_type=OutType.SHOW, legend=None):
-    """ graphs the histogram of the provided data
+    """ graphs the histograms of multiple datasets on a single plot
     :param data: list of observations
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label

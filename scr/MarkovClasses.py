@@ -3,7 +3,7 @@ import numpy as np
 
 def continuous_to_discrete(rate_matrix, delta_t):
     """
-    :param rate_matrix: (list of lists) transition rate matrix
+    :param rate_matrix: (list of lists) transition rate matrix (assumes None or 0 for diagonal elements)
     :param delta_t: cycle length
     :return: transition probability matrix (list of lists)
              and the upper bound for the probability of two transitions within delta_t (float)
