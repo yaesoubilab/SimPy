@@ -70,16 +70,15 @@ def graph_histograms(data_sets, title, x_label, y_label,
                      bin_width=None, x_range=None, output_type=OutType.SHOW, legend=None, transparency=1):
     """
 
-    :param data_sets:
-    :param title:
-    :param x_label:
-    :param y_label:
-    :param bin_width:
-    :param x_range:
-    :param output_type:
-    :param legend:
-    :param transparency:
-    :return:
+    :param data_sets: (list of lists) observations
+    :param title: (string) title of the figure
+    :param x_label: (string) x-axis label
+    :param y_label: (string) y-axis label
+    :param bin_width: bin width
+    :param x_range: (list with 2 elements) minimum and maximum of x-axis
+    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param legend: string for the legend
+    :param transparency: (float) 0.0 transparent through 1.0 opaque
     """
 
     fig = plt.figure(title)

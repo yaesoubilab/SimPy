@@ -213,7 +213,7 @@ class CEA(_EconEval):
             self._strategiesNotOnFrontier.append(self._strategies[j])
             self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
 
-    def show_CE_plane(self, title, x_label, y_label,
+    def show_CE_plane(self, title, x_label, y_label, x_range=None,
                       show_names=False, show_clouds=False, transparency=0.4,
                       show_legend=False, figure_size=6):
         """
@@ -298,6 +298,9 @@ class CEA(_EconEval):
                         xy=(x, y), xycoords='data', xytext=(x - 0.05 * Lx, y + 0.04 * Ly), textcoords='data',
                         arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
                         weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
+
+        if not (x_range is None):
+            plt.xlim(x_range)
 
         # show the figure
         Fig.output_figure(plt, Fig.OutType.SHOW, title)
