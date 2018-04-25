@@ -213,9 +213,9 @@ class CEA(_EconEval):
             self._strategiesNotOnFrontier.append(self._strategies[j])
             self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
 
-    def show_CE_plane(self, title, x_label, y_label, x_range=None,
+    def show_CE_plane(self, title, x_label, y_label,
                       show_names=False, show_clouds=False, transparency=0.4,
-                      show_legend=False, figure_size=6):
+                      show_legend=False, figure_size=6, x_range=None, y_range=None):
         """
         :param title: title of the figure
         :param x_label: (string) x-axis label
@@ -225,6 +225,8 @@ class CEA(_EconEval):
         :param transparency: transparency of clouds (0.0 transparent through 1.0 opaque)
         :param show_legend: shows the legend of strategies, would only be used when show_clouds is true
         :param figure_size: int, specify the figure size
+        :param x_range: list, range of x axis
+        :param y_range: list, range of y axis
         """
         # plots
         # operate on local variable data rather than self attribute
@@ -268,6 +270,12 @@ class CEA(_EconEval):
                         c=list(df_shifted_strategies['Color']),
                         s=50)
 
+        if not (x_range is None):
+            plt.xlim(x_range)
+
+        if not (y_range is None):
+            plt.ylim(y_range)
+
         vals_y, labs_y = plt.yticks()
         vals_x, labs_x = plt.xticks()
         plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
@@ -299,8 +307,6 @@ class CEA(_EconEval):
                         arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
                         weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
 
-        if not (x_range is None):
-            plt.xlim(x_range)
 
         # show the figure
         Fig.output_figure(plt, Fig.OutType.SHOW, title)

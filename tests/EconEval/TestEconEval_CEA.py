@@ -23,6 +23,11 @@ myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=False)
 myCEA.show_CE_plane('CE plane with unpaired observations and showing labels',
                     'E[Effect]', 'E[Cost]', show_names=True, show_clouds=True, figure_size=6)
 
+# plot with label and sample cloud
+myCEA.show_CE_plane('CE plane with unpaired observations and showing labels',
+                    'E[Effect]', 'E[Cost]', show_names=True, show_clouds=True, figure_size=6,
+                    x_range=[-2000, 6000], y_range=[-10000, 2000])
+
 # plot with sample cloud and legend
 myCEA.show_CE_plane('CE Plane with unpaired observations and showing legend',
                     'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=6)
