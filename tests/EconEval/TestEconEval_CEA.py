@@ -40,6 +40,7 @@ myCEA.show_CE_plane('CE Plane with unpaired observations and no clouds',
 print('')
 # return none and write result into csv
 print(myCEA.build_CE_table(ce.Interval.PREDICTION))
+print(myCEA.build_CE_table())
 
 # create a CEA object -- paired
 myCEA2 = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)

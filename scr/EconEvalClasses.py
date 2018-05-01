@@ -566,7 +566,11 @@ class CEA(_EconEval):
                                                    'dEffect_I', 'ICER_I']]
 
         else:
-            out_intervals = None
+            # define column order and write csv
+            output_estimates[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].\
+                to_csv("CETable.csv", encoding='utf-8', index=False)
+            # no need to calculate intervals, break of function
+            return None
 
         # merge estimates and intervals together
         out_table = pd.DataFrame(
