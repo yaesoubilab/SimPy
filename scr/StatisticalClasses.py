@@ -101,8 +101,10 @@ class SummaryStat(_Statistics):
         # convert data to numpy array if needed
         if type(data) == list:
             self._data = numpy.array(data)
-        else:
+        elif type(data) == numpy.ndarray:
             self._data = data
+        else:
+            raise ValueError("The argument data can be either a list of numbers or a numpy.array.")
 
         self._n = len(self._data)
         self._total = numpy.sum(self._data)
@@ -300,13 +302,17 @@ class _ComparativeStat(_Statistics):
 
         if type(x) == list:
             self._x = numpy.array(x)
-        else:
+        elif type(x) == numpy.ndarray:
             self._x = x
+        else:
+            raise ValueError("The argument x can be either a list of numbers or a numpy.array.")
 
         if type(y_ref) == list:
             self._y_ref = numpy.array(y_ref)
-        else:
+        elif type(y_ref) == numpy.ndarray:
             self._y_ref = y_ref
+        else:
+            raise ValueError("The argument y_ref can be either a list of numbers or a numpy.array.")
 
         self._x_n = len(self._x)  # number of observations for x
         self._y_n = len(self._y_ref)    # number of observations for y_ref

@@ -7,7 +7,8 @@ cls.graph_histogram(
     title='Histogram',
     x_label='Values',
     y_label='Counts',
-    x_range=[-5,20],
+    x_range=[-5, 20],
+    y_range=[0, 140],
     legend='Number of patients')
 
 obs_sets = [
@@ -23,5 +24,6 @@ cls.graph_histograms(
     legend=['H 1', 'H 2'],
     bin_width=0.5,
     x_range=[-10, 20],
+    y_range=[0, 100],
     transparency=0.6
 )

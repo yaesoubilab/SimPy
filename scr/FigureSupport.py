@@ -27,7 +27,8 @@ def output_figure(plt, output_type, title):
 
 
 def graph_histogram(data, title, x_label, y_label,
-                    bin_width=None, x_range=None, output_type=OutType.SHOW, legend=None):
+                    bin_width=None, x_range=None, y_range=None,
+                    output_type=OutType.SHOW, legend=None):
     """ graphs the histograms of multiple datasets on a single plot
     :param data: list of observations
     :param title: (string) title of the figure
@@ -35,6 +36,7 @@ def graph_histogram(data, title, x_label, y_label,
     :param y_label: (string) y-axis label
     :param bin_width: bin width
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
+    :param y_range: (list with 2 elements) minimum and maximum of y-axis
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     :param legend: string for the legend
     """
@@ -57,6 +59,8 @@ def graph_histogram(data, title, x_label, y_label,
 
     if not (x_range is None):
         plt.xlim(x_range)
+    if not (y_range is None):
+        plt.ylim(y_range)
 
     # add legend if provided
     if not (legend is None):
@@ -67,7 +71,8 @@ def graph_histogram(data, title, x_label, y_label,
 
 
 def graph_histograms(data_sets, title, x_label, y_label,
-                     bin_width=None, x_range=None, output_type=OutType.SHOW, legend=None, transparency=1):
+                     bin_width=None, x_range=None, y_range=None,
+                     output_type=OutType.SHOW, legend=None, transparency=1):
     """
 
     :param data_sets: (list of lists) observations
@@ -76,6 +81,7 @@ def graph_histograms(data_sets, title, x_label, y_label,
     :param y_label: (string) y-axis label
     :param bin_width: bin width
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
+    :param x_range: (list with 2 elements) minimum and maximum of y-axis
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     :param legend: string for the legend
     :param transparency: (float) 0.0 transparent through 1.0 opaque
@@ -108,6 +114,8 @@ def graph_histograms(data_sets, title, x_label, y_label,
 
     if not (x_range is None):
         plt.xlim(x_range)
+    if not (y_range is None):
+        plt.ylim(y_range)
 
     # add legend if provided
     if not (legend is None):
