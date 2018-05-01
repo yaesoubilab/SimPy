@@ -278,12 +278,18 @@ class CEA(_EconEval):
 
         vals_y, labs_y = plt.yticks()
         vals_x, labs_x = plt.xticks()
-        plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
-        plt.xticks(vals_x, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
         # get ranges of x, y axis
         Lx = np.ptp(vals_x)
         Ly = np.ptp(vals_y)
+
+        # if range Lx or Ly <= 10, use the default format for ticks
+        # else, format them with 0 decimal
+        if Ly > 10:
+            plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+        if Lx > 10:
+            plt.xticks(vals_x, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
+
 
         # show names of strategies
         if show_names:
