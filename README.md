@@ -1,4 +1,4 @@
-# Support Library
+# Simulation in Medicine (SimPy)
 
 This library includes classes to support the following analyses and operations.
 
