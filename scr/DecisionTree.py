@@ -30,10 +30,9 @@ class Node:
 
 
 class DecisionNode(Node):
-    def __init__(self, name, cum_prob, dict_decisions, dict_chances, dict_terminals):
+    def __init__(self, name, dict_decisions, dict_chances, dict_terminals):
         """
         :param name: (string) key of this decision node in the dictionary of decision nodes
-        :param cum_prob: probability of visiting this node
         :param dict_decisions: dictionary of decision nodes
         :param dict_chances: dictionary of chance nodes
         :param dict_terminals: dictionary of terminal nodes
@@ -43,7 +42,7 @@ class DecisionNode(Node):
         # find if this node is in the decision dictionary
         if name in dict_decisions:
             # if found, initialize this node
-            Node.__init__(self, name, cum_prob)
+            Node.__init__(self, name, cum_prob=1)
             # find the names of future nodes for this decision node
             names = dict_decisions[name][Properties.NODES.value]
             # add the future nodes

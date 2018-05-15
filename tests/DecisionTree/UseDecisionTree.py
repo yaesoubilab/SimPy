@@ -29,7 +29,7 @@ dictTerminals = {'t1': [0,      1],
                  't10': [1093, -.3]};
 
 # build the decision tree
-myDT = dt.DecisionNode('d1', 1, dictDecisions, dictChances, dictTerminals)
+myDT = dt.DecisionNode('d1', dictDecisions, dictChances, dictTerminals)
 
 # print the expected cost and utility of each alternative
 print('\nExpected cost and utility:')
