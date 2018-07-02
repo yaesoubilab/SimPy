@@ -1,4 +1,4 @@
-from scr import InOutFunctions as OutSupport
+from SimPy import InOutFunctions as OutSupport
 
 myList = [['Col1', 'Col2', 'Col3']]
 for i in range(1, 10):

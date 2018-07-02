@@ -1,4 +1,4 @@
-import scr.FormatFunctions as Format
+import SimPy.FormatFunctions as Format
 
 print("\nFormatting estimates:")
 print(Format.format_number(12345.678,deci=1))

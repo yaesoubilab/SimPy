@@ -1,5 +1,5 @@
 import numpy as np
-import scr.RandomVariantGenerators as RVGs
+import SimPy.RandomVariantGenerators as RVGs
 import math
 import scipy.stats as scipy
 

@@ -1,4 +1,4 @@
-from scr import EconEvalClasses as ce
+from SimPy import EconEvalClasses as ce
 import numpy as np
 
 

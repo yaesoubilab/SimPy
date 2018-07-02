@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from scr import FigureSupport as Fig
+from SimPy import FigureSupport as Fig
 
 
 class _SamplePath(object):

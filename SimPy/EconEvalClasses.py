@@ -1,11 +1,11 @@
 from enum import Enum
 import numpy as np
-import scr.StatisticalClasses as Stat
+import SimPy.StatisticalClasses as Stat
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
-from scr import FigureSupport as Fig
-from scr import FormatFunctions as FormatFunc
+from SimPy import FigureSupport as Fig
+from SimPy import FormatFunctions as FormatFunc
 
 
 def pv(payment, discount_rate, discount_period):

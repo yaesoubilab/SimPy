@@ -1,4 +1,4 @@
-import scr.EconEvalClasses as EconEval
+import SimPy.EconEvalClasses as EconEval
 import numpy as np
 import random
 

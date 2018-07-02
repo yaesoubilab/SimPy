@@ -1,4 +1,4 @@
-from scr import InOutFunctions as InOutSupport
+from SimPy import InOutFunctions as InOutSupport
 
 # test reading by rows
 rows = InOutSupport.read_csv_rows('myCSV', if_del_first_row=True, if_convert_float=True)

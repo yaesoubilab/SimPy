@@ -1,4 +1,4 @@
-import scr.DecisionTree as dt
+import SimPy.DecisionTree as dt
 
 # dictionary for decision nodes
 #               // key: cost, utility, [future nodes]

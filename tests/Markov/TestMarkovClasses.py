@@ -1,4 +1,4 @@
-import scr.MarkovClasses as Cls
+import SimPy.MarkovClasses as Cls
 
 probMatrix = [
     [0.721,	0.202,	0.067,	0.010],

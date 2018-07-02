@@ -1,4 +1,4 @@
-from scr import SamplePathClasses as Path
+from SimPy import SamplePathClasses as Path
 
 # a sample path with initial size = 1
 path1 = Path.SamplePathRealTimeUpdate('Path 1', 0, 1)

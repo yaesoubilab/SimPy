@@ -1,6 +1,6 @@
 import numpy
-from scr import StatisticalClasses as Stat
-from scr import FormatFunctions as Support
+from SimPy import StatisticalClasses as Stat
+from SimPy import FormatFunctions as Support
 
 
 def print_results(stat):
