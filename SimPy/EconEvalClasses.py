@@ -117,15 +117,17 @@ class _EconEval:
 class CEA(_EconEval):
     """ class for doing cost-effectiveness analysis """
 
-    def __init__(self, strategies, if_paired):
+    def __init__(self, strategies, if_paired, if_find_frontier=True):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
+        :param if_find_frontier: if the cost-effectiveness frontier should be calcualted
         """
         _EconEval.__init__(self, strategies, if_paired)
 
         # find the CE frontier
-        self.__find_frontier()
+        if if_find_frontier:
+            self.__find_frontier()
 
     def get_strategies_on_frontier(self):
         """ :return list of strategies on the frontier"""
