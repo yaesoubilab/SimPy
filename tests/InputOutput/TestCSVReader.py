@@ -11,3 +11,8 @@ cols = InOutSupport.read_csv_cols('myCSV', n_cols=3, if_ignore_first_row=True, i
 print('Testing reading by columns:')
 for j in range(0, 3):
     print(sum(cols[j]))
+
+# rest reading by columns into a dictionary
+dict_cols = InOutSupport.read_csv_cols_to_dictionary('myCSV', if_convert_float=True)
+print('Testing reading by columns into a dictionary:')
+print(dict_cols)

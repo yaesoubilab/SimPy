@@ -78,3 +78,22 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter='\t', if_con
                 cols[j] = numpy.array(cols[j]).astype(numpy.float)
 
         return cols
+
+
+def read_csv_cols_to_dictionary(file_name, delimiter='\t', if_convert_float=False):
+
+    dict_of_columns = {} # dictionary of columns   
+    csv_file = open(file_name, "r")
+    col_headers = next(csv.reader(csv_file, delimiter=delimiter))
+    n_cols = len(col_headers)
+    cols = read_csv_cols(
+        file_name, 
+        n_cols=n_cols,
+        if_ignore_first_row=True,
+        delimiter=delimiter,
+        if_convert_float=if_convert_float)
+    
+    for j, col in enumerate(cols):
+        dict_of_columns[col_headers[j]] = col
+
+    return dict_of_columns
