@@ -26,7 +26,7 @@ def output_figure(plt, output_type, title):
         plt.savefig(title+".pdf")
 
 
-def graph_histogram(data, title, x_label, y_label,
+def graph_histogram(data, title, x_label=None, y_label=None,
                     bin_width=None, x_range=None, y_range=None,
                     output_type=OutType.SHOW, legend=None):
     """ graphs the histograms of multiple datasets on a single plot
@@ -43,8 +43,10 @@ def graph_histogram(data, title, x_label, y_label,
 
     fig = plt.figure(title)
     plt.title(title)
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
+    if x_label is not None:
+        plt.xlabel(x_label)
+    if y_label is not None:
+        plt.ylabel(y_label)
 
     if bin_width is None:
         plt.hist(data,
