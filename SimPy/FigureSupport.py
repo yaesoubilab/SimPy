@@ -41,8 +41,8 @@ def graph_histogram2(data, title,
     :param y_range: (list with 2 elements) minimum and maximum of y-axis
     :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
     :param legend: string for the legend
-    :param figure_size: figure size
-    :param file_name: file name
+    :param figure_size: (list) figure size
+    :param file_name: (string) file name to be saved as
     """
 
     fig, ax = plt.subplots(figsize=figure_size)
