@@ -2,8 +2,7 @@ import sys
 import numpy as numpy
 import scipy.stats as stat
 import math
-
-from SimPy import FormatFunctions as Support
+from SimPy import FormatFunctions as F
 
 
 class _Statistics(object):
@@ -85,12 +84,17 @@ class _Statistics(object):
         :return: a list ['name', 'mean', 'confidence interval', 'percentile interval', 'st dev', 'min', 'max']
         """
         return [self._name,
-                Support.format_number(self.get_mean(), digits),
-                Support.format_interval(self.get_t_CI(alpha), digits),
-                Support.format_interval(self.get_PI(alpha), digits),
-                Support.format_number(self.get_stdev(), digits),
-                Support.format_number(self.get_min(), digits),
-                Support.format_number(self.get_max(), digits)]
+                F.format_number(self.get_mean(), digits),
+                F.format_interval(self.get_t_CI(alpha), digits),
+                F.format_interval(self.get_PI(alpha), digits),
+                F.format_number(self.get_stdev(), digits),
+                F.format_number(self.get_min(), digits),
+                F.format_number(self.get_max(), digits)]
+
+    def format_estimate_PI(self, alpha, deci, form=F.FormatNumber.NUMBER):
+        estimate = self.get_mean()
+        interval = self.get_PI(0.05)
+        return F.format_estimate_interval(estimate, interval, deci, form)
 
 
 class SummaryStat(_Statistics):

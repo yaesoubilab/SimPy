@@ -26,6 +26,62 @@ def output_figure(plt, output_type, title):
         plt.savefig(title+".pdf")
 
 
+def graph_histogram2(data, title,
+                     x_label=None, y_label=None, bin_width=None,
+                     x_range=None, y_range=None,
+                     legend=None, figure_size=(5, 5),
+                     output_type=OutType.SHOW, file_name=None):
+    """ graphs the histograms of multiple datasets on a single plot
+    :param data: list of observations
+    :param title: (string) title of the figure
+    :param x_label: (string) x-axis label
+    :param y_label: (string) y-axis label
+    :param bin_width: bin width
+    :param x_range: (list with 2 elements) minimum and maximum of x-axis
+    :param y_range: (list with 2 elements) minimum and maximum of y-axis
+    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param legend: string for the legend
+    :param figure_size: figure size
+    :param file_name: file name
+    """
+
+    fig, ax = plt.subplots(figsize=figure_size)
+
+    ax.set_title(title)
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+
+    if bin_width is None:
+        ax.hist(data,
+                bins='auto',
+                edgecolor='black',
+                linewidth=1,
+                alpha=0.75)
+    else:
+        ax.hist(data,
+                bins=np.arange(min(data), max(data) + bin_width, bin_width),
+                edgecolor='black',
+                linewidth=1,
+                alpha = 0.75)
+
+    if not (x_range is None):
+        ax.set_xlim(x_range)
+    if not (y_range is None):
+        ax.set_ylim(y_range)
+
+    # add legend if provided
+    if not (legend is None):
+        ax.legend([legend])
+
+    # output figure
+    if not (file_name is None):
+        output_figure(plt, output_type, file_name)
+    else:
+        output_figure(plt, output_type, title)
+
+
 def graph_histogram(data, title, x_label=None, y_label=None,
                     bin_width=None, x_range=None, y_range=None,
                     output_type=OutType.SHOW, legend=None):
