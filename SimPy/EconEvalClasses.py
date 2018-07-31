@@ -161,23 +161,23 @@ class CEA(_EconEval):
     def __find_frontier(self):
         """ find the cost-effectiveness frontier """
 
-        # sort strategies by cost, ascending
+        # sort shifted strategies by cost, ascending
         # operate on local variable data rather than self attribute
-        df_sorted = self._dfStrategies.sort_values('E[Cost]')
+        df_shifted_sorted = self._dfStrategies_shifted.sort_values('E[Cost]')
 
         # apply criteria 1
         for i in range(self._n):
             # strategies with higher cost and lower Effect are dominated
-            df_sorted.loc[
-                (df_sorted['E[Cost]'] > df_sorted['E[Cost]'][i]) &
-                (df_sorted['E[Effect]'] <= df_sorted['E[Effect]'][i]),
+            df_shifted_sorted.loc[
+                (df_shifted_sorted['E[Cost]'] > df_shifted_sorted['E[Cost]'][i]) &
+                (df_shifted_sorted['E[Effect]'] <= df_shifted_sorted['E[Effect]'][i]),
                 'Dominated'] = True
         # change the color of dominated strategies to blue
-        df_sorted.loc[df_sorted['Dominated'] == True, 'Color'] = 'blue'
+        df_shifted_sorted.loc[df_shifted_sorted['Dominated'] == True, 'Color'] = 'blue'
 
         # apply criteria 2
         # select all non-dominated strategies
-        df2 = df_sorted.loc[df_sorted['Dominated']==False]
+        df2 = df_shifted_sorted.loc[df_shifted_sorted['Dominated']==False]
         n2 = len(df2['E[Cost]'])
 
         for i in range(0, n2): # can't decide for first and last point
@@ -210,20 +210,26 @@ class CEA(_EconEval):
                     # ref: How to tell whether a point is to the right or left side of a line
                     # https://stackoverflow.com/questions/1560492
                     dominated_index = inner_points[cross_product > 0].index
-                    df_sorted.loc[list(dominated_index), 'Dominated'] = True
-                    df_sorted.loc[list(dominated_index), 'Color'] = 'blue'
+                    df_shifted_sorted.loc[list(dominated_index), 'Dominated'] = True
+                    df_shifted_sorted.loc[list(dominated_index), 'Color'] = 'blue'
 
-        # update strategies
-        self._dfStrategies = df_sorted
+        # update the unshifted strategies
+        for i in range(self._n):
+            for j in range(self._n):
+                if self._dfStrategies['Name'].iloc[i] == df_shifted_sorted['Name'].iloc[j]:
+                    self._dfStrategies['Dominated'].iloc[i] = df_shifted_sorted['Dominated'].iloc[j]
+
+        # sort the unshifted strategies
+        self._dfStrategies = self._dfStrategies.sort_values('E[Cost]')
 
         # create list of strategies on frontier
-        on_frontier_index = df_sorted[df_sorted['Dominated'] == False].index
+        on_frontier_index = df_shifted_sorted[df_shifted_sorted['Dominated'] == False].index
         for i in on_frontier_index:
             self._strategiesOnFrontier.append(self._strategies[i])
             self._shifted_strategiesOnFrontier.append(self._shifted_strategies[i])
 
         # create list of strategies not on frontier
-        not_on_frontier_index = df_sorted[df_sorted['Dominated'] == True].index
+        not_on_frontier_index = df_shifted_sorted[df_shifted_sorted['Dominated'] == True].index
         for j in not_on_frontier_index:
             self._strategiesNotOnFrontier.append(self._strategies[j])
             self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
@@ -347,13 +353,13 @@ class CEA(_EconEval):
         """
 
         # initialize the table
-        dfStrategies = self._dfStrategies
-        dfStrategies['E[dCost]'] = "-"
-        dfStrategies['E[dEffect]'] = "-"
-        dfStrategies['ICER'] = "Dominated"
+        #dfStrategies = self._dfStrategies
+        self._dfStrategies['E[dCost]'] = "-"
+        self._dfStrategies['E[dEffect]'] = "-"
+        self._dfStrategies['ICER'] = "Dominated"
 
         # get strategies on the frontier
-        frontier_strategies = dfStrategies.loc[dfStrategies["Dominated"] == False].sort_values('E[Cost]')
+        frontier_strategies = self._dfStrategies.loc[self._dfStrategies["Dominated"] == False].sort_values('E[Cost]')
         # number of strategies on the frontier
         n_frontier_strategies = frontier_strategies.shape[0]
 
@@ -368,7 +374,8 @@ class CEA(_EconEval):
                 d_cost = frontier_strategies["E[Cost]"].iloc[i]-frontier_strategies["E[Cost]"].iloc[i-1]
                 incr_cost = np.append(incr_cost, d_cost)
                 # incremental effect
-                d_effect = frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1]
+                d_effect = self._effect_multiplier\
+                           *(frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1])
                 if d_effect == 0:
                     raise ValueError('invalid value of E[dEffect], the ratio is not computable')
                 incr_effect = np.append(incr_effect, d_effect)
@@ -377,40 +384,40 @@ class CEA(_EconEval):
 
             # format the numbers
             ind_change = frontier_strategies.index[1:]
-            dfStrategies.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
-            dfStrategies.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
-            dfStrategies.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
+            self._dfStrategies.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
+            self._dfStrategies.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
+            self._dfStrategies.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
 
         # put - for the ICER of the first strategy on the frontier
-        dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
+        self._dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
 
         # format cost column
         if cost_digits == 0:
-            output_cost = dfStrategies['E[Cost]'].astype(int)
+            output_cost = self._dfStrategies['E[Cost]'].astype(int)
         else:
-            output_cost = dfStrategies['E[Cost]'].astype(float).round(cost_digits)
+            output_cost = self._dfStrategies['E[Cost]'].astype(float).round(cost_digits)
 
         # format effect column
         if effect_digits == 0:
-            output_effect = dfStrategies['E[Effect]'].astype(int)
+            output_effect = self._dfStrategies['E[Effect]'].astype(int)
         else:
-            output_effect = dfStrategies['E[Effect]'].astype(float).round(effect_digits)
+            output_effect = self._dfStrategies['E[Effect]'].astype(float).round(effect_digits)
 
         # create output dataframe
         # dataframe of estimates (without intervals)
         output_estimates = pd.DataFrame(
-            {'Name': dfStrategies['Name'],
+            {'Name': self._dfStrategies['Name'],
              'E[Cost]': output_cost,
              'E[Effect]': output_effect,
-             'E[dCost]': dfStrategies['E[dCost]'],
-             'E[dEffect]': dfStrategies['E[dEffect]'],
-             'ICER': dfStrategies['ICER']
+             'E[dCost]': self._dfStrategies['E[dCost]'],
+             'E[dEffect]': self._dfStrategies['E[dEffect]'],
+             'ICER': self._dfStrategies['ICER']
              })
 
         # decide about what interval to return and create table out_intervals
         if interval == Interval.PREDICTION:
             # create the dataframe
-            out_intervals_PI = pd.DataFrame(index=dfStrategies.index,
+            out_intervals_PI = pd.DataFrame(index=self._dfStrategies.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
             # initialize incremental cost and health and ICER with -
             out_intervals_PI['dCost_I'] = '-'
@@ -418,10 +425,10 @@ class CEA(_EconEval):
             out_intervals_PI['ICER_I'] = '-'
 
             # calculate prediction intervals for cost and effect
-            for i in dfStrategies.index:
+            for i in self._dfStrategies.index:
                 # populated name, dominated, cost and effect PI columns
                 out_intervals_PI.loc[i, 'Name'] = self._strategies[i].name
-                out_intervals_PI.loc[i, 'Dominated'] = dfStrategies.loc[i, 'Dominated']
+                out_intervals_PI.loc[i, 'Dominated'] = self._dfStrategies.loc[i, 'Dominated']
 
                 # prediction interval of cost
                 temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_PI(alpha)
@@ -493,17 +500,17 @@ class CEA(_EconEval):
 
         elif interval == Interval.CONFIDENCE:
             # create the datafram
-            out_intervals_CI = pd.DataFrame(index=dfStrategies.index,
+            out_intervals_CI = pd.DataFrame(index=self._dfStrategies.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
             out_intervals_CI['dCost_I'] = '-'
             out_intervals_CI['dEffect_I'] = '-'
             out_intervals_CI['ICER_I'] = '-'
 
             # calculate confidence intervals for cost and effect
-            for i in dfStrategies.index:
+            for i in self._dfStrategies.index:
                 # populated name, dominated, cost and effect CI columns
                 out_intervals_CI.loc[i, 'Name'] = self._strategies[i].name
-                out_intervals_CI.loc[i, 'Dominated'] = dfStrategies.loc[i, 'Dominated']
+                out_intervals_CI.loc[i, 'Dominated'] = self._dfStrategies.loc[i, 'Dominated']
 
                 # confidence interval of cost
                 temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_t_CI(alpha)
@@ -589,7 +596,7 @@ class CEA(_EconEval):
 
         # merge estimates and intervals together
         out_table = pd.DataFrame(
-            {'Name': dfStrategies['Name'],
+            {'Name': self._dfStrategies['Name'],
              'E[Cost]': output_estimates['E[Cost]'],
              'E[Effect]': output_estimates['E[Effect]'],
              'E[dCost]': output_estimates['E[dCost]'],
@@ -598,7 +605,7 @@ class CEA(_EconEval):
              })
 
         # put estimates and intervals together
-        for i in dfStrategies.index:
+        for i in self._dfStrategies.index:
             out_table.loc[i, 'E[Cost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Cost]'],
                                                     out_intervals.loc[i,'Cost_I'],
