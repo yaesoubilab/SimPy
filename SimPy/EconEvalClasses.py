@@ -23,6 +23,11 @@ class Interval(Enum):
     PREDICTION = 2
 
 
+class HealthMeasure(Enum):
+    UTILITY = 0
+    DISUTILITY = 1
+
+
 class Strategy:
     def __init__(self, name, cost_obs, effect_obs):
         """
@@ -47,10 +52,13 @@ class Strategy:
 class _EconEval:
     """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
-    def __init__(self, strategies, if_paired):
+    def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
+        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
+        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        (e.g. when DALYS is used)
         """
         self._n = len(strategies)  # number of strategies
         self._strategies = strategies  # list of strategies
@@ -59,6 +67,7 @@ class _EconEval:
         self._shifted_strategiesOnFrontier = []  # list of shifted strategies on the frontier
         self._shifted_strategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
         self._ifPaired = if_paired
+        self._effect_multiplier = (-1, 1)[health_measure == HealthMeasure.UTILITY]
 
         # create a data frame for all strategies' expected outcomes
         self._dfStrategies = pd.DataFrame(
@@ -81,7 +90,8 @@ class _EconEval:
             for i in range(self._n):
                 shifted_strategy = Strategy(strategies[i].name,
                                             strategies[i].costObs - strategies[0].costObs,
-                                            strategies[i].effectObs - strategies[0].effectObs)
+                                            (strategies[i].effectObs - strategies[0].effectObs)*self._effect_multiplier)
+
                 shifted_strategies.append(shifted_strategy)
 
         else:  # if not paired
@@ -90,7 +100,7 @@ class _EconEval:
             for i in range(self._n):
                 shifted_strategy = Strategy(strategies[i].name,
                                             strategies[i].costObs - e_cost,
-                                            strategies[i].effectObs - e_effect)
+                                            (strategies[i].effectObs - e_effect)*self._effect_multiplier)
                 shifted_strategies.append(shifted_strategy)
         self._shifted_strategies = shifted_strategies  # list of shifted strategies
 
@@ -117,13 +127,16 @@ class _EconEval:
 class CEA(_EconEval):
     """ class for doing cost-effectiveness analysis """
 
-    def __init__(self, strategies, if_paired, if_find_frontier=True):
+    def __init__(self, strategies, if_paired, if_find_frontier=True, health_measure=HealthMeasure.UTILITY):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
-        :param if_find_frontier: if the cost-effectiveness frontier should be calcualted
+        :param if_find_frontier: if the cost-effectiveness frontier should be calculated
+        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
+        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        (e.g. when DALYS is used)
         """
-        _EconEval.__init__(self, strategies, if_paired)
+        _EconEval.__init__(self, strategies, if_paired, health_measure)
 
         # find the CE frontier
         if if_find_frontier:
@@ -150,7 +163,7 @@ class CEA(_EconEval):
 
         # sort strategies by cost, ascending
         # operate on local variable data rather than self attribute
-        df1 = self._dfStrategies.sort_values('E[Cost]')
+        df1 = self._dfStrategies_shifted.sort_values('E[Cost]')
 
         # apply criteria 1
         for i in range(self._n):
