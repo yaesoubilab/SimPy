@@ -163,21 +163,21 @@ class CEA(_EconEval):
 
         # sort strategies by cost, ascending
         # operate on local variable data rather than self attribute
-        df1 = self._dfStrategies_shifted.sort_values('E[Cost]')
+        df_sorted = self._dfStrategies.sort_values('E[Cost]')
 
         # apply criteria 1
         for i in range(self._n):
             # strategies with higher cost and lower Effect are dominated
-            df1.loc[
-                (df1['E[Cost]'] > df1['E[Cost]'][i]) &
-                (df1['E[Effect]'] <= df1['E[Effect]'][i]),
+            df_sorted.loc[
+                (df_sorted['E[Cost]'] > df_sorted['E[Cost]'][i]) &
+                (df_sorted['E[Effect]'] <= df_sorted['E[Effect]'][i]),
                 'Dominated'] = True
         # change the color of dominated strategies to blue
-        df1.loc[df1['Dominated'] == True, 'Color'] = 'blue'
+        df_sorted.loc[df_sorted['Dominated'] == True, 'Color'] = 'blue'
 
         # apply criteria 2
         # select all non-dominated strategies
-        df2 = df1.loc[df1['Dominated']==False]
+        df2 = df_sorted.loc[df_sorted['Dominated']==False]
         n2 = len(df2['E[Cost]'])
 
         for i in range(0, n2): # can't decide for first and last point
@@ -210,20 +210,20 @@ class CEA(_EconEval):
                     # ref: How to tell whether a point is to the right or left side of a line
                     # https://stackoverflow.com/questions/1560492
                     dominated_index = inner_points[cross_product > 0].index
-                    df1.loc[list(dominated_index), 'Dominated'] = True
-                    df1.loc[list(dominated_index), 'Color'] = 'blue'
+                    df_sorted.loc[list(dominated_index), 'Dominated'] = True
+                    df_sorted.loc[list(dominated_index), 'Color'] = 'blue'
 
         # update strategies
-        self._dfStrategies = df1
+        self._dfStrategies = df_sorted
 
         # create list of strategies on frontier
-        on_frontier_index = df1[df1['Dominated'] == False].index
+        on_frontier_index = df_sorted[df_sorted['Dominated'] == False].index
         for i in on_frontier_index:
             self._strategiesOnFrontier.append(self._strategies[i])
             self._shifted_strategiesOnFrontier.append(self._shifted_strategies[i])
 
         # create list of strategies not on frontier
-        not_on_frontier_index = df1[df1['Dominated'] == True].index
+        not_on_frontier_index = df_sorted[df_sorted['Dominated'] == True].index
         for j in not_on_frontier_index:
             self._strategiesNotOnFrontier.append(self._strategies[j])
             self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
