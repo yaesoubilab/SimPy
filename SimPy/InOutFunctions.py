@@ -40,7 +40,10 @@ def read_csv_rows(file_name, if_del_first_row, delimiter='\t', if_convert_float=
         # convert column values to float if needed
         if if_convert_float:
             for i in range(0, len(rows)):
-                rows[i] = numpy.array(rows[i]).astype(numpy.float)
+                try:
+                    rows[i] = numpy.array(rows[i]).astype(numpy.float)
+                except:
+                    pass
 
         return rows
 
@@ -75,7 +78,10 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter='\t', if_con
         # convert column values to float if needed
         if if_convert_float:
             for j in range(0, n_cols):
-                cols[j] = numpy.array(cols[j]).astype(numpy.float)
+                try:
+                    cols[j] = numpy.array(cols[j]).astype(numpy.float)
+                except:
+                    pass
 
         return cols
 
