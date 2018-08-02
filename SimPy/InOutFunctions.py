@@ -1,4 +1,5 @@
 import csv
+import os
 import numpy as numpy
 
 
@@ -103,3 +104,15 @@ def read_csv_cols_to_dictionary(file_name, delimiter='\t', if_convert_float=Fals
         dict_of_columns[col_headers[j]] = col
 
     return dict_of_columns
+
+
+def delete_files(extension='.txt', path='..'):
+    """ delete every files with the specified extension inside the directory
+    :param extension: (string) extension of the files to be removed
+    :param path: (string) path (relative to the current root) where the files are located
+    (the folder should already exist)
+    """
+
+    for f in os.listdir(path):
+        if f.endswith(extension):
+            os.remove(os.path.join(path, f))

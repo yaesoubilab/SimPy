@@ -1,6 +1,6 @@
 import heapq
 import os
-import shutil
+import SimPy.InOutFunctions as io
 
 
 class SimulationEvent:
@@ -126,6 +126,4 @@ def clear_txt_files(path='..'):
     (the folder should already exist)
     """
 
-    for f in os.listdir(path):
-        if f.endswith('.txt'):
-            os.remove(os.path.join(path, f))
+    io.delete_files('.txt', path)
