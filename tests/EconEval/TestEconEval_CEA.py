@@ -34,7 +34,7 @@ myCEA.show_CE_plane('CE Plane with unpaired observations and showing legend',
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('CE Plane with unpaired observations and no clouds',
-                    'E[Effect]','E[Cost]', show_clouds=False, show_names=True)
+                    'E[Effect]', 'E[Cost]', show_clouds=False, show_names=True)
 
 # table
 print('')

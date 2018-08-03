@@ -340,7 +340,7 @@ class CEA(_EconEval):
 
     def build_CE_table(self,
                        interval=Interval.NO_INTERVAL, alpha=0.05,
-                       cost_digits=0, effect_digits=2, icer_digits=1):
+                       cost_digits=0, effect_digits=2, icer_digits=1, file_name='CETable.csv'):
         """
         :param interval: type of interval to report for the cost, effect and ICER estimates,
                         can take values from
@@ -349,7 +349,8 @@ class CEA(_EconEval):
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
         :param icer_digits: digits to round ICER estimates to
-        :return: output csv file called "CETable.csv" in local environment
+        :param file_name: address and file name where the CEA results should be saved to
+        :return: output csv file called in local environment
         """
 
         # initialize the table
@@ -635,7 +636,7 @@ class CEA(_EconEval):
 
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
-            "CETable.csv", encoding='utf-8', index=False)
+            file_name, encoding='utf-8', index=False)
 
 
 class CBA(_EconEval):
