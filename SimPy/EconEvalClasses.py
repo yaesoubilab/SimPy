@@ -339,8 +339,10 @@ class CEA(_EconEval):
         Fig.output_figure(plt, Fig.OutType.SHOW, title)
 
     def build_CE_table(self,
-                       interval=Interval.NO_INTERVAL, alpha=0.05,
-                       cost_digits=0, effect_digits=2, icer_digits=1, file_name='CETable.csv'):
+                       interval=Interval.NO_INTERVAL,
+                       alpha=0.05,
+                       cost_digits=0, effect_digits=2, icer_digits=1,
+                       file_name='CETable'):
         """
         :param interval: type of interval to report for the cost, effect and ICER estimates,
                         can take values from
@@ -636,7 +638,7 @@ class CEA(_EconEval):
 
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
-            file_name, encoding='utf-8', index=False)
+            file_name+'.csv', encoding='utf-8', index=False)
 
 
 class CBA(_EconEval):
