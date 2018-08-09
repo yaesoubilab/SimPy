@@ -75,6 +75,8 @@ def graph_histogram2(data, title,
     if not (legend is None):
         ax.legend([legend])
 
+    plt.tight_layout()
+
     # output figure
     if not (file_name is None):
         output_figure(plt, output_type, file_name)
