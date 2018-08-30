@@ -7,6 +7,8 @@ class RNG(RandomState):
     def __init__(self, seed):
         RandomState.__init__(self, seed)
 
+    def sample(self):
+        RandomState.random_sample()
 
 class RVG:
     def __init__(self):
