@@ -7,7 +7,7 @@ rng = rndSupport.RNG(1)
 print('')
 
 # tests
-
+Tests.test_rng(rng)
 Tests.test_bernoulli(rng, p=.2)
 Tests.test_beta(rng, a=2, b=5, loc=1,scale=2)
 Tests.test_exponential(rng, scale=10, loc=1)

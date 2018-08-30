@@ -39,6 +39,18 @@ def get_samples_multivariate(dist, rnd):
     return samples
 
 
+def test_rng(rnd):
+    # obtain samples
+    samples=[]
+    for i in range(10000):
+        samples.append(rnd.sample())
+    
+    # report mean and variance
+    print_test_results('RNG', samples,
+                       expectation=0.5,
+                       variance=1/12)
+
+
 def test_exponential(rnd, scale, loc=0):
 
     # exponential random variate generator
