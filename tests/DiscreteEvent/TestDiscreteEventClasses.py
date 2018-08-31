@@ -1,4 +1,4 @@
-import SimPy.DiscreteEventClasses as Cls
+import SimPy.DiscreteEventSim as Cls
 
 # create a simulation event calendar
 calendar = Cls.SimulationCalendar()
