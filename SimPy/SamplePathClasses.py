@@ -4,7 +4,7 @@ from SimPy import FigureSupport as Fig
 
 class _SamplePath(object):
 
-    def __init__(self, name, index, initial_size):
+    def __init__(self, name, initial_size, index=0):
         self._name = name
         self._index = index
         self._currentValue = initial_size
@@ -34,8 +34,8 @@ class _SamplePath(object):
 
 class SamplePathRealTimeUpdate(_SamplePath):
     """ a sample path where observations are recorded in real-time (over the simulation) """
-    def __init__(self, name, index, initial_size):
-        _SamplePath.__init__(self, name, index, initial_size)
+    def __init__(self, name, initial_size, index=0):
+        _SamplePath.__init__(self, name, initial_size, index)
 
     def record(self, time, increment):
 
@@ -61,10 +61,10 @@ class SamplePathRealTimeUpdate(_SamplePath):
 
 class SamplePathBatchUpdate(_SamplePath):
     """ a sample path where observations are recorded at the end of the simulation """
-    def __init__(self, name, index, initial_size):
-        _SamplePath.__init__(self, name, index, initial_size)
+    def __init__(self, name, initial_size, index=0):
+        _SamplePath.__init__(self, name, initial_size, index)
 
-        self._samplePath = SamplePathRealTimeUpdate(name, index, initial_size)
+        self._samplePath = SamplePathRealTimeUpdate(name, initial_size, index)
         self._ifProcessed = False
         self._t = []
         self._obs = []
@@ -91,7 +91,7 @@ class SamplePathBatchUpdate(_SamplePath):
 
     def __process(self):
 
-        # population a list with recorded times and incremetal values
+        # population a list with recorded times and incremental values
         l = []
         for i in range(len(self._t)):
             l.append([self._t[i], self._obs[i]])
@@ -99,7 +99,7 @@ class SamplePathBatchUpdate(_SamplePath):
         # sort this list based on the recorded time
         new_list = sorted(l, key=lambda x : x[0])
 
-        # create teh sample path
+        # create the sample path
         for item in new_list:
             self._samplePath.record(item[0], item[1])
 
