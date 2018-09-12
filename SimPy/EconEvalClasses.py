@@ -28,6 +28,16 @@ class HealthMeasure(Enum):
     DISUTILITY = 1
 
 
+def get_an_interval(data, interval, alpha):
+    sum_stat = Stat.SummaryStat('', data)
+    if interval == Interval.CONFIDENCE:
+        return sum_stat.get_t_CI(alpha)
+    elif interval == Interval.PREDICTION:
+        return sum_stat.get_PI(alpha)
+    else:
+        return None
+
+
 class Strategy:
     def __init__(self, name, cost_obs, effect_obs):
         """
@@ -47,6 +57,12 @@ class Strategy:
         self.aveCost = np.average(self.costObs)
         self.aveEffect = np.average(self.effectObs)
         self.ifDominated = False
+
+    def get_cost_interval(self, interval, alpha):
+        return get_an_interval(self.costObs, interval, alpha)
+
+    def get_effect_interval(self, interval, alpha):
+        return get_an_interval(self.effectObs, interval, alpha)
 
 
 class _EconEval:
