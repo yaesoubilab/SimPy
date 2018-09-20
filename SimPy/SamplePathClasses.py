@@ -2,55 +2,58 @@ import matplotlib.pyplot as plt
 from SimPy import FigureSupport as Fig
 
 
-class _SamplePath(object):
+class _SamplePath:
 
-    def __init__(self, name, initial_size, index=0):
-        self._name = name
-        self._index = index
-        self._currentValue = initial_size
+    def __init__(self, name, initial_size, sim_rep=0):
+        """
+        :param name: name of this sample path
+        :param initial_size: value of the sample path at simulation time 0
+        :param sim_rep: simulation replication of this sample path
+        """
+
+        self.name = name
+        self.sim_rep = sim_rep
+        self.currentValue = initial_size
         self._times = [0]
         self._values = [initial_size]
 
     def record(self, time, increment):
         """
         updates the value of this sample path (e.g. number of people in the system)
-        :param time: time of this chance in the system
+        :param time: time of this change in the system
         :param increment: (integer) change (+ or -) in value of this sample path
         """
         raise NotImplementedError("Abstract method not implemented.")
 
     def get_times(self):
-        """ returns the times of changes """
+        """
+        :return: times when changes in the sample path recorded
+        """
         raise NotImplementedError("Abstract method not implemented.")
 
     def get_values(self):
-        """" returns the value of this sample path at times when changes occured """
+        """
+        :return: value of the sample path at times when changes in the sampel path recorded
+        """
         raise NotImplementedError("Abstract method not implemented.")
-
-    def get_name(self):
-        """ :returns the name of this sample path"""
-        return self._name
 
 
 class SamplePathRealTimeUpdate(_SamplePath):
-    """ a sample path where observations are recorded in real-time (over the simulation) """
-    def __init__(self, name, initial_size, index=0):
-        _SamplePath.__init__(self, name, initial_size, index)
+    """ a sample path for which observations are recorded in real-time (throughout the simulation) """
+
+    def __init__(self, name, initial_size, sim_rep=0):
+        _SamplePath.__init__(self, name, initial_size, sim_rep)
 
     def record(self, time, increment):
 
         # store the current size
         self._times.append(time)
-        self._values.append(self._currentValue)
+        self._values.append(self.currentValue)
         # increment the current value
-        self._currentValue += increment
+        self.currentValue += increment
         # store the new value
         self._times.append(time)
-        self._values.append(self._currentValue)
-
-    def get_current_value(self):
-        """ :return the current value of this sample path"""
-        return self._currentValue
+        self._values.append(self.currentValue)
 
     def get_times(self):
         return self._times
@@ -60,44 +63,43 @@ class SamplePathRealTimeUpdate(_SamplePath):
 
 
 class SamplePathBatchUpdate(_SamplePath):
-    """ a sample path where observations are recorded at the end of the simulation """
-    def __init__(self, name, initial_size, index=0):
-        _SamplePath.__init__(self, name, initial_size, index)
+    """ a sample path for which observations are recorded at the end of the simulation """
 
-        self._samplePath = SamplePathRealTimeUpdate(name, initial_size, index)
-        self._ifProcessed = False
-        self._t = []
-        self._obs = []
+    def __init__(self, name, initial_size, sim_rep=0):
+        _SamplePath.__init__(self, name, initial_size, sim_rep)
+
+        self._samplePath = SamplePathRealTimeUpdate(name, initial_size, sim_rep)
+        self._ifProcessed = False   # set to True when the sample path is built
+        self._time_and_values = []     # list of (time, value) of recordings
 
     def record(self, time, increment):
-        self._t.append(time)
-        self._obs.append(increment)
+        self._time_and_values.append([time, increment])
 
     def get_times(self):
+        """
+        :return: times when changes in the sample path recorded
+        """
 
-        # create the sample path if not created yet
+        # build the sample path if not build yet
         if not self._ifProcessed:
-            self.__process();
-
-        return self._samplePath.get_times()
+            self.__process()
+        return self._samplePath._times
 
     def get_values(self):
+        """
+        :return: value of the sample path at times when changes in the sampel path recorded
+        """
 
-        # create the sample path if not created yet
+        # build the sample path if not build yet
         if not self._ifProcessed:
-            self.__process();
-
-        return self._samplePath.get_values()
+            self.__process()
+        return self._samplePath._values
 
     def __process(self):
-
-        # population a list with recorded times and incremental values
-        l = []
-        for i in range(len(self._t)):
-            l.append([self._t[i], self._obs[i]])
+        """ will build the sample path when requested """
 
         # sort this list based on the recorded time
-        new_list = sorted(l, key=lambda x : x[0])
+        new_list = sorted(self._time_and_values, key=lambda x : x[0])
 
         # create the sample path
         for item in new_list:
@@ -165,6 +167,10 @@ def graph_sample_paths(sample_paths, title, x_label, y_label, output_type=Fig.Ou
 
     if len(sample_paths) == 1:
         raise ValueError('Only one sample path is provided. Use graph_sample_path instead.')
+
+    if if_same_color and common_color_code is None:
+        raise ValueError(
+            "Provide a color code (e.g. 'k') for common_color_code if all sample paths should have the same color .")
 
     fig = plt.figure(title)
     plt.title(title)        # title
