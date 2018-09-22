@@ -628,11 +628,11 @@ class CEA(_EconEval):
             out_table.loc[i, 'E[Cost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Cost]'],
                                                     out_intervals.loc[i,'Cost_I'],
-                                                    cost_digits, form=FormatFunc.FormatNumber.NUMBER)
+                                                    cost_digits, format=FormatFunc.FormatNumber.NUMBER)
             out_table.loc[i, 'E[Effect]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Effect]'],
                                                     out_intervals.loc[i,'Effect_I'],
-                                                    effect_digits, form=FormatFunc.FormatNumber.NUMBER)
+                                                    effect_digits, format=FormatFunc.FormatNumber.NUMBER)
 
         # add the incremental and ICER estimates and intervals
         for i in range(1, n_frontier_strategies):
@@ -640,17 +640,17 @@ class CEA(_EconEval):
             out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dCost]'],
                                                     out_intervals.loc[frontier_strategies.index[i],'dCost_I'],
-                                                    cost_digits, form=FormatFunc.FormatNumber.NUMBER)
+                                                    cost_digits, format=FormatFunc.FormatNumber.NUMBER)
 
             out_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dEffect]'],
                                                     out_intervals.loc[frontier_strategies.index[i],'dEffect_I'],
-                                                    effect_digits, form=FormatFunc.FormatNumber.NUMBER)
+                                                    effect_digits, format=FormatFunc.FormatNumber.NUMBER)
 
             out_table.loc[frontier_strategies.index[i], 'ICER'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'ICER'],
                                                     out_intervals.loc[frontier_strategies.index[i],'ICER_I'],
-                                                    icer_digits, form=FormatFunc.FormatNumber.NUMBER)
+                                                    icer_digits, format=FormatFunc.FormatNumber.NUMBER)
 
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(

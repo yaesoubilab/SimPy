@@ -91,9 +91,9 @@ class _Statistics(object):
                 F.format_number(self.get_min(), digits),
                 F.format_number(self.get_max(), digits)]
 
-    def format_estimate_PI(self, alpha, deci, form=F.FormatNumber.NUMBER):
+    def format_estimate_PI(self, alpha, deci, form=None):
         estimate = self.get_mean()
-        interval = self.get_PI(0.05)
+        interval = self.get_PI(alpha)
         return F.format_estimate_interval(estimate, interval, deci, form)
 
 
