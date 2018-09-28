@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class SimModel:
@@ -6,7 +7,7 @@ class SimModel:
     def __init__(self):
         pass
 
-    def get_obj_value(self, x, y):
+    def get_obj_value(self, x):
         """ abstract method to return one realization of the objective function to optimize """
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
@@ -33,48 +34,50 @@ class StochasticApproximation:
         self._stepSize = step_size
         self._derivativeStep = derivative_step
         self._xStar = None
-        self._yStar = None
         self._fStar = None
 
         self._is = []
         self._xs = []
-        self._ys = []
         self._fs = []
+        self._deltax=[]
 
-    def minimize(self, max_itr, x0, y0):
+    def minimize(self, max_itr, x0):
         """
         :param max_itr: maximum iteration to terminate the algorithm
         :param x0: starting point
         :return:
         """
-
-        x = x0
-        y = y0
-        f = self._simModel.get_obj_value(x, y)
+        x=x0
+        f = self._simModel.get_obj_value(x)
 
         self._is.append(0)
         self._xs.append(x)
-        self._ys.append(y)
         self._fs.append(f)
+
+
+        for k in range(0, len(x)):
+            zero_s = np.zeros(len(x))
+            zero_s[k] = self._derivativeStep
+            self._deltax.append(zero_s)
+
 
         for i in range(1, max_itr):
             # estimate the derivative at x and y
-            derivative_x = (self._simModel.get_obj_value(x+self._derivativeStep, y) - f)/self._derivativeStep
-            derivative_y = (self._simModel.get_obj_value(y+self._derivativeStep, x) - f)/self._derivativeStep
+            derivativevector=np.array([])
+            for j in range(0,len(x)):
+               derivative=(self._simModel.get_obj_value(x+self._deltax[j])-f)/self._derivativeStep
+               derivativevector=np.append(derivativevector,[derivative])
             # find a new x
-            x = x - self._stepSize.get_value(i)*derivative_x
-            y = y - self._stepSize.get_value(i)*derivative_y
+            x = x - self._stepSize.get_value(i)*derivativevector
             # evaluate the model at x
-            f = self._simModel.get_obj_value(x, y)
+            f = self._simModel.get_obj_value(x)
 
             self._is.append(i)
             self._xs.append(x)
-            self._ys.append(y)
             self._fs.append(f)
 
         # store the optimal x and optimal objective value
         self._xStar = x
-        self._yStar = y
         self._fStar = f
 
     def plot_fs(self, fStar=None):
@@ -97,16 +100,5 @@ class StochasticApproximation:
         plt.ylabel('x')
         if xStar is not None:
             plt.axhline(y=xStar, linestyle='--', color='black', linewidth=1)
-        plt.show()
-
-    def plot_ys(self, yStar=None):
-
-        fig, ax = plt.subplots(figsize=(6, 5))
-        ax.plot(self._is, self._ys)
-
-        plt.xlabel('Iteration')
-        plt.ylabel('y')
-        if yStar is not None:
-            plt.axhline(y=yStar, linestyle='--', color='black', linewidth=1)
         plt.show()
 

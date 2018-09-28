@@ -1,5 +1,6 @@
 import SimPy.Optimization as Opt
 from tests.Optimization import ToyModels
+import numpy as np
 
 # create an object for the stochastic approximation method
 mySimOpt = Opt.StochasticApproximation(
@@ -8,8 +9,10 @@ mySimOpt = Opt.StochasticApproximation(
     derivative_step=0.1)
 
 # find the minimum
-mySimOpt.minimize(max_itr=1000, x0=5)
+mySimOpt.minimize(max_itr=1000, x0=np.array([5,5]))
 
 # plot x and objective function values
+mySimOpt.plot_fs(fStar=0)
 mySimOpt.plot_xs(xStar=0)
-mySimOpt.plot_fs(yStar=0)
+
+print(mySimOpt._xs)
