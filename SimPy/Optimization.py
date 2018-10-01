@@ -50,11 +50,14 @@ class StochasticApproximation:
         x=x0
         f = self._simModel.get_obj_value(x)
 
+        #i: number of itteration
         self._is.append(0)
+        #x: independent variable
         self._xs.append(x)
+        #f: value of the function given x
         self._fs.append(f)
 
-
+        #generate arrays to calculate derivative
         for k in range(0, len(x)):
             zero_s = np.zeros(len(x))
             zero_s[k] = self._derivativeStep
