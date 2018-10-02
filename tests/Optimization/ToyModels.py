@@ -3,7 +3,7 @@ from SimPy.Optimization import SimModel
 
 
 class Xto2(SimModel):
-    # a simple simulation model that represents x^2 + noise (where noise is normally distributed)
+    # a simple simulation model that represents x0^2 + x1^2 + noise (where noise is normally distributed)
     def __init__(self, err_sigma):
         """"
         :param err_sigma is the standard deviation of noise term
@@ -18,4 +18,4 @@ class Xto2(SimModel):
     def get_obj_value(self, x):
         """ returns one realization from x^2+noise """
 
-        return x[0]*x[0] + x[1]*x[1]+ self._err.sample(self._rng)
+        return x[0]*x[0] + x[1]*x[1] + self._err.sample(self._rng)

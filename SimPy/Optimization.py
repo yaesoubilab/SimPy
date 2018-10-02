@@ -140,4 +140,3 @@ class StochasticApproximation:
             if x_star is not None:
                 plt.axhline(y=x_star[i], linestyle='--', color='black', linewidth=1)
             plt.show()
-
