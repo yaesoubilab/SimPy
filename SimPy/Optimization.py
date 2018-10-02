@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class SimModel:
@@ -23,70 +24,120 @@ class StepSize:
 class StochasticApproximation:
     # stochastic approximation algorithm
 
-    def __init__(self, sim_model, step_size, derivative_step):
+    def __init__(self, sim_model, derivative_step, step_size=StepSize(a=1)):
         """
         :param sim_model: the simulation model to optimize
-        :param step_size: the step size rule
         :param derivative_step: derivative step if calculating slopes
+        :param step_size: the step size rule
         """
         self._simModel = sim_model
         self._stepSize = step_size
         self._derivativeStep = derivative_step
-        self._xStar = None
-        self._fStar = None
+        self.xStar = None   # optimal x value
 
-        self._is = []
-        self._xs = []
-        self._fs = []
+        self.itr_i = []     # iteration indices
+        self.itr_x = []     # x values over iterations
+        self.itr_f = []     # f values over iterations
 
     def minimize(self, max_itr, x0):
         """
         :param max_itr: maximum iteration to terminate the algorithm
-        :param x0: starting point
-        :return:
+        :param x0: (list or numpy.array) starting point
         """
+
+        # x0 has to be of type numpy.array
+        if type(x0) is not np.ndarray:
+            try:
+                x0 = np.array(x0)
+            except:
+                raise ValueError('x0 should be a list or a numpy.array.')
 
         x = x0
         f = self._simModel.get_obj_value(x)
 
-        self._is.append(0)
-        self._xs.append(x)
-        self._fs.append(f)
+        # store information at iteration 0
+        self.itr_i.append(0)
+        self.itr_x.append(x)
+        self.itr_f.append(f)
 
-        for i in range(1, max_itr):
-            # estimate the derivative at x
-            derivative = (self._simModel.get_obj_value(x+self._derivativeStep) - f)/self._derivativeStep
-            # find a new x
-            x = x - self._stepSize.get_value(i)*derivative
+        # generate an array of numpy.array to calculate derivative
+        # epsilon_matrix =
+        #   [
+        #       [ε, 0, 0, 0],
+        #       [0, ε, 0, 0],
+        #       [0, 0, ε, 0],
+        #       [0, 0, 0, ε],
+        #   ]
+
+        epsilon_matrix = []
+        for i in range(0, len(x)):
+            # create an all zero array
+            epsilon_array = np.zeros(len(x))
+            # set ith element to epsilon (derivative step)
+            epsilon_array[i] = self._derivativeStep
+            # append the array to the epsilon matrix
+            epsilon_matrix.append(epsilon_array)
+
+        # iterations of stochastic approximation algorithm
+        for itr in range(1, max_itr):
+
+            # estimate the derivative of f at current x
+            derivative = np.array([])
+            for i in range(0, len(x)):
+                # partial derivative of variable i
+                partial_derivative_i = (self._simModel.get_obj_value(x + epsilon_matrix[i])-f)/self._derivativeStep
+                # append this partial derivative
+                derivative = np.append(derivative, [partial_derivative_i])
+
+            # find a new x: x_new = x - step_size*f'(x)
+            x = x - self._stepSize.get_value(itr)*derivative
+
             # evaluate the model at x
             f = self._simModel.get_obj_value(x)
 
-            self._is.append(i)
-            self._xs.append(x)
-            self._fs.append(f)
+            # store information at this iteration
+            self.itr_i.append(itr)
+            self.itr_x.append(x)
+            self.itr_f.append(f)
 
         # store the optimal x and optimal objective value
-        self._xStar = x
-        self._fStar = f
+        self.xStar = x
 
-    def plot_fs(self, yStar=None):
+    def plot_f_itr(self, f_star=None):
+        """
+        :param f_star: optimal f value if known
+        :return: a plot of f values as the algorithm iterates
+        """
 
         fig, ax = plt.subplots(figsize=(6, 5))
-        ax.plot(self._is, self._fs)
+        ax.plot(self.itr_i, self.itr_f)
 
         plt.xlabel('Iteration')
         plt.ylabel('Objective Function')
-        if yStar is not None:
-            plt.axhline(y=yStar, linestyle='--', color='black', linewidth=1)
+        if f_star is not None:
+            plt.axhline(y=f_star, linestyle='--', color='black', linewidth=1)
         plt.show()
 
-    def plot_xs(self, xStar=None):
+    def plot_x_irs(self, x_star=None):
+        """
+        :param x_star: (list or numpy.array) optimal x value
+        :return: plots of x_i in x as the the algorithm iterates
+        """
 
-        fig, ax = plt.subplots(figsize=(6, 5))
-        ax.plot(self._is, self._xs)
+        for i in range(len(x_star)):
 
-        plt.xlabel('Iteration')
-        plt.ylabel('x')
-        if xStar is not None:
-            plt.axhline(y=xStar, linestyle='--', color='black', linewidth=1)
-        plt.show()
+            fig, ax = plt.subplots(figsize=(6, 5))
+
+            # find x_i (ith dimension of x) over iterations
+            x_i_itr = []
+            for itr in range(len(self.itr_i)):
+                x_i_itr.append(self.itr_x[itr][i])
+
+            # plot
+            ax.plot(self.itr_i, x_i_itr)
+            plt.xlabel('Iteration')
+            plt.ylabel('x'+str(i))
+            if x_star is not None:
+                plt.axhline(y=x_star[i], linestyle='--', color='black', linewidth=1)
+            plt.show()
+

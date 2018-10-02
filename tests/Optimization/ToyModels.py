@@ -18,4 +18,4 @@ class Xto2(SimModel):
     def get_obj_value(self, x):
         """ returns one realization from x^2+noise """
 
-        return x*x + self._err.sample(self._rng)
+        return x[0]*x[0] + x[1]*x[1]+ self._err.sample(self._rng)
