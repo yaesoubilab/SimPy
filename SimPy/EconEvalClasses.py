@@ -1,4 +1,5 @@
 from enum import Enum
+import math
 import numpy as np
 import SimPy.StatisticalClasses as Stat
 import matplotlib.pyplot as plt
@@ -395,8 +396,8 @@ class CEA(_EconEval):
                 # incremental effect
                 d_effect = self._effect_multiplier\
                            *(frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1])
-                if d_effect == 0:
-                    raise ValueError('invalid value of E[dEffect], the ratio is not computable')
+                # if d_effect == 0:
+                #     raise ValueError('invalid value of E[dEffect], the ratio is not computable')
                 incr_effect = np.append(incr_effect, d_effect)
                 # ICER
                 ICER = np.append(ICER, d_cost/d_effect)
@@ -627,30 +628,30 @@ class CEA(_EconEval):
         for i in self._dfStrategies.index:
             out_table.loc[i, 'E[Cost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Cost]'],
-                                                    out_intervals.loc[i,'Cost_I'],
-                                                    cost_digits, format=FormatFunc.FormatNumber.NUMBER)
+                                                    out_intervals.loc[i, 'Cost_I'],
+                                                    cost_digits, format=',')
             out_table.loc[i, 'E[Effect]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Effect]'],
-                                                    out_intervals.loc[i,'Effect_I'],
-                                                    effect_digits, format=FormatFunc.FormatNumber.NUMBER)
+                                                    out_intervals.loc[i, 'Effect_I'],
+                                                    effect_digits, format=',')
 
         # add the incremental and ICER estimates and intervals
         for i in range(1, n_frontier_strategies):
 
             out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dCost]'],
-                                                    out_intervals.loc[frontier_strategies.index[i],'dCost_I'],
-                                                    cost_digits, format=FormatFunc.FormatNumber.NUMBER)
+                                                    out_intervals.loc[frontier_strategies.index[i], 'dCost_I'],
+                                                    cost_digits, format=',')
 
             out_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dEffect]'],
-                                                    out_intervals.loc[frontier_strategies.index[i],'dEffect_I'],
-                                                    effect_digits, format=FormatFunc.FormatNumber.NUMBER)
+                                                    out_intervals.loc[frontier_strategies.index[i], 'dEffect_I'],
+                                                    effect_digits, format=',')
 
             out_table.loc[frontier_strategies.index[i], 'ICER'] = \
                 FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'ICER'],
-                                                    out_intervals.loc[frontier_strategies.index[i],'ICER_I'],
-                                                    icer_digits, format=FormatFunc.FormatNumber.NUMBER)
+                                                    out_intervals.loc[frontier_strategies.index[i], 'ICER_I'],
+                                                    icer_digits, format=',')
 
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
