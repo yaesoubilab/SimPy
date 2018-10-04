@@ -37,6 +37,7 @@ class StochasticApproximation:
 
         self.itr_i = []     # iteration indices
         self.itr_x = []     # x values over iterations
+        self.itr_nDf = []    # normalized derivatives of f over iterations
         self.itr_f = []     # f values over iterations
 
     def minimize(self, max_itr, x0):
@@ -89,8 +90,11 @@ class StochasticApproximation:
                 # append this partial derivative
                 derivative = np.append(derivative, [partial_derivative_i])
 
-            # find a new x: x_new = x - step_size*f'(x)
-            x = x - self._stepSize.get_value(itr)*derivative
+            # normalize derivative
+            nDf = derivative / np.linalg.norm(derivative, 2)
+
+            # find a new x: x_new = x - step_size*f'(x)/||f'(x)||
+            x = x - self._stepSize.get_value(itr)*nDf
 
             # evaluate the model at x
             f = self._simModel.get_obj_value(x)
@@ -98,10 +102,14 @@ class StochasticApproximation:
             # store information at this iteration
             self.itr_i.append(itr)
             self.itr_x.append(x)
+            self.itr_nDf.append(nDf)
             self.itr_f.append(f)
 
         # store the optimal x and optimal objective value
         self.xStar = x
+
+        # last derivative is not calculated
+        self.itr_nDf.append(None)
 
     def plot_f_itr(self, f_star=None):
         """
