@@ -83,15 +83,15 @@ class StochasticApproximation:
         for itr in range(1, max_itr):
 
             # estimate the derivative of f at current x
-            derivative = np.array([])
+            Df = np.array([])
             for i in range(0, len(x)):
                 # partial derivative of variable i
                 partial_derivative_i = (self._simModel.get_obj_value(x + epsilon_matrix[i])-f)/self._derivativeStep
                 # append this partial derivative
-                derivative = np.append(derivative, [partial_derivative_i])
+                Df = np.append(Df, [partial_derivative_i])
 
             # normalize derivative
-            nDf = derivative / np.linalg.norm(derivative, 2)
+            nDf = Df / np.linalg.norm(Df, 2)
 
             # find a new x: x_new = x - step_size*f'(x)/||f'(x)||
             x = x - self._stepSize.get_value(itr)*nDf
