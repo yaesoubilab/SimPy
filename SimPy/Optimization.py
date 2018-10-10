@@ -12,7 +12,7 @@ class SimModel:
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 
-class StepSize:
+class StepSize_a:
     # step size: a/i where a>0 and i>=0 is the iteration of the optimization algorithm
     def __init__(self, a):
         self._a = a
@@ -21,10 +21,19 @@ class StepSize:
         return self._a/(i+1)
 
 
+class StepSize_e:
+    # step size: c/i^(-0.25) where e>0 and i>=0 is the iteration of the optimization algorithm
+    def __init__(self, e):
+        self._e = e
+
+    def get_value(self, i):
+        return self._e * pow(i, -0.25)
+
+
 class StochasticApproximation:
     # stochastic approximation algorithm
 
-    def __init__(self, sim_model, derivative_step, step_size=StepSize(a=1)):
+    def __init__(self, sim_model, derivative_step, step_size=StepSize_a(a=1)):
         """
         :param sim_model: the simulation model to optimize
         :param derivative_step: derivative step if calculating slopes
