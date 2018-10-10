@@ -43,15 +43,17 @@ class StochasticApproximation:
         self._stepSize = step_size
         self._derivativeStep = derivative_step
         self.xStar = None   # optimal x value
+        self.fStar = None   # optimal objective function 
 
         self.itr_i = []     # iteration indices
         self.itr_x = []     # x values over iterations
         self.itr_nDf = []    # normalized derivatives of f over iterations
         self.itr_f = []     # f values over iterations
 
-    def minimize(self, max_itr, x0):
+    def minimize(self, max_itr, nLastItrsToAve, x0):
         """
         :param max_itr: maximum iteration to terminate the algorithm
+        :param nLastItrsToAve: the number of last iterations to average as estimates of optimal x and f(x)
         :param x0: (list or numpy.array) starting point
         """
 
@@ -116,6 +118,7 @@ class StochasticApproximation:
 
         # store the optimal x and optimal objective value
         self.xStar = x
+        self.fStar = 0 # should be the average of last f's
 
         # last derivative is not calculated
         self.itr_nDf.append(None)
