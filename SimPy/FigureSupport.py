@@ -1,48 +1,42 @@
-from enum import Enum
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-class OutType(Enum):
-    """output types for plotted figures"""
-    SHOW = 1    # show
-    JPG = 2     # save the figure as a jpg file
-    PDF = 3     # save the figure as a pdf file
-
-
-def output_figure(plt, output_type, title):
+def output_figure(plt, output_type='show', filename='figure'):
     """
     :param plt: reference to the plot
-    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
-    :param title: figure title
-    :return:
+    :param output_type: select from 'show', 'png', or 'pdf'
+    :param filename: filename to save this figure as
     """
     # output
-    if output_type == OutType.SHOW:
+    if output_type == 'show':
         plt.show()
-    elif output_type == OutType.JPG:
-        plt.savefig(title+".png")
-    elif output_type == OutType.PDF:
-        plt.savefig(title+".pdf")
+    elif output_type == 'png':
+        plt.savefig(filename + ".png")
+    elif output_type == 'pdf':
+        plt.savefig(filename + ".pdf")
+    else:
+        raise ValueError("Invalid value for figure output type. "
+                         "Valid values are: 'show', 'png', and 'pdf' ")
 
 
-def graph_histogram2(data, title,
-                     x_label=None, y_label=None, bin_width=None,
-                     x_range=None, y_range=None,
-                     legend=None, figure_size=(5, 5),
-                     output_type=OutType.SHOW, file_name=None):
-    """ graphs the histograms of multiple datasets on a single plot
-    :param data: list of observations
+def graph_histogram(data, title,
+                    x_label=None, y_label=None, bin_width=None,
+                    x_range=None, y_range=None,
+                    legend=None, figure_size=(5, 5),
+                    output_type='show', file_name=None):
+    """ graphs a histogram
+    :param data: (list) observations
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
     :param bin_width: bin width
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
     :param y_range: (list with 2 elements) minimum and maximum of y-axis
-    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param output_type: select from 'show', 'png', or 'pdf'
     :param legend: string for the legend
-    :param figure_size: (list) figure size
-    :param file_name: (string) file name to be saved as
+    :param figure_size: (tuple) figure size
+    :param file_name: (string) filename to to save the histogram as
     """
 
     fig, ax = plt.subplots(figsize=figure_size)
@@ -84,9 +78,9 @@ def graph_histogram2(data, title,
         output_figure(plt, output_type, title)
 
 
-def graph_histogram(data, title, x_label=None, y_label=None,
-                    bin_width=None, x_range=None, y_range=None,
-                    output_type=OutType.SHOW, legend=None):
+def graph_histogram1(data, title, x_label=None, y_label=None,
+                     bin_width=None, x_range=None, y_range=None,
+                     output_type='show', legend=None):
     """ graphs the histograms of multiple datasets on a single plot
     :param data: list of observations
     :param title: (string) title of the figure
@@ -95,7 +89,7 @@ def graph_histogram(data, title, x_label=None, y_label=None,
     :param bin_width: bin width
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
     :param y_range: (list with 2 elements) minimum and maximum of y-axis
-    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param output_type: select from 'show', 'png', or 'pdf'
     :param legend: string for the legend
     """
 
@@ -132,17 +126,17 @@ def graph_histogram(data, title, x_label=None, y_label=None,
 
 def graph_histograms(data_sets, title, x_label, y_label,
                      bin_width=None, x_range=None, y_range=None,
-                     output_type=OutType.SHOW, legend=None, transparency=1):
+                     output_type='show', legend=None, transparency=1):
     """
-
+    plots multiple histograms on a single figure
     :param data_sets: (list of lists) observations
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
     :param bin_width: bin width
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
-    :param x_range: (list with 2 elements) minimum and maximum of y-axis
-    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param y_range: (list with 2 elements) minimum and maximum of y-axis
+    :param output_type: select from 'show', 'png', or 'pdf'
     :param legend: string for the legend
     :param transparency: (float) 0.0 transparent through 1.0 opaque
     """
