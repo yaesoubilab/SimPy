@@ -15,6 +15,7 @@ def pv(payment, discount_rate, discount_period):
     :param discount_rate: discount rate (per period)
     :param discount_period: number of periods to discount the payment
     :return: payment/(1+discount_rate)^discount_period    """
+
     return payment * pow(1 + discount_rate, -discount_period)
 
 
@@ -29,7 +30,13 @@ class HealthMeasure(Enum):
     DISUTILITY = 1
 
 
-def get_an_interval(data, interval, alpha):
+def get_an_interval(data, interval, alpha=0.05):
+    """
+    :param data: (list or numpy.array) data
+    :param interval: select from Interval.CONFIDENCE or Interval.PREDICTION
+    :param alpha: significance level
+    :return: a confidence or prediction interval of data
+    """
     sum_stat = Stat.SummaryStat('', data)
     if interval == Interval.CONFIDENCE:
         return sum_stat.get_t_CI(alpha)
@@ -105,20 +112,24 @@ class _EconEval:
         # if observations are paired across strategies
         if if_paired:
             for i in range(self._n):
-                shifted_strategy = Strategy(strategies[i].name,
-                                            strategies[i].costObs - strategies[0].costObs,
-                                            (strategies[i].effectObs - strategies[0].effectObs)*self._effect_multiplier)
-
+                shifted_strategy = Strategy(
+                    name=strategies[i].name,
+                    cost_obs=strategies[i].costObs - strategies[0].costObs,
+                    effect_obs=(strategies[i].effectObs - strategies[0].effectObs)*self._effect_multiplier
+                )
                 shifted_strategies.append(shifted_strategy)
 
         else:  # if not paired
-            e_cost = strategies[0].aveCost
-            e_effect = strategies[0].aveEffect
+            e_cost = strategies[0].aveCost  # average cost of the base strategy
+            e_effect = strategies[0].aveEffect  # average effect of the base strategy
             for i in range(self._n):
-                shifted_strategy = Strategy(strategies[i].name,
-                                            strategies[i].costObs - e_cost,
-                                            (strategies[i].effectObs - e_effect)*self._effect_multiplier)
+                shifted_strategy = Strategy(
+                    name=strategies[i].name,
+                    cost_obs=strategies[i].costObs - e_cost,
+                    effect_obs=(strategies[i].effectObs - e_effect)*self._effect_multiplier
+                )
                 shifted_strategies.append(shifted_strategy)
+
         self._shifted_strategies = shifted_strategies  # list of shifted strategies
 
         # create a data frame for all strategies' shifted expected outcomes
