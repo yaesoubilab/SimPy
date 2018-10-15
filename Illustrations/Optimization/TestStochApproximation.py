@@ -1,5 +1,5 @@
 import SimPy.Optimization as Opt
-from tests.Optimization import ToyModels
+from Illustrations.Optimization import ToyModels
 import numpy as np
 
 # create an object for the stochastic approximation method

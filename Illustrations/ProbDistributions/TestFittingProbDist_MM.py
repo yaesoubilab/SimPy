@@ -1,7 +1,7 @@
 import SimPy.FittingProbDist_MM as Est
 import numpy as np
 import SimPy.RandomVariantGenerators as RVGs
-from tests.ProbDistributions.RVGtests import get_samples
+from Illustrations.ProbDistributions.RVGtests import get_samples
 
 
 # simulate some data
