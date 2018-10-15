@@ -24,8 +24,8 @@ def make_trace():
     myTrace.add_message("Message 1")
     myTrace.add_message("Message 2")
 
-    myTrace.print_trace(filename='TraceTest2.txt', path='../Illustrations/trace')
+    myTrace.print_trace(filename='TraceTest2.txt', path='../Illustration/trace')
 
 
 make_trace()
-#Cls.clear_trace_files('../Illustrations/trace')
+#Cls.clear_trace_files('../Illustration/trace')

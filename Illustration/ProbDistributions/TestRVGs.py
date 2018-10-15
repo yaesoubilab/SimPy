@@ -1,4 +1,4 @@
-from Illustrations.ProbDistributions import RVGtests as Tests
+from Illustration.ProbDistributions import RVGtests as Tests
 import SimPy.RandomVariantGenerators as rndSupport
 
 # use numpy random number generator
@@ -6,7 +6,7 @@ rng = rndSupport.RNG(1)
 
 print('')
 
-# Illustrations
+# Illustration
 Tests.test_rng(rng)
 Tests.test_bernoulli(rng, p=.2)
 Tests.test_beta(rng, a=2, b=5, loc=1,scale=2)
