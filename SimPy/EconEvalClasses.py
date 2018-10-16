@@ -19,17 +19,6 @@ def pv(payment, discount_rate, discount_period):
     return payment * pow(1 + discount_rate, -discount_period)
 
 
-class Interval(Enum):
-    NO_INTERVAL = 0
-    CONFIDENCE = 1
-    PREDICTION = 2
-
-
-class HealthMeasure(Enum):
-    UTILITY = 0
-    DISUTILITY = 1
-
-
 def get_an_interval(data, interval, alpha=0.05):
     """
     :param data: (list or numpy.array) data
@@ -44,6 +33,17 @@ def get_an_interval(data, interval, alpha=0.05):
         return sum_stat.get_PI(alpha)
     else:
         return None
+
+
+class Interval(Enum):
+    NO_INTERVAL = 0
+    CONFIDENCE = 1
+    PREDICTION = 2
+
+
+class HealthMeasure(Enum):
+    UTILITY = 0
+    DISUTILITY = 1
 
 
 class Strategy:
@@ -67,9 +67,19 @@ class Strategy:
         self.ifDominated = False
 
     def get_cost_interval(self, interval, alpha):
+        """
+        :param interval: select from Interval.CONFIDENCE or Interval.PREDICTION
+        :param alpha: significance level
+        :return: a confidence or prediction interval of cost observations
+        """
         return get_an_interval(self.costObs, interval, alpha)
 
     def get_effect_interval(self, interval, alpha):
+        """
+        :param interval: select from Interval.CONFIDENCE or Interval.PREDICTION
+        :param alpha: significance level
+        :return: a confidence or prediction interval of effect observations
+        """
         return get_an_interval(self.effectObs, interval, alpha)
 
 
@@ -79,21 +89,25 @@ class _EconEval:
     def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
-        :param if_paired: indicate whether the strategies are paired
+        :param if_paired: set to true to indicate that the strategies are paired
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         self._n = len(strategies)  # number of strategies
-        self._strategies = strategies  # list of strategies
-        self._strategiesOnFrontier = []  # list of strategies on the frontier
-        self._strategiesNotOnFrontier = []  # list of strategies not on the frontier
-        self._shifted_strategiesOnFrontier = []  # list of shifted strategies on the frontier
-        self._shifted_strategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
         self._ifPaired = if_paired
         self._effect_multiplier = (-1, 1)[health_measure == HealthMeasure.UTILITY]
 
+        self._strategies = strategies  # list of strategies
+        self._strategiesOnFrontier = []  # list of strategies on the frontier
+        self._strategiesNotOnFrontier = []  # list of strategies not on the frontier
+
+        self._shifted_strategies = [] # list of shifted strategies
+        self._shifted_strategiesOnFrontier = []  # list of shifted strategies on the frontier
+        self._shifted_strategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
+
         # create a data frame for all strategies' expected outcomes
+        # this data frame will be used to report the cost-effectiveness table
         self._dfStrategies = pd.DataFrame(
             index=range(self._n),
             columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated'])
@@ -108,7 +122,6 @@ class _EconEval:
 
         # now shift all strategies such that the base strategy (first in the list) lies on the origin
         # all the following data analysis are based on the shifted data
-        shifted_strategies = []
         # if observations are paired across strategies
         if if_paired:
             for i in range(self._n):
@@ -117,7 +130,7 @@ class _EconEval:
                     cost_obs=strategies[i].costObs - strategies[0].costObs,
                     effect_obs=(strategies[i].effectObs - strategies[0].effectObs)*self._effect_multiplier
                 )
-                shifted_strategies.append(shifted_strategy)
+                self._shifted_strategies.append(shifted_strategy)
 
         else:  # if not paired
             e_cost = strategies[0].aveCost  # average cost of the base strategy
@@ -128,9 +141,7 @@ class _EconEval:
                     cost_obs=strategies[i].costObs - e_cost,
                     effect_obs=(strategies[i].effectObs - e_effect)*self._effect_multiplier
                 )
-                shifted_strategies.append(shifted_strategy)
-
-        self._shifted_strategies = shifted_strategies  # list of shifted strategies
+                self._shifted_strategies.append(shifted_strategy)
 
         # create a data frame for all strategies' shifted expected outcomes
         self._dfStrategies_shifted = pd.DataFrame(
@@ -139,10 +150,10 @@ class _EconEval:
 
         # populate the data frame
         for j in range(self._n):
-            self._dfStrategies_shifted.loc[j, 'Name'] = shifted_strategies[j].name
-            self._dfStrategies_shifted.loc[j, 'E[Cost]'] = shifted_strategies[j].aveCost
-            self._dfStrategies_shifted.loc[j, 'E[Effect]'] = shifted_strategies[j].aveEffect
-            self._dfStrategies_shifted.loc[j, 'Dominated'] = shifted_strategies[j].ifDominated
+            self._dfStrategies_shifted.loc[j, 'Name'] = self._shifted_strategies[j].name
+            self._dfStrategies_shifted.loc[j, 'E[Cost]'] = self._shifted_strategies[j].aveCost
+            self._dfStrategies_shifted.loc[j, 'E[Effect]'] = self._shifted_strategies[j].aveEffect
+            self._dfStrategies_shifted.loc[j, 'Dominated'] = self._shifted_strategies[j].ifDominated
             self._dfStrategies_shifted.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
     def get_shifted_strategies(self):
@@ -157,9 +168,9 @@ class CEA(_EconEval):
 
     def __init__(self, strategies, if_paired, if_find_frontier=True, health_measure=HealthMeasure.UTILITY):
         """
-        :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
-        :param if_paired: indicate whether the strategies are paired
-        :param if_find_frontier: if the cost-effectiveness frontier should be calculated
+        :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param if_paired: set to true to indicate that the strategies are paired
+        :param if_find_frontier: set to true if the cost-effectiveness frontier should be calculated
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
@@ -241,13 +252,13 @@ class CEA(_EconEval):
                     df_shifted_sorted.loc[list(dominated_index), 'Dominated'] = True
                     df_shifted_sorted.loc[list(dominated_index), 'Color'] = 'blue'
 
-        # update the unshifted strategies
+        # update the not shifted strategies
         for i in range(self._n):
             for j in range(self._n):
                 if self._dfStrategies['Name'].iloc[i] == df_shifted_sorted['Name'].iloc[j]:
                     self._dfStrategies['Dominated'].iloc[i] = df_shifted_sorted['Dominated'].iloc[j]
 
-        # sort the unshifted strategies
+        # sort the not shifted strategies
         self._dfStrategies = self._dfStrategies.sort_values('E[Cost]')
 
         # create list of strategies on frontier
@@ -339,7 +350,6 @@ class CEA(_EconEval):
         if Lx > 10:
             plt.xticks(vals_x, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
-
         # show names of strategies
         if show_names:
             if not show_clouds:
@@ -362,9 +372,8 @@ class CEA(_EconEval):
                         arrowprops=dict(arrowstyle='->', connectionstyle='arc3', shrinkA=0, shrinkB=2),
                         weight='bold', bbox=dict(pad=0, facecolor="none", edgecolor="none"))
 
-
         # show the figure
-        Fig.output_figure(plt, Fig.OutType.SHOW, title)
+        Fig.output_figure(plt, output_type='show', filename=title)
 
     def build_CE_table(self,
                        interval=Interval.NO_INTERVAL,
@@ -384,7 +393,6 @@ class CEA(_EconEval):
         """
 
         # initialize the table
-        #dfStrategies = self._dfStrategies
         self._dfStrategies['E[dCost]'] = "-"
         self._dfStrategies['E[dEffect]'] = "-"
         self._dfStrategies['ICER'] = "Dominated"
