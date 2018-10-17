@@ -1,5 +1,7 @@
 import SimPy.DecisionTree as dt
 
+# Migraine model displayed here: tests/DecisionTree/Migraine Model.tif
+
 # dictionary for decision nodes
 #               // key: cost, utility, [future nodes]
 dictDecisions = {'d1': [0,     0,       ['c1', 'c5']]};

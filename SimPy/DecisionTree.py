@@ -215,5 +215,5 @@ def graph_outcomes(decision_tree):
     plt.xlim([0,1])
     plt.ylim(ymin=0)
 
-    # save the figure
+    # show the figure
     plt.show()
