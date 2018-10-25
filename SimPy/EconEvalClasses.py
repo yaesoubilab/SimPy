@@ -1,5 +1,5 @@
 from enum import Enum
-import math
+import warnings
 import numpy as np
 import SimPy.StatisticalClasses as Stat
 import matplotlib.pyplot as plt
@@ -894,7 +894,7 @@ class ICER_paired(_ICER):
 
             # assert all the means should not be 0
             if np.average(ave_d_health) == 0:
-                raise ValueError('invalid value of mean of y, the ratio is not computable')
+                 warnings.warn('Mean incremental health is 0, ICER is not computable')
 
             ICERs[i] = ave_d_cost/ave_d_health - self._ICER
 
