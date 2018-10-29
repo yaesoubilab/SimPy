@@ -1,5 +1,6 @@
 from enum import Enum
 import warnings
+import math as math
 import numpy as np
 import SimPy.StatisticalClasses as Stat
 import matplotlib.pyplot as plt
@@ -565,8 +566,13 @@ class CEA(_EconEval):
                 # for difference statistics, and CI are using t_CI
                 # for ratio, using bootstrap with 1000 number of samples
                 for i in range(1, n_frontier_strategies):
+
+                    name = self._strategies[frontier_strategies.index[i]].name \
+                           + " to " \
+                           + self._strategies[frontier_strategies.index[i-1]].name
+
                     # calculate the confidence interval of incremental cost
-                    CI_PariedDiffCost = Stat.SummaryStat("",
+                    CI_PariedDiffCost = Stat.SummaryStat(name,
                         self._strategies[frontier_strategies.index[i]].costObs -
                         self._strategies[frontier_strategies.index[i-1]].costObs).get_t_CI(alpha)
                     # add the interval to the data frame
@@ -574,7 +580,7 @@ class CEA(_EconEval):
                         CI_PariedDiffCost
 
                     # calculate the confidence interval of incremental effect
-                    CI_PariedDiffEffect = Stat.SummaryStat("",
+                    CI_PariedDiffEffect = Stat.SummaryStat(name,
                         self._strategies[frontier_strategies.index[i]].effectObs -
                         self._strategies[frontier_strategies.index[i-1]].effectObs).get_t_CI(alpha)
 
@@ -583,7 +589,7 @@ class CEA(_EconEval):
                         CI_PariedDiffEffect
 
                     # calculate the confidence interval of incremental ICER
-                    CI_PairedICER = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
+                    CI_PairedICER = ICER_paired(name, self._strategies[frontier_strategies.index[i]].costObs,
                                             self._strategies[frontier_strategies.index[i]].effectObs,
                                             self._strategies[frontier_strategies.index[i-1]].costObs,
                                             self._strategies[frontier_strategies.index[i-1]].effectObs)
@@ -803,7 +809,7 @@ class ComparativeEconMeasure:
         """
         np.random.seed(1)
 
-        self._name = name
+        self.name = name
         self._costNew = cost_new          # cost data for the new strategy
         self._healthNew = health_new      # health data for the new strategy
         self._costBase = cost_base        # cost data for teh base line
@@ -834,8 +840,12 @@ class _ICER(ComparativeEconMeasure):
         """
         # initialize the base class
         ComparativeEconMeasure.__init__(self, name, cost_new, health_new, cost_base, health_base)
-        # calcualte ICER
-        self._ICER = self._delta_ave_cost/self._delta_ave_health
+        # calculate ICER
+        if self._delta_ave_health == 0:
+            warnings.warn(self.name + ': Mean incremental health is 0. ICER is not computable.')
+            self.ICER = math.nan
+        else:
+            self._ICER = self._delta_ave_cost/self._delta_ave_health
 
     def get_ICER(self):
         """ return ICER """
@@ -880,23 +890,30 @@ class ICER_paired(_ICER):
 
     def get_CI(self, alpha, num_bootstrap_samples):
 
-        # bootstrap algorithm
-        ICERs = np.zeros(num_bootstrap_samples)
-        for i in range(num_bootstrap_samples):
-            # because cost and health are paired as one observation in natural,
-            # so do delta cost and delta health, should sample them together
-            index = np.random.choice(range(len(self._deltaCost)), size=len(self._deltaCost), replace=True)
-            d_cost = self._deltaCost[index]
-            d_health = self._deltaHealth[index]
+        # check if ICER is computable
 
-            ave_d_cost = np.average(d_cost)
-            ave_d_health = np.average(d_health)
+        if min(self._deltaHealth) == 0 and max(self._deltaHealth) == 0:
+            warnings.warn(self.name + ': Incremental health observations are 0, ICER is not computable')
+            return [math.nan, math.nan]
+        else:
+            # bootstrap algorithm
+            ICERs = np.zeros(num_bootstrap_samples)
+            for i in range(num_bootstrap_samples):
+                # because cost and health are paired as one observation,
+                # so do delta cost and delta health, should sample them together
+                index = np.random.choice(range(len(self._deltaCost)), size=len(self._deltaCost), replace=True)
+                d_cost = self._deltaCost[index]
+                d_health = self._deltaHealth[index]
 
-            # assert all the means should not be 0
-            if np.average(ave_d_health) == 0:
-                 warnings.warn('Mean incremental health is 0, ICER is not computable')
+                ave_d_cost = np.average(d_cost)
+                ave_d_health = np.average(d_health)
 
-            ICERs[i] = ave_d_cost/ave_d_health - self._ICER
+                # assert all the means should not be 0
+                if np.average(ave_d_health) == 0:
+                     warnings.warn(
+                         self.name + ': Mean incremental health is 0 for one bootstrap sample, ICER is not computable')
+
+                ICERs[i] = ave_d_cost/ave_d_health - self._ICER
 
         return self._ICER - np.percentile(ICERs, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
 
@@ -1019,13 +1036,13 @@ class NMB_paired(_NMB):
     def get_CI(self, wtp, alpha):
 
         # create a summary statistics
-        stat = Stat.SummaryStat(self._name, wtp * self._deltaHealth - self._deltaCost)
+        stat = Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost)
         return stat.get_t_CI(alpha)
 
     def get_PI(self, wtp, alpha):
 
         # create a summary statistics
-        stat = Stat.SummaryStat(self._name, wtp * self._deltaHealth - self._deltaCost)
+        stat = Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost)
         return stat.get_PI(alpha)
 
 
@@ -1045,7 +1062,7 @@ class NMB_indp(_NMB):
         stat_new = wtp * self._healthNew - self._costNew
         stat_base = wtp * self._healthBase - self._costBase
         # to get CI for stat_new - stat_base
-        diff_stat = Stat.DifferenceStatIndp(self._name, stat_new, stat_base)
+        diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
         return diff_stat.get_t_CI(alpha)
 
     def get_PI(self, wtp, alpha):
@@ -1054,5 +1071,5 @@ class NMB_indp(_NMB):
         stat_base = wtp * self._healthBase - self._costBase
 
         # to get PI for stat_new - stat_base
-        diff_stat = Stat.DifferenceStatIndp(self._name, stat_new, stat_base)
+        diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
         return diff_stat.get_PI(alpha)
