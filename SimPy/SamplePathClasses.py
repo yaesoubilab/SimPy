@@ -110,14 +110,14 @@ class SamplePathBatchUpdate(_SamplePath):
 
 
 def graph_sample_path(sample_path, title, x_label, y_label,
-                      output_type=Fig.OutType.SHOW, legend=None, color_code=None):
+                      output_type='show', legend=None, color_code=None):
     """
     produces a sample path
     :param sample_path: a sample path
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
-    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param output_type: select from 'show', 'pdf' or 'png'
     :param legend: string for the legend
     :param color_code: (string) 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     """
@@ -150,14 +150,14 @@ def graph_sample_path(sample_path, title, x_label, y_label,
     Fig.output_figure(plt, output_type, title)
 
 
-def graph_sample_paths(sample_paths, title, x_label, y_label, output_type=Fig.OutType.SHOW,
+def graph_sample_paths(sample_paths, title, x_label, y_label, output_type='show',
                        legends=None, transparency=1, common_color_code=None, if_same_color=False):
     """ graphs multiple sample paths
     :param sample_paths: a list of sample paths
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
-    :param output_type: select from OutType.SHOW, OutType.PDF, or OutType.JPG
+    :param output_type: select from 'show', 'pdf' or 'png'
     :param legends: list of strings for legend
     :param transparency: float (0.0 transparent through 1.0 opaque)
     :param common_color_code: (string) color code if all sample paths should have the same color
