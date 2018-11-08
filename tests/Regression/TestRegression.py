@@ -17,6 +17,12 @@ ax.grid(True)
 # create the regression model
 single_var_poly_reg = Reg.SingleVarRegression(x, y, degree=2)
 
+# print the coefficients of the fitted model
+print(single_var_poly_reg.get_coeffs())
+
+# print derivative at 0
+print(single_var_poly_reg.get_derivative(x=1))
+
 # make prediction over the range [x_min, x_max]
 x_pred = np.linspace(x.min(), x.max(), 50)
 y_pred = single_var_poly_reg.get_predicted_y(x_pred)

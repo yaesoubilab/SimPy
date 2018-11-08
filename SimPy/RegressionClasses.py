@@ -84,3 +84,18 @@ class SingleVarRegression:
         X_pred = self.f.get_X(x_pred)
         sdev, lower, upper = wls_prediction_std(self.fitted, exog=X_pred, alpha=alpha)
         return lower, upper
+
+    def get_coeffs(self):
+        """ :returns coefficients of the fitted model """
+
+        return self.fitted.params
+
+    def get_derivative(self, x):
+        """ :returns derivative of the polynomial function at x """
+
+        coeffs = self.fitted.params
+        result = 0
+        for i in range(len(coeffs)-1):
+            result += (i+1) * coeffs[i+1] * pow(x, i)
+
+        return result
