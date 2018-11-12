@@ -12,37 +12,35 @@ class SimModel:
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 
-class StepSize_a:
-    # step size: a/i where a>0 and i>=0 is the iteration of the optimization algorithm
-    def __init__(self, a):
-        self._a = a
+class StepSize_GeneralizedHarmonic:
+    # generalized harmonic(GH) stepsize
+    # step_n = a0 * b / (b + i), for i >= 0, a0 > 0, and b >= 1
+    # (i is the iteration of the optimization algorithm)
 
-    def get_value(self, i):
-        return self._a/(i+1)
+    def __init__(self, a0, b=1):
+        self._a0 = a0
+        self._b = b
+
+    def get_value(self, itr):
+        return self._a0 * self._b / (itr + self._b)
 
 
-class StepSize_e:
-    # step size: c/i^(-0.25) where e>0 and i>=0 is the iteration of the optimization algorithm
-    def __init__(self, e):
-        self._e = e
+class StepSize_Df:
+    # step size: c/i^(-0.25) where c>0 and i>=0 is the iteration of the optimization algorithm
+    def __init__(self, c0):
+        self._c0 = c0
 
-    def get_value(self, i):
-        return self._e * pow(i, -0.25)
-
-class Penalty:
-    #penalty for any of x<0. penalty size: p/(i+1) where p>0 and i>=0 is the iteration of the optimization algorithm
-    def __init__(self, p):
-        self._p = p
-
-    def get_value(self,i):
-        return self._p/(i+1)
-
+    def get_value(self, itr):
+        return self._c0 * pow(itr + 1, -0.25)
 
 
 class StochasticApproximation:
     # stochastic approximation algorithm
 
-    def __init__(self, sim_model, derivative_step=StepSize_e(e=1), step_size=StepSize_a(a=1), penalty=Penalty(p=100)):
+    def __init__(self, sim_model,
+                 derivative_step=StepSize_Df(c0=1),
+                 step_size=StepSize_GeneralizedHarmonic(a0=1)
+                 ):
         """
         :param sim_model: the simulation model to optimize
         :param derivative_step: derivative step if calculating slopes
@@ -51,7 +49,6 @@ class StochasticApproximation:
         self._simModel = sim_model
         self._stepSize = step_size
         self._derivativeStep = derivative_step
-        self._penalty=penalty
         self.xStar = None   # optimal x value
         self.fStar = None   # optimal objective function 
 
@@ -60,10 +57,10 @@ class StochasticApproximation:
         self.itr_nDf = []    # normalized derivatives of f over iterations
         self.itr_f = []     # f values over iterations
 
-    def minimize(self, max_itr, nLastItrsToAve, x0, penalty_or_not):
+    def minimize(self, max_itr, n_last_itrs_to_ave, x0):
         """
         :param max_itr: maximum iteration to terminate the algorithm
-        :param nLastItrsToAve: the number of last iterations to average as estimates of optimal x and f(x)
+        :param n_last_itrs_to_ave: the number of last iterations to average as estimates of optimal x and f(x)
         :param x0: (list or numpy.array) starting point
         """
 
@@ -81,12 +78,9 @@ class StochasticApproximation:
         self.itr_i.append(0)
         self.itr_x.append(x)
         self.itr_f.append(f)
-        # last n xs and fs to calculate optimal x and f
-        self._nLastItrsToAve=nLastItrsToAve
-
 
         # iterations of stochastic approximation algorithm
-        for itr in range(1, max_itr):
+        for itr in range(0, max_itr):
 
             # generate an array of numpy.array to calculate derivative
             # epsilon_matrix =
@@ -106,12 +100,12 @@ class StochasticApproximation:
                 # append the array to the epsilon matrix
                 epsilon_matrix.append(epsilon_array)
 
-
             # estimate the derivative of f at current x
             Df = np.array([])
             for i in range(0, len(x)):
                 # partial derivative of variable i
-                partial_derivative_i = (self._simModel.get_obj_value(x + epsilon_matrix[i])-f)/self._derivativeStep.get_value(itr)
+                partial_derivative_i = (self._simModel.get_obj_value(x + epsilon_matrix[i])-f)\
+                                       /self._derivativeStep.get_value(itr)
                 # append this partial derivative
                 Df = np.append(Df, [partial_derivative_i])
 
@@ -120,9 +114,6 @@ class StochasticApproximation:
 
             # find a new x: x_new = x - step_size*f'(x)/||f'(x)||
             x = x - self._stepSize.get_value(itr)*nDf
-            # penalty if any of x < 0
-            if penalty_or_not==1 and (x<0).any():
-                x=abs(x)*self._penalty.get_value(itr)
 
             # evaluate the model at x
             f = self._simModel.get_obj_value(x)
@@ -133,10 +124,10 @@ class StochasticApproximation:
             self.itr_nDf.append(nDf)
             self.itr_f.append(f)
 
-        #use the last nLastItrsToAve to calculate optimal x and optimal objective value
-        length=len(self.itr_x)-self._nLastItrsToAve
-        x_cal=self.itr_x[length:]
-        f_cal=self.itr_f[length:]
+        # use the last nLastItrsToAve to calculate optimal x and optimal objective value
+        length = len(self.itr_x) - n_last_itrs_to_ave
+        x_cal = self.itr_x[length:]
+        f_cal = self.itr_f[length:]
 
         # store the optimal x and optimal objective value
         self.xStar = sum(x_cal)/len(x_cal)
