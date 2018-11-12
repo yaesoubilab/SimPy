@@ -10,15 +10,16 @@ class Xto2(SimModel):
         """
 
         SimModel.__init__(self)
-        # create a random number generator
-        self._rng = RVGs.RNG(seed=1)
+
         # create a normal distribution to model noise
         self._err = RVGs.Normal(loc=0, scale=err_sigma)
 
-    def get_obj_value(self, x):
+    def get_obj_value(self, x, seed_index=0):
         """ returns one realization from x^2+noise """
+        # create a random number generator
+        rng = RVGs.RNG(seed=seed_index)
 
-        return (x[0]+1)*(x[0]+1) + x[1]*x[1] + self._err.sample(self._rng)
+        return (x[0]+1)*(x[0]+1) + x[1]*x[1] + self._err.sample(rng)
 
 
 class Xto2Constrained(SimModel):
@@ -30,21 +31,22 @@ class Xto2Constrained(SimModel):
         """
 
         SimModel.__init__(self)
-        # create a random number generator
-        self._rng = RVGs.RNG(seed=1)
         # create a normal distribution to model noise
         self._err = RVGs.Normal(loc=0, scale=err_sigma)
         # penalty
         self._penalty = penalty
 
-    def get_obj_value(self, x):
+    def get_obj_value(self, x, seed_index=0):
         """ returns one realization from x^2+noise """
 
-        accum_penalty = 0  # accumulated penalty
+        # create a random number generator
+        rng = RVGs.RNG(seed=seed_index)
+
+        accum_penalty = 0       # accumulated penalty
 
         # test the feasibility
         if x[1] < 1:
             accum_penalty += self._penalty * pow(x[1] - 1, 2)
             x[1] = 1
 
-        return (x[0]+1)*(x[0]+1) + x[1]*x[1] + self._err.sample(self._rng) + accum_penalty
+        return (x[0]+1)*(x[0]+1) + x[1]*x[1] + self._err.sample(rng) + accum_penalty
