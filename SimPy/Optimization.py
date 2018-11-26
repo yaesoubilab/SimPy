@@ -61,6 +61,8 @@ class StochasticApproximation:
         self.itr_x = []     # x values over iterations
         self.itr_nDf = []    # normalized derivatives of f over iterations
         self.itr_f = []     # f values over iterations
+        self.itr_stepmove=[] #moving steps over iterations
+        self.itr_stepdf=[] #harmonic step size over iterations
 
     def minimize(self, max_itr, n_last_itrs_to_ave, x0):
         """
@@ -128,6 +130,8 @@ class StochasticApproximation:
             self.itr_x.append(x)
             self.itr_f.append(f)
             self.itr_nDf.append(nDf)
+            self.itr_stepdf.append(step_df)
+            self.itr_stepmove.append(step_move)
 
             # find a new x: x_new = x - step_size*f'(x)/||f'(x)||
             x = x - step_move * nDf
@@ -180,4 +184,42 @@ class StochasticApproximation:
         # label the x-axis of the last figure
         axarr[n_vars-1].set(xlabel='Iteration')
 
+        plt.show()
+
+    def plot_Df_irs(self):
+        """
+        :return: plot of how the derivative is changing over iterations.
+        """
+        n_vars=len(self.itr_nDf[0])
+        fig, ax = plt.subplots(n_vars, 1, sharex=True)
+
+        for i in range(n_vars):
+            # find x_i (ith dimension of x) over iterations
+            df_i_itr = []
+            for itr in range(len(self.itr_i)):
+                df_i_itr.append(self.itr_nDf[itr][i])
+
+            ax[i].plot(self.itr_i, df_i_itr)  # , color=ser.color, alpha=0.5)
+            ax[i].set(ylabel='nDf' + str(i))
+        # label the x-axis of nDf
+        ax[n_vars - 1].set(xlabel='Iteration')
+
+        plt.show()
+
+    def plot_step_move(self):
+        """
+        :return: plot of how the harmonic step size are changing over iterations.
+        """
+        plt.plot(self.itr_i,self.itr_stepmove)
+        plt.ylabel('harmonic step size')
+        plt.xlabel('iterations')
+        plt.show()
+
+    def plot_step_Df(self):
+        """
+        :return: plot of how the derivative step size are changing over iterations.
+        """
+        plt.plot(self.itr_i,self.itr_stepdf)
+        plt.ylabel('derivative step size')
+        plt.xlabel('iterations')
         plt.show()
