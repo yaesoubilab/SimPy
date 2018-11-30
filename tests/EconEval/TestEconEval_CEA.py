@@ -37,7 +37,7 @@ myCEA.show_CE_plane('CE Plane with unpaired observations and no clouds',
 
 # table
 print('')
-myCEA.build_CE_table(interval=ce.Interval.CONFIDENCE)
+myCEA.build_CE_table(interval=ce.Interval.CONFIDENCE, cost_multiplier=1, effect_multiplier=1)
 
 # create a CEA object -- paired
 myCEA2 = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)

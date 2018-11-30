@@ -159,16 +159,16 @@ class _EconEval:
 
     def get_shifted_strategies(self):
         """
-        :return: the list of strategies after being shifted so that the first strategy falls on the origin
+        :return: the list of strategies after being shifted so that the first strategy lies on the origin of
+            the cost-effectiveness plane
         """
         return self._shifted_strategies
 
 
 class CEA(_EconEval):
-    """ class for doing cost-effectiveness analysis """
+    """ class for conducting cost-effectiveness analysis """
 
-    def __init__(self, strategies, if_paired, if_find_frontier=True, health_measure=HealthMeasure.UTILITY,
-                 cost_ratio=1, effect_ratio=1):
+    def __init__(self, strategies, if_paired, if_find_frontier=True, health_measure=HealthMeasure.UTILITY):
         """
         :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: set to true to indicate that the strategies are paired
@@ -206,7 +206,7 @@ class CEA(_EconEval):
         # operate on local variable data rather than self attribute
         df_shifted_sorted = self._dfStrategies_shifted.sort_values('E[Cost]')
 
-        # apply criteria 1
+        # apply criteria 1 (strict dominance)
         for i in range(self._n):
             # strategies with higher cost and lower Effect are dominated
             df_shifted_sorted.loc[
@@ -216,7 +216,7 @@ class CEA(_EconEval):
         # change the color of dominated strategies to blue
         df_shifted_sorted.loc[df_shifted_sorted['Dominated'] == True, 'Color'] = 'blue'
 
-        # apply criteria 2
+        # apply criteria 2 (weak dominance)
         # select all non-dominated strategies
         df2 = df_shifted_sorted.loc[df_shifted_sorted['Dominated']==False]
         n2 = len(df2['E[Cost]'])
@@ -381,7 +381,7 @@ class CEA(_EconEval):
                        interval=Interval.NO_INTERVAL,
                        alpha=0.05,
                        cost_digits=0, effect_digits=2, icer_digits=1,
-                       cost_ratio=1, effect_ratio=1,
+                       cost_multiplier=1, effect_multiplier=1,
                        file_name='CETable'):
         """
         :param interval: type of interval to report for the cost, effect and ICER estimates,
@@ -390,9 +390,9 @@ class CEA(_EconEval):
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
         :param icer_digits: digits to round ICER estimates to
-        :param cost_ratio: set to 1/1000 or 1/100,000 to represent cost in terms of
+        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
                 thousands or hundred thousands unit
-        :param effect_ratio: set to 1/1000 or 1/100,000 to represent effect in terms of
+        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
                 thousands or hundred thousands unit
         :param file_name: address and file name where the CEA results should be saved to
         :return: output csv file called in local environment
@@ -661,31 +661,37 @@ class CEA(_EconEval):
         # put estimates and intervals together
         for i in self._dfStrategies.index:
             out_table.loc[i, 'E[Cost]'] = \
-                FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Cost]'],
-                                                    out_intervals.loc[i, 'Cost_I'],
-                                                    cost_digits, format=',')
+                FormatFunc.format_estimate_interval(
+                    estimate=output_estimates.loc[i, 'E[Cost]']*cost_multiplier,
+                    interval=[x*cost_multiplier for x in out_intervals.loc[i, 'Cost_I']],
+                    deci=cost_digits, format=',')
+
             out_table.loc[i, 'E[Effect]'] = \
-                FormatFunc.format_estimate_interval(output_estimates.loc[i, 'E[Effect]'],
-                                                    out_intervals.loc[i, 'Effect_I'],
-                                                    effect_digits, format=',')
+                FormatFunc.format_estimate_interval(
+                    estimate=output_estimates.loc[i, 'E[Effect]']*effect_multiplier,
+                    interval=[x * effect_multiplier for x in out_intervals.loc[i, 'Effect_I']],
+                    deci=effect_digits, format=',')
 
         # add the incremental and ICER estimates and intervals
         for i in range(1, n_frontier_strategies):
 
             out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
-                FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dCost]'],
-                                                    out_intervals.loc[frontier_strategies.index[i], 'dCost_I'],
-                                                    cost_digits, format=',')
+                FormatFunc.format_estimate_interval(
+                    estimate=output_estimates.loc[frontier_strategies.index[i], 'E[dCost]']*cost_multiplier,
+                    interval=[x * cost_multiplier for x in out_intervals.loc[frontier_strategies.index[i], 'dCost_I']],
+                    deci=cost_digits, format=',')
 
             out_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
-                FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'E[dEffect]'],
-                                                    out_intervals.loc[frontier_strategies.index[i], 'dEffect_I'],
-                                                    effect_digits, format=',')
+                FormatFunc.format_estimate_interval(
+                    estimate=output_estimates.loc[frontier_strategies.index[i], 'E[dEffect]']*effect_multiplier,
+                    interval=[x * effect_multiplier for x in out_intervals.loc[frontier_strategies.index[i], 'dEffect_I']],
+                    deci=effect_digits, format=',')
 
             out_table.loc[frontier_strategies.index[i], 'ICER'] = \
-                FormatFunc.format_estimate_interval(output_estimates.loc[frontier_strategies.index[i], 'ICER'],
-                                                    out_intervals.loc[frontier_strategies.index[i], 'ICER_I'],
-                                                    icer_digits, format=',')
+                FormatFunc.format_estimate_interval(
+                    estimate=output_estimates.loc[frontier_strategies.index[i], 'ICER'],
+                    interval=out_intervals.loc[frontier_strategies.index[i], 'ICER_I'],
+                    deci=icer_digits, format=',')
 
         # define column order and write csv
         out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
