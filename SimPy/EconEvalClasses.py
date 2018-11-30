@@ -167,7 +167,8 @@ class _EconEval:
 class CEA(_EconEval):
     """ class for doing cost-effectiveness analysis """
 
-    def __init__(self, strategies, if_paired, if_find_frontier=True, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, strategies, if_paired, if_find_frontier=True, health_measure=HealthMeasure.UTILITY,
+                 cost_ratio=1, effect_ratio=1):
         """
         :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: set to true to indicate that the strategies are paired
@@ -380,53 +381,61 @@ class CEA(_EconEval):
                        interval=Interval.NO_INTERVAL,
                        alpha=0.05,
                        cost_digits=0, effect_digits=2, icer_digits=1,
+                       cost_ratio=1, effect_ratio=1,
                        file_name='CETable'):
         """
         :param interval: type of interval to report for the cost, effect and ICER estimates,
-                        can take values from
-                        Interval.NO_INTERVAL, Interval.CONFIDENCE, Interval.PREDICTION
+                        can take values from Interval.NO_INTERVAL, Interval.CONFIDENCE, Interval.PREDICTION
         :param alpha: significance level
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
         :param icer_digits: digits to round ICER estimates to
+        :param cost_ratio: set to 1/1000 or 1/100,000 to represent cost in terms of
+                thousands or hundred thousands unit
+        :param effect_ratio: set to 1/1000 or 1/100,000 to represent effect in terms of
+                thousands or hundred thousands unit
         :param file_name: address and file name where the CEA results should be saved to
         :return: output csv file called in local environment
         """
 
-        # initialize the table
+        # initialize the cost-effectiveness table
         self._dfStrategies['E[dCost]'] = "-"
         self._dfStrategies['E[dEffect]'] = "-"
         self._dfStrategies['ICER'] = "Dominated"
 
         # get strategies on the frontier
         frontier_strategies = self._dfStrategies.loc[self._dfStrategies["Dominated"] == False].sort_values('E[Cost]')
+
         # number of strategies on the frontier
         n_frontier_strategies = frontier_strategies.shape[0]
 
-        incr_cost = []      # list of incremental costs
-        incr_effect = []    # list of incremental effects
-        ICER = []           # list of ICER estimates
+        list_incr_costs = []      # list of incremental costs
+        list_incr_effects = []    # list of incremental effects
+        list_ICERs = []           # list of ICER estimates
 
         # calculate incremental costs, incremental effects and ICER
         if n_frontier_strategies > 1:
             for i in range(1, n_frontier_strategies):
+
                 # incremental cost
                 d_cost = frontier_strategies["E[Cost]"].iloc[i]-frontier_strategies["E[Cost]"].iloc[i-1]
-                incr_cost = np.append(incr_cost, d_cost)
+                list_incr_costs = np.append(list_incr_costs, d_cost)
+
                 # incremental effect
                 d_effect = self._effect_multiplier\
                            *(frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1])
                 # if d_effect == 0:
                 #     raise ValueError('invalid value of E[dEffect], the ratio is not computable')
-                incr_effect = np.append(incr_effect, d_effect)
+                list_incr_effects = np.append(list_incr_effects, d_effect)
+
                 # ICER
-                ICER = np.append(ICER, d_cost/d_effect)
+                list_ICERs = np.append(list_ICERs, d_cost/d_effect)
 
             # format the numbers
             ind_change = frontier_strategies.index[1:]
-            self._dfStrategies.loc[ind_change, 'E[dCost]'] = incr_cost.astype(float).round(cost_digits)
-            self._dfStrategies.loc[ind_change, 'E[dEffect]'] = incr_effect.astype(float).round(effect_digits)
-            self._dfStrategies.loc[ind_change, 'ICER'] = ICER.astype(float).round(icer_digits)
+            self._dfStrategies.loc[ind_change, 'E[dCost]'] = list_incr_costs.astype(float).round(cost_digits)
+            self._dfStrategies.loc[ind_change, 'E[dEffect]'] = list_incr_effects.astype(float).round(effect_digits)
+            self._dfStrategies.loc[ind_change, 'ICER'] = list_ICERs.astype(float).round(icer_digits)
 
         # put - for the ICER of the first strategy on the frontier
         self._dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
@@ -553,11 +562,11 @@ class CEA(_EconEval):
                 out_intervals_CI.loc[i, 'Dominated'] = self._dfStrategies.loc[i, 'Dominated']
 
                 # confidence interval of cost
-                temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_t_CI(alpha)
+                temp_c = Stat.SummaryStat("", self._strategies[i].costObs).get_t_CI(alpha)
                 out_intervals_CI.loc[i, 'Cost_I'] = temp_c
 
                 # confidence interval of effect
-                temp_e = Stat.SummaryStat("",self._strategies[i].effectObs).get_t_CI(alpha)
+                temp_e = Stat.SummaryStat("", self._strategies[i].effectObs).get_t_CI(alpha)
                 out_intervals_CI.loc[i, 'Effect_I'] = temp_e
 
             # calculate confidence intervals for incremental cost and effect and ICER
