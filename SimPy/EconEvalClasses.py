@@ -1102,15 +1102,18 @@ class NMB_indp(_NMB):
         _NMB.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
 
     def get_CI(self, wtp, alpha):
-        # reform 2 independent variables to pass in DifferenceStatIndp class
+
+        # NMB observations of two alternatives
         stat_new = wtp * self._effectNew * self._effect_multiplier - self._costNew
         stat_base = wtp * self._effectBase * self._effect_multiplier - self._costBase
+
         # to get CI for stat_new - stat_base
         diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
         return diff_stat.get_t_CI(alpha)
 
     def get_PI(self, wtp, alpha):
-        # reform 2 independent variables to pass in DifferenceStatIndp class
+
+        # NMB observations of two alternatives
         stat_new = wtp * self._effectNew * self._effect_multiplier - self._costNew
         stat_base = wtp * self._effectBase * self._effect_multiplier - self._costBase
 
