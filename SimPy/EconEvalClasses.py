@@ -8,6 +8,7 @@ import matplotlib.cm as cm
 import pandas as pd
 from SimPy import FigureSupport as Fig
 from SimPy import FormatFunctions as FormatFunc
+from SimPy import  RandomVariantGenerators as RVG
 
 
 def pv(payment, discount_rate, discount_period):
@@ -16,6 +17,13 @@ def pv(payment, discount_rate, discount_period):
     :param discount_rate: discount rate (per period)
     :param discount_period: number of periods to discount the payment
     :return: payment/(1+discount_rate)^discount_period    """
+
+    # error checking
+    assert type(discount_period) is int, "discount_period should be an integer number."
+    if discount_rate < 0 or discount_rate > 1:
+        raise ValueError("discount_rate should be a number between 0 and 1.")
+    if discount_period < 0:
+        raise ValueError("discount_period cannot be less than 0.")
 
     return payment * pow(1 + discount_rate, -discount_period)
 
@@ -27,13 +35,19 @@ def get_an_interval(data, interval, alpha=0.05):
     :param alpha: significance level
     :return: a confidence or prediction interval of data
     """
+
+    assert type(data) is list or type(data) is np.ndarray, \
+        "data should be list or np.array."
+    assert type(interval) is Interval, \
+        "interval should be Interval.CONFIDENCE or Interval.PREDICTION."
+
     sum_stat = Stat.SummaryStat('', data)
     if interval == Interval.CONFIDENCE:
         return sum_stat.get_t_CI(alpha)
     elif interval == Interval.PREDICTION:
         return sum_stat.get_PI(alpha)
     else:
-        return None
+        raise ValueError("Invalid value for interval.")
 
 
 class Interval(Enum):
@@ -54,15 +68,22 @@ class Strategy:
         :param cost_obs: list or numpy.array of cost observations
         :param effect_obs: list or numpy.array of effect observations
         """
+
+        assert type(cost_obs) is list or type(cost_obs) is np.ndarray, \
+            "cost_obs should be list or np.array."
+        assert type(effect_obs) is list or type(effect_obs) is np.ndarray, \
+            "effect_obs should be list or np.array."
+
         self.name = name
-        if type(cost_obs) == list:
+        if type(cost_obs) is list:
             self.costObs = np.array(cost_obs)
         else:
             self.costObs = cost_obs
-        if type(effect_obs) == list:
+        if type(effect_obs) is list:
             self.effectObs = np.array(effect_obs)
         else:
             self.effectObs = effect_obs
+
         self.aveCost = np.average(self.costObs)
         self.aveEffect = np.average(self.effectObs)
         self.ifDominated = False
@@ -828,7 +849,17 @@ class ComparativeEconMeasure:
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
-        np.random.seed(1)
+
+        assert type(cost_new) is list or type(cost_new) is np.ndarray, \
+            "cost_new should be list or np.array."
+        assert type(effect_new) is list or type(effect_new) is np.ndarray, \
+            "effect_new should be list or np.array."
+        assert type(cost_base) is list or type(cost_base) is np.ndarray, \
+            "cost_base should be list or np.array."
+        assert type(effect_base) is list or type(effect_base) is np.ndarray, \
+            "effect_base should be list or np.array."
+        assert type(health_measure) is HealthMeasure, \
+            "health_measure should be of type HealthMeasure."
 
         self.name = name
         self._costNew = cost_new          # cost data for the new strategy
@@ -867,6 +898,7 @@ class _ICER(ComparativeEconMeasure):
         """
         # initialize the base class
         ComparativeEconMeasure.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
+
         # calculate ICER
         if self._delta_ave_effect == 0:
             warnings.warn(self.name + ': Mean incremental effect is 0. ICER is not computable.')
@@ -879,10 +911,11 @@ class _ICER(ComparativeEconMeasure):
         """ return ICER """
         return self._ICER
 
-    def get_CI(self, alpha, num_bootstrap_samples):
+    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
+        :param rng: random number generator
         :return: confidence interval in the format of list [l, u]
         """
         # abstract method to be overridden in derived classes to process an event
@@ -919,8 +952,18 @@ class ICER_paired(_ICER):
         # create a ratio stat
         self._ratio_stat = np.divide(self._deltaCost, self._deltaEffect)
 
-    def get_CI(self, alpha, num_bootstrap_samples):
+    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
+        """
+        :param alpha: significance level, a value from [0, 1]
+        :param num_bootstrap_samples: number of bootstrap samples
+        :param rng: random number generator
+        :return: confidence interval in the format of list [l, u]
+        """
 
+        if rng is None:
+            rng = RVG.RNG(seed=1)
+        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
+        
         # check if ICER is computable
         if min(self._deltaEffect) == 0 and max(self._deltaEffect) == 0:
             warnings.warn(self.name + ': Incremental health observations are 0, ICER is not computable')
@@ -931,7 +974,7 @@ class ICER_paired(_ICER):
             for i in range(num_bootstrap_samples):
                 # because cost and health are paired as one observation,
                 # so do delta cost and delta health, should sample them together
-                index = np.random.choice(range(len(self._deltaCost)), size=len(self._deltaCost), replace=True)
+                index = rng.choice(range(len(self._deltaCost)), size=len(self._deltaCost), replace=True)
                 d_cost = self._deltaCost[index]
                 d_effect = self._deltaEffect[index]
 
@@ -966,18 +1009,24 @@ class ICER_indp(_ICER):
         # initialize the base class
         _ICER.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
 
-    def get_CI(self, alpha, num_bootstrap_samples):
+    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
+        :param rng: random number generator
         :return: confidence interval in the format of list [l, u]
         """
+
+        if rng is None:
+            rng = RVG.RNG(seed=1)
+        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
+
         ICERs = np.zeros(num_bootstrap_samples)
 
         n_new = len(self._costNew)
         n_base = len(self._costBase)
         for i in range(num_bootstrap_samples):
-            index_new_i = np.random.choice(range(n_new), size=n_new, replace=True)
+            index_new_i = rng.choice(range(n_new), size=n_new, replace=True)
             cost_new_i = self._costNew[index_new_i]
             effect_new_i = self._effectNew[index_new_i]
 
@@ -1043,7 +1092,7 @@ class _NMB(ComparativeEconMeasure):
         :param alpha: significance level, a value from [0, 1]
         :return: confidence interval in the format of list [l, u]
         """
-        # abstract method to be overridden in derived classes to process an event
+        # abstract method to be overridden in derived classes
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
     def get_PI(self, wtp, alpha):
@@ -1052,7 +1101,7 @@ class _NMB(ComparativeEconMeasure):
         :param alpha: significance level, a value from [0, 1]
         :return: percentile interval in the format of list [l, u]
         """
-        # abstract method to be overridden in derived classes to process an event
+        # abstract method to be overridden in derived classes
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 

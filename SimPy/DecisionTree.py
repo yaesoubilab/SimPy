@@ -153,6 +153,7 @@ class TerminalNode(Node):
 
         return terminal_prob
 
+
 def create_future_nodes(names, dict_chances, dict_terminals, cum_prob=1, p_future_nodes=[]):
     """ gets the names of future nodes and return the future node objects
     :param names: names of future nodes
