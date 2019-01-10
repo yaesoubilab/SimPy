@@ -439,18 +439,18 @@ class CEA(_EconEval):
             for i in range(1, n_frontier_strategies):
 
                 # incremental cost
-                d_cost = frontier_strategies["E[Cost]"].iloc[i]-frontier_strategies["E[Cost]"].iloc[i-1]
-                list_incr_costs = np.append(list_incr_costs, d_cost)
+                incremental_cost = frontier_strategies["E[Cost]"].iloc[i]-frontier_strategies["E[Cost]"].iloc[i-1]
+                list_incr_costs = np.append(list_incr_costs, incremental_cost)
 
                 # incremental effect
-                d_effect = self._effect_multiplier\
+                incremental_effect = self._effect_multiplier\
                            *(frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1])
                 # if d_effect == 0:
                 #     raise ValueError('invalid value of E[dEffect], the ratio is not computable')
-                list_incr_effects = np.append(list_incr_effects, d_effect)
+                list_incr_effects = np.append(list_incr_effects, incremental_effect)
 
                 # ICER
-                list_ICERs = np.append(list_ICERs, d_cost/d_effect)
+                list_ICERs = np.append(list_ICERs, incremental_cost/incremental_effect)
 
             # format the numbers
             ind_change = frontier_strategies.index[1:]
@@ -501,11 +501,11 @@ class CEA(_EconEval):
                 out_intervals_PI.loc[i, 'Dominated'] = self._dfStrategies.loc[i, 'Dominated']
 
                 # prediction interval of cost
-                temp_c = Stat.SummaryStat("",self._strategies[i].costObs).get_PI(alpha)
+                temp_c = Stat.SummaryStat("", self._strategies[i].costObs).get_PI(alpha)
                 out_intervals_PI.loc[i, 'Cost_I'] = temp_c
 
                 # prediction interval of effect
-                temp_e = Stat.SummaryStat("",self._strategies[i].effectObs).get_PI(alpha)
+                temp_e = Stat.SummaryStat("", self._strategies[i].effectObs).get_PI(alpha)
                 out_intervals_PI.loc[i, 'Effect_I'] = temp_e
 
             # calculate prediction intervals for incremental cost and effect and ICER
@@ -522,17 +522,19 @@ class CEA(_EconEval):
 
                     # calculate the prediction interval of incremental effect
                     PI_PariedDiffEffect = Stat.DifferenceStatPaired("",
-                        self._strategies[frontier_strategies.index[i]].effectObs,
-                        self._strategies[frontier_strategies.index[i-1]].effectObs).get_PI(alpha)
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._effect_multiplier,
+                        self._strategies[frontier_strategies.index[i-1]].effectObs*self._effect_multiplier
+                                                                    ).get_PI(alpha)
                     # add the interval to the data frame
                     out_intervals_PI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
                         PI_PariedDiffEffect
 
                     # calculate the prediction interval of ICER
-                    PI_PairedICER = ICER_paired("", self._strategies[frontier_strategies.index[i]].costObs,
-                                            self._strategies[frontier_strategies.index[i]].effectObs,
-                                            self._strategies[frontier_strategies.index[i-1]].costObs,
-                                            self._strategies[frontier_strategies.index[i-1]].effectObs)
+                    PI_PairedICER = ICER_paired(
+                        "", self._strategies[frontier_strategies.index[i]].costObs,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._effect_multiplier,
+                        self._strategies[frontier_strategies.index[i-1]].costObs,
+                        self._strategies[frontier_strategies.index[i-1]].effectObs*self._effect_multiplier)
                     # add the interval to the data frame
                     out_intervals_PI.loc[frontier_strategies.index[i], 'ICER_I'] = \
                         PI_PairedICER.get_PI(alpha)
@@ -557,10 +559,12 @@ class CEA(_EconEval):
                         PI_indpDiffEffect
 
                     # calculate the prediction interval of ICER
-                    PI_indpICER = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
-                                            self._strategies[frontier_strategies.index[i]].effectObs,
-                                            self._strategies[frontier_strategies.index[i - 1]].costObs,
-                                            self._strategies[frontier_strategies.index[i - 1]].effectObs)
+                    PI_indpICER = ICER_indp(
+                        "",
+                        self._strategies[frontier_strategies.index[i]].costObs,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._effect_multiplier,
+                        self._strategies[frontier_strategies.index[i - 1]].costObs,
+                        self._strategies[frontier_strategies.index[i - 1]].effectObs*self._effect_multiplier)
                     # add the interval to the data frame
                     out_intervals_PI.loc[frontier_strategies.index[i], 'ICER_I'] = \
                         PI_indpICER.get_PI(alpha)
@@ -622,10 +626,12 @@ class CEA(_EconEval):
                         CI_PariedDiffEffect
 
                     # calculate the confidence interval of incremental ICER
-                    CI_PairedICER = ICER_paired(name, self._strategies[frontier_strategies.index[i]].costObs,
-                                            self._strategies[frontier_strategies.index[i]].effectObs,
-                                            self._strategies[frontier_strategies.index[i-1]].costObs,
-                                            self._strategies[frontier_strategies.index[i-1]].effectObs)
+                    CI_PairedICER = ICER_paired(
+                        name,
+                        self._strategies[frontier_strategies.index[i]].costObs,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._effect_multiplier,
+                        self._strategies[frontier_strategies.index[i-1]].costObs,
+                        self._strategies[frontier_strategies.index[i-1]].effectObs*self._effect_multiplier)
 
                     # add the interval to the data frame
                     out_intervals_CI.loc[frontier_strategies.index[i], 'ICER_I'] = \
@@ -645,18 +651,21 @@ class CEA(_EconEval):
 
                     # calculate the confidence interval of incremental effect
                     CI_indpDiffEffect = Stat.DifferenceStatIndp("",
-                        self._strategies[frontier_strategies.index[i]].effectObs,
-                        self._strategies[frontier_strategies.index[i - 1]].effectObs).get_t_CI(alpha)
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._effect_multiplier,
+                        self._strategies[frontier_strategies.index[i - 1]].effectObs*self._effect_multiplier
+                                                                ).get_t_CI(alpha)
 
                     # add the interval to the data frame
                     out_intervals_CI.loc[frontier_strategies.index[i], 'dEffect_I'] = \
                         CI_indpDiffEffect
 
                     # calculate the confidence interval of incremental ICER
-                    CI_indpICER = ICER_indp("", self._strategies[frontier_strategies.index[i]].costObs,
-                                            self._strategies[frontier_strategies.index[i]].effectObs,
-                                            self._strategies[frontier_strategies.index[i - 1]].costObs,
-                                            self._strategies[frontier_strategies.index[i - 1]].effectObs)
+                    CI_indpICER = ICER_indp(
+                        "",
+                        self._strategies[frontier_strategies.index[i]].costObs,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._effect_multiplier,
+                        self._strategies[frontier_strategies.index[i - 1]].costObs,
+                        self._strategies[frontier_strategies.index[i - 1]].effectObs*self._effect_multiplier)
 
                     # add the interval to the data frame
                     out_intervals_CI.loc[frontier_strategies.index[i], 'ICER_I'] = \
