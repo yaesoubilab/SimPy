@@ -848,70 +848,71 @@ class CBA(_EconEval):
 
 
 class ComparativeEconMeasure:
-    def __init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
-        :param cost_new: (list or numpy.array) cost data for the new strategy
-        :param effect_new: (list or numpy.array) effect data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for the base line
-        :param effect_base: (list or numpy.array) effect data for the base line
+        :param costs_new: (list or numpy.array) cost data for the new strategy
+        :param effects_new: (list or numpy.array) effect data for the new strategy
+        :param costs_base: (list or numpy.array) cost data for the base line
+        :param effects_base: (list or numpy.array) effect data for the base line
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
 
-        assert type(cost_new) is list or type(cost_new) is np.ndarray, \
+        assert type(costs_new) is list or type(costs_new) is np.ndarray, \
             "cost_new should be list or np.array."
-        assert type(effect_new) is list or type(effect_new) is np.ndarray, \
+        assert type(effects_new) is list or type(effects_new) is np.ndarray, \
             "effect_new should be list or np.array."
-        assert type(cost_base) is list or type(cost_base) is np.ndarray, \
+        assert type(costs_base) is list or type(costs_base) is np.ndarray, \
             "cost_base should be list or np.array."
-        assert type(effect_base) is list or type(effect_base) is np.ndarray, \
+        assert type(effects_base) is list or type(effects_base) is np.ndarray, \
             "effect_base should be list or np.array."
         assert type(health_measure) is HealthMeasure, \
             "health_measure should be of type HealthMeasure."
 
         self.name = name
-        self._costNew = cost_new          # cost data for the new strategy
-        self._effectNew = effect_new      # effect data for the new strategy
-        self._costBase = cost_base        # cost data for teh base line
-        self._effectBase = effect_base    # effect data for the base line
+        self._costsNew = costs_new          # cost data for the new strategy
+        self._effectsNew = effects_new      # effect data for the new strategy
+        self._costsBase = costs_base        # cost data for teh base line
+        self._effectsBase = effects_base    # effect data for the base line
         # if QALY or DALY is being used
         self._effect_multiplier = 1 if health_measure == HealthMeasure.UTILITY else -1
 
         # convert input data to numpy.array if needed
-        if type(cost_new) == list:
-            self._costNew = np.array(cost_new)
-        if type(effect_new) == list:
-            self._effectNew = np.array(effect_new)
-        if type(cost_base) == list:
-            self._costBase = np.array(cost_base)
-        if type(effect_base) == list:
-            self._effectBase = np.array(effect_base)
+        if type(costs_new) == list:
+            self._costsNew = np.array(costs_new)
+        if type(effects_new) == list:
+            self._effectsNew = np.array(effects_new)
+        if type(costs_base) == list:
+            self._costsBase = np.array(costs_base)
+        if type(effects_base) == list:
+            self._effectsBase = np.array(effects_base)
 
         # calculate the difference in average cost and effect
-        self._delta_ave_cost = np.average(self._costNew) - np.average(self._costBase)
+        self._delta_ave_cost = np.average(self._costsNew) - np.average(self._costsBase)
         # change in effect: DALY averted or QALY gained
-        self._delta_ave_effect = (np.average(self._effectNew) - np.average(self._effectBase)) * self._effect_multiplier
+        self._delta_ave_effect = (np.average(self._effectsNew) - np.average(self._effectsBase)) \
+                                 * self._effect_multiplier
 
 
 class _ICER(ComparativeEconMeasure):
-    def __init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
-        :param cost_new: (list or numpy.array) cost data for the new strategy
-        :param effect_new: (list or numpy.array) effect data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for the base line
-        :param effect_base: (list or numpy.array) effect data for the base line
+        :param costs_new: (list or numpy.array) cost data for the new strategy
+        :param effects_new: (list or numpy.array) effect data for the new strategy
+        :param costs_base: (list or numpy.array) cost data for the base line
+        :param effects_base: (list or numpy.array) effect data for the base line
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         # initialize the base class
-        ComparativeEconMeasure.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
+        ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # calculate ICER
         if self._delta_ave_effect == 0:
             warnings.warn(self.name + ': Mean incremental effect is 0. ICER is not computable.')
-            self.ICER = math.nan
+            self._ICER = math.nan
         else:
             # $ per DALY averted or $ per QALY gained
             self._ICER = self._delta_ave_cost/self._delta_ave_effect
@@ -941,25 +942,30 @@ class _ICER(ComparativeEconMeasure):
 
 class ICER_paired(_ICER):
 
-    def __init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
-        :param cost_new: (list or numpy.array) cost data for the new strategy
-        :param effect_new: (list or numpy.array) health data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for the base line
-        :param effect_base: (list or numpy.array) health data for the base line
+        :param costs_new: (list or numpy.array) cost data for the new strategy
+        :param effects_new: (list or numpy.array) health data for the new strategy
+        :param costs_base: (list or numpy.array) cost data for the base line
+        :param effects_base: (list or numpy.array) health data for the base line
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
+
+        # all cost and effects should have the same length
+        if not (len(costs_new) == len(effects_new) == len(costs_base) == len(effects_base)):
+            raise ValueError('Paired ICER assume the same number of observations for all cost and health outcomes.')
+
         # initialize the base class
-        _ICER.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
+        _ICER.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # incremental observations
-        self._deltaCost = self._costNew - self._costBase
-        self._deltaEffect = (self._effectNew - self._effectBase)*self._effect_multiplier
+        self._deltaCosts = self._costsNew - self._costsBase
+        self._deltaEffects = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
-        # create a ratio stat
-        self._ratio_stat = np.divide(self._deltaCost, self._deltaEffect)
+        # calculate ICERs
+        self._icers = np.divide(self._deltaCosts, self._deltaEffects)
 
     def get_CI(self, alpha, num_bootstrap_samples, rng=None):
         """
@@ -969,124 +975,144 @@ class ICER_paired(_ICER):
         :return: confidence interval in the format of list [l, u]
         """
 
+        # create a new random number generator if one is not provided.
         if rng is None:
             rng = RVG.RNG(seed=1)
         assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
         
         # check if ICER is computable
-        if min(self._deltaEffect) == 0 and max(self._deltaEffect) == 0:
+        if min(self._deltaEffects) == 0 and max(self._deltaEffects) == 0:
             warnings.warn(self.name + ': Incremental health observations are 0, ICER is not computable')
             return [math.nan, math.nan]
         else:
             # bootstrap algorithm
-            ICERs = np.zeros(num_bootstrap_samples)
+            icer_bootstrap_means = np.zeros(num_bootstrap_samples)
             for i in range(num_bootstrap_samples):
                 # because cost and health are paired as one observation,
                 # so do delta cost and delta health, should sample them together
-                index = rng.choice(range(len(self._deltaCost)), size=len(self._deltaCost), replace=True)
-                d_cost = self._deltaCost[index]
-                d_effect = self._deltaEffect[index]
+                indices = rng.choice(range(len(self._deltaCosts)), size=len(self._deltaCosts), replace=True)
+                sampled_delta_costs = self._deltaCosts[indices]
+                sampled_delta_effects = self._deltaEffects[indices]
 
-                ave_d_cost = np.average(d_cost)
-                ave_d_effect = np.average(d_effect)
+                ave_delta_cost = np.average(sampled_delta_costs)
+                ave_delta_effect = np.average(sampled_delta_effects)
 
                 # assert all the means should not be 0
-                if np.average(ave_d_effect) == 0:
+                if np.average(ave_delta_effect) == 0:
                      warnings.warn(
                          self.name + ': Mean incremental health is 0 for one bootstrap sample, ICER is not computable')
 
-                ICERs[i] = ave_d_cost/ave_d_effect - self._ICER
+                icer_bootstrap_means[i] = ave_delta_cost/ave_delta_effect - self._ICER
 
-        return self._ICER - np.percentile(ICERs, [100*(1-alpha/2.0), 100*alpha/2.0])
-
-    def get_PI(self, alpha):
-        return np.percentile(self._ratio_stat, [100*alpha/2.0, 100*(1-alpha/2.0)])
-
-
-class ICER_indp(_ICER):
-
-    def __init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure=HealthMeasure.UTILITY):
-        """
-        :param cost_new: (list or numpy.array) cost data for the new strategy
-        :param effect_new: (list or numpy.array) health data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for the base line
-        :param effect_base: (list or numpy.array) health data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
-        (e.g. when DALYS is used)
-        """
-        # initialize the base class
-        _ICER.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
-
-    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
-        """
-        :param alpha: significance level, a value from [0, 1]
-        :param num_bootstrap_samples: number of bootstrap samples
-        :param rng: random number generator
-        :return: confidence interval in the format of list [l, u]
-        """
-
-        if rng is None:
-            rng = RVG.RNG(seed=1)
-        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
-
-        ICERs = np.zeros(num_bootstrap_samples)
-
-        n_new = len(self._costNew)
-        n_base = len(self._costBase)
-        for i in range(num_bootstrap_samples):
-            index_new_i = rng.choice(range(n_new), size=n_new, replace=True)
-            cost_new_i = self._costNew[index_new_i]
-            effect_new_i = self._effectNew[index_new_i]
-
-            index_base_i = np.random.choice(range(n_base), size=n_base, replace=True)
-            cost_base_i = self._costBase[index_base_i]
-            effect_base_i = self._effectBase[index_base_i]
-
-            # for each random sample of (c2,h2), (c1,h1)
-            # calculate ICER = (E(c2)-E(c1))/(E(h2)-E(h1))
-            r_temp = np.mean(cost_new_i - cost_base_i)/np.mean(effect_new_i - effect_base_i) * self._effect_multiplier
-            ICERs[i] = np.mean(r_temp)
-
-        return np.percentile(ICERs, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        # returnt the bootstrap interval
+        return self._ICER - np.percentile(icer_bootstrap_means, [100*(1-alpha/2.0), 100*alpha/2.0])
 
     def get_PI(self, alpha):
         """
         :param alpha: significance level, a value from [0, 1]
         :return: prediction interval in the format of list [l, u]
         """
+        return np.percentile(self._icers, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
 
-        n = max(len(self._costNew), len(self._costBase))
+
+class ICER_indp(_ICER):
+
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+        """
+        :param costs_new: (list or numpy.array) cost data for the new strategy
+        :param effects_new: (list or numpy.array) health data for the new strategy
+        :param costs_base: (list or numpy.array) cost data for the base line
+        :param effects_base: (list or numpy.array) health data for the base line
+        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
+        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        (e.g. when DALYS is used)
+        """
+
+        # all cost and effects should have the same length for each alternative
+        if not (len(costs_new) == len(effects_new) and len(costs_base) == len(effects_base)):
+            raise ValueError(
+                'ICER assume the same number of observations for the cost and health outcome of each alternative.')
+
+        # initialize the base class
+        _ICER.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
+
+    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
+        """
+        :param alpha: significance level, a value from [0, 1]
+        :param num_bootstrap_samples: number of bootstrap samples
+        :param rng: random number generator
+        :return: confidence interval in the format of list [l, u]
+        """
+
+        # create a new random number generator if one is not provided.
+        if rng is None:
+            rng = RVG.RNG(seed=1)
+        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
+
+        icer_bootstrap_means = np.zeros(num_bootstrap_samples)
+
+        n_obs_new = len(self._costsNew)
+        n_obs_base = len(self._costsBase)
+        for i in range(num_bootstrap_samples):
+            indices_new = rng.choice(range(n_obs_new), size=n_obs_new, replace=True)
+            costs_new = self._costsNew[indices_new]
+            effects_new = self._effectsNew[indices_new]
+
+            indices_base = np.random.choice(range(n_obs_base), size=n_obs_base, replace=True)
+            costs_base = self._costsBase[indices_base]
+            effects_base = self._effectsBase[indices_base]
+
+            icer_bootstrap_means[i] = \
+                (np.mean(costs_new) - np.mean(costs_base))/(np.mean(effects_new) - np.mean(effects_base)) \
+                * self._effect_multiplier
+
+        return np.percentile(icer_bootstrap_means, [100*alpha/2.0, 100*(1-alpha/2.0)])
+
+    def get_PI(self, alpha, num_bootstrap_samples=0, rng=None):
+        """
+        :param alpha: significance level, a value from [0, 1]
+        :param num_bootstrap_samples: number of bootstrap samples
+        :param rng: random number generator
+        :return: prediction interval in the format of list [l, u]
+        """
+
+        # create a new random number generator if one is not provided.
+        if rng is None:
+            rng = RVG.RNG(seed=1)
+        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
+
+        if num_bootstrap_samples == 0:
+            num_bootstrap_samples = max(len(self._costsNew), len(self._costsBase))
 
         # calculate element-wise ratio as sample of ICER
-        index_new_0 = np.random.choice(range(n), size=n, replace=True)
-        cost_new_0 = self._costNew[index_new_0]
-        effect_new_0 = self._effectNew[index_new_0]
+        indices_new = rng.choice(range(num_bootstrap_samples), size=num_bootstrap_samples, replace=True)
+        costs_new = self._costsNew[indices_new]
+        effects_new = self._effectsNew[indices_new]
 
-        index_base_0 = np.random.choice(range(n), size=n, replace=True)
-        cost_base_0 = self._costBase[index_base_0]
-        effect_base_0 = self._effectBase[index_base_0]
+        indices_base = rng.choice(range(num_bootstrap_samples), size=num_bootstrap_samples, replace=True)
+        costs_base = self._costsBase[indices_base]
+        effects_base = self._effectsBase[indices_base]
 
-        sum_stat_sample_ratio = np.divide(
-            (cost_new_0 - cost_base_0),
-            (effect_new_0 - effect_base_0)*self._effect_multiplier)
+        sample_icers = np.divide(
+            (costs_new - costs_base),
+            (effects_new - effects_base)*self._effect_multiplier)
 
-        return np.percentile(sum_stat_sample_ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        return np.percentile(sample_icers, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
 
 class _NMB(ComparativeEconMeasure):
-    def __init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
-        :param cost_new: (list or numpy.array) cost data for the new strategy
-        :param effect_new: (list or numpy.array) health data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for the base line
-        :param effect_base: (list or numpy.array) health data for the base line
+        :param costs_new: (list or numpy.array) cost data for the new strategy
+        :param effects_new: (list or numpy.array) health data for the new strategy
+        :param costs_base: (list or numpy.array) cost data for the base line
+        :param effects_base: (list or numpy.array) health data for the base line
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         # initialize the base class
-        ComparativeEconMeasure.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
+        ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
     def get_NMB(self, wtp):
         """
@@ -1116,21 +1142,21 @@ class _NMB(ComparativeEconMeasure):
 
 class NMB_paired(_NMB):
 
-    def __init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
-        :param cost_new: (list or numpy.array) cost data for the new strategy
-        :param effect_new: (list or numpy.array) health data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for the base line
-        :param effect_base: (list or numpy.array) health data for the base line
+        :param costs_new: (list or numpy.array) cost data for the new strategy
+        :param effects_new: (list or numpy.array) health data for the new strategy
+        :param costs_base: (list or numpy.array) cost data for the base line
+        :param effects_base: (list or numpy.array) health data for the base line
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
-        _NMB.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
+        _NMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # incremental observations
-        self._deltaCost = self._costNew - self._costBase
-        self._deltaHealth = (self._effectNew - self._effectBase)*self._effect_multiplier
+        self._deltaCost = self._costsNew - self._costsBase
+        self._deltaHealth = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
     def get_CI(self, wtp, alpha):
 
@@ -1147,23 +1173,23 @@ class NMB_paired(_NMB):
 
 class NMB_indp(_NMB):
 
-    def __init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
-        :param cost_new: (list or numpy.array) cost data for the new strategy
-        :param effect_new: (list or numpy.array) health data for the new strategy
-        :param cost_base: (list or numpy.array) cost data for the base line
-        :param effect_base: (list or numpy.array) health data for the base line
+        :param costs_new: (list or numpy.array) cost data for the new strategy
+        :param effects_new: (list or numpy.array) health data for the new strategy
+        :param costs_base: (list or numpy.array) cost data for the base line
+        :param effects_base: (list or numpy.array) health data for the base line
         :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
-        _NMB.__init__(self, name, cost_new, effect_new, cost_base, effect_base, health_measure)
+        _NMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
     def get_CI(self, wtp, alpha):
 
         # NMB observations of two alternatives
-        stat_new = wtp * self._effectNew * self._effect_multiplier - self._costNew
-        stat_base = wtp * self._effectBase * self._effect_multiplier - self._costBase
+        stat_new = wtp * self._effectsNew * self._effect_multiplier - self._costsNew
+        stat_base = wtp * self._effectsBase * self._effect_multiplier - self._costsBase
 
         # to get CI for stat_new - stat_base
         diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
@@ -1172,8 +1198,8 @@ class NMB_indp(_NMB):
     def get_PI(self, wtp, alpha):
 
         # NMB observations of two alternatives
-        stat_new = wtp * self._effectNew * self._effect_multiplier - self._costNew
-        stat_base = wtp * self._effectBase * self._effect_multiplier - self._costBase
+        stat_new = wtp * self._effectsNew * self._effect_multiplier - self._costsNew
+        stat_base = wtp * self._effectsBase * self._effect_multiplier - self._costsBase
 
         # to get PI for stat_new - stat_base
         diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
