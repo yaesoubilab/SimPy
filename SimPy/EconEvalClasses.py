@@ -128,20 +128,6 @@ class _EconEval:
         self._shifted_strategiesOnFrontier = []  # list of shifted strategies on the frontier
         self._shifted_strategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
 
-        # create a data frame for all strategies' expected outcomes
-        # this data frame will be used to report the cost-effectiveness table
-        self._dfStrategies = pd.DataFrame(
-            index=range(self._n),
-            columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated'])
-
-        # populate the data frame
-        for j in range(self._n):
-            self._dfStrategies.loc[j, 'Name'] = strategies[j].name
-            self._dfStrategies.loc[j, 'E[Cost]'] = strategies[j].aveCost
-            self._dfStrategies.loc[j, 'E[Effect]'] = strategies[j].aveEffect
-            self._dfStrategies.loc[j, 'Dominated'] = strategies[j].ifDominated
-            self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
-
         # now shift all strategies such that the base strategy (first in the list) lies on the origin
         # all the following data analysis are based on the shifted data
         # if observations are paired across strategies
@@ -155,17 +141,31 @@ class _EconEval:
                 self._shifted_strategies.append(shifted_strategy)
 
         else:  # if not paired
-            e_cost = strategies[0].aveCost  # average cost of the base strategy
-            e_effect = strategies[0].aveEffect  # average effect of the base strategy
+            base_ave_cost = strategies[0].aveCost  # average cost of the base strategy
+            base_ave_effect = strategies[0].aveEffect  # average effect of the base strategy
             for i in range(self._n):
                 shifted_strategy = Strategy(
                     name=strategies[i].name,
-                    cost_obs=strategies[i].costObs - e_cost,
-                    effect_obs=(strategies[i].effectObs - e_effect)*self._effect_multiplier
+                    cost_obs=strategies[i].costObs - base_ave_cost,
+                    effect_obs=(strategies[i].effectObs - base_ave_effect)*self._effect_multiplier
                 )
                 self._shifted_strategies.append(shifted_strategy)
 
-        # create a data frame for all strategies' shifted expected outcomes
+        # create a data frame for all strategies
+        # this data frame will be used to report the cost-effectiveness table
+        self._dfStrategies = pd.DataFrame(
+            index=range(self._n),
+            columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated'])
+
+        # populate the data frame
+        for j in range(self._n):
+            self._dfStrategies.loc[j, 'Name'] = strategies[j].name
+            self._dfStrategies.loc[j, 'E[Cost]'] = strategies[j].aveCost
+            self._dfStrategies.loc[j, 'E[Effect]'] = strategies[j].aveEffect
+            self._dfStrategies.loc[j, 'Dominated'] = strategies[j].ifDominated
+            self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
+
+        # create a data frame for shifted strategies
         self._dfStrategies_shifted = pd.DataFrame(
             index=range(self._n),
             columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
