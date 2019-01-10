@@ -8,7 +8,7 @@ import matplotlib.cm as cm
 import pandas as pd
 from SimPy import FigureSupport as Fig
 from SimPy import FormatFunctions as FormatFunc
-from SimPy import  RandomVariantGenerators as RVG
+from SimPy import RandomVariantGenerators as RVG
 
 
 def pv(payment, discount_rate, discount_period):
