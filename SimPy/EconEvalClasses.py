@@ -123,109 +123,69 @@ class _EconEval:
         self._strategies = strategies  # list of strategies
         self._strategiesOnFrontier = []  # list of strategies on the frontier
         self._strategiesNotOnFrontier = []  # list of strategies not on the frontier
-
         self._shifted_strategies = [] # list of shifted strategies
         self._shifted_strategiesOnFrontier = []  # list of shifted strategies on the frontier
         self._shifted_strategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
+        self._ifFrontierIsCalculated = False # CE frontier is not calculated yet
 
-        # now shift all strategies such that the base strategy (first in the list) lies on the origin
-        # all the following data analysis are based on the shifted data
+        self._dfStrategies = None  # data frame to store the CE table
+
+        # shift the strategies
+        self.__find_shifted_strategies()
+
+    def __find_shifted_strategies(self):
+        """ find shifted strategies.
+        In calculating the change in effect, it accounts for whether QALY or DALY is used.
+        """
+
+        # shift all strategies such that the base strategy (first in the list) lies on the origin
         # if observations are paired across strategies
-        if if_paired:
+        if self._ifPaired:
             for i in range(self._n):
                 shifted_strategy = Strategy(
-                    name=strategies[i].name,
-                    cost_obs=strategies[i].costObs - strategies[0].costObs,
-                    effect_obs=(strategies[i].effectObs - strategies[0].effectObs)*self._effect_multiplier
+                    name=self._strategies[i].name,
+                    cost_obs=self._strategies[i].costObs - self._strategies[0].costObs,
+                    effect_obs=(self._strategies[i].effectObs - self._strategies[0].effectObs) * self._effect_multiplier
                 )
                 self._shifted_strategies.append(shifted_strategy)
 
         else:  # if not paired
-            base_ave_cost = strategies[0].aveCost  # average cost of the base strategy
-            base_ave_effect = strategies[0].aveEffect  # average effect of the base strategy
+            base_ave_cost = self._strategies[0].aveCost  # average cost of the base strategy
+            base_ave_effect = self._strategies[0].aveEffect  # average effect of the base strategy
             for i in range(self._n):
                 shifted_strategy = Strategy(
-                    name=strategies[i].name,
-                    cost_obs=strategies[i].costObs - base_ave_cost,
-                    effect_obs=(strategies[i].effectObs - base_ave_effect)*self._effect_multiplier
+                    name=self._strategies[i].name,
+                    cost_obs=self._strategies[i].costObs - base_ave_cost,
+                    effect_obs=(self._strategies[i].effectObs - base_ave_effect) * self._effect_multiplier
                 )
                 self._shifted_strategies.append(shifted_strategy)
-
-        # create a data frame for all strategies
-        # this data frame will be used to report the cost-effectiveness table
-        self._dfStrategies = pd.DataFrame(
-            index=range(self._n),
-            columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated'])
-
-        # populate the data frame
-        for j in range(self._n):
-            self._dfStrategies.loc[j, 'Name'] = strategies[j].name
-            self._dfStrategies.loc[j, 'E[Cost]'] = strategies[j].aveCost
-            self._dfStrategies.loc[j, 'E[Effect]'] = strategies[j].aveEffect
-            self._dfStrategies.loc[j, 'Dominated'] = strategies[j].ifDominated
-            self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
-
-        # create a data frame for shifted strategies
-        self._dfStrategies_shifted = pd.DataFrame(
-            index=range(self._n),
-            columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
-
-        # populate the data frame
-        for j in range(self._n):
-            self._dfStrategies_shifted.loc[j, 'Name'] = self._shifted_strategies[j].name
-            self._dfStrategies_shifted.loc[j, 'E[Cost]'] = self._shifted_strategies[j].aveCost
-            self._dfStrategies_shifted.loc[j, 'E[Effect]'] = self._shifted_strategies[j].aveEffect
-            self._dfStrategies_shifted.loc[j, 'Dominated'] = self._shifted_strategies[j].ifDominated
-            self._dfStrategies_shifted.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
-
-    def get_shifted_strategies(self):
-        """
-        :return: the list of strategies after being shifted so that the first strategy lies on the origin of
-            the cost-effectiveness plane
-        """
-        return self._shifted_strategies
-
-
-class CEA(_EconEval):
-    """ class for conducting cost-effectiveness analysis """
-
-    def __init__(self, strategies, if_paired, if_find_frontier=True, health_measure=HealthMeasure.UTILITY):
-        """
-        :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
-        :param if_paired: set to true to indicate that the strategies are paired
-        :param if_find_frontier: set to true if the cost-effectiveness frontier should be calculated
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
-        (e.g. when DALYS is used)
-        """
-        _EconEval.__init__(self, strategies, if_paired, health_measure)
-
-        # find the CE frontier
-        if if_find_frontier:
-            self.__find_frontier()
-
-    def get_strategies_on_frontier(self):
-        """ :return list of strategies on the frontier"""
-        return self._strategiesOnFrontier
-
-    def get_strategies_not_on_frontier(self):
-        """ :return list of strategies that are not on the frontier """
-        return self._strategiesNotOnFrontier
-
-    def get_shifted_strategies_on_frontier(self):
-        """ :return list of shifted strategies on the frontier"""
-        return self._shifted_strategiesOnFrontier
-
-    def get_shifted_strategies_not_on_frontier(self):
-        """ :return list of shifted strategies not on the frontier"""
-        return self._shifted_strategiesNotOnFrontier
 
     def __find_frontier(self):
         """ find the cost-effectiveness frontier """
 
-        # sort shifted strategies by cost, ascending
-        # operate on local variable data rather than self attribute
-        df_shifted_sorted = self._dfStrategies_shifted.sort_values('E[Cost]')
+        # populate the data frame for CE table
+        self._dfStrategies = pd.DataFrame(
+            index=range(self._n),
+            columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated'])
+        for j in range(self._n):
+            self._dfStrategies.loc[j, 'Name'] = self._strategies[j].name
+            self._dfStrategies.loc[j, 'E[Cost]'] = self._strategies[j].aveCost
+            self._dfStrategies.loc[j, 'E[Effect]'] = self._strategies[j].aveEffect
+            self._dfStrategies.loc[j, 'Dominated'] = self._strategies[j].ifDominated
+            self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
+
+        # create a data frame for shifted strategies
+        df_shifted_strategies = pd.DataFrame(
+            index=range(self._n),
+            columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
+        for j in range(self._n):
+            df_shifted_strategies.loc[j, 'Name'] = self._shifted_strategies[j].name
+            df_shifted_strategies.loc[j, 'E[Cost]'] = self._shifted_strategies[j].aveCost
+            df_shifted_strategies.loc[j, 'E[Effect]'] = self._shifted_strategies[j].aveEffect
+            df_shifted_strategies.loc[j, 'Dominated'] = self._shifted_strategies[j].ifDominated
+            df_shifted_strategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
+        # sort shifted strategies by cost in an ascending order
+        df_shifted_sorted = df_shifted_strategies.sort_values('E[Cost]')
 
         # apply criteria 1 (strict dominance)
         for i in range(self._n):
@@ -296,6 +256,62 @@ class CEA(_EconEval):
             self._strategiesNotOnFrontier.append(self._strategies[j])
             self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
 
+    def get_shifted_strategies(self):
+        """
+        :return: the list of strategies after being shifted so that the first strategy lies on the origin of
+            the cost-effectiveness plane
+        """
+        if len(self._shifted_strategies) == 0:
+            warnings.warn('The list of shifted strategies are empty.')
+
+        return self._shifted_strategies
+
+    def get_strategies_on_frontier(self):
+        """ :return list of strategies on the frontier"""
+
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        return self._strategiesOnFrontier
+
+    def get_strategies_not_on_frontier(self):
+        """ :return list of strategies that are not on the frontier """
+
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        return self._strategiesNotOnFrontier
+
+    def get_shifted_strategies_on_frontier(self):
+        """ :return list of shifted strategies on the frontier"""
+
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        return self._shifted_strategiesOnFrontier
+
+    def get_shifted_strategies_not_on_frontier(self):
+        """ :return list of shifted strategies not on the frontier"""
+
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        return self._shifted_strategiesNotOnFrontier
+
+
+class _CEA(_EconEval):
+    """ class for conducting cost-effectiveness analysis """
+
+    def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
+        """
+        :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param if_paired: set to true to indicate that the strategies are paired
+        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
+        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        (e.g. when DALYS is used)
+        """
+        _EconEval.__init__(self, strategies, if_paired, health_measure)
+
     def show_CE_plane(self, title, x_label, y_label,
                       show_names=False, show_clouds=False, transparency=0.4,
                       show_legend=False, figure_size=6, x_range=None, y_range=None):
@@ -311,6 +327,11 @@ class CEA(_EconEval):
         :param x_range: list, range of x axis
         :param y_range: list, range of y axis
         """
+
+        # find the frontier if not calculated already
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
         # plots
         # operate on local variable data rather than self attribute
         df_shifted_strategies = self._dfStrategies_shifted
@@ -418,6 +439,10 @@ class CEA(_EconEval):
         :param file_name: address and file name where the CEA results should be saved to
         :return: output csv file called in local environment
         """
+
+        # find the frontier if not calculated already
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
 
         # initialize the cost-effectiveness table
         self._dfStrategies['E[dCost]'] = "-"
@@ -731,7 +756,23 @@ class CEA(_EconEval):
             file_name+'.csv', encoding='utf-8', index=False)
 
 
-class CBA(_EconEval):
+class CEA_paired(_CEA):
+
+    def __init__(self, strategies, health_measure=HealthMeasure.UTILITY):
+        """
+        :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
+        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        (e.g. when DALYS is used)
+        """
+        _EconEval.__init__(self, strategies, True, health_measure)
+
+
+class CEA_indp(_CEA):
+    pass
+
+
+class _CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
     def __init__(self, strategies, if_paired):
@@ -845,9 +886,17 @@ class CBA(_EconEval):
         plt.axvline(x=0, c='k', ls='--', linewidth=0.5)
 
         plt.show()
+    pass
 
 
-class ComparativeEconMeasure:
+class CBA_paired(_CBA):
+    pass
+
+class CBA_indp(_CBA):
+    pass
+
+
+class _ComparativeEconMeasure:
     def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
@@ -895,7 +944,7 @@ class ComparativeEconMeasure:
                                  * self._effect_multiplier
 
 
-class _ICER(ComparativeEconMeasure):
+class _ICER(_ComparativeEconMeasure):
     def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
@@ -907,7 +956,7 @@ class _ICER(ComparativeEconMeasure):
         (e.g. when DALYS is used)
         """
         # initialize the base class
-        ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
+        _ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # calculate ICER
         if self._delta_ave_effect == 0:
@@ -1100,7 +1149,7 @@ class ICER_indp(_ICER):
         return np.percentile(sample_icers, [100*alpha/2.0, 100*(1-alpha/2.0)])
 
 
-class _NMB(ComparativeEconMeasure):
+class _NMB(_ComparativeEconMeasure):
     def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
@@ -1112,7 +1161,7 @@ class _NMB(ComparativeEconMeasure):
         (e.g. when DALYS is used)
         """
         # initialize the base class
-        ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
+        _ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
     def get_NMB(self, wtp):
         """
