@@ -459,16 +459,14 @@ class _CEA(_EconEval):
         if not self._ifFrontierIsCalculated:
             self._find_frontier()
 
-        # initialize the cost-effectiveness table
+        # add CEA columns to the strategies data frame
         self._dfStrategies['E[dCost]'] = "-"
         self._dfStrategies['E[dEffect]'] = "-"
         self._dfStrategies['ICER'] = "Dominated"
 
-        # get strategies on the frontier
+        # get strategies on the frontier sorted by cost
         frontier_strategies = self._dfStrategies.loc[self._dfStrategies["Dominated"] == False].sort_values('E[Cost]')
-
-        # number of strategies on the frontier
-        n_frontier_strategies = frontier_strategies.shape[0]
+        n_frontier_strategies = frontier_strategies.shape[0]    # number of strategies
 
         list_incr_costs = []      # list of incremental costs
         list_incr_effects = []    # list of incremental effects
@@ -485,48 +483,44 @@ class _CEA(_EconEval):
                 # incremental effect
                 incremental_effect = self._effect_multiplier\
                            *(frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1])
-                # if d_effect == 0:
-                #     raise ValueError('invalid value of E[dEffect], the ratio is not computable')
                 list_incr_effects = np.append(list_incr_effects, incremental_effect)
 
                 # ICER
-                list_ICERs = np.append(list_ICERs, incremental_cost/incremental_effect)
-
-            # format the numbers
-            ind_change = frontier_strategies.index[1:]
-            self._dfStrategies.loc[ind_change, 'E[dCost]'] = list_incr_costs.astype(float).round(cost_digits)
-            self._dfStrategies.loc[ind_change, 'E[dEffect]'] = list_incr_effects.astype(float).round(effect_digits)
-            self._dfStrategies.loc[ind_change, 'ICER'] = list_ICERs.astype(float).round(icer_digits)
+                try:
+                    list_ICERs = np.append(list_ICERs, incremental_cost/incremental_effect)
+                except ValueError:
+                    warnings.warn('Incremental effect is 0 for strategy ' + frontier_strategies['Name'].iloc[i])
+                    list_ICERs = np.append(list_ICERs, math.nan)
 
         # put - for the ICER of the first strategy on the frontier
-        self._dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
-
-        # format cost column
-        if cost_digits == 0:
-            output_cost = self._dfStrategies['E[Cost]'].astype(int)
+        if frontier_strategies["E[Cost]"].iloc[0] < 0:
+            self._dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = 'Cost-Saving'
         else:
-            output_cost = self._dfStrategies['E[Cost]'].astype(float).round(cost_digits)
+            self._dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
 
-        # format effect column
-        if effect_digits == 0:
-            output_effect = self._dfStrategies['E[Effect]'].astype(int)
-        else:
-            output_effect = self._dfStrategies['E[Effect]'].astype(float).round(effect_digits)
+        # format estimates in the cost-effectiveness table
+        self._format_nums_in_dfstrategies(frontier_strategies=frontier_strategies,
+                                          list_incr_costs=list_incr_costs,
+                                          list_incr_effects=list_incr_effects,
+                                          list_ICERs=list_ICERs,
+                                          cost_digits=cost_digits,
+                                          effect_digits=effect_digits,
+                                          icer_digits=icer_digits)
 
-        # create output dataframe
-        # dataframe of estimates (without intervals)
-        output_estimates = pd.DataFrame(
-            {'Name': self._dfStrategies['Name'],
-             'E[Cost]': output_cost,
-             'E[Effect]': output_effect,
-             'E[dCost]': self._dfStrategies['E[dCost]'],
-             'E[dEffect]': self._dfStrategies['E[dEffect]'],
-             'ICER': self._dfStrategies['ICER']
-             })
+
+        # # create output data frame of estimates (without intervals)
+        # output_estimates = pd.DataFrame(
+        #     {'Name': self._dfStrategies['Name'],
+        #      'E[Cost]': output_cost,
+        #      'E[Effect]': output_effect,
+        #      'E[dCost]': self._dfStrategies['E[dCost]'],
+        #      'E[dEffect]': self._dfStrategies['E[dEffect]'],
+        #      'ICER': self._dfStrategies['ICER']
+        #      })
 
         # decide about what interval to return and create table out_intervals
         if interval == Interval.PREDICTION:
-            # create the dataframe
+            # create the data frame
             out_intervals_PI = pd.DataFrame(index=self._dfStrategies.index,
                 columns=['Name', 'Cost_I', 'Effect_I', 'Dominated'])
             # initialize incremental cost and health and ICER with -
@@ -716,59 +710,92 @@ class _CEA(_EconEval):
 
         else:
             # define column order and write csv
-            output_estimates[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].\
+            self._dfStrategies[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].\
                 to_csv("CETable.csv", encoding='utf-8', index=False)
             # no need to calculate intervals, break of function
             return None
 
         # merge estimates and intervals together
-        out_table = pd.DataFrame(
+        ce_table = pd.DataFrame(
             {'Name': self._dfStrategies['Name'],
-             'E[Cost]': output_estimates['E[Cost]'],
-             'E[Effect]': output_estimates['E[Effect]'],
-             'E[dCost]': output_estimates['E[dCost]'],
-             'E[dEffect]': output_estimates['E[dEffect]'],
-             'ICER': output_estimates['ICER']
+             'E[Cost]': self._dfStrategies['E[Cost]'],
+             'E[Effect]': self._dfStrategies['E[Effect]'],
+             'E[dCost]': self._dfStrategies['E[dCost]'],
+             'E[dEffect]': self._dfStrategies['E[dEffect]'],
+             'ICER': self._dfStrategies['ICER']
              })
 
         # put estimates and intervals together
         for i in self._dfStrategies.index:
-            out_table.loc[i, 'E[Cost]'] = \
+            ce_table.loc[i, 'E[Cost]'] = \
                 FormatFunc.format_estimate_interval(
-                    estimate=output_estimates.loc[i, 'E[Cost]']*cost_multiplier,
+                    estimate=self._dfStrategies.loc[i, 'E[Cost]']*cost_multiplier,
                     interval=[x*cost_multiplier for x in out_intervals.loc[i, 'Cost_I']],
                     deci=cost_digits, format=',')
 
-            out_table.loc[i, 'E[Effect]'] = \
+            ce_table.loc[i, 'E[Effect]'] = \
                 FormatFunc.format_estimate_interval(
-                    estimate=output_estimates.loc[i, 'E[Effect]']*effect_multiplier,
+                    estimate=self._dfStrategies.loc[i, 'E[Effect]']*effect_multiplier,
                     interval=[x * effect_multiplier for x in out_intervals.loc[i, 'Effect_I']],
                     deci=effect_digits, format=',')
 
         # add the incremental and ICER estimates and intervals
         for i in range(1, n_frontier_strategies):
 
-            out_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
+            ce_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
                 FormatFunc.format_estimate_interval(
-                    estimate=output_estimates.loc[frontier_strategies.index[i], 'E[dCost]']*cost_multiplier,
+                    estimate=self._dfStrategies.loc[frontier_strategies.index[i], 'E[dCost]']*cost_multiplier,
                     interval=[x * cost_multiplier for x in out_intervals.loc[frontier_strategies.index[i], 'dCost_I']],
                     deci=cost_digits, format=',')
 
-            out_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
+            ce_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
                 FormatFunc.format_estimate_interval(
-                    estimate=output_estimates.loc[frontier_strategies.index[i], 'E[dEffect]']*effect_multiplier,
+                    estimate=self._dfStrategies.loc[frontier_strategies.index[i], 'E[dEffect]']*effect_multiplier,
                     interval=[x * effect_multiplier for x in out_intervals.loc[frontier_strategies.index[i], 'dEffect_I']],
                     deci=effect_digits, format=',')
 
-            out_table.loc[frontier_strategies.index[i], 'ICER'] = \
+            ce_table.loc[frontier_strategies.index[i], 'ICER'] = \
                 FormatFunc.format_estimate_interval(
-                    estimate=output_estimates.loc[frontier_strategies.index[i], 'ICER'],
+                    estimate=self._dfStrategies.loc[frontier_strategies.index[i], 'ICER'],
                     interval=out_intervals.loc[frontier_strategies.index[i], 'ICER_I'],
                     deci=icer_digits, format=',')
 
         # define column order and write csv
-        out_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
+        ce_table[['Name', 'E[Cost]', 'E[Effect]', 'E[dCost]', 'E[dEffect]', 'ICER']].to_csv(
             file_name+'.csv', encoding='utf-8', index=False)
+
+    def _format_nums_in_dfstrategies(self,
+                                     frontier_strategies,
+                                     list_incr_costs,
+                                     list_incr_effects,
+                                     list_ICERs,
+                                     cost_digits,
+                                     effect_digits,
+                                     icer_digits):
+
+        # format the estimates of incremental outcomes and ICER
+        indices = frontier_strategies.index[1:]
+
+        # format cost column
+        if cost_digits == 0:
+            self._dfStrategies['E[Cost]'] = self._dfStrategies['E[Cost]'].astype(int)
+            self._dfStrategies.loc[indices, 'E[dCost]'] = list_incr_costs.astype(int)
+        else:
+            self._dfStrategies['E[Cost]'] = self._dfStrategies['E[Cost]'].astype(float).round(cost_digits)
+            self._dfStrategies.loc[indices, 'E[dCost]'] = list_incr_costs.astype(float).round(cost_digits)
+
+        # format effect column
+        if effect_digits == 0:
+            self._dfStrategies['E[Effect]'] = self._dfStrategies['E[Effect]'].astype(int)
+            self._dfStrategies.loc[indices, 'E[dEffect]'] = list_incr_effects.astype(int)
+        else:
+            self._dfStrategies['E[Effect]'] = self._dfStrategies['E[Effect]'].astype(float).round(effect_digits)
+            self._dfStrategies.loc[indices, 'E[dEffect]'] = list_incr_effects.astype(float).round(effect_digits)
+
+        if icer_digits == 0:
+            self._dfStrategies.loc[indices, 'ICER'] = list_ICERs.astype(int)
+        else:
+            self._dfStrategies.loc[indices, 'ICER'] = list_ICERs.astype(float).round(icer_digits)
 
 
 class CEA_paired(_CEA):
