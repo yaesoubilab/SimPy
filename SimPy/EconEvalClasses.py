@@ -123,12 +123,13 @@ class _EconEval:
         self._strategies = strategies  # list of strategies
         self._strategiesOnFrontier = []  # list of strategies on the frontier
         self._strategiesNotOnFrontier = []  # list of strategies not on the frontier
-        self._shifted_strategies = [] # list of shifted strategies
-        self._shifted_strategiesOnFrontier = []  # list of shifted strategies on the frontier
-        self._shifted_strategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
+        self._shiftedStrategies = [] # list of shifted strategies
+        self._shiftedStrategiesOnFrontier = []  # list of shifted strategies on the frontier
+        self._shiftedStrategiesNotOnFrontier = []  # list of shifted strategies not on the frontier
         self._ifFrontierIsCalculated = False # CE frontier is not calculated yet
 
         self._dfStrategies = None  # data frame to store the CE table
+        self._dfShiftedStrategies = None # data frame to build CE figure
 
         # shift the strategies
         self.__find_shifted_strategies()
@@ -147,7 +148,7 @@ class _EconEval:
                     cost_obs=self._strategies[i].costObs - self._strategies[0].costObs,
                     effect_obs=(self._strategies[i].effectObs - self._strategies[0].effectObs) * self._effect_multiplier
                 )
-                self._shifted_strategies.append(shifted_strategy)
+                self._shiftedStrategies.append(shifted_strategy)
 
         else:  # if not paired
             base_ave_cost = self._strategies[0].aveCost  # average cost of the base strategy
@@ -158,9 +159,9 @@ class _EconEval:
                     cost_obs=self._strategies[i].costObs - base_ave_cost,
                     effect_obs=(self._strategies[i].effectObs - base_ave_effect) * self._effect_multiplier
                 )
-                self._shifted_strategies.append(shifted_strategy)
+                self._shiftedStrategies.append(shifted_strategy)
 
-    def __find_frontier(self):
+    def _find_frontier(self):
         """ find the cost-effectiveness frontier """
 
         # populate the data frame for CE table
@@ -175,17 +176,18 @@ class _EconEval:
             self._dfStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
 
         # create a data frame for shifted strategies
-        df_shifted_strategies = pd.DataFrame(
+        self._dfShiftedStrategies = pd.DataFrame(
             index=range(self._n),
             columns=['Name', 'E[Cost]', 'E[Effect]', 'Dominated', 'Color'])
         for j in range(self._n):
-            df_shifted_strategies.loc[j, 'Name'] = self._shifted_strategies[j].name
-            df_shifted_strategies.loc[j, 'E[Cost]'] = self._shifted_strategies[j].aveCost
-            df_shifted_strategies.loc[j, 'E[Effect]'] = self._shifted_strategies[j].aveEffect
-            df_shifted_strategies.loc[j, 'Dominated'] = self._shifted_strategies[j].ifDominated
-            df_shifted_strategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
+            self._dfShiftedStrategies.loc[j, 'Name'] = self._shiftedStrategies[j].name
+            self._dfShiftedStrategies.loc[j, 'E[Cost]'] = self._shiftedStrategies[j].aveCost
+            self._dfShiftedStrategies.loc[j, 'E[Effect]'] = self._shiftedStrategies[j].aveEffect
+            self._dfShiftedStrategies.loc[j, 'Dominated'] = self._shiftedStrategies[j].ifDominated
+            self._dfShiftedStrategies.loc[j, 'Color'] = "k"  # not Dominated black, Dominated blue
+
         # sort shifted strategies by cost in an ascending order
-        df_shifted_sorted = df_shifted_strategies.sort_values('E[Cost]')
+        df_shifted_sorted = self._dfShiftedStrategies.sort_values('E[Cost]')
 
         # apply criteria 1 (strict dominance)
         for i in range(self._n):
@@ -248,29 +250,35 @@ class _EconEval:
         on_frontier_index = df_shifted_sorted[df_shifted_sorted['Dominated'] == False].index
         for i in on_frontier_index:
             self._strategiesOnFrontier.append(self._strategies[i])
-            self._shifted_strategiesOnFrontier.append(self._shifted_strategies[i])
+            self._shiftedStrategiesOnFrontier.append(self._shiftedStrategies[i])
 
         # create list of strategies not on frontier
         not_on_frontier_index = df_shifted_sorted[df_shifted_sorted['Dominated'] == True].index
         for j in not_on_frontier_index:
             self._strategiesNotOnFrontier.append(self._strategies[j])
-            self._shifted_strategiesNotOnFrontier.append(self._shifted_strategies[j])
+            self._shiftedStrategiesNotOnFrontier.append(self._shiftedStrategies[j])
+
+        # update the data frame of the shifted strategies
+        self._dfShiftedStrategies = df_shifted_sorted
+
+        # frontier is calculated
+        self._ifFrontierIsCalculated = True
 
     def get_shifted_strategies(self):
         """
         :return: the list of strategies after being shifted so that the first strategy lies on the origin of
             the cost-effectiveness plane
         """
-        if len(self._shifted_strategies) == 0:
+        if len(self._shiftedStrategies) == 0:
             warnings.warn('The list of shifted strategies are empty.')
 
-        return self._shifted_strategies
+        return self._shiftedStrategies
 
     def get_strategies_on_frontier(self):
         """ :return list of strategies on the frontier"""
 
         if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
+            self._find_frontier()
 
         return self._strategiesOnFrontier
 
@@ -278,7 +286,7 @@ class _EconEval:
         """ :return list of strategies that are not on the frontier """
 
         if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
+            self._find_frontier()
 
         return self._strategiesNotOnFrontier
 
@@ -286,17 +294,17 @@ class _EconEval:
         """ :return list of shifted strategies on the frontier"""
 
         if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
+            self._find_frontier()
 
-        return self._shifted_strategiesOnFrontier
+        return self._shiftedStrategiesOnFrontier
 
     def get_shifted_strategies_not_on_frontier(self):
         """ :return list of shifted strategies not on the frontier"""
 
         if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
+            self._find_frontier()
 
-        return self._shifted_strategiesNotOnFrontier
+        return self._shiftedStrategiesNotOnFrontier
 
 
 class _CEA(_EconEval):
@@ -330,16 +338,16 @@ class _CEA(_EconEval):
 
         # find the frontier if not calculated already
         if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
+            self._find_frontier()
 
         # plots
         # operate on local variable data rather than self attribute
-        df_shifted_strategies = self._dfStrategies_shifted
+        df_shifted_strategies = self._dfShiftedStrategies
         # find the dominated strategies
-        df_shifted_strategies["Dominated_result"] = self._dfStrategies["Dominated"]
+        df_shifted_strategies["Dominated"] = self._dfStrategies["Dominated"]
 
         # re-sorted according to Effect to draw line
-        frontier_plot = df_shifted_strategies.loc[df_shifted_strategies["Dominated_result"] == False]\
+        frontier_plot = df_shifted_strategies.loc[df_shifted_strategies["Dominated"] == False]\
             .sort_values('E[Effect]')
 
         # draw the fontier
@@ -354,7 +362,7 @@ class _CEA(_EconEval):
 
         # show observation clouds for strategies
         if show_clouds:
-            for strategy_i, color in zip(self._shifted_strategies, cm.rainbow(np.linspace(0, 1, self._n))):
+            for strategy_i, color in zip(self._shiftedStrategies, cm.rainbow(np.linspace(0, 1, self._n))):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
@@ -397,12 +405,19 @@ class _CEA(_EconEval):
         # show names of strategies
         if show_names:
             if not show_clouds:
-                for label, x, y in zip(
+                for label, x, y, if_dominated in zip(
                         df_shifted_strategies['Name'],
                         df_shifted_strategies['E[Effect]'],
-                        df_shifted_strategies['E[Cost]']):
+                        df_shifted_strategies['E[Cost]'],
+                        df_shifted_strategies['Dominated']):
+                    if if_dominated:
+                        dx = - 0.05 * Lx
+                        dy = + 0.03 * Ly
+                    else:
+                        dx = + 0.05 * Lx
+                        dy = - 0.03 * Ly
                     plt.annotate(
-                        label, xy=(x, y), xycoords='data', xytext=(x - 0.05 * Lx, y + 0.03 * Ly),
+                        label, xy=(x, y), xycoords='data', xytext=(x+dx, y+dy),
                         textcoords='data', weight='bold', ha='center')
 
             elif show_clouds:
@@ -442,7 +457,7 @@ class _CEA(_EconEval):
 
         # find the frontier if not calculated already
         if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
+            self._find_frontier()
 
         # initialize the cost-effectiveness table
         self._dfStrategies['E[dCost]'] = "-"
@@ -769,7 +784,14 @@ class CEA_paired(_CEA):
 
 
 class CEA_indp(_CEA):
-    pass
+    def __init__(self, strategies, health_measure=HealthMeasure.UTILITY):
+        """
+        :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
+        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        (e.g. when DALYS is used)
+        """
+        _EconEval.__init__(self, strategies, False, health_measure)
 
 
 class _CBA(_EconEval):
@@ -886,7 +908,6 @@ class _CBA(_EconEval):
         plt.axvline(x=0, c='k', ls='--', linewidth=0.5)
 
         plt.show()
-    pass
 
 
 class CBA_paired(_CBA):
