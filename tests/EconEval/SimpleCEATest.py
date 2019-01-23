@@ -20,4 +20,4 @@ for s in cea.get_strategies_not_on_frontier():
 
 cea.show_CE_plane('CE plane', 'E[Effect]', 'E[Cost]',
                   show_names=True, figure_size=6)
-cea.build_CE_table(cost_digits=0)
+cea.build_CE_table(cost_digits=0, interval=EV.Interval.NO_INTERVAL)

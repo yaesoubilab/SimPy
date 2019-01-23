@@ -19,7 +19,7 @@ S4 = EV.Strategy(name='A4',
                  cost_obs=np.random.normal(loc=-100, scale=10, size=100),
                  effect_obs=np.random.normal(loc=2, scale=0.1, size=100))
 
-cea = EV.CEA_paired(strategies=[S0, S1, S2, S3, S4], health_measure=EV.HealthMeasure.UTILITY)
+cea = EV.CEA_indp(strategies=[S0, S1, S2, S3, S4], health_measure=EV.HealthMeasure.UTILITY)
 
 print('On frontier')
 for s in cea.get_strategies_on_frontier():
@@ -31,4 +31,4 @@ for s in cea.get_strategies_not_on_frontier():
 
 cea.show_CE_plane('CE plane', 'E[Effect]', 'E[Cost]',
                   show_names=True, show_clouds=False, figure_size=6)
-cea.build_CE_table(cost_digits=1, interval=EV.Interval.PREDICTION)
+cea.build_CE_table(cost_digits=1, interval=EV.Interval.CONFIDENCE)
