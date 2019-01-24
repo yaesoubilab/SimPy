@@ -4,6 +4,8 @@ import scipy.stats as stat
 import math
 from SimPy import FormatFunctions as F
 
+NUM_BOOTSTRAP_SAMPLES = 1000
+
 
 class _Statistics(object):
     def __init__(self, name):
@@ -91,9 +93,27 @@ class _Statistics(object):
                 F.format_number(self.get_min(), digits),
                 F.format_number(self.get_max(), digits)]
 
-    def format_estimate_PI(self, alpha, deci, form=None):
+    def get_formatted_estimate_interval(self, interval_type='c', alpha=0.05, deci=0, form=None):
+        """
+        :param interval_type: (string) 'c' for t-based confidence interval,
+                                       'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param deci: digits to round the numbers to
+        :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
+        :return: (string) estimate and interval formatted as specified
+        """
         estimate = self.get_mean()
-        interval = self.get_PI(alpha)
+
+        if interval_type == 'c':
+            interval = self.get_t_CI(alpha)
+        elif interval_type == 'cb':
+            interval = self.get_bootstrap_CI(alpha, NUM_BOOTSTRAP_SAMPLES)
+        elif interval_type == 'p':
+            interval = self.get_PI(alpha)
+        else:
+            raise ValueError('Invalid interval type.')
+
         return F.format_estimate_interval(estimate, interval, deci, form)
 
 
