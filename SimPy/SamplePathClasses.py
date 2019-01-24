@@ -144,7 +144,7 @@ def graph_sample_path(sample_path, title, x_label, y_label,
         plt.legend([legend])
         
     # set the minimum of y-axis to zero
-    plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
+    plt.ylim(bottom=0)  # the minimum has to be set after plotting the values
 
     # output figure
     Fig.output_figure(plt, output_type, title)
