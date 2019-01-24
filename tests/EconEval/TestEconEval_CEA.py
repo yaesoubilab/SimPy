@@ -17,7 +17,7 @@ s8 = ce.Strategy("s9", s_center[8, 0]+np.random.normal(0, 200, 10), s_center[8, 
 s9 = ce.Strategy("s10", s_center[9, 0]+np.random.normal(0, 200, 10), s_center[9, 1]+np.random.normal(0, 200, 10))
 
 # create a CEA object -- unpaired
-myCEA = ce._CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=False)
+myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=False)
 
 # plot with label and sample cloud
 myCEA.show_CE_plane('CE plane with unpaired observations and showing labels',
@@ -40,7 +40,7 @@ print('')
 myCEA.build_CE_table(interval=ce.Interval.CONFIDENCE, cost_multiplier=1, effect_multiplier=1)
 
 # create a CEA object -- paired
-myCEA2 = ce._CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)
+myCEA2 = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)
 
 # plot with label and sample cloud
 myCEA2.show_CE_plane('CE plane with paired observations and showing labels',

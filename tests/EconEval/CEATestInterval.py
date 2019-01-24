@@ -14,12 +14,12 @@ S2 = EV.Strategy(name='A2',
                  effect_obs=np.random.normal(loc=10, scale=1, size=100))
 S3 = EV.Strategy(name='A3',
                  cost_obs=np.random.normal(loc=500, scale=50, size=100),
-                 effect_obs=np.random.normal(loc=6, scale=1, size=100))
+                 effect_obs=np.random.normal(loc=7, scale=1, size=100))
 S4 = EV.Strategy(name='A4',
                  cost_obs=np.random.normal(loc=-100, scale=10, size=100),
                  effect_obs=np.random.normal(loc=2, scale=0.1, size=100))
 
-cea = EV.CEA_indp(strategies=[S0, S1, S2, S3, S4], health_measure=EV.HealthMeasure.UTILITY)
+cea = EV.CEA(strategies=[S0, S1, S2, S3, S4], if_paired=False, health_measure=EV.HealthMeasure.UTILITY)
 
 print('On frontier')
 for s in cea.get_strategies_on_frontier():

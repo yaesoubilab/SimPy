@@ -11,8 +11,8 @@ s1 = ce.Strategy("s1", s_center[1, 0]+np.random.normal(0, 1000, 10), s_center[1,
 s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, 10), s_center[2, 1]+np.random.normal(0, 0.05, 10))
 
 
-nmb_paired = ce._CBA([s0, s1, s2], if_paired=True) # list of frontier strategies as input
-nmb_indp = ce._CBA([s0, s1, s2], if_paired=False) # list of frontier strategies as input
+nmb_paired = ce.CBA([s0, s1, s2], if_paired=True) # list of frontier strategies as input
+nmb_indp = ce.CBA([s0, s1, s2], if_paired=False) # list of frontier strategies as input
 
 # Try NMB_Lines figure - paired CI
 nmb_paired.graph_deltaNMB_lines(0,50000,"deltaNMB lines for paired CI","wtp values","NMB values",

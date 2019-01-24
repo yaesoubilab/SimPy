@@ -169,7 +169,7 @@ class _EconEval:
         return self._shiftedStrategies
 
 
-class _CEA(_EconEval):
+class CEA(_EconEval):
     """ class for conducting cost-effectiveness analysis """
 
     def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
@@ -473,7 +473,7 @@ class _CEA(_EconEval):
         list_ICERs = []           # list of ICER estimates
 
         # decide about the ICER of the first strategy on the frontier
-        if frontier_strategies["E[Cost]"].iloc[0] < 0:
+        if frontier_strategies["E[Cost]"].iloc[0] < 0: ### *** this condition is not correct ****
             self._dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = 'Cost-Saving'
         else:
             self._dfStrategies.loc[frontier_strategies.index[0], 'ICER'] = '-'
@@ -754,30 +754,7 @@ class _CEA(_EconEval):
         return ce_table
 
 
-class CEA_paired(_CEA):
-
-    def __init__(self, strategies, health_measure=HealthMeasure.UTILITY):
-        """
-        :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
-        (e.g. when DALYS is used)
-        """
-        _EconEval.__init__(self, strategies, True, health_measure)
-
-
-class CEA_indp(_CEA):
-    def __init__(self, strategies, health_measure=HealthMeasure.UTILITY):
-        """
-        :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
-        (e.g. when DALYS is used)
-        """
-        _EconEval.__init__(self, strategies, False, health_measure)
-
-
-class _CBA(_EconEval):
+class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
     def __init__(self, strategies, if_paired):
@@ -891,13 +868,6 @@ class _CBA(_EconEval):
         plt.axvline(x=0, c='k', ls='--', linewidth=0.5)
 
         plt.show()
-
-
-class CBA_paired(_CBA):
-    pass
-
-class CBA_indp(_CBA):
-    pass
 
 
 class _ComparativeEconMeasure:
