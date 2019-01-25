@@ -1,25 +1,22 @@
 from SimPy import SamplePathClasses as Path
 
 # a sample path with initial size = 1
-path1 = Path.SamplePathRealTimeUpdate('Path 1', 0, 1)
+path1 = Path.PrevalencePathRealTimeUpdate('Path 1', 0, sim_rep=1)
 # record the observations
 path1.record(1.5, 2)
 path1.record(2, -1)
 path1.record(5, 0)
 
 # second sample path with initial size = 1
-path2 = Path.SamplePathRealTimeUpdate('Path 2', 0, 1)
+path2 = Path.PrevalencePathRealTimeUpdate('Path 2', 0, sim_rep=1)
 # record the observations
 path2.record(0.5, 4)
 path2.record(1.8, -2)
 path2.record(5.5, 1)
 
 # third sample path with initial size = 1
-path3 = Path.SamplePathBatchUpdate('Path 3', 0, 1)
-# record the observations
-path3.record(1.5, 2)
-path3.record(2, -1)
-path3.record(5, 0)
+path3 = Path.PrevalencePathBatchUpdate(
+    'Path 3', 0, times_of_changes=[1.5, 2, 5], increments=[2, -1, 0], sim_rep=1)
 
 
 # plot path 1 only

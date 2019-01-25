@@ -2,25 +2,25 @@ import matplotlib.pyplot as plt
 from SimPy import FigureSupport as Fig
 
 
-class _SamplePath:
+class _PrevalenceSamplePath:
 
     def __init__(self, name, initial_size, sim_rep=0):
         """
         :param name: name of this sample path
-        :param initial_size: value of the sample path at simulation time 0
-        :param sim_rep: simulation replication of this sample path
+        :param initial_size: (int) value of the sample path at simulation time 0
+        :param sim_rep: (int) simulation replication of this sample path
         """
 
         self.name = name
-        self.sim_rep = sim_rep
-        self.currentValue = initial_size
-        self._times = [0]
-        self._values = [initial_size]
+        self.simRep = sim_rep
+        self.currentSize = initial_size     # current size of the sample path
+        self._times = [0]                   # times at which changes occur
+        self._values = [initial_size]       # size of this sample path over time
 
     def record(self, time, increment):
         """
         updates the value of this sample path (e.g. number of people in the system)
-        :param time: time of this change in the system
+        :param time: time of this change
         :param increment: (integer) change (+ or -) in value of this sample path
         """
         raise NotImplementedError("Abstract method not implemented.")
@@ -33,27 +33,40 @@ class _SamplePath:
 
     def get_values(self):
         """
-        :return: value of the sample path at times when changes in the sampel path recorded
+        :return: value of the sample path at times when changes in the sample path recorded
         """
         raise NotImplementedError("Abstract method not implemented.")
 
 
-class SamplePathRealTimeUpdate(_SamplePath):
+class PrevalencePathRealTimeUpdate(_PrevalenceSamplePath):
     """ a sample path for which observations are recorded in real-time (throughout the simulation) """
 
     def __init__(self, name, initial_size, sim_rep=0):
-        _SamplePath.__init__(self, name, initial_size, sim_rep)
+        """
+        :param name: name of this sample path
+        :param initial_size: (int) value of the sample path at simulation time 0
+        :param sim_rep: (int) simulation replication of this sample path
+        """
+        _PrevalenceSamplePath.__init__(self, name, initial_size, sim_rep)
 
     def record(self, time, increment):
+        """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param increment: (integer) change (+ or -) in value of this sample path
+        """
+
+        if time < self._times[-1]:
+            raise ValueError('New time could not be less than the last recorded time.')
 
         # store the current size
         self._times.append(time)
-        self._values.append(self.currentValue)
+        self._values.append(self.currentSize)
         # increment the current value
-        self.currentValue += increment
+        self.currentSize += increment
         # store the new value
         self._times.append(time)
-        self._values.append(self.currentValue)
+        self._values.append(self.currentSize)
 
     def get_times(self):
         return self._times
@@ -62,15 +75,32 @@ class SamplePathRealTimeUpdate(_SamplePath):
         return self._values
 
 
-class SamplePathBatchUpdate(_SamplePath):
+class PrevalencePathBatchUpdate(_PrevalenceSamplePath):
     """ a sample path for which observations are recorded at the end of the simulation """
 
-    def __init__(self, name, initial_size, sim_rep=0):
-        _SamplePath.__init__(self, name, initial_size, sim_rep)
+    def __init__(self, name, initial_size, times_of_changes, increments, sim_rep=0):
+        """
+        :param name: name of this sample path
+        :param initial_size: (int) value of the sample path at simulation time 0
+        :param times_of_changes: (list) times at which changes occurred
+        :param increments: (list) level of changes
+        :param sim_rep: (int) simulation replication of this sample path
+        """
 
-        self._samplePath = SamplePathRealTimeUpdate(name, initial_size, sim_rep)
+        if len(times_of_changes) != len(increments):
+            raise ValueError('The list of times at which changes occurred should '
+                             'be the same size as the list of changes.')
+
+        _PrevalenceSamplePath.__init__(self, name, initial_size, sim_rep)
+
+        # populate the list of [time, value] of recordings
+        self._time_and_values = []
+        for i in range(len(times_of_changes)):
+            self.record(time=times_of_changes[i], increment=increments[i])
+
+        # the batch sample path will be converted to real-time sample path
+        self._samplePath = PrevalencePathRealTimeUpdate(name, initial_size, sim_rep)
         self._ifProcessed = False   # set to True when the sample path is built
-        self._time_and_values = []     # list of (time, value) of recordings
 
     def record(self, time, increment):
         self._time_and_values.append([time, increment])
@@ -99,7 +129,7 @@ class SamplePathBatchUpdate(_SamplePath):
         """ will build the sample path when requested """
 
         # sort this list based on the recorded time
-        new_list = sorted(self._time_and_values, key=lambda x : x[0])
+        new_list = sorted(self._time_and_values, key=lambda x: x[0])
 
         # create the sample path
         for item in new_list:
@@ -204,7 +234,7 @@ def graph_sample_paths(sample_paths, title, x_label, y_label, output_type='show'
             plt.legend([legends])
 
     # set the minimum of y-axis to zero
-    plt.ylim(ymin=0)  # the minimum has to be set after plotting the values
+    plt.ylim(bottom=0)  # the minimum has to be set after plotting the values
 
     # output figure
     Fig.output_figure(plt, output_type, title)
