@@ -2,7 +2,7 @@ from enum import Enum
 import matplotlib.pyplot as plt
 
 
-class Properties(Enum):
+class Columns(Enum):
     """ Index of parameters in decision and chance node dictionaries. """
     COST = 0
     UTILITY = 1
@@ -44,7 +44,7 @@ class DecisionNode(Node):
             # if found, initialize this node
             Node.__init__(self, name, cum_prob=1)
             # find the names of future nodes for this decision node
-            names = dict_decisions[name][Properties.NODES.value]
+            names = dict_decisions[name][Columns.NODES.value]
             # add the future nodes
             self.futureNodes = create_future_nodes(names, dict_chances, dict_terminals)
 
@@ -88,12 +88,12 @@ class ChanceNode(Node):
             # if found, initialize this node
             Node.__init__(self, name, cum_prob)
 
-            self.cost = dict_chances[name][Properties.COST.value]            # find cost
-            self.utility = dict_chances[name][Properties.UTILITY.value]      # find utility
-            self.pFutureNodes = dict_chances[name][Properties.PROB.value]    # find probability of each future nodes
+            self.cost = dict_chances[name][Columns.COST.value]            # find cost
+            self.utility = dict_chances[name][Columns.UTILITY.value]      # find utility
+            self.pFutureNodes = dict_chances[name][Columns.PROB.value]    # find probability of each future nodes
 
             # find the names of future nodes for this chance node
-            names = dict_chances[name][Properties.NODES.value]
+            names = dict_chances[name][Columns.NODES.value]
             # add the future nodes
             self.futureNodes = create_future_nodes\
                 (names, dict_chances, dict_terminals, cum_prob, self.pFutureNodes)
@@ -137,9 +137,9 @@ class TerminalNode(Node):
             # create the node
             Node.__init__(self, name, cum_prob)
             # find the cost of this node (for terminal nodes eCost = immediate cost)
-            self.eCost = dict_terminals[name][Properties.COST.value]
+            self.eCost = dict_terminals[name][Columns.COST.value]
             # find the utility of this node (for terminal nodes eUtility = immediate utility)
-            self.eUtility = dict_terminals[name][Properties.UTILITY.value]
+            self.eUtility = dict_terminals[name][Columns.UTILITY.value]
 
         else:
             print('{} is not in the terminal node dictionary'.format(self.name))
@@ -200,8 +200,8 @@ def graph_outcomes(decision_tree):
 
     # specify title and labels
     fig = plt.figure('cost vs. utility')
-    plt.xlabel('health utility')
-    plt.ylabel('cost')
+    plt.xlabel('Expected Health Utility')
+    plt.ylabel('Expected Cost')
 
     # build the legend and add the series
     names = []  # names of choices
@@ -214,7 +214,7 @@ def graph_outcomes(decision_tree):
 
     # specify the range of x and y-axes
     plt.xlim([0,1])
-    plt.ylim(ymin=0)
+    plt.ylim(bottom=0)
 
     # show the figure
     plt.show()

@@ -15,7 +15,8 @@ dictChances = {'c1': [16.1,   0,       ['c2', 'c3'],    [.558, .442]],
                'c5': [1.32,   0,       ['c6', 'c7'],    [.379, .621]],
                'c6': [0,      0,       ['t6', 't7'],    [.703, .297]],
                'c7': [0,      0,       ['t8', 'c8'],    [.92, .08]],
-               'c8': [63.13,  0,       ['t9', 't10'],   [.998, .002]]};
+               'c8': [63.13,  0,       ['t9', 't10'],   [.998, .002]]
+               }
 
 # dictionary for terminal nodes
 #               //key: cost, utility
@@ -28,7 +29,8 @@ dictTerminals = {'t1': [0,      1],
                  't7': [1.32,   .9],
                  't8': [0,     -.3],
                  't9': [0,      .1],
-                 't10': [1093, -.3]};
+                 't10': [1093, -.3]
+                 }
 
 # build the decision tree
 myDT = dt.DecisionNode('d1', dictDecisions, dictChances, dictTerminals)
