@@ -85,6 +85,10 @@ def discrete_to_continuous(prob_matrix, delta_t):
     :return: (list of lists) transition rate matrix
     """
 
+    assert type(prob_matrix) == list, \
+        "prob_matrix is a matrix that should be represented as a list of lists: " \
+        "For example: [ [0.1, 0.9], [0.8, 0.2] ]."
+
     rate_matrix = []
     for i in range(len(prob_matrix)):
         rate_row = []   # list of rates
