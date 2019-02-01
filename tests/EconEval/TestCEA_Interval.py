@@ -31,4 +31,4 @@ for s in cea.get_strategies_not_on_frontier():
 
 cea.show_CE_plane('CE plane', 'E[Effect]', 'E[Cost]',
                   show_names=True, show_clouds=False, figure_size=6)
-cea.build_CE_table(cost_digits=1, interval=EV.Interval.CONFIDENCE)
+cea.build_CE_table(cost_digits=1, interval_type='c')

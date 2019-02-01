@@ -28,32 +28,21 @@ def pv(payment, discount_rate, discount_period):
     return payment * pow(1 + discount_rate, -discount_period)
 
 
-def get_an_interval(data, interval, alpha=0.05):
+def get_an_interval(data, interval_type, alpha=0.05):
     """
     :param data: (list or numpy.array) data
-    :param interval: select from Interval.CONFIDENCE or Interval.PREDICTION
+    :param interval_type: (string) 'c' for t-based confidence interval,
+                                   'cb' for bootstrap confidence interval, and
+                                   'p' for percentile interval
     :param alpha: significance level
-    :return: a confidence or prediction interval of data
+    :return: a list [L, U]
     """
 
     assert type(data) is list or type(data) is np.ndarray, \
-        "data should be list or np.array."
-    assert type(interval) is Interval, \
-        "interval should be Interval.CONFIDENCE or Interval.PREDICTION."
+        "Data should be a list or a np.array but {} provided.".format(type(data))
 
     sum_stat = Stat.SummaryStat('', data)
-    if interval == Interval.CONFIDENCE:
-        return sum_stat.get_t_CI(alpha)
-    elif interval == Interval.PREDICTION:
-        return sum_stat.get_PI(alpha)
-    else:
-        raise ValueError("Invalid value for interval.")
-
-
-class Interval(Enum):
-    NO_INTERVAL = 0
-    CONFIDENCE = 1
-    PREDICTION = 2
+    return sum_stat.get_interval(interval_type=interval_type,alpha=alpha)
 
 
 class HealthMeasure(Enum):
@@ -435,14 +424,15 @@ class CEA(_EconEval):
         Fig.output_figure(plt, output_type='show', filename=title)
 
     def build_CE_table(self,
-                       interval=Interval.NO_INTERVAL,
+                       interval_type='n',
                        alpha=0.05,
                        cost_digits=0, effect_digits=2, icer_digits=1,
                        cost_multiplier=1, effect_multiplier=1,
                        file_name='CETable'):
         """
-        :param interval: type of interval to report for the cost, effect and ICER estimates,
-                        can take values from Interval.NO_INTERVAL, Interval.CONFIDENCE, Interval.PREDICTION
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval
         :param alpha: significance level
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
@@ -509,7 +499,7 @@ class CEA(_EconEval):
 
         # create a data frame for intervals
         df_intervals = None
-        if interval in (Interval.PREDICTION, Interval.CONFIDENCE):
+        if interval_type in ['c', 'p']:
             df_intervals = pd.DataFrame(
                 index=self._dfStrategies.index,
                 columns=['Name', 'Cost', 'Effect', 'Dominated'])
@@ -519,7 +509,7 @@ class CEA(_EconEval):
             df_intervals['ICER'] = '-'
 
         # decide about what interval to return and create table out_intervals
-        if interval == Interval.PREDICTION:
+        if interval_type == 'p':
             # calculate prediction intervals for cost and effect
             for i in self._dfStrategies.index:
                 # populated name, dominated, cost and effect PI columns
@@ -584,7 +574,7 @@ class CEA(_EconEval):
                     # add the interval to the data frame
                     df_intervals.loc[frontier_strategies.index[i], 'ICER'] = PI_indpICER.get_PI(alpha)
 
-        elif interval == Interval.CONFIDENCE:
+        elif interval_type == 'c':
             # calculate confidence intervals for cost and effect
             for i in self._dfStrategies.index:
                 # populated name, dominated, cost and effect CI columns
@@ -765,16 +755,17 @@ class CBA(_EconEval):
         _EconEval.__init__(self, strategies, if_paired)
 
     def graph_deltaNMB_lines(self, min_wtp, max_wtp, title,
-                        x_label, y_label, interval=Interval.NO_INTERVAL, transparency=0.4,
-                        show_legend=False, figure_size=6):
+                             x_label, y_label, interval_type='n', transparency=0.4,
+                             show_legend=False, figure_size=6):
         """
         :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param title: title
         :param x_label: x-axis label
         :param y_label: y-axis label
-        :param interval: type of interval to show. Can take values from
-                Interval.NO_INTERVAL, Interval.CONFIDENCE, Interval.PREDICTION
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval
         :param transparency: transparency of intervals (0.0 transparent through 1.0 opaque)
         :param show_legend: set true to show legend
         :param figure_size: size of the figure
@@ -802,7 +793,7 @@ class CBA(_EconEval):
                 plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
 
                 # get confidence interval and plot
-                if interval == Interval.CONFIDENCE:
+                if interval_type == 'c':
                     y_ci = [nmbi.get_CI(x, alpha=0.05) for x in x_values]
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
@@ -812,7 +803,7 @@ class CBA(_EconEval):
                     #             alpha=transparency, label=strategy_i.name)
 
                 # get prediction interval and plot
-                if interval == Interval.PREDICTION:
+                if interval_type == 'p':
                     y_ci = [nmbi.get_PI(x, alpha=0.05) for x in x_values]
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
@@ -836,7 +827,7 @@ class CBA(_EconEval):
                 plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
 
                 # get confidence interval and plot
-                if interval == Interval.CONFIDENCE:
+                if interval_type == 'c':
                     y_ci = [nmbi.get_CI(x, alpha=0.05) for x in x_values]
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
@@ -844,7 +835,7 @@ class CBA(_EconEval):
                     plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
 
                 # get prediction interval and plot
-                if interval == Interval.PREDICTION:
+                if interval_type == 'p':
                     y_ci = [nmbi.get_PI(x, alpha=0.05) for x in x_values]
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
@@ -1027,7 +1018,7 @@ class ICER_paired(_ICER):
 
                 icer_bootstrap_means[i] = ave_delta_cost/ave_delta_effect - self._ICER
 
-        # returnt the bootstrap interval
+        # return the bootstrap interval
         return self._ICER - np.percentile(icer_bootstrap_means, [100*(1-alpha/2.0), 100*alpha/2.0])
 
     def get_PI(self, alpha):

@@ -15,23 +15,23 @@ nmb_paired = ce.CBA([s0, s1, s2], if_paired=True) # list of frontier strategies 
 nmb_indp = ce.CBA([s0, s1, s2], if_paired=False) # list of frontier strategies as input
 
 # Try NMB_Lines figure - paired CI
-nmb_paired.graph_deltaNMB_lines(0,50000,"deltaNMB lines for paired CI","wtp values","NMB values",
-                                interval=ce.Interval.CONFIDENCE,
+nmb_paired.graph_deltaNMB_lines(0, 50000,"deltaNMB lines for paired CI","wtp values","NMB values",
+                                interval_type=ce.Interval.CONFIDENCE,
                                 show_legend=True, figure_size=6)
 
 # Try NMB_Lines figure - paired PI
-nmb_paired.graph_deltaNMB_lines(0,50000,"deltaNMB lines for paired PI","wtp values","NMB values",
-                                interval=ce.Interval.PREDICTION,
+nmb_paired.graph_deltaNMB_lines(0, 50000,"deltaNMB lines for paired PI","wtp values","NMB values",
+                                interval_type=ce.Interval.PREDICTION,
                                 show_legend=True, figure_size=6)
 
 # Try NMB_Lines figure - indp CI
-nmb_indp.graph_deltaNMB_lines(0,50000,"deltaNMB lines for indp CI","wtp values","NMB values",
-                              interval=ce.Interval.CONFIDENCE,
+nmb_indp.graph_deltaNMB_lines(0, 50000,"deltaNMB lines for indp CI","wtp values","NMB values",
+                              interval_type=ce.Interval.CONFIDENCE,
                               show_legend=True, figure_size=6)
 
 # Try NMB_Lines figure - indp PI
-nmb_indp.graph_deltaNMB_lines(0,50000,"deltaNMB lines for indp PI","wtp values","NMB values",
-                              interval=ce.Interval.PREDICTION,
+nmb_indp.graph_deltaNMB_lines(0, 50000,"deltaNMB lines for indp PI","wtp values","NMB values",
+                              interval_type=ce.Interval.PREDICTION,
                               show_legend=True, figure_size=6)
 
 

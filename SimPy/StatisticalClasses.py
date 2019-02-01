@@ -93,6 +93,24 @@ class _Statistics(object):
                 F.format_number(self.get_min(), digits),
                 F.format_number(self.get_max(), digits)]
 
+    def get_interval(self, interval_type='c', alpha=0.05):
+        """
+        :param interval_type: (string) 'c' for t-based confidence interval,
+                                       'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :return: a list [L, U]
+        """
+
+        if interval_type == 'c':
+            return self.get_t_CI(alpha)
+        elif interval_type == 'cb':
+            return self.get_bootstrap_CI(alpha, NUM_BOOTSTRAP_SAMPLES)
+        elif interval_type == 'p':
+            return self.get_PI(alpha)
+        else:
+            raise ValueError('Invalid interval type.')
+
     def get_formatted_estimate_interval(self, interval_type='c', alpha=0.05, deci=0, form=None):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
@@ -103,16 +121,9 @@ class _Statistics(object):
         :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
         :return: (string) estimate and interval formatted as specified
         """
-        estimate = self.get_mean()
 
-        if interval_type == 'c':
-            interval = self.get_t_CI(alpha)
-        elif interval_type == 'cb':
-            interval = self.get_bootstrap_CI(alpha, NUM_BOOTSTRAP_SAMPLES)
-        elif interval_type == 'p':
-            interval = self.get_PI(alpha)
-        else:
-            raise ValueError('Invalid interval type.')
+        estimate = self.get_mean()
+        interval = self.get_interval(interval_type=interval_type, alpha=alpha)
 
         return F.format_estimate_interval(estimate, interval, deci, form)
 
