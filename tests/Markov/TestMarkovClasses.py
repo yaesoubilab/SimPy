@@ -14,7 +14,7 @@ print(rateMatrix, '\n')
 
 # continuous to discrete
 newProbMatrix, prob2events = \
-    Cls.continuous_to_discrete(rate_matrix=rateMatrix, delta_t=1/4)
+    Cls.continuous_to_discrete(rate_matrix=rateMatrix, delta_t=1)
 print(newProbMatrix)
 print('Upper bound for the probability of 2 transitions withing delta_t:', prob2events)
 

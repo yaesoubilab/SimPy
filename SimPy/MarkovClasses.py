@@ -1,4 +1,37 @@
 import numpy as np
+import SimPy.RandomVariantGenerators as RVG
+
+
+class Gillespie:
+    def __init__(self, transition_rate_matrix):
+
+        self.rateMatrix = transition_rate_matrix
+        self.expDists = []
+        self.empiricalDists = []
+
+        for row in transition_rate_matrix:
+            rate_out = out_rate(row)
+            self.expDists.append(RVG.Exponential(scale=rate_out))
+
+            rates = []
+            for v in row:
+                if v is None:
+                    rates.append(0)
+                else:
+                    rates.append(v)
+
+            probs = np.array(rates)/rate_out
+
+            self.empiricalDists.append(RVG.Empirical(probs))
+
+    def get_next_state(self, current_state_index, rng):
+
+        # find the time until next event
+        t = self.expDists[current_state_index].sample(rng=rng)
+        # find the next state
+        i = self.empiricalDists[current_state_index].sample(rng=rng)
+
+        return t, i
 
 
 def continuous_to_discrete(rate_matrix, delta_t):
@@ -90,12 +123,14 @@ def discrete_to_continuous(prob_matrix, delta_t):
         "For example: [ [0.1, 0.9], [0.8, 0.2] ]."
 
     rate_matrix = []
-    for i in range(len(prob_matrix)):
+    for i, row in enumerate(prob_matrix):
         rate_row = []   # list of rates
         # calculate rates
-        for j in range(len(prob_matrix[i])):
-            rate = None
-            if not i == j:
+        for j in range(len(row)):
+            # rate is None for diagonal elements
+            if i == j:
+                rate = None
+            else:
                 if prob_matrix[i][i] == 1:
                     rate = 0
                 else:
