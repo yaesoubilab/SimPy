@@ -9,22 +9,37 @@ class Gillespie:
         self.expDists = []
         self.empiricalDists = []
 
-        for row in transition_rate_matrix:
+        for i, row in enumerate(transition_rate_matrix):
+            # find sum of rates out of this state
             rate_out = out_rate(row)
+            # create an exponential distribution with rate equal to sum of rates out of this state
             self.expDists.append(RVG.Exponential(scale=rate_out))
 
+            # find the transition rates to other states
+            # assume that the rate into this state is 0
             rates = []
-            for v in row:
-                if v is None:
+            for j, v in enumerate(row):
+                if i == j:
                     rates.append(0)
                 else:
                     rates.append(v)
 
+            # calculate the probability of each event (prob_j = rate_j / (sum over j of rate_j)
             probs = np.array(rates)/rate_out
 
+            # create an empirical distribution over the future states from this state
             self.empiricalDists.append(RVG.Empirical(probs))
 
     def get_next_state(self, current_state_index, rng):
+        """
+        :param current_state_index: index of the current state
+        :param rng: random number generator object
+        :return: (t, i) where t is the time until next event, and i is the index of the next state
+        """
+
+        if not (0 < current_state_index < len(self.rateMatrix)):
+            raise ValueError('The value of the current state index should be greater '
+                             'than 0 and smaller than number of states.')
 
         # find the time until next event
         t = self.expDists[current_state_index].sample(rng=rng)
