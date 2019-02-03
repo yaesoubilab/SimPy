@@ -38,7 +38,7 @@ class Gillespie:
         """
         :param current_state_index: index of the current state
         :param rng: random number generator object
-        :return: (t, i) where t is the time until next event, and i is the index of the next state
+        :return: (dt, i) where dt is the time until next event, and i is the index of the next state
         """
 
         if not (0 <= current_state_index < len(self.rateMatrix)):
@@ -47,15 +47,16 @@ class Gillespie:
 
         # if this is an absorbing state (i.e. sum of rates out of this state is 0)
         if self.expDists[current_state_index] is None:
-            t = None
+            # the process stays in the current state
+            dt = None
             i = current_state_index
         else:
             # find the time until next event
-            t = self.expDists[current_state_index].sample(rng=rng)
+            dt = self.expDists[current_state_index].sample(rng=rng)
             # find the next state
             i = self.empiricalDists[current_state_index].sample(rng=rng)
 
-        return t, i
+        return dt, i
 
 
 def continuous_to_discrete(rate_matrix, delta_t):

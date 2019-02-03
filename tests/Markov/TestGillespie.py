@@ -9,6 +9,7 @@ t = 0
 i = 0
 rng = np.random.RandomState()
 while t is not None:
+    print('Current state:', i)
     t, i = myGillespie.get_next_state(current_state_index=i, rng=rng)
-    print(i, t)
+    print('Time to next transition:', t)
 
