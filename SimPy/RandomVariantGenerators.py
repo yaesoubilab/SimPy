@@ -145,9 +145,12 @@ class Empirical(RVG):
         self.prob = probabilities
 
     def sample(self, rng):
+        """
+        :return: (int) from possible outcomes [0, 1, 2, 3, ...]
+        """
         # this works for both numpy array and list
         # ref:https://stackoverflow.com/questions/4265988/generate-random-numbers-with-a-given-numerical-distribution
-        return rng.choice(range(self.nOutcomes), size=1, p=self.prob)
+        return rng.choice(range(self.nOutcomes), size=1, p=self.prob)[0]
 
 
 class Gamma(RVG):
