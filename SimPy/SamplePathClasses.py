@@ -96,14 +96,14 @@ class PrevalencePathBatchUpdate(_PrevalenceSamplePath):
         # populate the list of [time, value] of recordings
         self._time_and_values = []
         for i in range(len(times_of_changes)):
-            self.record(time=times_of_changes[i], increment=increments[i])
+            self._time_and_values.append([times_of_changes[i], increments[i]])
 
         # the batch sample path will be converted to real-time sample path
         self._samplePath = PrevalencePathRealTimeUpdate(name, initial_size, sim_rep)
         self._ifProcessed = False   # set to True when the sample path is built
 
     def record(self, time, increment):
-        self._time_and_values.append([time, increment])
+        pass
 
     def get_times(self):
         """
