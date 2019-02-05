@@ -39,11 +39,12 @@ class Gillespie:
         :param current_state_index: index of the current state
         :param rng: random number generator object
         :return: (dt, i) where dt is the time until next event, and i is the index of the next state
+        it returns (None, None) if the process has reached an absorbing state
         """
 
         if not (0 <= current_state_index < len(self._rateMatrix)):
             raise ValueError('The value of the current state index should be greater '
-                             'than 0 and smaller than number of states.')
+                             'than 0 and smaller than the number of states.')
 
         # if this is an absorbing state (i.e. sum of rates out of this state is 0)
         if self._expDists[current_state_index] is None:
