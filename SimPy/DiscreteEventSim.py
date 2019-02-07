@@ -100,17 +100,21 @@ class Trace:
 
         return self._messages
 
-    def print_trace(self, filename, path='..'):
-        """ print the trace messages into a text file with the specified filename
+    def print_trace(self, filename, directory='Trace'):
+        """ print the trace messages into a text file with the specified filename.
+        It creates a sub directory where the python script is located.
         :param filename: filename of the text file where trace message should be exported to
-        :param path: path (relative to the current root '..') where the trace files should be located
-        (the folder should already exist)
+        :param directory: directory (relative to the current root) where the trace files should be located
         """
         if not self._on:
             return
 
+        # create the directory if does not exist
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         # create a new file
-        filename = os.path.join(path, filename)
+        filename = os.path.join(directory, filename)
         # open the file with a write access
         file = open(filename, 'w')
         # write the trace messages

@@ -139,7 +139,7 @@ class PrevalencePathBatchUpdate(_PrevalenceSamplePath):
         self._ifProcessed = True
 
 
-def graph_sample_path(sample_path, title, x_label, y_label,
+def graph_sample_path(sample_path, title, x_label, y_label='',
                       output_type='show', legend=None, color_code=None):
     """
     produces a sample path

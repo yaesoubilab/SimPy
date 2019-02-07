@@ -58,7 +58,7 @@ def graph_histogram(data, title,
                 bins=np.arange(min(data), max(data) + bin_width, bin_width),
                 edgecolor='black',
                 linewidth=1,
-                alpha = 0.75)
+                alpha=0.75)
 
     if not (x_range is None):
         ax.set_xlim(x_range)
