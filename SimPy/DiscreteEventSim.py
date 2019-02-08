@@ -9,18 +9,8 @@ class SimulationEvent:
         :param time: (float) time of the event
         :param priority: priority of the event (the lowest value implies the highest priority)
         """
-        self._time = time
-        self._priority = priority
-
-    def get_time(self):
-        """
-        :returns time when this event is going to occur """
-        return self._time
-
-    def get_priority(self):
-        """
-        :returns priority of the event"""
-        return self._priority
+        self.time = time            # event time
+        self.priority = priority    # event priority
 
     def process(self):
         """ implements instruction to process this event once occurs
@@ -33,13 +23,7 @@ class SimulationCalendar:
         """  create a simulation calendar """
 
         self._q = []  # a list (priority queue) to store simulation events
-        self._currentTime = 0
-
-    def get_current_time(self):
-        """
-        :returns the current time """
-
-        return self._currentTime
+        self.time = 0   # current time
 
     def n_events(self):
         """
@@ -51,7 +35,10 @@ class SimulationCalendar:
         """ add a new event to the calendar (sorted by event time and then priority)
         :param event: a simulation event to be added to the simulation calendar """
 
-        entry = [event.get_time(), event.get_priority(), event]
+        if event.time < self.time:
+            raise ValueError('An event with event time past the current time cannot be added to the calendar.')
+
+        entry = [event.time, event.priority, event]
         heapq.heappush(self._q, entry)
 
     def get_next_event(self):
@@ -59,7 +46,7 @@ class SimulationCalendar:
         :return: the next simulation event
         (if time of events are equal, the event with lowest value for priority will be returned.) """
 
-        self._currentTime, priority, next_event = heapq.heappop(self._q)
+        self.time, priority, next_event = heapq.heappop(self._q)
         return next_event
 
     def clear_calendar(self):
@@ -88,7 +75,7 @@ class Trace:
         if not self._on:
             return
 
-        text = "At {t:.{prec}f}: ".format(t=self._simCalendar.get_current_time(), prec=self._deci) + message
+        text = "At {t:.{prec}f}: ".format(t=self._simCalendar.time, prec=self._deci) + message
         self._messages.append(text)
 
     def get_trace(self):
