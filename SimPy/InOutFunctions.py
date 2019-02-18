@@ -3,12 +3,23 @@ import os
 import numpy as numpy
 
 
-def write_csv(file_name, rows, delimiter='\t'):
+def write_csv(file_name, rows, delimiter='\t', directory=''):
     """ write a list to a csv file
     :param file_name: the file name to be given to the csv file
     :param rows: list of lists to be imported to the csv file
     :param delimiter: to separate by comma, use ',' and by tab, use '\t'
+    :param directory: directory (relative to the current root) where the files should be located
+            for example use 'Example' to create put the csv file under the folder Example
     """
+
+    if directory!='':
+        # create the directory if does not exist
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+    # create a new file
+    file_name = os.path.join(directory, file_name)
+
     with open(file_name, "w", newline='') as file:
         csv_file = csv.writer(file, delimiter=delimiter)
 
