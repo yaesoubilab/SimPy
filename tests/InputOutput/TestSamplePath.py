@@ -18,6 +18,8 @@ path2.record(5.5, 1)
 path3 = Path.PrevalencePathBatchUpdate(
     'Path 3', 0, times_of_changes=[1.5, 2, 5], increments=[2, -1, 0], sim_rep=1)
 
+# stats
+print(path1.stat.get_mean())
 
 # plot path 1 only
 Path.graph_sample_path(

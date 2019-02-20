@@ -1,14 +1,16 @@
 import matplotlib.pyplot as plt
 from SimPy import FigureSupport as Fig
+import SimPy.StatisticalClasses as Stat
 
 
 class _PrevalenceSamplePath:
 
-    def __init__(self, name, initial_size, sim_rep=0):
+    def __init__(self, name, initial_size, sim_rep=0, collect_stat=True):
         """
         :param name: name of this sample path
         :param initial_size: (int) value of the sample path at simulation time 0
         :param sim_rep: (int) simulation replication of this sample path
+        :param collect_stat: set to True to collect statistics on average, max, min, stDev, etc for this sample path
         """
 
         self.name = name
@@ -16,6 +18,10 @@ class _PrevalenceSamplePath:
         self.currentSize = initial_size     # current size of the sample path
         self._times = [0]                   # times at which changes occur
         self._values = [initial_size]       # size of this sample path over time
+        # statistics on this prevalence sample path
+        self.ifCollectStat = collect_stat
+        if collect_stat:
+            self.stat = Stat.ContinuousTimeStat(name=name, initial_time=0)
 
     def record(self, time, increment):
         """
@@ -58,6 +64,10 @@ class PrevalencePathRealTimeUpdate(_PrevalenceSamplePath):
 
         if time < self._times[-1]:
             raise ValueError('New time could not be less than the last recorded time.')
+
+        # update stat
+        if self.ifCollectStat:
+            self.stat.record(time=time, increment=increment)
 
         # store the current size
         self._times.append(time)
