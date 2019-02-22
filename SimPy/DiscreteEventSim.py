@@ -67,6 +67,7 @@ class Trace:
         self._deci = deci
         self._messages = []                 # list of strings to store trace messages
         self._simCalendar = sim_calendar    # simulation calender (to get the current simulation time)
+        self._tOfLastMessage = 0            # time when the last message was recorded
 
     def add_message(self, message):
         """ adds the entered text to the trace list
@@ -75,8 +76,18 @@ class Trace:
         if not self._on:
             return
 
+        # if the time has changed since the last message, add an empty message
+        if self._simCalendar.time > self._tOfLastMessage:
+            self._messages.append('---')
+
+        # message
         text = "At {t:.{prec}f}: ".format(t=self._simCalendar.time, prec=self._deci) + message
+
+        # record the message
         self._messages.append(text)
+
+        # update the time of last message
+        self._tOfLastMessage = self._simCalendar.time
 
     def get_trace(self):
         """
@@ -87,11 +98,12 @@ class Trace:
 
         return self._messages
 
-    def print_trace(self, filename, directory='Trace'):
+    def print_trace(self, filename, directory='Trace', delete_existing_files=True):
         """ print the trace messages into a text file with the specified filename.
         It creates a sub directory where the python script is located.
         :param filename: filename of the text file where trace message should be exported to
         :param directory: directory (relative to the current root) where the trace files should be located
+        :param delete_existing_files: set to True to delete the existing trace files in the directory
         """
         if not self._on:
             return
@@ -99,6 +111,10 @@ class Trace:
         # create the directory if does not exist
         if not os.path.exists(directory):
             os.makedirs(directory)
+
+        # delete existing files
+        if delete_existing_files:
+            io.delete_files(extension='.txt', path=os.getcwd()+'/'+directory)
 
         # create a new file
         filename = os.path.join(directory, filename)
@@ -110,11 +126,3 @@ class Trace:
         # close the file
         file.close()
 
-
-def clear_txt_files(path='..'):
-    """ removes every .txt files inside the directory
-    :param path: path (relative to the current root) where the .txt files are located
-    (the folder should already exist)
-    """
-
-    io.delete_files('.txt', path)
