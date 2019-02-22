@@ -21,8 +21,8 @@ print (nextEvent.get_time(), nextEvent.get_priority())
 def make_trace():
     calendar = Cls.SimulationCalendar()
     myTrace = Cls.Trace(calendar, True, 2)
-    myTrace.add_message("Message 1")
-    myTrace.add_message("Message 2")
+    myTrace._add_message("Message 1")
+    myTrace._add_message("Message 2")
 
     myTrace.print_trace(filename='TraceTest2.txt', directory='trace')
 
