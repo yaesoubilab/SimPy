@@ -89,7 +89,8 @@ class Trace(_Trace):
         self._add_message(time=time, message=message)
 
 
-class DESimulationTrace(_Trace):
+class DiscreteEventSimTrace(_Trace):
+    # trace for discrete-event simulation models
 
     def __init__(self, sim_calendar, if_should_trace, deci):
         """ creates a list to store trace messages
