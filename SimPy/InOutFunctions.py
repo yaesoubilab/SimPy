@@ -3,7 +3,7 @@ import os
 import numpy as numpy
 
 
-def write_csv(file_name, rows, delimiter='\t', directory='csvfiles', delete_existing_files=False):
+def write_csv(file_name, rows, delimiter='\t', directory='', delete_existing_files=False):
     """ write a list to a csv file
     :param file_name: the file name to be given to the csv file
     :param rows: list of lists to be imported to the csv file
