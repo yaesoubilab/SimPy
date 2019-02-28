@@ -10,7 +10,7 @@ def format_number(number, deci, format=None):
     if number is None:
         return ''
     else:
-        if format is None:
+        if format is None or format == '':
             return '{:.{prec}f}'.format(number, prec=deci)
         elif format == ',':
             return '{:,.{prec}f}'.format(number, prec=deci)
@@ -31,7 +31,7 @@ def format_interval(interval, deci, format=None):
     if interval is None:
         return '(,)'
     else:
-        if format is None:
+        if format is None or format == '':
             return '({low:.{prec}f}, {up:.{prec}f})' \
                 .format(low=interval[0], up=interval[1], prec=deci)
         elif format == ',':
