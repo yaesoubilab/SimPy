@@ -11,30 +11,69 @@ from SimPy import FormatFunctions as FormatFunc
 from SimPy import RandomVariantGenerators as RVG
 
 
-def pv(payment, discount_rate, discount_period, if_discount_continuously=False):
-    """ calculates the present value of a payment
+def pv_single_payment(payment, discount_rate, discount_period, discount_continuously=False):
+    """ calculates the present value of a single future payment
     :param payment: payment to calculate the present value for
-    :param discount_rate: discount rate (per period)
+    :param discount_rate: discount rate
     :param discount_period: number of periods to discount the payment
-    :param if_discount_continuously: set to True to discount continuously
+    :param discount_continuously: set to True to discount continuously
     :return: payment/(1+discount_rate)^discount_period for discrete discounting
              payment * exp(-discounted_rate*discount_period) for continuous discounting """
 
     # error checking
-    if if_discount_continuously:
+    if discount_continuously:
         pass
     else:
         assert type(discount_period) is int, "discount_period should be an integer number."
     if discount_rate < 0 or discount_rate > 1:
         raise ValueError("discount_rate should be a number between 0 and 1.")
-    if discount_period < 0:
-        raise ValueError("discount_period cannot be less than 0.")
+    if discount_period <= 0:
+        raise ValueError("discount_period should be greater than 0.")
 
     # calculate the present value
-    if if_discount_continuously:
+    if discount_continuously:
         return payment * np.exp(-discount_rate * discount_period)
     else:
         return payment * pow(1 + discount_rate, -discount_period)
+
+
+def pv_continuous_payment(payment, discount_rate, discount_period):
+    """ calculates the present value of a future continuous payment (discounted continuously)
+    :param payment: payment to calculate the present value for
+    :param discount_rate: discount rate
+    :param discount_period: (tuple) in the form of (l, u) specifying the period where
+                             the continuous payment is received
+    :return: payment * (exp(-discount_rate*l - exp(-discount_rate*u))/discount_rate
+    """
+    assert type(discount_period) is tuple, "discount_period should be a tuple (l, u)."
+    if discount_rate < 0 or discount_rate > 1:
+        raise ValueError("discount_rate should be a number between 0 and 1.")
+
+    if discount_rate == 0:
+        return payment * (discount_period[1] - discount_period[0])
+    else:
+        return payment/discount_rate * \
+               (np.exp(-discount_rate*discount_period[0])
+                - np.exp(-discount_rate*discount_period[1]))
+
+
+def equivalent_annual_value(present_value, discount_rate, discount_period):
+    """  calculates the equivalent annual value of a present value
+    :param present_value:
+    :param discount_rate: discount rate (per period)
+    :param discount_period: number of periods to discount the payment
+    :return: discount_rate*present_value/(1-pow(1+discount_rate, -discount_period))
+    """
+
+    # error checking
+    assert type(discount_period) is int, "discount_period should be an integer number."
+    if discount_rate < 0 or discount_rate > 1:
+        raise ValueError("discount_rate should be a number between 0 and 1.")
+    if discount_period < 0:
+        raise ValueError("discount_period cannot be less than 0.")
+
+    # calculate the equivalent annual value
+    return discount_rate*present_value/(1-pow(1+discount_rate, -discount_period))
 
 
 def get_an_interval(data, interval_type, alpha=0.05):
