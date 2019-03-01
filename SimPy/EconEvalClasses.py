@@ -11,21 +11,30 @@ from SimPy import FormatFunctions as FormatFunc
 from SimPy import RandomVariantGenerators as RVG
 
 
-def pv(payment, discount_rate, discount_period):
+def pv(payment, discount_rate, discount_period, if_discount_continuously=False):
     """ calculates the present value of a payment
     :param payment: payment to calculate the present value for
     :param discount_rate: discount rate (per period)
     :param discount_period: number of periods to discount the payment
-    :return: payment/(1+discount_rate)^discount_period    """
+    :param if_discount_continuously: set to True to discount continuously
+    :return: payment/(1+discount_rate)^discount_period for discrete discounting
+             payment * exp(-discounted_rate*discount_period) for continuous discounting """
 
     # error checking
-    assert type(discount_period) is int, "discount_period should be an integer number."
+    if if_discount_continuously:
+        pass
+    else:
+        assert type(discount_period) is int, "discount_period should be an integer number."
     if discount_rate < 0 or discount_rate > 1:
         raise ValueError("discount_rate should be a number between 0 and 1.")
     if discount_period < 0:
         raise ValueError("discount_period cannot be less than 0.")
 
-    return payment * pow(1 + discount_rate, -discount_period)
+    # calculate the present value
+    if if_discount_continuously:
+        return payment * np.exp(-discount_rate * discount_period)
+    else:
+        return payment * pow(1 + discount_rate, -discount_period)
 
 
 def get_an_interval(data, interval_type, alpha=0.05):
@@ -42,7 +51,7 @@ def get_an_interval(data, interval_type, alpha=0.05):
         "Data should be a list or a np.array but {} provided.".format(type(data))
 
     sum_stat = Stat.SummaryStat('', data)
-    return sum_stat.get_interval(interval_type=interval_type,alpha=alpha)
+    return sum_stat.get_interval(interval_type=interval_type, alpha=alpha)
 
 
 class HealthMeasure(Enum):
