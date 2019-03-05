@@ -99,3 +99,10 @@ class SingleVarRegression:
             result += (i+1) * coeffs[i+1] * pow(x, i)
 
         return result
+
+    def get_zero(self):
+        """
+        :return: x for which f(x) = 0
+        """
+        coeffs = np.fliplr([self.fitted.params])[0]
+        return np.roots(coeffs)

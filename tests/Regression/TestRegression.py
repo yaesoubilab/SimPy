@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 
 # generate x values (observations)
 x = np.random.randn(100)
-# generate y values (assuming y = x^2 + error)
-y = x*x + np.random.randn(100)
+# generate y values (assuming y = x^2 -2 + error)
+y = x*x + np.random.randn(100) - 2
 
 # create the scatter plot of (x, y) points
 fig, ax = plt.subplots(figsize=(8, 4))
@@ -18,10 +18,13 @@ ax.grid(True)
 single_var_poly_reg = Reg.SingleVarRegression(x, y, degree=2)
 
 # print the coefficients of the fitted model
-print(single_var_poly_reg.get_coeffs())
+print('Estimated coefficients:', single_var_poly_reg.get_coeffs())
 
-# print derivative at 0
-print(single_var_poly_reg.get_derivative(x=1))
+# print derivative
+print('Derivative at x=1:', single_var_poly_reg.get_derivative(x=1))
+
+# print zeros
+print('x for which f(x) = 0:', single_var_poly_reg.get_zero())
 
 # make prediction over the range [x_min, x_max]
 x_pred = np.linspace(x.min(), x.max(), 50)
