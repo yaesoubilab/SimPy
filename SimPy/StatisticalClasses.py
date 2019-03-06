@@ -728,11 +728,11 @@ class RelativeDifferencePaired(_RelativeDifference):
 
 
 class RelativeDifferenceIndp(_RelativeDifference):
-    def __init__(self, name, x, y_ref, order = 0):
+    def __init__(self, name, x, y_ref, order=0):
         """
         :param x: list or numpy.array of first set of observations
         :param y: list or numpy.array of second set of observations
-        :param order: set to 0 to calculate (X-Y_ref)/Y and to 1 to calculate (Y_ref-X)/Y_ref
+        :param order: set to 0 to calculate (X-Y_ref)/Y_ref and to 1 to calculate (Y_ref-X)/Y_ref
         """
         _RelativeDifference.__init__(self, name, x, y_ref, order)
 
@@ -750,7 +750,7 @@ class RelativeDifferenceIndp(_RelativeDifference):
         if self._order == 0:
             self._sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(x_resample, y_resample) - 1)
         else:
-            self._sum_stat_sample_relativeRatio = SummaryStat(name, 1- numpy.divide(x_resample, y_resample))
+            self._sum_stat_sample_relativeRatio = SummaryStat(name, 1 - numpy.divide(x_resample, y_resample))
 
     def get_mean(self):
         return self._sum_stat_sample_relativeRatio.get_mean()
