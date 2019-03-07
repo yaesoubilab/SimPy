@@ -125,21 +125,25 @@ class Strategy:
         self.aveEffect = np.average(self.effectObs)
         self.ifDominated = False
 
-    def get_cost_interval(self, interval, alpha):
+    def get_cost_interval(self, interval_type, alpha):
         """
-        :param interval: select from Interval.CONFIDENCE or Interval.PREDICTION
+        :param interval_type: (string) 'c' for t-based confidence interval,
+                               'cb' for bootstrap confidence interval, and
+                               'p' for percentile interval
         :param alpha: significance level
         :return: a confidence or prediction interval of cost observations
         """
-        return get_an_interval(self.costObs, interval, alpha)
+        return get_an_interval(self.costObs, interval_type, alpha)
 
-    def get_effect_interval(self, interval, alpha):
+    def get_effect_interval(self, interval_type, alpha):
         """
-        :param interval: select from Interval.CONFIDENCE or Interval.PREDICTION
+        :param interval_type: (string) 'c' for t-based confidence interval,
+                               'cb' for bootstrap confidence interval, and
+                               'p' for percentile interval
         :param alpha: significance level
         :return: a confidence or prediction interval of effect observations
         """
-        return get_an_interval(self.effectObs, interval, alpha)
+        return get_an_interval(self.effectObs, interval_type, alpha)
 
 
 class _EconEval:
@@ -220,7 +224,7 @@ class CEA(_EconEval):
         _EconEval.__init__(self, strategies, if_paired, health_measure)
 
         self._dfStrategies = None  # data frame to store the CE table
-        self._dfShiftedStrategies = None # data frame to build CE figure
+        self._dfShiftedStrategies = None  # data frame to build CE figure
 
     def get_strategies_on_frontier(self):
         """ :return list of strategies on the frontier"""
@@ -790,6 +794,62 @@ class CEA(_EconEval):
                     deci=icer_digits, format=',')
 
         return ce_table
+
+    def get_dCost_dEffect_cer(self,
+                              interval_type='n',
+                              alpha=0.05,
+                              cost_digits=0, effect_digits=2, icer_digits=1,
+                              cost_multiplier=1, effect_multiplier=1):
+        """
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param cost_digits: digits to round cost estimates to
+        :param effect_digits: digits to round effect estimate to
+        :param icer_digits: digits to round ICER estimates to
+        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
+                thousands or hundred thousands unit
+        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
+                thousands or hundred thousands unit
+        :return: a dictionary of additional cost, additional effect, and cost-effectiveness ratio for
+                all strategies
+        """
+
+        dictionary_results = {}
+
+        for s in self._shiftedStrategies:
+
+            interval = s.get_cost_interval(interval_type=interval_type, alpha=alpha)
+            d_cost_text = FormatFunc.format_estimate_interval(
+                estimate=s.aveCost * cost_multiplier,
+                interval=[x*cost_multiplier for x in interval],
+                deci=cost_digits,
+                format=','
+            )
+            interval = s.get_effect_interval(interval_type=interval_type, alpha=alpha)
+            d_effect_text = FormatFunc.format_estimate_interval(
+                estimate=s.aveEffect*effect_multiplier,
+                interval=[x*effect_multiplier for x in interval],
+                deci=effect_digits,
+                format=','
+            )
+
+            # calculate cost-effectiveness ratio
+            if self._ifPaired:
+                ratio_stat = Stat.RatioStatPaired(name='', x=s.costObs, y_ref=s.effectObs)
+            else:
+                ratio_stat = Stat.RatioStatIndp(name='', x=s.costObs, y_ref=s.effectObs)
+            cer_text = FormatFunc.format_estimate_interval(
+                estimate=ratio_stat.get_mean(),
+                interval=ratio_stat.get_interval(interval_type=interval_type, alpha=alpha),
+                deci=icer_digits,
+                format=',')
+
+            # add to the dictionary
+            dictionary_results[s.name] = [d_cost_text, d_effect_text, cer_text]
+
+        return dictionary_results
 
 
 class CBA(_EconEval):
