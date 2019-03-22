@@ -223,3 +223,34 @@ class StochasticApproximation:
         plt.ylabel('derivative step size')
         plt.xlabel('iterations')
         plt.show()
+
+
+def plot_step_size(a0s, bs, c0s, nItrs):
+      
+    fig, ax = plt.subplots(figsize=(6, 5))
+    ax.set_xlabel('Iteration')
+    
+    for a0 in a0s:
+        for b in bs:
+            GH = StepSize_GeneralizedHarmonic(a0=a0, b=b)
+            
+            y = []
+            for itr in range(nItrs+1):
+                y.append(GH.get_value(itr=itr))
+
+            ax.plot(range(nItrs+1), y, label='GH: a0={}, b={}'.format(a0, b))
+
+    for c0 in c0s:
+        Df = StepSize_Df(c0=c0)
+        y = []
+        for itr in range(nItrs + 1):
+            y.append(Df.get_value(itr=itr))
+
+        ax.plot(range(nItrs + 1), y, linestyle='dashed', linewidth=3, label='Df: c0={}'.format(c0))
+    
+    fig.legend()
+    fig.show()            
+                
+                
+        
+    

@@ -8,7 +8,7 @@ from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
 
 class PolyRegFunction:
-    # regression of form: 1 + x + x^2 + x^3 + ...
+    # regression of form: f(x) = c0 + c1*x + c2*x^2 + c3*x^3 + ...
 
     def __init__(self, degree=1):
         """
