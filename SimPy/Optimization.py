@@ -249,8 +249,4 @@ def plot_step_size(a0s, bs, c0s, nItrs):
         ax.plot(range(nItrs + 1), y, linestyle='dashed', linewidth=3, label='Df: c0={}'.format(c0))
     
     fig.legend()
-    fig.show()            
-                
-                
-        
-    
+    fig.show()
