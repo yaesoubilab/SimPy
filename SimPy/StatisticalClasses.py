@@ -10,7 +10,7 @@ NUM_BOOTSTRAP_SAMPLES = 1000
 class _Statistics(object):
     def __init__(self, name):
         """ abstract method to be overridden in derived classes"""
-        self._name = name        # name of this statistics
+        self.name = name        # name of this statistics
         self._n = 0              # number of data points
         self._mean = 0           # sample mean
         self._stDev = 0          # sample standard deviation
@@ -85,7 +85,7 @@ class _Statistics(object):
         :param digits: digits to round the numbers to
         :return: a list ['name', 'mean', 'confidence interval', 'percentile interval', 'st dev', 'min', 'max']
         """
-        return [self._name,
+        return [self.name,
                 F.format_number(self.get_mean(), digits),
                 F.format_interval(self.get_t_CI(alpha), digits),
                 F.format_interval(self.get_PI(alpha), digits),
@@ -412,6 +412,10 @@ class DifferenceStatIndp(_DifferenceStat):
         """
         _DifferenceStat.__init__(self, name, x, y_ref)
 
+        self._XMinusYSimulated = False
+
+    def _simulate_x_minus_y(self):
+
         # generate random realizations for random variable X - Y
         # this will be used for calculating the projection interval
         numpy.random.seed(1)
@@ -419,7 +423,9 @@ class DifferenceStatIndp(_DifferenceStat):
         max_n = max(self._x_n, self._y_n, 1000)
         x_i = numpy.random.choice(self._x, size=max_n, replace=True)
         y_i = numpy.random.choice(self._y_ref, size=max_n, replace=True)
-        self._sum_stat_sample_delta = SummaryStat(name, x_i - y_i)
+        self._sum_stat_sample_delta = SummaryStat(self.name, x_i - y_i)
+
+        self._XMinusYSimulated = False
 
     def get_mean(self):
         """
@@ -449,12 +455,16 @@ class DifferenceStatIndp(_DifferenceStat):
         :param q: the percentile want to return, in [0, 100]
         :return: qth percentile of sample (x-y)
         """
+
+        if not self._XMinusYSimulated:
+            self._simulate_x_minus_y()
+
         return self._sum_stat_sample_delta.get_percentile(q)
 
     def get_bootstrap_CI(self, alpha, num_samples):
         """
         :param alpha: confidence level
-        :param num_samples: number of samples
+        :param num_samples: number of bootstrap samples
         :return: empirical bootstrap confidence interval
         """
         # set random number generator seed
@@ -506,6 +516,10 @@ class DifferenceStatIndp(_DifferenceStat):
         return [diff - interval, diff + interval]
 
     def get_PI(self, alpha):
+
+        if not self._XMinusYSimulated:
+            self._simulate_x_minus_y()
+
         return self._sum_stat_sample_delta.get_PI(alpha)
 
 
