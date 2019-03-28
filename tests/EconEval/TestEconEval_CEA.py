@@ -56,7 +56,7 @@ myCEA2.show_CE_plane('CE Plane with paired observations and showing legend',
 
 # plot with no label and sample cloud
 myCEA2.show_CE_plane('CE Plane with paired observations and no clouds',
-                     'E[Effect]','E[Cost]', show_clouds=False, show_names=True)
+                     'E[Effect]', 'E[Cost]', show_clouds=False, show_names=True)
 
 # frontier results
 print('')

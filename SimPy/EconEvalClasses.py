@@ -159,7 +159,7 @@ class _EconEval:
         """
         self._n = len(strategies)  # number of strategies
         self._ifPaired = if_paired
-        self._utility_or_disutiliy = (-1, 1)[health_measure == HealthMeasure.UTILITY]
+        self._utility_or_disutility = 1 if health_measure == HealthMeasure.UTILITY else -1
 
         self._strategies = strategies  # list of strategies
         self._strategiesOnFrontier = []  # list of strategies on the frontier
@@ -184,7 +184,7 @@ class _EconEval:
                 shifted_strategy = Strategy(
                     name=self._strategies[i].name,
                     cost_obs=self._strategies[i].costObs - self._strategies[0].costObs,
-                    effect_obs=(self._strategies[i].effectObs - self._strategies[0].effectObs) * self._utility_or_disutiliy
+                    effect_obs=(self._strategies[i].effectObs - self._strategies[0].effectObs) * self._utility_or_disutility
                 )
                 self._shiftedStrategies.append(shifted_strategy)
 
@@ -195,7 +195,7 @@ class _EconEval:
                 shifted_strategy = Strategy(
                     name=self._strategies[i].name,
                     cost_obs=self._strategies[i].costObs - base_ave_cost,
-                    effect_obs=(self._strategies[i].effectObs - base_ave_effect) * self._utility_or_disutiliy
+                    effect_obs=(self._strategies[i].effectObs - base_ave_effect) * self._utility_or_disutility
                 )
                 self._shiftedStrategies.append(shifted_strategy)
 
@@ -407,7 +407,7 @@ class CEA(_EconEval):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
-                plt.scatter(x_values, y_values, c=color, alpha=transparency, s=25, label=strategy_i.name)
+                plt.scatter(x_values, y_values, c=[color], alpha=transparency, s=25, label=strategy_i.name)
             if show_legend:
                 handles, labels = plt.gca().get_legend_handles_labels()
                 order = np.append(range(len(handles))[1:], 0)
@@ -529,7 +529,7 @@ class CEA(_EconEval):
                 list_incr_costs = np.append(list_incr_costs, incremental_cost)
 
                 # incremental effect
-                incremental_effect = self._utility_or_disutiliy\
+                incremental_effect = self._utility_or_disutility\
                            *(frontier_strategies["E[Effect]"].iloc[i]-frontier_strategies["E[Effect]"].iloc[i-1])
                 list_incr_effects = np.append(list_incr_effects, incremental_effect)
 
@@ -585,17 +585,17 @@ class CEA(_EconEval):
                     # calculate the prediction interval of incremental effect
                     df_intervals.loc[frontier_strategies.index[i], 'dEffect'] \
                         = Stat.DifferenceStatPaired("",
-                                                    self._strategies[frontier_strategies.index[i]].effectObs * self._utility_or_disutiliy,
-                                                    self._strategies[frontier_strategies.index[i-1]].effectObs * self._utility_or_disutiliy
+                                                    self._strategies[frontier_strategies.index[i]].effectObs * self._utility_or_disutility,
+                                                    self._strategies[frontier_strategies.index[i-1]].effectObs * self._utility_or_disutility
                                                     ).get_PI(alpha)
 
                     # calculate the prediction interval of ICER
                     PI_PairedICER = ICER_paired(
                         "",
                         self._strategies[frontier_strategies.index[i]].costObs,
-                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutiliy,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutility,
                         self._strategies[frontier_strategies.index[i-1]].costObs,
-                        self._strategies[frontier_strategies.index[i-1]].effectObs*self._utility_or_disutiliy)
+                        self._strategies[frontier_strategies.index[i-1]].effectObs*self._utility_or_disutility)
                     # add the interval to the data frame
                     df_intervals.loc[frontier_strategies.index[i], 'ICER'] = \
                         PI_PairedICER.get_PI(alpha)
@@ -620,9 +620,9 @@ class CEA(_EconEval):
                     PI_indpICER = ICER_indp(
                         "",
                         self._strategies[frontier_strategies.index[i]].costObs,
-                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutiliy,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutility,
                         self._strategies[frontier_strategies.index[i - 1]].costObs,
-                        self._strategies[frontier_strategies.index[i - 1]].effectObs*self._utility_or_disutiliy)
+                        self._strategies[frontier_strategies.index[i - 1]].effectObs*self._utility_or_disutility)
                     # add the interval to the data frame
                     df_intervals.loc[frontier_strategies.index[i], 'ICER'] = PI_indpICER.get_PI(alpha)
 
@@ -655,17 +655,17 @@ class CEA(_EconEval):
                     # calculate the confidence interval of incremental effect
                     df_intervals.loc[frontier_strategies.index[i], 'dEffect'] \
                         = Stat.DifferenceStatPaired(name,
-                                                    self._strategies[frontier_strategies.index[i]].effectObs * self._utility_or_disutiliy,
-                                                    self._strategies[frontier_strategies.index[i-1]].effectObs* self._utility_or_disutiliy
+                                                    self._strategies[frontier_strategies.index[i]].effectObs * self._utility_or_disutility,
+                                                    self._strategies[frontier_strategies.index[i-1]].effectObs * self._utility_or_disutility
                                                     ).get_t_CI(alpha)
 
                     # calculate the confidence interval of incremental ICER
                     CI_PairedICER = ICER_paired(
                         name,
                         self._strategies[frontier_strategies.index[i]].costObs,
-                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutiliy,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutility,
                         self._strategies[frontier_strategies.index[i-1]].costObs,
-                        self._strategies[frontier_strategies.index[i-1]].effectObs*self._utility_or_disutiliy)
+                        self._strategies[frontier_strategies.index[i-1]].effectObs*self._utility_or_disutility)
 
                     # add the interval to the data frame
                     df_intervals.loc[frontier_strategies.index[i], 'ICER'] = CI_PairedICER.get_CI(alpha, 1000)
@@ -682,17 +682,17 @@ class CEA(_EconEval):
                     # calculate the confidence interval of incremental effect
                     df_intervals.loc[frontier_strategies.index[i], 'dEffect'] \
                         = Stat.DifferenceStatIndp("",
-                                                  self._strategies[frontier_strategies.index[i]].effectObs * self._utility_or_disutiliy,
-                                                  self._strategies[frontier_strategies.index[i - 1]].effectObs * self._utility_or_disutiliy
+                                                  self._strategies[frontier_strategies.index[i]].effectObs * self._utility_or_disutility,
+                                                  self._strategies[frontier_strategies.index[i - 1]].effectObs * self._utility_or_disutility
                                                   ).get_t_CI(alpha)
 
                     # calculate the confidence interval of incremental ICER
                     CI_indpICER = ICER_indp(
                         "",
                         self._strategies[frontier_strategies.index[i]].costObs,
-                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutiliy,
+                        self._strategies[frontier_strategies.index[i]].effectObs*self._utility_or_disutility,
                         self._strategies[frontier_strategies.index[i - 1]].costObs,
-                        self._strategies[frontier_strategies.index[i - 1]].effectObs*self._utility_or_disutiliy)
+                        self._strategies[frontier_strategies.index[i - 1]].effectObs*self._utility_or_disutility)
 
                     # add the interval to the data frame
                     df_intervals.loc[frontier_strategies.index[i], 'ICER'] = \
