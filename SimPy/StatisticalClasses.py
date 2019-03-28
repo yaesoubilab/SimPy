@@ -111,7 +111,7 @@ class _Statistics(object):
         else:
             raise ValueError('Invalid interval type.')
 
-    def get_formatted_estimate_interval(self, interval_type='c', alpha=0.05, deci=0, form=None):
+    def get_formatted_mean_and_interval(self, interval_type='c', alpha=0.05, deci=0, form=None):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
@@ -140,6 +140,9 @@ class SummaryStat(_Statistics):
             self._data = data
         else:
             raise ValueError("The argument data can be either a list of numbers or a numpy.array.")
+
+        if len(data) == 0:
+            raise ValueError("The data provided for summary statistics '" + name + "' is empty.")
 
         self._n = len(self._data)
         self._total = numpy.sum(self._data)
@@ -348,6 +351,11 @@ class _ComparativeStat(_Statistics):
             self._y_ref = y_ref
         else:
             raise ValueError("The argument y_ref can be either a list of numbers or a numpy.array.")
+
+        if len(self._x) == 0:
+            raise ValueError("x is empty for the comparative statistics '" + name + "'.")
+        if len(self._y_ref) == 0:
+            raise ValueError("y_ref is empty for the comparative statistics '" + name + "'.")
 
         self._x_n = len(self._x)        # number of observations for x
         self._y_n = len(self._y_ref)    # number of observations for y_ref
