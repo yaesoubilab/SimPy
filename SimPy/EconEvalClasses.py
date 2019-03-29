@@ -874,6 +874,17 @@ class CEA(_EconEval):
         return dictionary_results
 
 
+class NMBCurve:
+
+    def __init__(self, label, color, wtps, ys, l_errs, u_errs):
+        self.label = label
+        self.color = color
+        self.wtps = wtps
+        self.ys = ys
+        self.l_errs = l_errs
+        self.u_errs = u_errs
+
+
 class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
@@ -886,6 +897,75 @@ class CBA(_EconEval):
         (e.g. when DALYS is used)
         """
         _EconEval.__init__(self, strategies, if_paired, health_measure)
+
+        self.nmbCurves = []  # list of NMB curves
+
+    def make_nmb_curves(self, min_wtp, max_wtp, interval_type='n'):
+        """
+        prepares the information needed to plot the incremental net-monetary benefit
+        compared to the first strategy (base)
+        :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
+        :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval):
+        """
+
+        self.nmbCurves = [] # empty the list of NMB curves
+
+        # wtp values at which NMB should be evaluated
+        x_values = np.arange(min_wtp, max_wtp, (max_wtp - min_wtp) / 100.0)
+
+        # decide about the color of each curve
+        rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n - 1))
+        colors = []
+        i = 0
+        for s in self._strategies[1:]:
+            if s.color:
+                colors.append(s.color)
+            else:
+                colors.append(rainbow_colors[i])
+            i += 1
+
+        # create the NMB curves
+        for strategy_i, color in zip(self._strategies[1:], colors):
+
+            if self._ifPaired:
+                # create a paired NMB object
+                paired_nmb = NMB_paired(name=strategy_i.name,
+                                        costs_new=strategy_i.costObs,
+                                        effects_new=strategy_i.effectObs,
+                                        costs_base=self._strategies[0].costObs,
+                                        effects_base=self._strategies[0].effectObs,
+                                        health_measure=self._healthMeasure)
+
+                # get the NMB values for each wtp
+                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
+                    nmb=paired_nmb, wtps=x_values, interval_type=interval_type
+                )
+
+            else:
+                # create an indp NMB object
+                ind_nmb = NMB_indp(name=strategy_i.name,
+                                   costs_new=strategy_i.costObs,
+                                   effects_new=strategy_i.effectObs,
+                                   costs_base=self._strategies[0].costObs,
+                                   effects_base=self._strategies[0].effectObs,
+                                   health_measure=self._healthMeasure)
+
+                # get the NMB values for each wtp
+                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
+                    nmb=ind_nmb, wtps=x_values, interval_type=interval_type
+                )
+
+            # make a NMB curve
+            self.nmbCurves.append(NMBCurve(label=strategy_i.name,
+                                           color=color,
+                                           wtps=x_values,
+                                           ys=y_values,
+                                           l_errs=l_err,
+                                           u_errs=u_err)
+                                  )
 
     def graph_incremental_NMBs(self, min_wtp, max_wtp,
                                title, x_label, y_label,
@@ -906,60 +986,20 @@ class CBA(_EconEval):
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
         """
 
-        # wtp values at which NMB should be evaluated
-        x_values = np.arange(min_wtp, max_wtp, (max_wtp-min_wtp)/100.0)
+        # make the NMB curves
+        self.make_nmb_curves(min_wtp=min_wtp,
+                             max_wtp=max_wtp,
+                             interval_type=interval_type)
 
         # initialize plot
         plt.figure(figsize=figure_size)
 
-        rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n-1))
-        colors = []
-        i = 0
-        for s in self._strategies[1:]:
-            if s.color:
-                colors.append(s.color)
-            else:
-                colors.append(rainbow_colors[i])
-            i += 1
-
-        for strategy_i, color in zip(self._strategies[1:], colors):
-
-            # if paired
-            if self._ifPaired:
-                # create a paired NMB object
-                paired_nmb = NMB_paired(name=strategy_i.name,
-                                        costs_new=strategy_i.costObs,
-                                        effects_new=strategy_i.effectObs,
-                                        costs_base=self._strategies[0].costObs,
-                                        effects_base=self._strategies[0].effectObs,
-                                        health_measure=self._healthMeasure)
-
-                # get the NMB values for each wtp
-                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
-                    nmb=paired_nmb, wtps=x_values, interval_type=interval_type
-                )
-
-            # if unpaired
-            else:
-                # create an indp NMB object
-                ind_nmb = NMB_indp(name=strategy_i.name,
-                                   costs_new=strategy_i.costObs,
-                                   effects_new=strategy_i.effectObs,
-                                   costs_base=self._strategies[0].costObs,
-                                   effects_base=self._strategies[0].effectObs,
-                                   health_measure=self._healthMeasure)
-
-                # get the NMB values for each wtp
-                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
-                    nmb=ind_nmb, wtps=x_values, interval_type=interval_type
-                )
-
+        for curve in self.nmbCurves:
             # plot line
-            plt.plot(x_values, y_values, c=color, alpha=1, label=strategy_i.name)
-
+            plt.plot(curve.wtps, curve.ys, c=curve.color, alpha=1, label=curve.label)
             # plot intervals
-            plt.fill_between(x_values, y_values - l_err, y_values + u_err,
-                             color=color, alpha=transparency)
+            plt.fill_between(curve.wtps, curve.ys - curve.l_errs, curve.ys + curve.u_errs,
+                             color=curve.color, alpha=transparency)
 
         if show_legend:
             plt.legend()
