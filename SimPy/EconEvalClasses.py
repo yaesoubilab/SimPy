@@ -99,17 +99,20 @@ class HealthMeasure(Enum):
 
 
 class Strategy:
-    def __init__(self, name, cost_obs, effect_obs):
+    def __init__(self, name, cost_obs, effect_obs, color=None):
         """
         :param name: name of the strategy
         :param cost_obs: list or numpy.array of cost observations
         :param effect_obs: list or numpy.array of effect observations
+        :param color: (string) color code
+                (https://www.webucator.com/blog/2015/03/python-color-constants-module/)
         """
 
         assert type(cost_obs) is list or type(cost_obs) is np.ndarray, \
             "cost_obs should be list or np.array."
         assert type(effect_obs) is list or type(effect_obs) is np.ndarray, \
             "effect_obs should be list or np.array."
+        assert color is None or type(color) is str, "color argument should be a string."
 
         self.name = name
         if type(cost_obs) is list:
@@ -124,6 +127,7 @@ class Strategy:
         self.aveCost = np.average(self.costObs)
         self.aveEffect = np.average(self.effectObs)
         self.ifDominated = False
+        self.color = color
 
     def get_cost_interval(self, interval_type, alpha):
         """
@@ -184,7 +188,8 @@ class _EconEval:
                 shifted_strategy = Strategy(
                     name=self._strategies[i].name,
                     cost_obs=self._strategies[i].costObs - self._strategies[0].costObs,
-                    effect_obs=(self._strategies[i].effectObs - self._strategies[0].effectObs) * self._utility_or_disutility
+                    effect_obs=(self._strategies[i].effectObs - self._strategies[0].effectObs) * self._utility_or_disutility,
+                    color=self._strategies[i].color
                 )
                 self._shiftedStrategies.append(shifted_strategy)
 
@@ -195,7 +200,8 @@ class _EconEval:
                 shifted_strategy = Strategy(
                     name=self._strategies[i].name,
                     cost_obs=self._strategies[i].costObs - base_ave_cost,
-                    effect_obs=(self._strategies[i].effectObs - base_ave_effect) * self._utility_or_disutility
+                    effect_obs=(self._strategies[i].effectObs - base_ave_effect) * self._utility_or_disutility,
+                    color=self._strategies[i].color
                 )
                 self._shiftedStrategies.append(shifted_strategy)
 
@@ -391,7 +397,7 @@ class CEA(_EconEval):
         frontier_plot = df_shifted_strategies.loc[df_shifted_strategies["Dominated"] == False]\
             .sort_values('E[Effect]')
 
-        # draw the fontier
+        # draw the frontier
         plt.figure(figsize=(figure_size, figure_size))
         plt.plot(frontier_plot['E[Effect]'], frontier_plot['E[Cost]'], c='k', alpha=0.6, linewidth=2,
                  label="Frontier")
@@ -403,7 +409,18 @@ class CEA(_EconEval):
 
         # show observation clouds for strategies
         if show_clouds:
-            for strategy_i, color in zip(self._shiftedStrategies, cm.rainbow(np.linspace(0, 1, self._n))):
+
+            rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n))
+            colors = []
+            i = 0
+            for s in self._shiftedStrategies:
+                if s.color:
+                    colors.append(s.color)
+                else:
+                    colors.append(rainbow_colors[i])
+                i += 1
+
+            for strategy_i, color in zip(self._shiftedStrategies, colors):
                 x_values = strategy_i.effectObs
                 y_values = strategy_i.costObs
                 # plot clouds
@@ -411,7 +428,7 @@ class CEA(_EconEval):
             if show_legend:
                 handles, labels = plt.gca().get_legend_handles_labels()
                 order = np.append(range(len(handles))[1:], 0)
-                plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
+                plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
                 # to customize legend: loc='lower right', numpoints=1, ncol=3, fontsize=8)
             plt.scatter(df_shifted_strategies['E[Effect]'],
                         df_shifted_strategies['E[Cost]'],
@@ -864,7 +881,7 @@ class CBA(_EconEval):
 
     def graph_deltaNMB_lines(self, min_wtp, max_wtp, title,
                              x_label, y_label, interval_type='n', transparency=0.4,
-                             show_legend=False, figure_size=6):
+                             show_legend=False, figure_size=(6,6)):
         """
         :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
@@ -876,13 +893,13 @@ class CBA(_EconEval):
                                        'p' for percentile interval
         :param transparency: transparency of intervals (0.0 transparent through 1.0 opaque)
         :param show_legend: set true to show legend
-        :param figure_size: size of the figure
+        :param figure_size: (tuple) size of the figure (e.g. (2, 3)
         """
         # set x-axis
         x_values = np.arange(min_wtp, max_wtp, (max_wtp-min_wtp)/100.0)
 
         # initialize plot
-        plt.figure(figsize=(figure_size, figure_size))
+        plt.figure(figsize=figure_size)
 
         # if paired
         if self._ifPaired:
@@ -898,7 +915,7 @@ class CBA(_EconEval):
                 # get the NMB values for each wtp
                 y_values = [nmbi.get_NMB(x) for x in x_values]
                 # plot line
-                plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
+                plt.plot(x_values, y_values, c=strategy_i.color, alpha=1, label=strategy_i.name)
 
                 # get confidence interval and plot
                 if interval_type == 'c':
@@ -906,7 +923,7 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color, alpha=transparency)
                     #plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
                     #             alpha=transparency, label=strategy_i.name)
 
@@ -916,7 +933,7 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color, alpha=transparency)
 
         # if unpaired
         elif self._ifPaired==False:
@@ -932,7 +949,7 @@ class CBA(_EconEval):
                 # get the NMB values for each wtp
                 y_values = [nmbi.get_NMB(x) for x in x_values]
                 # plot line
-                plt.plot(x_values, y_values, c=color, alpha=transparency, label=strategy_i.name)
+                plt.plot(x_values, y_values, c=strategy_i.color, alpha=1, label=strategy_i.name)
 
                 # get confidence interval and plot
                 if interval_type == 'c':
@@ -940,7 +957,8 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color,
+                                     alpha=transparency)
 
                 # get prediction interval and plot
                 if interval_type == 'p':
@@ -948,7 +966,8 @@ class CBA(_EconEval):
                     # reshape confidence interval to plot
                     xerr = np.array([p[1] for p in y_ci]) - y_values
                     yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color="grey", alpha=transparency)
+                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color,
+                                     alpha=transparency)
 
         if show_legend:
             plt.legend()
