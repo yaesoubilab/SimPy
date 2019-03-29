@@ -163,6 +163,7 @@ class _EconEval:
         """
         self._n = len(strategies)  # number of strategies
         self._ifPaired = if_paired
+        self._healthMeasure = health_measure
         self._utility_or_disutility = 1 if health_measure == HealthMeasure.UTILITY else -1
 
         self._strategies = strategies  # list of strategies
@@ -352,12 +353,16 @@ class CEA(_EconEval):
         # create list of strategies on frontier
         on_frontier_index = df_shifted_sorted[df_shifted_sorted['Dominated'] == False].index
         for i in on_frontier_index:
+            self._strategies[i].ifDominated = False
+            self._shiftedStrategies[i].ifDominated = False
             self._strategiesOnFrontier.append(self._strategies[i])
             self._shiftedStrategiesOnFrontier.append(self._shiftedStrategies[i])
 
         # create list of strategies not on frontier
         not_on_frontier_index = df_shifted_sorted[df_shifted_sorted['Dominated'] == True].index
         for j in not_on_frontier_index:
+            self._strategies[j].ifDominated = True
+            self._shiftedStrategies[j].ifDominated = True
             self._strategiesNotOnFrontier.append(self._strategies[j])
             self._shiftedStrategiesNotOnFrontier.append(self._shiftedStrategies[j])
 
@@ -872,17 +877,22 @@ class CEA(_EconEval):
 class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
-    def __init__(self, strategies, if_paired):
+    def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
+        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
+        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        (e.g. when DALYS is used)
         """
-        _EconEval.__init__(self, strategies, if_paired)
+        _EconEval.__init__(self, strategies, if_paired, health_measure)
 
-    def graph_deltaNMB_lines(self, min_wtp, max_wtp, title,
-                             x_label, y_label, interval_type='n', transparency=0.4,
-                             show_legend=False, figure_size=(6,6)):
+    def graph_incremental_NMBs(self, min_wtp, max_wtp,
+                               title, x_label, y_label,
+                               interval_type='n', transparency=0.4,
+                               show_legend=False, figure_size=(6,6)):
         """
+        plots the incremental net-monetary benefit compared to the first strategy (base)
         :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param title: title
@@ -895,79 +905,61 @@ class CBA(_EconEval):
         :param show_legend: set true to show legend
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
         """
-        # set x-axis
+
+        # wtp values at which NMB should be evaluated
         x_values = np.arange(min_wtp, max_wtp, (max_wtp-min_wtp)/100.0)
 
         # initialize plot
         plt.figure(figsize=figure_size)
 
-        # if paired
-        if self._ifPaired:
-            # nmb_paired = []
-            for strategy_i, color in zip(self._strategies[1:], cm.rainbow(np.linspace(0, 1, self._n-1))):
-                # create NMB_paired objects
-                nmbi = NMB_paired(strategy_i.name, strategy_i.costObs,
-                                  strategy_i.effectObs, self._strategies[0].costObs,
-                                  self._strategies[0].effectObs)
+        rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n-1))
+        colors = []
+        i = 0
+        for s in self._strategies[1:]:
+            if s.color:
+                colors.append(s.color)
+            else:
+                colors.append(rainbow_colors[i])
+            i += 1
 
-                # nmb_paired.append(nmbi)
+        for strategy_i, color in zip(self._strategies[1:], colors):
 
-                # get the NMB values for each wtp
-                y_values = [nmbi.get_NMB(x) for x in x_values]
-                # plot line
-                plt.plot(x_values, y_values, c=strategy_i.color, alpha=1, label=strategy_i.name)
-
-                # get confidence interval and plot
-                if interval_type == 'c':
-                    y_ci = [nmbi.get_CI(x, alpha=0.05) for x in x_values]
-                    # reshape confidence interval to plot
-                    xerr = np.array([p[1] for p in y_ci]) - y_values
-                    yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color, alpha=transparency)
-                    #plt.errorbar(x_values, y_values, np.array([xerr, yerr]), color=color,
-                    #             alpha=transparency, label=strategy_i.name)
-
-                # get prediction interval and plot
-                if interval_type == 'p':
-                    y_ci = [nmbi.get_PI(x, alpha=0.05) for x in x_values]
-                    # reshape confidence interval to plot
-                    xerr = np.array([p[1] for p in y_ci]) - y_values
-                    yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color, alpha=transparency)
-
-        # if unpaired
-        elif self._ifPaired==False:
-            # nmb_indp = []
-            for strategy_i, color in zip(self._strategies[1:], cm.rainbow(np.linspace(0, 1, self._n-1))):
-                # create NMB_indp objects
-                nmbi = NMB_indp(strategy_i.name, strategy_i.costObs,
-                                  strategy_i.effectObs, self._strategies[0].costObs,
-                                  self._strategies[0].effectObs)
-
-                # nmb_indp.append(nmbi)
+            # if paired
+            if self._ifPaired:
+                # create a paired NMB object
+                paired_nmb = NMB_paired(name=strategy_i.name,
+                                        costs_new=strategy_i.costObs,
+                                        effects_new=strategy_i.effectObs,
+                                        costs_base=self._strategies[0].costObs,
+                                        effects_base=self._strategies[0].effectObs,
+                                        health_measure=self._healthMeasure)
 
                 # get the NMB values for each wtp
-                y_values = [nmbi.get_NMB(x) for x in x_values]
-                # plot line
-                plt.plot(x_values, y_values, c=strategy_i.color, alpha=1, label=strategy_i.name)
+                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
+                    nmb=paired_nmb, wtps=x_values, interval_type=interval_type
+                )
 
-                # get confidence interval and plot
-                if interval_type == 'c':
-                    y_ci = [nmbi.get_CI(x, alpha=0.05) for x in x_values]
-                    # reshape confidence interval to plot
-                    xerr = np.array([p[1] for p in y_ci]) - y_values
-                    yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color,
-                                     alpha=transparency)
+            # if unpaired
+            else:
+                # create an indp NMB object
+                ind_nmb = NMB_indp(name=strategy_i.name,
+                                   costs_new=strategy_i.costObs,
+                                   effects_new=strategy_i.effectObs,
+                                   costs_base=self._strategies[0].costObs,
+                                   effects_base=self._strategies[0].effectObs,
+                                   health_measure=self._healthMeasure)
 
-                # get prediction interval and plot
-                if interval_type == 'p':
-                    y_ci = [nmbi.get_PI(x, alpha=0.05) for x in x_values]
-                    # reshape confidence interval to plot
-                    xerr = np.array([p[1] for p in y_ci]) - y_values
-                    yerr = y_values - np.array([p[0] for p in y_ci])
-                    plt.fill_between(x_values, y_values - yerr, y_values + xerr, color=strategy_i.color,
-                                     alpha=transparency)
+                # get the NMB values for each wtp
+                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
+                    nmb=ind_nmb, wtps=x_values, interval_type=interval_type
+                )
+
+            # plot line
+            plt.plot(x_values, y_values, c=color, alpha=1, label=strategy_i.name)
+
+            # plot intervals
+            plt.fill_between(x_values, y_values - l_err, y_values + u_err,
+                             color=color, alpha=transparency)
 
         if show_legend:
             plt.legend()
@@ -986,6 +978,24 @@ class CBA(_EconEval):
         plt.axvline(x=0, c='k', ls='--', linewidth=0.5)
 
         plt.show()
+
+    def __get_ys_uerrs_lerrs(self, nmb, wtps, interval_type='c'):
+
+        # get the NMB values for each wtp
+        y_values = [nmb.get_NMB(x) for x in wtps]
+
+        if interval_type == 'c':
+            y_ci = [nmb.get_CI(x, alpha=0.05) for x in wtps]
+        elif interval_type == 'p':
+            y_ci = [nmb.get_PI(x, alpha=0.05) for x in wtps]
+        else:
+            raise ValueError('Invalid value for internal_type.')
+
+        # reshape confidence interval to plot
+        u_err = np.array([p[1] for p in y_ci]) - y_values
+        l_err = y_values - np.array([p[0] for p in y_ci])
+
+        return  y_values, u_err, l_err
 
 
 class _ComparativeEconMeasure:
