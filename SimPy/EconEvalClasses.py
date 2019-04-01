@@ -132,10 +132,10 @@ class Strategy:
     def get_cost_interval(self, interval_type, alpha):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
-                               'cb' for bootstrap confidence interval, and
-                               'p' for percentile interval
+                                       'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
         :param alpha: significance level
-        :return: a confidence or prediction interval of cost observations
+        :return: list [L, U] for a confidence or prediction interval of cost observations
         """
         return get_an_interval(self.costObs, interval_type, alpha)
 
@@ -145,9 +145,37 @@ class Strategy:
                                'cb' for bootstrap confidence interval, and
                                'p' for percentile interval
         :param alpha: significance level
-        :return: a confidence or prediction interval of effect observations
+        :return: list [L, U] for a confidence or prediction interval of effect observations
         """
         return get_an_interval(self.effectObs, interval_type, alpha)
+
+    def get_cost_err_interval(self, interval_type, alpha):
+        """
+        :param interval_type: (string) 'c' for t-based confidence interval,
+                                       'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :return: list [err_l, err_u] for the lower and upper error length
+                of confidence or prediction intervals of cost observations.
+                NOTE: [err_l, err_u] = [mean - L, mean + U], where [L, U] is the confidence or prediction interval
+
+        """
+        interval = self.get_cost_interval(interval_type, alpha)
+        return [self.aveCost - interval[0], interval[1] - self.aveCost]
+
+    def get_effect_err_interval(self, interval_type, alpha):
+        """
+        :param interval_type: (string) 'c' for t-based confidence interval,
+                                       'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :return: list [err_l, err_u] for the lower and upper error length
+                of confidence or prediction intervals of effect observations.
+                NOTE: [err_l, err_u] = [mean - L, mean + U], where [L, U] is the confidence or prediction interval
+
+        """
+        interval = self.get_effect_interval(interval_type, alpha)
+        return [self.aveEffect - interval[0], interval[1] - self.aveEffect]
 
 
 class _EconEval:
