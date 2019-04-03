@@ -968,7 +968,7 @@ class CBA(_EconEval):
                                         health_measure=self._healthMeasure)
 
                 # get the NMB values for each wtp
-                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
+                y_values, l_err, u_err = self.__get_ys_lerrs_uerrs(
                     nmb=paired_nmb, wtps=x_values, interval_type=interval_type
                 )
 
@@ -982,7 +982,7 @@ class CBA(_EconEval):
                                    health_measure=self._healthMeasure)
 
                 # get the NMB values for each wtp
-                y_values, l_err, u_err = self.__get_ys_uerrs_lerrs(
+                y_values, l_err, u_err = self.__get_ys_lerrs_uerrs(
                     nmb=ind_nmb, wtps=x_values, interval_type=interval_type
                 )
 
@@ -1047,7 +1047,7 @@ class CBA(_EconEval):
 
         plt.show()
 
-    def __get_ys_uerrs_lerrs(self, nmb, wtps, interval_type='c'):
+    def __get_ys_lerrs_uerrs(self, nmb, wtps, interval_type='c'):
 
         # get the NMB values for each wtp
         y_values = [nmb.get_NMB(x) for x in wtps]
@@ -1063,7 +1063,7 @@ class CBA(_EconEval):
         u_err = np.array([p[1] for p in y_ci]) - y_values
         l_err = y_values - np.array([p[0] for p in y_ci])
 
-        return  y_values, u_err, l_err
+        return y_values, l_err, u_err
 
 
 class _ComparativeEconMeasure:
