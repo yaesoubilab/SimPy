@@ -11,6 +11,9 @@ from SimPy import FormatFunctions as FormatFunc
 from SimPy import RandomVariantGenerators as RVG
 
 
+NUM_WTPS_FOR_NMB_CURVES = 100       # number of wtp values to use to make net-monetary benefit curves
+
+
 def pv_single_payment(payment, discount_rate, discount_period, discount_continuously=False):
     """ calculates the present value of a single future payment
     :param payment: payment to calculate the present value for
@@ -939,10 +942,10 @@ class CBA(_EconEval):
                                        'p' for percentile interval):
         """
 
-        self.nmbCurves = [] # empty the list of NMB curves
+        self.nmbCurves = []  # empty the list of NMB curves
 
         # wtp values at which NMB should be evaluated
-        x_values = np.arange(min_wtp, max_wtp, (max_wtp - min_wtp) / 100.0)
+        x_values = np.linspace(min_wtp, max_wtp, num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
 
         # decide about the color of each curve
         rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n - 1))
@@ -998,7 +1001,7 @@ class CBA(_EconEval):
     def graph_incremental_NMBs(self, min_wtp, max_wtp,
                                title, x_label, y_label,
                                interval_type='n', transparency=0.4,
-                               show_legend=False, figure_size=(6,6)):
+                               show_legend=False, figure_size=(6, 6)):
         """
         plots the incremental net-monetary benefit compared to the first strategy (base)
         :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
@@ -1035,15 +1038,17 @@ class CBA(_EconEval):
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
-        plt.xlim([min_wtp, max_wtp])
 
         vals_y, labs_y = plt.yticks()
         vals_x, labs_x = plt.xticks()
         plt.yticks(vals_y, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
         plt.xticks(vals_x, ['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
+        d = (max_wtp - min_wtp) / NUM_WTPS_FOR_NMB_CURVES
+        plt.xlim([min_wtp-d, max_wtp+d])
+
         plt.axhline(y=0, c='k', ls='--', linewidth=0.5)
-        plt.axvline(x=0, c='k', ls='--', linewidth=0.5)
+        #plt.axvline(x=0, c='k', ls='--', linewidth=0.5)
 
         plt.show()
 
@@ -1125,12 +1130,16 @@ class _ICER(_ComparativeEconMeasure):
         (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
+
+        self._isDefined = True  # if ICER cannot be computed, this will change to False
+
         # initialize the base class
         _ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # calculate ICER
         if self._delta_ave_effect == 0:
             warnings.warn(self.name + ': Mean incremental effect is 0. ICER is not computable.')
+            self._isDefined = False
             self._ICER = math.nan
         else:
             # $ per DALY averted or $ per QALY gained
@@ -1183,8 +1192,16 @@ class ICER_paired(_ICER):
         self._deltaCosts = self._costsNew - self._costsBase
         self._deltaEffects = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
+        # check if ICER is computable
+        if min(self._deltaEffects) < 0:
+            self._isDefined = False
+            warnings.warn('{}: Confidence or uncertainty intervals for ICER is not '
+                          'computable because at least one of observations on incremental '
+                          'effect is negative.'.format(self.name))
+
         # calculate ICERs
-        self._icers = np.divide(self._deltaCosts, self._deltaEffects)
+        if self._isDefined:
+            self._icers = np.divide(self._deltaCosts, self._deltaEffects)
 
     def get_CI(self, alpha, num_bootstrap_samples, rng=None):
         """
@@ -1193,6 +1210,9 @@ class ICER_paired(_ICER):
         :param rng: random number generator
         :return: confidence interval in the format of list [l, u]
         """
+
+        if not self._isDefined:
+            return [math.nan, math.nan]
 
         # create a new random number generator if one is not provided.
         if rng is None:
@@ -1231,6 +1251,9 @@ class ICER_paired(_ICER):
         :param alpha: significance level, a value from [0, 1]
         :return: prediction interval in the format of list [l, u]
         """
+        if not self._isDefined:
+            return [math.nan, math.nan]
+
         return np.percentile(self._icers, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
 
 
