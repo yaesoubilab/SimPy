@@ -1283,7 +1283,7 @@ class ICER_indp(_ICER):
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
         :param rng: random number generator
-        :return: confidence interval in the format of list [l, u]
+        :return: bootstrap confidence interval in the format of list [l, u]
         """
 
         # create a new random number generator if one is not provided.
@@ -1291,24 +1291,47 @@ class ICER_indp(_ICER):
             rng = RVG.RNG(seed=1)
         assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
 
+        # vector to store bootstrap ICERs
         icer_bootstrap_means = np.zeros(num_bootstrap_samples)
 
         n_obs_new = len(self._costsNew)
         n_obs_base = len(self._costsBase)
+
+        # get bootstrap samples
         for i in range(num_bootstrap_samples):
+            # for the new alternative
             indices_new = rng.choice(range(n_obs_new), size=n_obs_new, replace=True)
             costs_new = self._costsNew[indices_new]
             effects_new = self._effectsNew[indices_new]
 
+            # for the base alternative
             indices_base = np.random.choice(range(n_obs_base), size=n_obs_base, replace=True)
             costs_base = self._costsBase[indices_base]
             effects_base = self._effectsBase[indices_base]
 
-            icer_bootstrap_means[i] = \
-                (np.mean(costs_new) - np.mean(costs_base))/(np.mean(effects_new) - np.mean(effects_base)) \
-                * self._effect_multiplier
+            # calculate this bootstrap ICER
+            mean_costs_new = np.mean(costs_new)
+            mean_costs_base = np.mean(costs_base)
+            mean_effects_new = np.mean(effects_new)
+            mean_effects_base = np.mean(effects_base)
 
-        return np.percentile(icer_bootstrap_means, [100*alpha/2.0, 100*(1-alpha/2.0)])
+            # calculate this bootstrap ICER
+            if (mean_effects_new - mean_effects_base) * self._effect_multiplier <= 0:
+                self._isDefined = False
+                warnings.warn('{}: Confidence intervals for ICER is not '
+                              'computable because at least one of bootstrap incremental '
+                              'effect is negative.'.format(self.name))
+                break
+
+            else:
+                icer_bootstrap_means[i] = \
+                    (mean_costs_new - mean_costs_base)/(mean_effects_new - mean_effects_base) \
+                    * self._effect_multiplier
+
+        if self._isDefined:
+            return np.percentile(icer_bootstrap_means, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        else:
+            return [math.nan, math.nan]
 
     def get_PI(self, alpha, num_bootstrap_samples=0, rng=None):
         """
@@ -1335,11 +1358,17 @@ class ICER_indp(_ICER):
         costs_base = self._costsBase[indices_base]
         effects_base = self._effectsBase[indices_base]
 
-        sample_icers = np.divide(
-            (costs_new - costs_base),
-            (effects_new - effects_base)*self._effect_multiplier)
+        if min((effects_new - effects_base)*self._effect_multiplier) <= 0:
+            self._isDefined = False
+        else:
+            sample_icers = np.divide(
+                (costs_new - costs_base),
+                (effects_new - effects_base)*self._effect_multiplier)
 
-        return np.percentile(sample_icers, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        if self._isDefined:
+            return np.percentile(sample_icers, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        else:
+            return [math.nan, math.nan]
 
 
 class _NMB(_ComparativeEconMeasure):
