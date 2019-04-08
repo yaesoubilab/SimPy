@@ -43,7 +43,7 @@ def fit_exp(data, x_label, fixed_location=0, figure_size=5):
     # plot the estimated exponential distribution
     x_values = np.linspace(scs.expon.ppf(0.0001, loc, scale), scs.expon.ppf(0.9999, loc, scale), 200)
     rv = scs.expon(loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Exponential')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Exponential')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -94,7 +94,7 @@ def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
     x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
                            scs.beta.ppf(0.9999, a, b, loc, scale), 200)
     rv = scs.beta(a, b, loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Beta')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Beta')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -277,7 +277,7 @@ def fit_gamma(data, x_label, fixed_location=0, figure_size=5):
     # plot the estimated gamma distribution
     x_values = np.linspace(scs.gamma.ppf(0.0001, a, loc, scale), scs.gamma.ppf(0.9999, a, loc, scale), 200)
     rv = scs.gamma(a, loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Gamma')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Gamma')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -421,10 +421,10 @@ def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5):
     a, b, loc, scale = scs.johnsonsb.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSb distribution
-    x_values = np.linspace(scs.johnsonsb.ppf(0.01, a, b, loc, scale),
-                           scs.johnsonsb.ppf(0.99, a, b, loc, scale), 100)
+    x_values = np.linspace(scs.johnsonsb.ppf(0.001, a, b, loc, scale),
+                           scs.johnsonsb.ppf(0.999, a, b, loc, scale), 100)
     rv = scs.johnsonsb(a, b, loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='JohnsonSb')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='JohnsonSb')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -458,10 +458,10 @@ def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5):
     a, b, loc, scale = scs.johnsonsu.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSu distribution
-    x_values = np.linspace(scs.johnsonsu.ppf(0.01, a, b, loc, scale),
-                           scs.johnsonsu.ppf(0.99, a, b, loc, scale), 100)
+    x_values = np.linspace(scs.johnsonsu.ppf(0.001, a, b, loc, scale),
+                           scs.johnsonsu.ppf(0.999, a, b, loc, scale), 100)
     rv = scs.johnsonsu(a, b, loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='JohnsonSu')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='JohnsonSu')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -497,7 +497,7 @@ def fit_lognorm(data, x_label, fixed_location=0, figure_size=5):
     # plot the estimated distribution
     x_values = np.linspace(scs.lognorm.ppf(0.0001, s, loc, scale), scs.lognorm.ppf(0.9999, s, loc, scale), 200)
     rv = scs.lognorm(s, loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='LogNormal')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='LogNormal')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -595,7 +595,7 @@ def fit_normal(data, x_label, figure_size=5):
     # plot the estimated distribution
     x_values = np.linspace(scs.norm.ppf(0.0001, loc, scale), scs.norm.ppf(0.9999, loc, scale), 200)
     rv = scs.norm(loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Normal')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Normal')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -672,7 +672,7 @@ def fit_triang(data, x_label, fixed_location=0, figure_size=5):
     # plot the estimated distribution
     x_values = np.linspace(scs.triang.ppf(0.0001, c, loc, scale), scs.triang.ppf(0.9999, c, loc, scale), 200)
     rv = scs.triang(c, loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Triangular')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Triangular')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -709,7 +709,7 @@ def fit_uniform(data, x_label, figure_size=5):
     # plot the estimated distribution
     x_values = np.linspace(scs.uniform.ppf(0.0001, loc, scale), scs.uniform.ppf(0.9999, loc, scale), 200)
     rv = scs.uniform(loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Uniform')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Uniform')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
@@ -787,7 +787,7 @@ def fit_weibull(data, x_label, fixed_location=0, figure_size=5):
     # plot the fitted Weibull distribution
     x_values = np.linspace(scs.weibull_min.ppf(0.001, c, loc, scale), scs.weibull_min.ppf(0.999, c, loc, scale), 100)
     rv = scs.weibull_min(c, loc, scale)
-    ax.plot_all(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Weibull')
+    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Weibull')
 
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
