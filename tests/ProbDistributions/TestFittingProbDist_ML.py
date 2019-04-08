@@ -33,7 +33,7 @@ print("Fitting Binomial:", dictResults)
 
 # 5 Empirical (for int data)
 dat_em = np.random.poisson(30, 1000)
-dictResults=Fit.fit_empirical(dat_em, 'Data', bin_size=2.5) # fit
+dictResults=Fit.fit_empirical(dat_em, 'Data', bin_width=2.5) # fit
 print("Fitting Empirical:", dictResults)
 
 # 6 fitting a gamma distribution

@@ -23,19 +23,29 @@ def AIC(k, log_likelihood):
     return 2 * k - 2 * log_likelihood
 
 
+def find_bins(data, bin_width):
+    # find bins
+    if bin_width is None:
+        bins = 'auto'
+    else:
+        bins = np.arange(min(data), max(data) + bin_width, bin_width)
+    return bins
+
+
 # Exponential
-def fit_exp(data, x_label, fixed_location=0, figure_size=5):
+def fit_exp(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: specify location, 0 by default
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "loc", "scale", and "AIC"
     """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of exponential
     loc, scale = scs.expon.fit(data, floc=fixed_location)
@@ -61,15 +71,17 @@ def fit_exp(data, x_label, fixed_location=0, figure_size=5):
 
 
 # Beta
-def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
+def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param minimum: minimum of data (calculated from data if not provided)
     :param maximum: maximum of data (calculated from data if not provided)
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
     """
+
     # transform data into [0,1]
     if minimum==None:
         L = np.min(data)
@@ -85,7 +97,7 @@ def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     a, b, loc, scale = scs.beta.fit(data, floc=0)
@@ -112,13 +124,14 @@ def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5):
 
 
 # BetaBinomial
-def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5):
+def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: fixed location
     :param fixed_scale: fixed scale
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "a", "b", "n" and "AIC"
     """
 
@@ -126,7 +139,7 @@ def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # Maximum-Likelihood Algorithm
     # ref: http://www.channelgrubb.com/blog/2015/2/27/beta-binomial-in-python
@@ -230,22 +243,22 @@ def fit_binomial(data, x_label, fixed_location=0, figure_size=5):
 
 
 # Empirical (I guess for this, we just need to return the frequency of each observation)
-def fit_empirical(data, x_label, figure_size=5, bin_size=1):
+def fit_empirical(data, x_label, figure_size=5, bin_width=1):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
-    :param bin_size: float, the width of histogram's bins
+    :param bin_width: float, the width of histogram's bins
     :returns: dictionary keys of "bins" and "freq"
     """
-    result = plt.hist(data, bins=np.arange(np.min(data), np.max(data) + bin_size, bin_size))
+    result = plt.hist(data, bins=np.arange(np.min(data), np.max(data) + bin_width, bin_width))
 
     bins = result[1] # bins are in the form of [a,b)
     freq = result[0]*1.0/len(data)
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=np.arange(np.min(data), np.max(data) + bin_size, bin_size),
+    ax.hist(data, normed=1, bins=np.arange(np.min(data), np.max(data) + bin_width, bin_width),
             edgecolor='black', alpha=0.5, label='Frequency')
 
     ax.set_xlabel(x_label)
@@ -257,18 +270,19 @@ def fit_empirical(data, x_label, figure_size=5, bin_size=1):
 
 
 # Gamma
-def fit_gamma(data, x_label, fixed_location=0, figure_size=5):
+def fit_gamma(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: fixed location
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "a", "loc", "scale", and "AIC"
     """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of gamma
     # alpha = a, beta = 1/scale
@@ -295,18 +309,19 @@ def fit_gamma(data, x_label, fixed_location=0, figure_size=5):
 
 
 # GammaPoisson
-def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5):
+def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "a", "scale" and "AIC"
     """
     data = 1 * (data - fixed_location) / fixed_scale
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # Maximum-Likelihood Algorithm
     # ref: https://en.wikipedia.org/wiki/Negative_binomial_distribution#Gamma%E2%80%93Poisson_mixture
@@ -373,6 +388,7 @@ def fit_geometric(data, x_label, fixed_location=0, figure_size=5):
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: fixed location
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "p" and "AIC"
     """
 
@@ -405,17 +421,18 @@ def fit_geometric(data, x_label, fixed_location=0, figure_size=5):
 
 
 # JohnsonSb
-def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5):
+def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
     """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     a, b, loc, scale = scs.johnsonsb.fit(data, floc=fixed_location)
@@ -442,17 +459,18 @@ def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5):
 
 
 # JohnsonSu
-def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5):
+def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
     """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     a, b, loc, scale = scs.johnsonsu.fit(data, floc=fixed_location)
@@ -479,17 +497,18 @@ def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5):
 
 
 # LogNormal
-def fit_lognorm(data, x_label, fixed_location=0, figure_size=5):
+def fit_lognorm(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "s", "loc", "scale", and "AIC", s = sigma and scale = exp(mu)
     """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     s, loc, scale = scs.lognorm.fit(data, floc=fixed_location)
@@ -515,12 +534,13 @@ def fit_lognorm(data, x_label, fixed_location=0, figure_size=5):
 
 
 # NegativeBinomial
-def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
+def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: fixed location
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "n", "p" and "AIC"
     """
     # n is the number of successes, p is the probability of a single success.
@@ -577,17 +597,18 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5):
 
 
 # Normal
-def fit_normal(data, x_label, figure_size=5):
+def fit_normal(data, x_label, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "loc", "scale", and "AIC"
     """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     loc, scale = scs.norm.fit(data)
@@ -613,11 +634,12 @@ def fit_normal(data, x_label, figure_size=5):
 
 
 # Poisson
-def fit_poisson(data, x_label, fixed_location=0, figure_size=5):
+def fit_poisson(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "lambda" and "AIC"
     """
 
@@ -651,12 +673,13 @@ def fit_poisson(data, x_label, fixed_location=0, figure_size=5):
 
 
 # Triangular
-def fit_triang(data, x_label, fixed_location=0, figure_size=5):
+def fit_triang(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: fixed location
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "c", "loc", "scale", and "AIC"
     """
     # The triangular distribution can be represented with an up-sloping line from
@@ -664,7 +687,7 @@ def fit_triang(data, x_label, fixed_location=0, figure_size=5):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     c, loc, scale = scs.triang.fit(data, floc=fixed_location)
@@ -690,18 +713,19 @@ def fit_triang(data, x_label, fixed_location=0, figure_size=5):
 
 
 # Uniform
-def fit_uniform(data, x_label, figure_size=5):
+def fit_uniform(data, x_label, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "loc", "scale", and "AIC"
     """
     # This distribution is constant between loc and loc + scale.
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     loc, scale = scs.uniform.fit(data)
@@ -727,18 +751,19 @@ def fit_uniform(data, x_label, figure_size=5):
 
 
 # UniformDiscrete
-def fit_uniformDiscrete(data, x_label, figure_size=5):
+def fit_uniformDiscrete(data, x_label, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "low", "high", and "AIC"
     """
     # This distribution is constant between low and high.
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     # as likelihood = 1/(high-low)^n, so the smaller the range, the higher the likelihood
@@ -767,18 +792,19 @@ def fit_uniformDiscrete(data, x_label, figure_size=5):
 
 
 # Weibull
-def fit_weibull(data, x_label, fixed_location=0, figure_size=5):
+def fit_weibull(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     """
     :param data: (numpy.array) observations
     :param x_label: label to show on the x-axis of the histogram
     :param fixed_location: fixed location
     :param figure_size: int, specify the figure size
+    :param bin_width: bin width
     :returns: dictionary with keys "c", "loc", "scale", and "AIC"
     """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins='auto', edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of weibull
     # location is fixed at 0
