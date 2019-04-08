@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 import scipy.stats as scs
 import scipy as sp
 from scipy.optimize import fmin_slsqp
+import matplotlib as mpl
 
 import warnings
 warnings.filterwarnings("ignore")
 
 # -------------------------------------------------------------------------------------------------
-# This module contains procedures to fit probability distributions to the data using maximum likelihood approaches
+# This module contains procedures to fit probability distributions to the data using maximum likelihood approaches.
 # Functions to fit probability distributions of non-negative random variables (e.g. exponential and gamma) take an
 # fixed_location as an argument (with a default value set to 0). Specifying this argument allows for
 # fitting a shifted distribution to the data.
@@ -16,6 +17,9 @@ warnings.filterwarnings("ignore")
 
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
+MIN_PROP = 0.005
+MAX_PROB = 0.995
+MAX_PROB_DISCRETE = 0.999999
 
 
 def AIC(k, log_likelihood):
@@ -45,16 +49,17 @@ def fit_exp(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, density=True, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of exponential
     loc, scale = scs.expon.fit(data, floc=fixed_location)
 
     # plot the estimated exponential distribution
-    x_values = np.linspace(scs.expon.ppf(0.0001, loc, scale), scs.expon.ppf(0.9999, loc, scale), 200)
+    x_values = np.linspace(scs.expon.ppf(MIN_PROP, loc, scale), scs.expon.ppf(MAX_PROB, loc, scale), 200)
     rv = scs.expon(loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Exponential')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -103,11 +108,12 @@ def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5, bin_width
     a, b, loc, scale = scs.beta.fit(data, floc=0)
 
     # plot the estimated distribution
-    x_values = np.linspace(scs.beta.ppf(0.0001, a, b, loc, scale),
-                           scs.beta.ppf(0.9999, a, b, loc, scale), 200)
+    x_values = np.linspace(scs.beta.ppf(MIN_PROP, a, b, loc, scale),
+                           scs.beta.ppf(MAX_PROB, a, b, loc, scale), 200)
     rv = scs.beta(a, b, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Beta')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -180,8 +186,11 @@ def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     for i in x_values:
         pmf[int(i)] = np.exp(BetaBinom(paras[0], paras[1], paras[2], i))
 
+    pmf = np.append([0], pmf[:-1])
+
     # plot PMF
     ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='BetaBinomial')
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -225,8 +234,12 @@ def fit_binomial(data, x_label, fixed_location=0, figure_size=5):
 
     # plot with fitted parameter
     x_plot = np.arange(0, n, step=1)
-    ax.step(x_plot, scs.binom.pmf(x_plot, n, p), COLOR_DISCRETE_FIT, ms=8, label='Binomial')
+    y_plot = scs.binom.pmf(x_plot, n, p)
+    y_plot = np.append([0], y_plot[:-1])
 
+    ax.step(x_plot, y_plot, COLOR_DISCRETE_FIT, ms=8, label='Binomial')
+
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -261,6 +274,7 @@ def fit_empirical(data, x_label, figure_size=5, bin_width=1):
     ax.hist(data, normed=1, bins=np.arange(np.min(data), np.max(data) + bin_width, bin_width),
             edgecolor='black', alpha=0.5, label='Frequency')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -289,10 +303,11 @@ def fit_gamma(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     a, loc, scale = scs.gamma.fit(data,floc=fixed_location)
 
     # plot the estimated gamma distribution
-    x_values = np.linspace(scs.gamma.ppf(0.0001, a, loc, scale), scs.gamma.ppf(0.9999, a, loc, scale), 200)
+    x_values = np.linspace(scs.gamma.ppf(MIN_PROP, a, loc, scale), scs.gamma.ppf(MAX_PROB, a, loc, scale), 200)
     rv = scs.gamma(a, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Gamma')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -364,8 +379,12 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     for i in x_values:
         pmf[int(i)] = gamma_poisson(paras[0], paras[1], i)
 
+    pmf = np.append([0], pmf[:-1])
+
     # plot PMF
     ax.step(x_values, pmf, color=COLOR_CONTINUOUS_FIT, lw=2, label='GammaPoisson')
+
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -402,9 +421,13 @@ def fit_geometric(data, x_label, fixed_location=0, figure_size=5):
             edgecolor='black', alpha=0.5, label='Frequency')
 
     # plot poisson-deviation with fitted parameter
-    x_plot = np.arange(scs.geom.ppf(0.0001, p), scs.geom.ppf(0.9999, p))
-    ax.step(x_plot, scs.geom.pmf(x_plot, p), COLOR_DISCRETE_FIT, ms=8, label='Geometric')
+    x_plot = np.arange(scs.geom.ppf(MIN_PROP, p), scs.geom.ppf(MAX_PROB, p)+1)
+    y_plot = scs.geom.pmf(x_plot, p)
+    y_plot = np.append([0], y_plot[:-1])
 
+    ax.step(x_plot, y_plot, COLOR_DISCRETE_FIT, ms=8, label='Geometric')
+
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -438,11 +461,12 @@ def fit_johnsonSb(data, x_label, fixed_location=0, figure_size=5, bin_width=None
     a, b, loc, scale = scs.johnsonsb.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSb distribution
-    x_values = np.linspace(scs.johnsonsb.ppf(0.001, a, b, loc, scale),
-                           scs.johnsonsb.ppf(0.999, a, b, loc, scale), 100)
+    x_values = np.linspace(scs.johnsonsb.ppf(MIN_PROP, a, b, loc, scale),
+                           scs.johnsonsb.ppf(MAX_PROB, a, b, loc, scale), 100)
     rv = scs.johnsonsb(a, b, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='JohnsonSb')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -476,11 +500,12 @@ def fit_johnsonSu(data, x_label, fixed_location=0, figure_size=5, bin_width=None
     a, b, loc, scale = scs.johnsonsu.fit(data, floc=fixed_location)
 
     # plot the estimated JohnsonSu distribution
-    x_values = np.linspace(scs.johnsonsu.ppf(0.001, a, b, loc, scale),
-                           scs.johnsonsu.ppf(0.999, a, b, loc, scale), 100)
+    x_values = np.linspace(scs.johnsonsu.ppf(MIN_PROP, a, b, loc, scale),
+                           scs.johnsonsu.ppf(MAX_PROB, a, b, loc, scale), 100)
     rv = scs.johnsonsu(a, b, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='JohnsonSu')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -514,10 +539,11 @@ def fit_lognorm(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     s, loc, scale = scs.lognorm.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
-    x_values = np.linspace(scs.lognorm.ppf(0.0001, s, loc, scale), scs.lognorm.ppf(0.9999, s, loc, scale), 200)
+    x_values = np.linspace(scs.lognorm.ppf(MIN_PROP, s, loc, scale), scs.lognorm.ppf(MAX_PROB, s, loc, scale), 200)
     rv = scs.lognorm(s, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='LogNormal')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -549,7 +575,7 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5, bin_wi
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), # bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
             edgecolor='black', alpha=0.5, label='Frequency')
 
     # Maximum-Likelihood Algorithm
@@ -579,8 +605,13 @@ def fit_negative_binomial(data, x_label, fixed_location=0, figure_size=5, bin_wi
     x_values = np.arange(0, np.max(data), step=1)
     rv = scs.nbinom(paras[0],paras[1])
 
+    y_plot = rv.pmf(x_values)
+    y_plot = np.append([0], y_plot[:-1])
+
     # plot PMF
-    ax.step(x_values, rv.pmf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='NegativeBinomial')
+    ax.step(x_values, y_plot, color=COLOR_CONTINUOUS_FIT, lw=2, label='NegativeBinomial')
+
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -614,10 +645,11 @@ def fit_normal(data, x_label, figure_size=5, bin_width=None):
     loc, scale = scs.norm.fit(data)
 
     # plot the estimated distribution
-    x_values = np.linspace(scs.norm.ppf(0.0001, loc, scale), scs.norm.ppf(0.9999, loc, scale), 200)
+    x_values = np.linspace(scs.norm.ppf(MIN_PROP, loc, scale), scs.norm.ppf(MAX_PROB, loc, scale), 200)
     rv = scs.norm(loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Normal')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -650,13 +682,16 @@ def fit_poisson(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=np.max(data)+1, range=[-0.5, np.max(data)+0.5],
+    ax.hist(data, normed=1, bins=find_bins(data, bin_width), #int(np.max(data)),#+1, #range=[-0.5, np.max(data)+0.5],
             edgecolor='black', alpha=0.5, label='Frequency')
 
     # plot poisson-deviation with fitted parameter
-    x_plot = np.arange(scs.poisson.ppf(0.0001, mu), scs.poisson.ppf(0.9999, mu))
-    ax.step(x_plot, scs.poisson.pmf(x_plot, mu), COLOR_DISCRETE_FIT, ms=8, label='Poisson')
+    x_plot = np.arange(scs.poisson.ppf(MIN_PROP, mu), scs.poisson.ppf(MAX_PROB_DISCRETE, mu)+1)
+    y_plot = scs.poisson.pmf(x_plot, mu)
+    y_plot = np.append([0], y_plot[:-1])
+    ax.step(x_plot, y_plot, COLOR_DISCRETE_FIT, ms=8, label='Poisson')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -693,10 +728,11 @@ def fit_triang(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     c, loc, scale = scs.triang.fit(data, floc=fixed_location)
 
     # plot the estimated distribution
-    x_values = np.linspace(scs.triang.ppf(0.0001, c, loc, scale), scs.triang.ppf(0.9999, c, loc, scale), 200)
+    x_values = np.linspace(scs.triang.ppf(MIN_PROP, c, loc, scale), scs.triang.ppf(MAX_PROB, c, loc, scale), 200)
     rv = scs.triang(c, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Triangular')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -731,10 +767,11 @@ def fit_uniform(data, x_label, figure_size=5, bin_width=None):
     loc, scale = scs.uniform.fit(data)
 
     # plot the estimated distribution
-    x_values = np.linspace(scs.uniform.ppf(0.0001, loc, scale), scs.uniform.ppf(0.9999, loc, scale), 200)
+    x_values = np.linspace(scs.uniform.ppf(MIN_PROP, loc, scale), scs.uniform.ppf(MAX_PROB, loc, scale), 200)
     rv = scs.uniform(loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Uniform')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -776,6 +813,7 @@ def fit_uniformDiscrete(data, x_label, figure_size=5, bin_width=None):
     rv = scs.randint(low, high)
     ax.step(x_values, rv.pmf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='UniformDiscrete')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()
@@ -811,10 +849,11 @@ def fit_weibull(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     c, loc, scale = scs.weibull_min.fit(data, floc=fixed_location)
 
     # plot the fitted Weibull distribution
-    x_values = np.linspace(scs.weibull_min.ppf(0.001, c, loc, scale), scs.weibull_min.ppf(0.999, c, loc, scale), 100)
+    x_values = np.linspace(scs.weibull_min.ppf(MIN_PROP, c, loc, scale), scs.weibull_min.ppf(MAX_PROB, c, loc, scale), 100)
     rv = scs.weibull_min(c, loc, scale)
     ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Weibull')
 
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
     ax.set_ylabel("Frequency")
     ax.legend()

@@ -22,7 +22,7 @@ print("Fitting Beta:", dictResults)
 # 3 fitting a beta-binomial distribution
 dist = RVGs.BetaBinomial(100, 2, 3, loc=1, scale=2) # n, a, b
 dat_betabin = np.array(get_samples(dist, np.random))
-dictResults=Fit.fit_beta_binomial(dat_betabin, 'Data', fixed_location=1, fixed_scale=2) # fit
+dictResults=Fit.fit_beta_binomial(dat_betabin, 'Data', fixed_location=1, fixed_scale=2, bin_width=5) # fit
 print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
@@ -45,7 +45,7 @@ print("Fitting Gamma:", dictResults)
 # 7 GammaPoisson
 dist = RVGs.GammaPoisson(a=2, gamma_scale=4, loc=1, scale=2)
 dat_gamma_poisson = np.array(get_samples(dist, np.random))
-dictResults=Fit.fit_gamma_poisson(dat_gamma_poisson, 'Data', fixed_location=1, fixed_scale=2) # fit
+dictResults=Fit.fit_gamma_poisson(dat_gamma_poisson, 'Data', fixed_location=1, fixed_scale=2, bin_width=2) # fit
 print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric
