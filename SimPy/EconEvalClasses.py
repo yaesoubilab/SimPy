@@ -1195,9 +1195,9 @@ class ICER_paired(_ICER):
         # check if ICER is computable
         if min(self._deltaEffects) < 0:
             self._isDefined = False
-            warnings.warn('{}: Confidence or uncertainty intervals for ICER is not '
-                          'computable because at least one of observations on incremental '
-                          'effect is negative.'.format(self.name))
+            warnings.warn('\nConfidence intervals for one of ICERs is not computable'
+                          '\nbecause at least one of bootstrap incremental effect is negative.'
+                          '\nIncreasing the number of cost and effect observations might resolve the issue.')
 
         # calculate ICERs
         if self._isDefined:
@@ -1318,9 +1318,9 @@ class ICER_indp(_ICER):
             # calculate this bootstrap ICER
             if (mean_effects_new - mean_effects_base) * self._effect_multiplier <= 0:
                 self._isDefined = False
-                warnings.warn('{}: Confidence intervals for ICER is not '
-                              'computable because at least one of bootstrap incremental '
-                              'effect is negative.'.format(self.name))
+                warnings.warn('\nConfidence intervals for one of ICERs is not computable'
+                              '\nbecause at least one of bootstrap incremental effect is negative.'
+                              '\nIncreasing the number of cost and effect observations might resolve the issue.')
                 break
 
             else:
