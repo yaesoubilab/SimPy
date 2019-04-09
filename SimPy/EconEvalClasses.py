@@ -1196,8 +1196,7 @@ class ICER_paired(_ICER):
         if min(self._deltaEffects) < 0:
             self._isDefined = False
             warnings.warn('\nConfidence intervals for one of ICERs is not computable'
-                          '\nbecause at least one of bootstrap incremental effect is negative.'
-                          '\nIncreasing the number of cost and effect observations might resolve the issue.')
+                          '\nbecause at least one incremental effect is negative.')
 
         # calculate ICERs
         if self._isDefined:
