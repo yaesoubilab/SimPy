@@ -24,6 +24,15 @@ class RVG:
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 
+class Constant (RVG):
+    def __init__(self, value):
+        RVG.__init__(self)
+        self.value = value
+
+    def sample(self, rng):
+        return self.value
+
+
 class Exponential(RVG):
     def __init__(self, scale, loc=0):
         """
