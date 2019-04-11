@@ -17,9 +17,12 @@ path2.record(5.5, 1)
 # third sample path with initial size = 1
 path3 = Path.PrevalencePathBatchUpdate(
     'Path 3', 0, times_of_changes=[1.5, 2, 5], increments=[2, -1, 0], sim_rep=1)
+path4 = Path.PrevalencePathBatchUpdate(
+    'Path 4', 0, times_of_changes=[0.5, 4, 4.5], increments=[2.5, 1, 1], sim_rep=1)
 
 # stats
 print(path1.stat.get_mean())
+
 
 # plot path 1 only
 Path.graph_sample_path(
@@ -27,7 +30,7 @@ Path.graph_sample_path(
     title='Plotting a single sample path',
     x_label='time',
     y_label='observed value',
-    legend= 'Path 1',
+    legend='Path 1',
     color_code='r')
 
 # plot path 3 only
@@ -36,7 +39,7 @@ Path.graph_sample_path(
     title='Plotting a single sample path that is updated in batch',
     x_label='time',
     y_label='observed value',
-    legend= 'Path 3',
+    legend='Path 3',
     color_code='r')
 
 # plot both paths
@@ -56,3 +59,12 @@ Path.graph_sample_paths(
     legends='Path',
     transparency=0.5,
     common_color_code='g')
+
+Path.graph_sets_of_sample_paths(
+    sets_of_sample_paths=[[path1, path2], [path3, path4]],
+    title='Plot 2 sets of sample paths',
+    x_label='time',
+    y_label='observed value',
+    legends=['Set 1', 'Set 2'],
+    transparency=0.5,
+    color_codes=['g', 'b'])

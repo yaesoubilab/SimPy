@@ -776,23 +776,29 @@ class CEA(_EconEval):
         # format cost column
         if cost_digits == 0:
             self._dfStrategies['E[Cost]'] = self._dfStrategies['E[Cost]'].astype(int)
-            self._dfStrategies.loc[indices, 'E[dCost]'] = list_incr_costs.astype(int)
+            if len(list_incr_costs)>0:
+                self._dfStrategies.loc[indices, 'E[dCost]'] = list_incr_costs.astype(int)
         else:
             self._dfStrategies['E[Cost]'] = self._dfStrategies['E[Cost]'].astype(float).round(cost_digits)
-            self._dfStrategies.loc[indices, 'E[dCost]'] = list_incr_costs.astype(float).round(cost_digits)
+            if len(list_incr_costs) > 0:
+                self._dfStrategies.loc[indices, 'E[dCost]'] = list_incr_costs.astype(float).round(cost_digits)
 
         # format effect column
         if effect_digits == 0:
             self._dfStrategies['E[Effect]'] = self._dfStrategies['E[Effect]'].astype(int)
-            self._dfStrategies.loc[indices, 'E[dEffect]'] = list_incr_effects.astype(int)
+            if len(list_incr_effects) > 0:
+                self._dfStrategies.loc[indices, 'E[dEffect]'] = list_incr_effects.astype(int)
         else:
             self._dfStrategies['E[Effect]'] = self._dfStrategies['E[Effect]'].astype(float).round(effect_digits)
-            self._dfStrategies.loc[indices, 'E[dEffect]'] = list_incr_effects.astype(float).round(effect_digits)
+            if len(list_incr_effects) > 0:
+                self._dfStrategies.loc[indices, 'E[dEffect]'] = list_incr_effects.astype(float).round(effect_digits)
 
         if icer_digits == 0:
-            self._dfStrategies.loc[indices, 'ICER'] = list_ICERs.astype(int)
+            if len(list_ICERs) > 0:
+                self._dfStrategies.loc[indices, 'ICER'] = list_ICERs.astype(int)
         else:
-            self._dfStrategies.loc[indices, 'ICER'] = list_ICERs.astype(float).round(icer_digits)
+            if len(list_ICERs) > 0:
+                self._dfStrategies.loc[indices, 'ICER'] = list_ICERs.astype(float).round(icer_digits)
 
     def _create_ce_table(self, frontier_strategies, df_intervals,
                          cost_multiplier, effect_multiplier,
