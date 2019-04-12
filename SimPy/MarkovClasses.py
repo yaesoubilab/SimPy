@@ -11,7 +11,7 @@ class Gillespie:
 
         for i, row in enumerate(transition_rate_matrix):
             # find sum of rates out of this state
-            rate_out = out_rate(row)
+            rate_out = out_rate(row, i)
             # if the rate is 0, put None as the exponential and empirical distributions
             if rate_out > 0:
                 # create an exponential distribution with rate equal to sum of rates out of this state
@@ -124,15 +124,16 @@ def continuous_to_discrete(rate_matrix, delta_t):
     return prob_matrix, max(prob_out_out)
 
 
-def out_rate(rates):
+def out_rate(rates, idx):
     """
     :param rates: list of rates leaving this state
+    :param inx: index of this state
     :returns the rate of leaving this sate (the sum of rates)
     """
 
     sum_rates = 0
-    for v in rates:
-        if not (v is None):
+    for i, v in enumerate(rates):
+        if i != idx and v is not None:
             sum_rates += v
     return sum_rates
 
