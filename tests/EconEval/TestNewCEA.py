@@ -17,8 +17,12 @@ cea.show_CE_plane()
 
 print('On frontier')
 frontier_strategies = cea.get_strategies_on_frontier()
-for s in frontier_strategies:
+for i, s in enumerate(frontier_strategies):
     print(s.name)
+    if i>0:
+        print('incCost:', s.incCost.get_mean())
+        print('incEffect:', s.incEffect.get_mean())
+        print('ICER:', s.icer.get_ICER())
 #
 # print('Not on frontier')
 # for s in cea.get_strategies_not_on_frontier():

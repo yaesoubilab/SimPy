@@ -13,9 +13,11 @@ print('On frontier')
 for s in cea.get_strategies_on_frontier():
     print(s.name)
 
+
 print('Not on frontier')
 for s in cea.get_strategies_not_on_frontier():
     print(s.name)
+
 
 cea.show_CE_plane('CE plane', 'E[Effect]', 'E[Cost]',
                   show_names=True, figure_size=6)

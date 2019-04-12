@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import SimPy.StatisticalClasses as Stat
+from SimPy.EconEvalClasses import *
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
-
 
 
 class Strategy:
@@ -31,17 +31,19 @@ class Strategy:
         self.costObs = None     # (list) cost observations
         self.dCostObs = None    # (list) cost observations with respect to base
         self.incCostObs = None  # (list) incremental cost observations
-        self.cost = None  # summary statistics for cost
-        self.dCost = None  # summary statistics for cost with respect to base
-        self.incCost = None  # summary statistics for incremental cost
+        self.cost = None        # summary statistics for cost
+        self.dCost = None       # summary statistics for cost with respect to base
+        self.incCost = None     # summary statistics for incremental cost
 
-        self.effectObs = None     # (list) effect observations
-        self.dEffectObs = None    # (list) effect observations with respect to base
-        self.incEffectObs = None  # (list) incremental effect observations
-        self.effectObs = None  # effect observations
-        self.effect = None  # summary statistics for effect
-        self.dEffect = None  # summary statistics for effect with respect to base
-        self.incEffect = None  # summary statistics for incremental effect
+        self.effectObs = None       # (list) effect observations
+        self.dEffectObs = None      # (list) effect observations with respect to base
+        self.incEffectObs = None    # (list) incremental effect observations
+        self.effectObs = None       # effect observations
+        self.effect = None          # summary statistics for effect
+        self.dEffect = None         # summary statistics for effect with respect to base
+        self.incEffect = None       # summary statistics for incremental effect
+
+        self.icer = None        # icer summary statistics
 
         if type(cost_obs) is list:
             self.costObs = np.array(cost_obs)
@@ -72,6 +74,7 @@ class CEA:
             raise ValueError("health_measure can be either 'u' (for utility) or 'd' (for disutility).")
 
         self.strategies = strategies  # list of strategies
+        self._strategies_on_frontier = []   # list of strategies on the frontier
         # assign the index of each strategy
         for i, s in enumerate(strategies):
             s.idx = i
@@ -204,21 +207,88 @@ class CEA:
                         if cross_product > 0:
                             inner_s.ifDominated = True
 
-        # sort back strategies
-        self.strategies.sort(key=get_index)
-
-    def get_strategies_on_frontier(self):
-
         # sort strategies by effect with respect to the base
         self.strategies.sort(key=get_d_effect)
 
         # find strategies on the frontier
-        frontier_strategies = [s for s in self.strategies if not s.ifDominated]
+        self._strategies_on_frontier = [s for s in self.strategies if not s.ifDominated]
 
         # sort back
         self.strategies.sort(key=get_index)
 
-        return frontier_strategies
+        # frontier is calculated
+        self._ifFrontierIsCalculated = True
+
+        # calcualte the incremental outcomes
+        self.__calculate_incremental_outcomes()
+
+    def get_strategies_on_frontier(self):
+
+        if self._ifFrontierIsCalculated:
+            return self._strategies_on_frontier
+
+    def __calculate_incremental_outcomes(self):
+
+        if self._ifPaired:
+
+            for i, s in enumerate(self._strategies_on_frontier):
+                if i > 0:
+                    s_before = self._strategies_on_frontier[i-1]
+
+                    s.incCostObs = s.costObs - s_before.costObs
+                    s.incCost = Stat.DifferenceStatPaired(name='Incremental cost',
+                                                          x=s.costObs,
+                                                          y_ref=s_before.costObs)
+                    # if health measure is utility
+                    if self._healthMeasure == 'u':
+                        s.incEffectObs = s.effectObs - self._strategies_on_frontier[i-1].effectObs
+                        s.incEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
+                                                                x=s.effectObs,
+                                                                y_ref=s_before.effectObs)
+
+                    else:  # if health measure is disutility
+                        s.incEffectObs = self._strategies_on_frontier[i-1].effectObs - s.effectObs
+                        s.incEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
+                                                                x=s_before.effectObs,
+                                                                y_ref=s.effectObs)
+
+
+        else:  # if not paired
+
+            for i, s in enumerate(self._strategies_on_frontier):
+
+                if i > 0:
+                    s_before = self._strategies_on_frontier[i - 1]
+
+                    # get average cost and effect of the strategy i - 1
+                    ave_cost_i_1 =s_before.cost.get_mean()
+                    ave_effect_i_1 = s_before.effect.get_mean()
+
+                    s.incCostObs = s.costObs - ave_cost_i_1
+                    s.incCost = Stat.DifferenceStatIndp(name='Cost with respect to base',
+                                                        x=s.costObs,
+                                                        y_ref=s_before.costObs)
+                    if self._healthMeasure == 'u':
+                        s.incEffectObs = s.effectObs - ave_effect_i_1
+                        s.incEffect = Stat.DifferenceStatIndp(name='Effect with respect to base',
+                                                              x=s.effectObs,
+                                                              y_ref=s_before.effectObs)
+
+                    else:  # if health measure is disutility
+                        s.incEffectObs = ave_effect_i_1 - s.effectObs
+                        s.incEffect = Stat.DifferenceStatIndp(name='Effect with respect to base',
+                                                              x=s_before.effectObs,
+                                                              y_ref=s.effectObs)
+
+                    # ICER
+                    s.icer = ICER_indp(name='ICER of {} relative to {}'.format(s.name, s_before.name),
+                                       costs_new=s.costObs,
+                                       effects_new=s.effectObs,
+                                       costs_base=s_before.costObs,
+                                       effects_base=s_before.effectObs,
+                                       health_measure=HealthMeasure.UTILITY)
+
+
 
     def add_ce_plane_to_ax(self, ax, include_clouds=True):
 
@@ -264,6 +334,7 @@ class CEA:
         self.add_ce_plane_to_ax(ax=ax, include_clouds=include_clouds)
 
         fig.show()
+
 
 def get_d_cost(strategy):
     return strategy.dCost.get_mean()
