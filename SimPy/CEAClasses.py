@@ -1,7 +1,10 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import SimPy.StatisticalClasses as Stat
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
+
 
 
 class Strategy:
@@ -20,6 +23,7 @@ class Strategy:
             "effect_obs should be list or np.array."
         assert color is None or type(color) is str, "color argument should be a string."
 
+        self.idx = 0        # index of the strategy
         self.name = name
         self.ifDominated = False
         self.color = color
@@ -68,6 +72,9 @@ class CEA:
             raise ValueError("health_measure can be either 'u' (for utility) or 'd' (for disutility).")
 
         self.strategies = strategies  # list of strategies
+        # assign the index of each strategy
+        for i, s in enumerate(strategies):
+            s.idx = i
 
         self._n = len(strategies)   # number of strategies
         self._ifPaired = if_paired  # if cost and effect outcomes are paired across strategies
@@ -77,6 +84,9 @@ class CEA:
 
         # shift the strategies
         self.__find_shifted_strategies()
+
+        # find the cost-effectiveness frontier
+        self.__find_frontier()
 
     def __find_shifted_strategies(self):
         """ find shifted strategies.
@@ -128,5 +138,140 @@ class CEA:
                                                         x=self.strategies[0].effectObs,
                                                         y_ref=s.effectObs)
 
+    def __find_frontier(self):
+
+        # apply criteria 1 (strict dominance)
+        # if a strategy i yields less health than strategy j but costs more, it is dominated
+        # sort by effect with respect to base
+        self.strategies.sort(key=get_d_effect)
+        for i in range(self._n):
+            for j in range(i+1, self._n):
+                if self.strategies[i].dCost.get_mean() >= self.strategies[j].dCost.get_mean():
+                    self.strategies[i].ifDominated = True
+                    break;
+
+        # select all non-dominated strategies
+        select_strategies = [s for s in self.strategies if not s.ifDominated]
+
+        # apply criteria 1 (strict dominance)
+        # if a strategy i costs more than strategy j but yields less health, it is dominated
+        # sort strategies by cost with respect to the base
+        select_strategies.sort(key=get_d_cost, reverse=True)
+        for i in range(len(select_strategies)):
+            for j in range(i + 1, len(select_strategies)):
+                if select_strategies[i].dEffect.get_mean() <= select_strategies[j].dEffect.get_mean():
+                    select_strategies[i].ifDominated = True
+                    break;
+
+        # apply criteria 2 (weak dominance)
+        # select all non-dominated strategies
+        select_strategies = [s for s in self.strategies if not s.ifDominated]
+
+        for i in range(len(select_strategies)):
+            for j in range(i+1, len(select_strategies)):
+                # cost and effect of strategy i
+                d_cost_i = select_strategies[i].dCost.get_mean()
+                d_effect_i = select_strategies[i].dEffect.get_mean()
+                # cost and effect of strategy j
+                d_cost_j = select_strategies[j].dCost.get_mean()
+                d_effect_j = select_strategies[j].dEffect.get_mean()
+                # vector connecting strategy i to j
+                v_i_to_j = np.array([d_effect_j - d_effect_i, d_cost_j - d_cost_i])
+
+                # find strategies with dEffect between i and j
+                s_between_i_and_j = []
+                for s in select_strategies:
+                    if d_effect_i < s.dEffect.get_mean() < d_effect_j:
+                        s_between_i_and_j.append(s)
+
+                # if the dEffect of no strategy is between the effects of strategies i and j
+                if len(s_between_i_and_j) == 0:
+                    continue  # to the next j
+                else:
+
+                    for inner_s in s_between_i_and_j:
+                        # vector from i to inner_s
+                        v_i_to_inner = np.array([inner_s.dEffect.get_mean() - d_effect_i,
+                                                 inner_s.dCost.get_mean() - d_cost_i])
+
+                        # cross products of vector i to j and the vectors i to the inner point
+                        cross_product = v_i_to_j[0] * v_i_to_inner[1] - v_i_to_j[1] * v_i_to_inner[0]
+
+                        # if cross_product > 0 the point is above the line
+                        # (because the point are sorted vertically)
+                        # ref: How to tell whether a point is to the right or left side of a line
+                        # https://stackoverflow.com/questions/1560492
+                        if cross_product > 0:
+                            inner_s.ifDominated = True
+
+        # sort back strategies
+        self.strategies.sort(key=get_index)
+
+    def get_strategies_on_frontier(self):
+
+        # sort strategies by effect with respect to the base
+        self.strategies.sort(key=get_d_effect)
+
+        # find strategies on the frontier
+        frontier_strategies = [s for s in self.strategies if not s.ifDominated]
+
+        # sort back
+        self.strategies.sort(key=get_index)
+
+        return frontier_strategies
+
+    def add_ce_plane_to_ax(self, ax, include_clouds=True):
+
+        # find the frontier (x, y)'s
+        frontier_d_effect = []
+        frontier_d_costs = []
+        for s in self.get_strategies_on_frontier():
+            frontier_d_effect.append(s.dEffect.get_mean())
+            frontier_d_costs.append(s.dCost.get_mean())
+
+        # add the frontier line
+        plt.plot(frontier_d_effect, frontier_d_costs,
+                 c='k',  # color
+                 alpha=0.6,  # transparency
+                 linewidth=2,  # line width
+                 label="Frontier")  # label to show in the legend
+
+        for s in self.strategies:
+            ax.scatter(s.dEffect.get_mean(), s.dCost.get_mean(),
+                       c=s.color,  # color
+                       alpha=1,  # transparency
+                       marker='o',  # markers
+                       s=75,  # marker size
+                       label=s.name  # name to show in the legend
+                       )
+            # if include_clouds:
+            #     ax.scatter(s.dEffect.get_mean(), s.dCost.get_mean(),
+            #                c='black',  # color
+            #                alpha=1,  # transparency
+            #                marker='x',  # markers
+            #                s=75,  # marker size
+            #                )
+
+        ax.legend()
+        ax.axhline(y=0, c='k', linewidth=0.5)
+        ax.axvline(x=0, c='k', linewidth=0.5)
+
+    def show_CE_plane(self, include_clouds=True):
+
+        fig, ax = plt.subplots()
+
+        # add the cost-effectiveness plane
+        self.add_ce_plane_to_ax(ax=ax, include_clouds=include_clouds)
+
+        fig.show()
+
+def get_d_cost(strategy):
+    return strategy.dCost.get_mean()
 
 
+def get_d_effect(strategy):
+    return strategy.dEffect.get_mean()
+
+
+def get_index(strategy):
+    return strategy.idx
