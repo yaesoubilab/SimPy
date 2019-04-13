@@ -113,7 +113,8 @@ class _Statistics(object):
         else:
             raise ValueError('Invalid interval type.')
 
-    def get_formatted_mean_and_interval(self, interval_type='c', alpha=0.05, deci=0, form=None, multiplier=1):
+    def get_formatted_mean_and_interval(self, interval_type='c',
+                                        alpha=0.05, deci=0, form=None, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
@@ -128,11 +129,12 @@ class _Statistics(object):
         estimate = self.get_mean()*multiplier
         interval = self.get_interval(interval_type=interval_type, alpha=alpha)
 
-        adj_interval = None
-        if interval is not None:
-            adj_interval = [v*multiplier for v in interval]
+        adj_interval = [v * multiplier for v in interval] if interval is not None else None
 
-        return F.format_estimate_interval(estimate, adj_interval, deci, form)
+        return F.format_estimate_interval(estimate=estimate,
+                                          interval=adj_interval,
+                                          deci=deci,
+                                          format=form)
 
 
 class SummaryStat(_Statistics):

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
 from SimPy import FigureSupport as Fig
-from SimPy import FormatFunctions as FormatFunc
+from SimPy import FormatFunctions as F
 from SimPy import RandomVariantGenerators as RVG
 
 
@@ -820,13 +820,13 @@ class CEA(_EconEval):
         # put estimates and intervals together
         for i in self._dfStrategies.index:
             ce_table.loc[i, 'E[Cost]'] = \
-                FormatFunc.format_estimate_interval(
+                F.format_estimate_interval(
                     estimate=self._dfStrategies.loc[i, 'E[Cost]'] * cost_multiplier,
                     interval=[x * cost_multiplier for x in df_intervals.loc[i, 'Cost']],
                     deci=cost_digits, format=',')
 
             ce_table.loc[i, 'E[Effect]'] = \
-                FormatFunc.format_estimate_interval(
+                F.format_estimate_interval(
                     estimate=self._dfStrategies.loc[i, 'E[Effect]'] * effect_multiplier,
                     interval=[x * effect_multiplier for x in df_intervals.loc[i, 'Effect']],
                     deci=effect_digits, format=',')
@@ -834,20 +834,20 @@ class CEA(_EconEval):
         # add the incremental and ICER estimates and intervals
         for i in range(1, frontier_strategies.shape[0]):
             ce_table.loc[frontier_strategies.index[i], 'E[dCost]'] = \
-                FormatFunc.format_estimate_interval(
+                F.format_estimate_interval(
                     estimate=self._dfStrategies.loc[frontier_strategies.index[i], 'E[dCost]'] * cost_multiplier,
                     interval=[x * cost_multiplier for x in df_intervals.loc[frontier_strategies.index[i], 'dCost']],
                     deci=cost_digits, format=',')
 
             ce_table.loc[frontier_strategies.index[i], 'E[dEffect]'] = \
-                FormatFunc.format_estimate_interval(
+                F.format_estimate_interval(
                     estimate=self._dfStrategies.loc[frontier_strategies.index[i], 'E[dEffect]'] * effect_multiplier,
                     interval=[x * effect_multiplier for x in
                               df_intervals.loc[frontier_strategies.index[i], 'dEffect']],
                     deci=effect_digits, format=',')
 
             ce_table.loc[frontier_strategies.index[i], 'ICER'] = \
-                FormatFunc.format_estimate_interval(
+                F.format_estimate_interval(
                     estimate=self._dfStrategies.loc[frontier_strategies.index[i], 'ICER'],
                     interval=df_intervals.loc[frontier_strategies.index[i], 'ICER'],
                     deci=icer_digits, format=',')
@@ -880,14 +880,14 @@ class CEA(_EconEval):
         for s in self._shiftedStrategies:
 
             interval = s.get_cost_interval(interval_type=interval_type, alpha=alpha)
-            d_cost_text = FormatFunc.format_estimate_interval(
+            d_cost_text = F.format_estimate_interval(
                 estimate=s.aveCost * cost_multiplier,
                 interval=[x*cost_multiplier for x in interval],
                 deci=cost_digits,
                 format=','
             )
             interval = s.get_effect_interval(interval_type=interval_type, alpha=alpha)
-            d_effect_text = FormatFunc.format_estimate_interval(
+            d_effect_text = F.format_estimate_interval(
                 estimate=s.aveEffect*effect_multiplier,
                 interval=[x*effect_multiplier for x in interval],
                 deci=effect_digits,
@@ -899,7 +899,7 @@ class CEA(_EconEval):
                 ratio_stat = Stat.RatioStatPaired(name='', x=s.costObs, y_ref=s.effectObs)
             else:
                 ratio_stat = Stat.RatioStatIndp(name='', x=s.costObs, y_ref=s.effectObs)
-            cer_text = FormatFunc.format_estimate_interval(
+            cer_text = F.format_estimate_interval(
                 estimate=ratio_stat.get_mean(),
                 interval=ratio_stat.get_interval(interval_type=interval_type, alpha=alpha),
                 deci=icer_digits,
@@ -1172,6 +1172,37 @@ class _ICER(_ComparativeEconMeasure):
         """
         # abstract method to be overridden in derived classes to process an event
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
+
+    def get_formatted_ICER_and_interval(self, interval_type='c',
+                                        alpha=0.05, deci=0, form=None,
+                                        multiplier=1, num_bootstrap_samples=1000):
+        """
+        :param interval_type: (string) 'n' for no interval
+                                       'c' or 'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param deci: digits to round the numbers to
+        :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
+        :param multiplier: to multiply the estimate and the interval by the provided value
+        :param num_bootstrap_samples: number of bootstrap samples to calculate confidence interval
+        :return: (string) estimate of ICER and interval formatted as specified
+        """
+
+        estimate = self.get_ICER()*multiplier
+
+        if interval_type == 'c' or interval_type == 'cb':
+            interval = self.get_CI(alpha=alpha, num_bootstrap_samples=num_bootstrap_samples)
+        elif interval_type == 'p':
+            interval = self.get_PI(alpha=alpha)
+        else:
+            interval = None
+
+        adj_interval = [v * multiplier for v in interval] if interval is not None else None
+
+        return F.format_estimate_interval(estimate=estimate,
+                                          interval=adj_interval,
+                                          deci=deci,
+                                          format=form)
 
 
 class ICER_paired(_ICER):

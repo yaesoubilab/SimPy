@@ -354,15 +354,22 @@ class CEA:
                                                                        form=',',
                                                                        multiplier=effect_multiplier))
 
+            # ICER
             if s.ifDominated:
                 row.append('Dominated')
             elif s.icer is not None:
-                row.append(s.icer.get_ICER())
+                row.append(s.icer.get_formatted_ICER_and_interval(interval_type=interval_type,
+                                                                  alpha=alpha,
+                                                                  deci=icer_digits,
+                                                                  form=',',
+                                                                  multiplier=1,
+                                                                  num_bootstrap_samples=NUM_OF_BOOTSTRAPS))
+            else:
+                row.append('-')
 
             table.append(row)
 
         IO.write_csv(file_name=file_name, rows=table)
-
 
     def add_ce_plane_to_ax(self, ax, include_clouds=True):
 
