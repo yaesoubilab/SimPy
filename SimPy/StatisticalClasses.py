@@ -108,10 +108,12 @@ class _Statistics(object):
             return self.get_bootstrap_CI(alpha, NUM_BOOTSTRAP_SAMPLES)
         elif interval_type == 'p':
             return self.get_PI(alpha)
+        elif interval_type == 'n' or None:
+            return None
         else:
             raise ValueError('Invalid interval type.')
 
-    def get_formatted_mean_and_interval(self, interval_type='c', alpha=0.05, deci=0, form=None):
+    def get_formatted_mean_and_interval(self, interval_type='c', alpha=0.05, deci=0, form=None, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
@@ -119,13 +121,18 @@ class _Statistics(object):
         :param alpha: significance level
         :param deci: digits to round the numbers to
         :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
+        :param multiplier: to multiply the estimate and the interval by the provided value
         :return: (string) estimate and interval formatted as specified
         """
 
-        estimate = self.get_mean()
+        estimate = self.get_mean()*multiplier
         interval = self.get_interval(interval_type=interval_type, alpha=alpha)
 
-        return F.format_estimate_interval(estimate, interval, deci, form)
+        adj_interval = None
+        if interval is not None:
+            adj_interval = [v*multiplier for v in interval]
+
+        return F.format_estimate_interval(estimate, adj_interval, deci, form)
 
 
 class SummaryStat(_Statistics):

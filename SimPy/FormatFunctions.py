@@ -29,7 +29,7 @@ def format_interval(interval, deci, format=None):
     :returns a text of form '(low, up)' where the numbers have the specified format """
 
     if interval is None:
-        return '(,)'
+        return ''
     else:
         if format is None or format == '':
             return '({low:.{prec}f}, {up:.{prec}f})' \

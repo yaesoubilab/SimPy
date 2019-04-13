@@ -15,6 +15,9 @@ cea = EV.CEA(strategies=[S0, S1, S2, S3, S4, S5, S6, S7], if_paired=False, healt
 # show the ce plane:
 cea.show_CE_plane()
 
+# build table
+cea.build_CE_table(interval_type='n')
+
 print('On frontier')
 frontier_strategies = cea.get_strategies_on_frontier()
 for i, s in enumerate(frontier_strategies):

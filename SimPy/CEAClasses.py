@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import SimPy.StatisticalClasses as Stat
 from SimPy.EconEvalClasses import *
+import SimPy.InOutFunctions as IO
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
 
@@ -288,6 +289,79 @@ class CEA:
                                        effects_base=s_before.effectObs,
                                        health_measure=HealthMeasure.UTILITY)
 
+    def build_CE_table(self,
+                       interval_type='n',
+                       alpha=0.05,
+                       cost_digits=0, effect_digits=2, icer_digits=1,
+                       cost_multiplier=1, effect_multiplier=1,
+                       file_name='myCSV.csv'):
+        """
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param cost_digits: digits to round cost estimates to
+        :param effect_digits: digits to round effect estimate to
+        :param icer_digits: digits to round ICER estimates to
+        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
+                thousands or hundred thousands unit
+        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
+                thousands or hundred thousands unit
+        :param file_name: address and file name where the CEA results should be saved to
+        """
+
+        # find the frontier if not calculated already
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        table = [['Strategy', 'Cost', 'Effect', 'Incremental Cost', 'Incremental Effect', 'ICER']]
+        # sort strategies in increasing order of cost
+        self.strategies.sort(key=get_d_cost)
+
+        for i, s in enumerate(self.strategies):
+            row=[]
+            # strategy name
+            row.append(s.name)
+            # strategy cost
+            row.append(s.cost.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                              alpha=alpha,
+                                                              deci=cost_digits,
+                                                              form=',',
+                                                              multiplier=cost_multiplier))
+            # strategy effect
+            row.append(s.effect.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                alpha=alpha,
+                                                                deci=effect_digits,
+                                                                form=',',
+                                                                multiplier=effect_multiplier))
+
+            # strategy incremental cost
+            if s.incCost is None:
+                row.append('-')
+            else:
+                row.append(s.incCost.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                     alpha=alpha,
+                                                                     deci=cost_digits,
+                                                                     form=',',
+                                                                     multiplier=cost_multiplier))
+            # strategy incremental effect
+            if s.incEffect is None:
+                row.append('-')
+            else:
+                row.append(s.incEffect.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                       alpha=alpha,
+                                                                       deci=effect_digits,
+                                                                       form=',',
+                                                                       multiplier=effect_multiplier))
+
+            if s.ifDominated:
+                row.append('Dominated')
+            elif s.icer is not None:
+                row.append(s.icer.get_ICER())
+
+            table.append(row)
+
+        IO.write_csv(file_name=file_name, rows=table)
 
 
     def add_ce_plane_to_ax(self, ax, include_clouds=True):
