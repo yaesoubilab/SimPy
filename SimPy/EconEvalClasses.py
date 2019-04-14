@@ -1097,8 +1097,9 @@ class _ComparativeEconMeasure:
             "cost_base should be list or np.array."
         assert type(effects_base) is list or type(effects_base) is np.ndarray, \
             "effect_base should be list or np.array."
-        assert type(health_measure) is HealthMeasure, \
-            "health_measure should be of type HealthMeasure."
+
+        if health_measure not in ['u', 'd']:
+            raise ValueError("health_measure can be either 'u' (for utility) or 'd' (for disutility).")
 
         self.name = name
         self._costsNew = costs_new          # cost data for the new strategy

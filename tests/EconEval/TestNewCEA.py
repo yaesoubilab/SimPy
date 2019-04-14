@@ -1,4 +1,4 @@
-from SimPy import CEAClasses as EV
+from SimPy import EconEval as EV
 
 
 S0 = EV.Strategy(name='Base', cost_obs=[100], effect_obs=[1])

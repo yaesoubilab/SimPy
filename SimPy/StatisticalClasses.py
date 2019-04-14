@@ -93,25 +93,29 @@ class _Statistics(object):
                 F.format_number(self.get_min(), digits),
                 F.format_number(self.get_max(), digits)]
 
-    def get_interval(self, interval_type='c', alpha=0.05):
+    def get_interval(self, interval_type='c', alpha=0.05, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
                                        'p' for percentile interval
         :param alpha: significance level
+        :param multiplier: to multiply the estimate and the interval by the provided value
         :return: a list [L, U]
         """
 
         if interval_type == 'c':
-            return self.get_t_CI(alpha)
+            interval = self.get_t_CI(alpha)
         elif interval_type == 'cb':
-            return self.get_bootstrap_CI(alpha, NUM_BOOTSTRAP_SAMPLES)
+            interval = self.get_bootstrap_CI(alpha, NUM_BOOTSTRAP_SAMPLES)
         elif interval_type == 'p':
-            return self.get_PI(alpha)
+            interval = self.get_PI(alpha)
         elif interval_type == 'n' or None:
-            return None
+            interval = None
         else:
             raise ValueError('Invalid interval type.')
+
+        return [v * multiplier for v in interval] if interval is not None else None
+
 
     def get_formatted_mean_and_interval(self, interval_type='c',
                                         alpha=0.05, deci=0, form=None, multiplier=1):
@@ -127,12 +131,10 @@ class _Statistics(object):
         """
 
         estimate = self.get_mean()*multiplier
-        interval = self.get_interval(interval_type=interval_type, alpha=alpha)
-
-        adj_interval = [v * multiplier for v in interval] if interval is not None else None
+        interval = self.get_interval(interval_type=interval_type, alpha=alpha, multiplier=multiplier)
 
         return F.format_estimate_interval(estimate=estimate,
-                                          interval=adj_interval,
+                                          interval=interval,
                                           deci=deci,
                                           format=form)
 
