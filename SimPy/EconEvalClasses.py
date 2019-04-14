@@ -96,11 +96,6 @@ def get_an_interval(data, interval_type, alpha=0.05):
     return sum_stat.get_interval(interval_type=interval_type, alpha=alpha)
 
 
-class HealthMeasure(Enum):
-    UTILITY = 0         # as in QALYS
-    DISUTILITY = 1      # as in DALY
-
-
 class Strategy:
     def __init__(self, name, cost_obs, effect_obs, color=None):
         """
@@ -184,18 +179,18 @@ class Strategy:
 class _EconEval:
     """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
-    def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, strategies, if_paired, health_measure='u'):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: set to true to indicate that the strategies are paired
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         self._n = len(strategies)  # number of strategies
         self._ifPaired = if_paired
         self._healthMeasure = health_measure
-        self._utility_or_disutility = 1 if health_measure == HealthMeasure.UTILITY else -1
+        self._utility_or_disutility = 1 if health_measure == 'u' else -1
 
         self._strategies = strategies  # list of strategies
         self._strategiesOnFrontier = []  # list of strategies on the frontier
@@ -251,12 +246,12 @@ class _EconEval:
 class CEA(_EconEval):
     """ class for conducting cost-effectiveness analysis """
 
-    def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, strategies, if_paired, health_measure='u'):
         """
         :param strategies: list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: set to true to indicate that the strategies are paired
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         _EconEval.__init__(self, strategies, if_paired, health_measure)
@@ -925,12 +920,12 @@ class NMBCurve:
 class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
-    def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, strategies, if_paired, health_measure='u'):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         _EconEval.__init__(self, strategies, if_paired, health_measure)
@@ -1078,14 +1073,14 @@ class CBA(_EconEval):
 
 
 class _ComparativeEconMeasure:
-    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) effect data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
         :param effects_base: (list or numpy.array) effect data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
 
@@ -1107,7 +1102,7 @@ class _ComparativeEconMeasure:
         self._costsBase = costs_base        # cost data for teh base line
         self._effectsBase = effects_base    # effect data for the base line
         # if QALY or DALY is being used
-        self._effect_multiplier = 1 if health_measure == HealthMeasure.UTILITY else -1
+        self._effect_multiplier = 1 if health_measure == 'u' else -1
 
         # convert input data to numpy.array if needed
         if type(costs_new) == list:
@@ -1127,14 +1122,14 @@ class _ComparativeEconMeasure:
 
 
 class _ICER(_ComparativeEconMeasure):
-    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) effect data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
         :param effects_base: (list or numpy.array) effect data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
 
@@ -1208,14 +1203,14 @@ class _ICER(_ComparativeEconMeasure):
 
 class ICER_paired(_ICER):
 
-    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) health data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
         :param effects_base: (list or numpy.array) health data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
 
@@ -1296,14 +1291,14 @@ class ICER_paired(_ICER):
 
 class ICER_indp(_ICER):
 
-    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) health data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
         :param effects_base: (list or numpy.array) health data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
 
@@ -1409,14 +1404,14 @@ class ICER_indp(_ICER):
 
 
 class _NMB(_ComparativeEconMeasure):
-    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) health data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
         :param effects_base: (list or numpy.array) health data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         # initialize the base class
@@ -1450,14 +1445,14 @@ class _NMB(_ComparativeEconMeasure):
 
 class NMB_paired(_NMB):
 
-    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) health data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
         :param effects_base: (list or numpy.array) health data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         _NMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
@@ -1481,14 +1476,14 @@ class NMB_paired(_NMB):
 
 class NMB_indp(_NMB):
 
-    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) health data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
         :param effects_base: (list or numpy.array) health data for the base line
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         _NMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)

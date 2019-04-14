@@ -148,7 +148,7 @@ class CEA(_EconEval):
         # if observations are paired across strategies
         if self._ifPaired:
 
-            for s in self.strategies:
+            for i, s in enumerate(self.strategies):
 
                 s.dCostObs = s.costObs - self.strategies[0].costObs
                 s.dCost = Stat.DifferenceStatPaired(name='Cost with respect to base',
@@ -167,16 +167,17 @@ class CEA(_EconEval):
                                                           x=self.strategies[0].effectObs,
                                                           y_ref=s.effectObs)
                 # cost-effectiveness ratio
-                s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio',
-                                             x=s.dCostObs,
-                                             y_ref=s.dEffectObs)
+                if i > 0:
+                    s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio',
+                                                 x=s.dCostObs,
+                                                 y_ref=s.dEffectObs)
 
         else:  # if not paired
             # get average cost and effect of the base strategy
             base_ave_cost = self.strategies[0].cost.get_mean()
             base_ave_effect = self.strategies[0].effect.get_mean()
 
-            for s in self.strategies:
+            for i, s in enumerate(self.strategies):
                 s.dCostObs = s.costObs - base_ave_cost
                 s.dCost = Stat.DifferenceStatIndp(name='Cost with respect to base',
                                                   x=s.costObs,
@@ -194,9 +195,10 @@ class CEA(_EconEval):
                                                         y_ref=s.effectObs)
 
                 # cost-effectiveness ratio
-                s.cer = Stat.RatioStatIndp(name='Cost-effectiveness ratio',
-                                           x=s.dCostObs,
-                                           y_ref=s.dEffectObs)
+                if i > 0:
+                    s.cer = Stat.RatioStatIndp(name='Cost-effectiveness ratio',
+                                               x=s.dCostObs,
+                                               y_ref=s.dEffectObs)
 
     def __find_frontier(self):
 
@@ -308,7 +310,13 @@ class CEA(_EconEval):
                         s.incEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
                                                                 x=s_before.effectObs,
                                                                 y_ref=s.effectObs)
-
+                    # ICER
+                    s.icer = ICER_paired(name='ICER of {} relative to {}'.format(s.name, s_before.name),
+                                         costs_new=s.costObs,
+                                         effects_new=s.effectObs,
+                                         costs_base=s_before.costObs,
+                                         effects_base=s_before.effectObs,
+                                         health_measure=self._healthMeasure)
 
         else:  # if not paired
 
@@ -343,7 +351,7 @@ class CEA(_EconEval):
                                        effects_new=s.effectObs,
                                        costs_base=s_before.costObs,
                                        effects_base=s_before.effectObs,
-                                       health_measure=HealthMeasure.UTILITY)
+                                       health_measure=self._healthMeasure)
 
     def build_CE_table(self,
                        interval_type='n',
@@ -427,6 +435,9 @@ class CEA(_EconEval):
 
         IO.write_csv(file_name=file_name, rows=table)
 
+        # sort strategies back
+        self.strategies.sort(key=get_index)
+
     def get_dCost_dEffect_cer(self,
                               interval_type='n',
                               alpha=0.05,
@@ -450,7 +461,7 @@ class CEA(_EconEval):
 
         dictionary_results = {}
 
-        for s in self.strategies:
+        for s in [s for s in self.strategies if s.idx > 0]:
 
             d_cost_text = s.dCost.get_formatted_mean_and_interval(interval_type=interval_type,
                                                                   alpha=alpha,
@@ -532,12 +543,12 @@ class NMBCurve:
 class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
-    def __init__(self, strategies, if_paired, health_measure=HealthMeasure.UTILITY):
+    def __init__(self, strategies, if_paired, health_measure='u'):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: indicate whether the strategies are paired
-        :param health_measure: set to HealthMeasure.UTILITY if higher "effect" implies better health
-        (e.g. when QALY is used) and set to HealthMeasure.DISUTILITY if higher "effect" implies worse health
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
         _EconEval.__init__(self, strategies=strategies,

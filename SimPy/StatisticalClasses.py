@@ -1,4 +1,5 @@
 import sys
+import warnings
 import numpy as numpy
 import scipy.stats as stat
 import math
@@ -115,7 +116,6 @@ class _Statistics(object):
             raise ValueError('Invalid interval type.')
 
         return [v * multiplier for v in interval] if interval is not None else None
-
 
     def get_formatted_mean_and_interval(self, interval_type='c',
                                         alpha=0.05, deci=0, form=None, multiplier=1):
@@ -551,6 +551,8 @@ class _RatioStat(_ComparativeStat):
         """
         _ComparativeStat.__init__(self, name, x, y_ref)
 
+        self._ifComputable = True  # if any element of the denominator is 0, ratio is not computable
+
 
 class RatioStatPaired(_RatioStat):
 
@@ -569,10 +571,12 @@ class RatioStatPaired(_RatioStat):
         for i in range(len(self._x)):
             # for 0 in the denominator variable, check whether numerator is also 0
             if self._y_ref[i] == 0:
-                if self._x[i] == 0: # set 0/0 = 1
+                if self._x[i] == 0:  # set 0/0 = 1
                     ratio[i] = 1
-                else: # else raise error
-                    raise ValueError('invalid value of y_ref, the ratio is not computable')
+                else:  # else raise error
+                    ratio[i] = math.nan
+                    warnings.warn('For Ratio Statistics' + name + ', the denominator of a ratio is 0.')
+                    self._ifComputable = False
             else:
                 # for non-zero denominators, calculate ratio
                 ratio[i] = 1.0*self._x[i] / self._y_ref[i]
