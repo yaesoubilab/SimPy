@@ -283,8 +283,10 @@ class CEA(_EconEval):
 
     def get_strategies_on_frontier(self):
 
-        if self._ifFrontierIsCalculated:
-            return self._strategies_on_frontier
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        return self._strategies_on_frontier
 
     def __calculate_incremental_outcomes(self):
 
@@ -433,7 +435,7 @@ class CEA(_EconEval):
 
             table.append(row)
 
-        IO.write_csv(file_name=file_name, rows=table)
+        IO.write_csv(file_name=file_name, rows=table, delimiter=',')
 
         # sort strategies back
         self.strategies.sort(key=get_index)

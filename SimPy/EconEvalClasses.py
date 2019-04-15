@@ -1228,7 +1228,7 @@ class ICER_paired(_ICER):
         # check if ICER is computable
         if min(self._deltaEffects) < 0:
             self._isDefined = False
-            warnings.warn('\nConfidence intervals for one of ICERs is not computable'
+            warnings.warn('\nFor "'+name+'" one of ICERs is not computable'
                           '\nbecause at least one incremental effect is negative.')
 
         # calculate ICERs
