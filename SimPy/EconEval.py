@@ -811,7 +811,7 @@ class CBA(_EconEval):
         fig.show()
 
     def graph_acceptability_curves(self, min_wtp, max_wtp,
-                                   title, x_label, y_label, y_range=None,
+                                   title=None, x_label=None, y_label=None, y_range=None,
                                    show_legend=True, figure_size=(6, 6)):
         """
         plots the acceptibility curves
