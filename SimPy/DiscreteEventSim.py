@@ -34,7 +34,7 @@ class SimulationCalendar:
         :param event: a simulation event to be added to the simulation calendar """
 
         if event.time < self.time:
-            raise ValueError('An event with event time past the current time cannot be added to the calendar.')
+            raise ValueError('An event with event time less than the current time cannot be added to the calendar.')
 
         entry = [event.time, event.priority, event]
         heapq.heappush(self._q, entry)
