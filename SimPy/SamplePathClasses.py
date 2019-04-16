@@ -260,8 +260,6 @@ def graph_sets_of_sample_paths(sets_of_sample_paths,
                                    legends=legends,
                                    transparency=transparency)
 
-    #ax.legend(legends)
-
     # set the minimum of y-axis to zero
     ax.set_ylim(bottom=0)  # the minimum has to be set after plotting the values
     # output figure
