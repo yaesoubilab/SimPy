@@ -59,33 +59,37 @@ class Strategy:
         self.cost = Stat.SummaryStat(name='Cost of '+name, data=self.costObs)
         self.effect = Stat.SummaryStat(name='Effect of '+name, data=self.effectObs)
 
-    def get_cost_err_interval(self, interval_type, alpha):
+    def get_cost_err_interval(self, interval_type, alpha, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
                                        'p' for percentile interval
         :param alpha: significance level
+        :param multiplier: to multiply the estimate and the interval by the provided value
         :return: list [err_l, err_u] for the lower and upper error length
                 of confidence or prediction intervals of cost observations.
                 NOTE: [err_l, err_u] = [mean - L, mean + U], where [L, U] is the confidence or prediction interval
 
         """
-        interval = self.get_cost_interval(interval_type, alpha)
-        return [self.aveCost - interval[0], interval[1] - self.aveCost]
+        interval = self.cost.get_interval(interval_type, alpha, multiplier)
+        return [self.cost.get_mean()*multiplier - interval[0],
+                interval[1] - self.cost.get_mean()*multiplier]
 
-    def get_effect_err_interval(self, interval_type, alpha):
+    def get_effect_err_interval(self, interval_type, alpha, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
                                        'p' for percentile interval
         :param alpha: significance level
+        :param multiplier: to multiply the estimate and the interval by the provided value
         :return: list [err_l, err_u] for the lower and upper error length
                 of confidence or prediction intervals of effect observations.
                 NOTE: [err_l, err_u] = [mean - L, mean + U], where [L, U] is the confidence or prediction interval
 
         """
-        interval = self.get_effect_interval(interval_type, alpha)
-        return [self.aveEffect - interval[0], interval[1] - self.aveEffect]
+        interval = self.effect.get_interval(interval_type, alpha, multiplier)
+        return [self.effect.get_mean()*multiplier - interval[0],
+                interval[1] - self.effect.get_mean()*multiplier]
 
 
 class _EconEval:
@@ -531,24 +535,29 @@ class CEA(_EconEval):
         fig.show()
 
 
-class NMBCurve:
-
-    def __init__(self, label, color, wtps, ys, l_errs, u_errs):
-        self.label = label
-        self.color = color
-        self.wtps = wtps
-        self.ys = ys
-        self.l_errs = l_errs
-        self.u_errs = u_errs
-
-class AcceptabilityCurve:
-
+class _Curve:
     def __init__(self, label, color, wtps):
         self.label = label
         self.color = color
         self.wtps = wtps
-        self.prob = []
 
+
+class NMBCurve(_Curve):
+
+    def __init__(self, label, color, wtps, ys, l_errs, u_errs):
+
+        _Curve.__init__(self, label, color, wtps)
+        self.ys = ys
+        self.l_errs = l_errs
+        self.u_errs = u_errs
+
+
+class AcceptabilityCurve(_Curve):
+
+    def __init__(self, label, color, wtps):
+
+        _Curve.__init__(self, label, color, wtps)
+        self.prob = []
 
 
 class CBA(_EconEval):
@@ -669,7 +678,9 @@ class CBA(_EconEval):
                 max_nmb = float('-inf')
                 max_idx = 0
                 for idx, s in enumerate(self.strategies):
-                    nmb = w * s.effectObs[obs_idx] - s.costObs[obs_idx]
+                    d_effect = (s.effectObs[obs_idx] - self.strategies[0].effectObs[obs_idx])*self._u_or_d
+                    d_cost = s.costObs[obs_idx] - self.strategies[0].costObs[obs_idx]
+                    nmb = w * d_effect - d_cost
                     if nmb > max_nmb:
                         max_nmb = nmb
                         max_idx = idx
@@ -679,12 +690,12 @@ class CBA(_EconEval):
             # calculate proportion maximum
             probMaximum = countMaximum/n_obs
 
-            for i in range(self.strategies):
+            for i in range(self._n):
                 self.acceptabilityCurves[i].prob.append(probMaximum[i])
 
     def add_incremental_NMBs_to_ax(self, ax,
                                    min_wtp, max_wtp,
-                                   title, x_label, y_label,
+                                   title, x_label, y_label, y_range=None,
                                    transparency=0.4, show_legend=False):
 
         for curve in self.nmbCurves:
@@ -692,20 +703,43 @@ class CBA(_EconEval):
             ax.plot(curve.wtps, curve.ys, c=curve.color, alpha=1, label=curve.label)
             # plot intervals
             ax.fill_between(curve.wtps, curve.ys - curve.l_errs, curve.ys + curve.u_errs,
-                             color=curve.color, alpha=transparency)
+                            color=curve.color, alpha=transparency)
 
         if show_legend:
             ax.legend()
-
-        ax.set_title(title)
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
 
         # format y-axis
         vals_y = ax.get_yticks()
         ax.set_yticks(vals_y)
         ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
 
+        # do the other formatting
+        self.__format_ax(ax=ax, title=title,x_label=x_label, y_label=y_label,
+                         y_range=y_range, min_wtp=min_wtp, max_wtp=max_wtp)
+
+    def add_acceptability_curves_to_ax(self, ax,
+                                       min_wtp, max_wtp,
+                                       title, x_label, y_label,
+                                       y_range=None, show_legend=False):
+
+        for curve in self.acceptabilityCurves:
+            # plot line
+            ax.plot(curve.wtps, curve.prob, c=curve.color, alpha=1, label=curve.label)
+        if show_legend:
+            ax.legend()
+
+        self.__format_ax(ax=ax, title=title, x_label=x_label, y_label=y_label,
+                         y_range=y_range, min_wtp=min_wtp, max_wtp=max_wtp)
+
+    def __format_ax(self, ax, title, x_label, y_label, y_range,
+                    min_wtp, max_wtp,):
+
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_ylim(y_range)
+
+        # format x-axis
         vals_x = ax.get_xticks()
         ax.set_xticks(vals_x)
         ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
@@ -716,9 +750,9 @@ class CBA(_EconEval):
         ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
     def graph_incremental_NMBs(self, min_wtp, max_wtp,
-                               title, x_label, y_label,
+                               title, x_label, y_label, y_range=None,
                                interval_type='n', transparency=0.4,
-                               show_legend=False, figure_size=(6, 6)):
+                               show_legend=True, figure_size=(6, 6)):
         """
         plots the incremental net-monetary benefit compared to the first strategy (base)
         :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
@@ -726,6 +760,7 @@ class CBA(_EconEval):
         :param title: title
         :param x_label: x-axis label
         :param y_label: y-axis label
+        :param y_range: (list) range of y-axis
         :param interval_type: (string) 'n' for no interval,
                                        'c' for confidence interval,
                                        'p' for percentile interval
@@ -745,8 +780,38 @@ class CBA(_EconEval):
         # add the incremental NMB curves
         self.add_incremental_NMBs_to_ax(ax=ax,
                                         min_wtp=min_wtp, max_wtp=max_wtp,
-                                        title=title, x_label=x_label, y_label=y_label,
+                                        title=title, x_label=x_label, y_label=y_label, y_range=y_range,
                                         transparency=transparency, show_legend=show_legend)
+
+        fig.show()
+
+    def graph_acceptability_curves(self, min_wtp, max_wtp,
+                                   title, x_label, y_label, y_range=None,
+                                   show_legend=True, figure_size=(6, 6)):
+        """
+        plots the acceptibility curves
+        :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
+        :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
+        :param title: title
+        :param x_label: x-axis label
+        :param y_label: y-axis label
+        :param y_range: (list) range of y-axis
+        :param show_legend: set true to show legend
+        :param figure_size: (tuple) size of the figure (e.g. (2, 3)
+        """
+
+        # make the acceptability curves
+        self.make_acceptability_curves(min_wtp=min_wtp,
+                                       max_wtp=max_wtp)
+
+        # initialize plot
+        fig, ax = plt.subplots(figsize=figure_size)
+
+        # add the incremental NMB curves
+        self.add_acceptability_curves_to_ax(ax=ax,
+                                            min_wtp=min_wtp, max_wtp=max_wtp,
+                                            title=title, x_label=x_label, y_label=y_label,
+                                            y_range=y_range, show_legend=show_legend)
 
         fig.show()
 
@@ -767,8 +832,6 @@ class CBA(_EconEval):
         l_err = y_values - np.array([p[0] for p in y_ci])
 
         return y_values, l_err, u_err
-
-    #def __get_prob_cost_effective(self):
 
 
 def get_d_cost(strategy):
