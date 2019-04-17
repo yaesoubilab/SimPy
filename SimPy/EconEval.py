@@ -172,7 +172,7 @@ class CEA(_EconEval):
                                                           y_ref=s.effectObs)
                 # cost-effectiveness ratio
                 if i > 0:
-                    s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio',
+                    s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio of ' + s.name,
                                                  x=s.dCostObs,
                                                  y_ref=s.dEffectObs)
 
