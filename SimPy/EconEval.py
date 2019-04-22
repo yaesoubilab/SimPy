@@ -526,7 +526,7 @@ class CEA(_EconEval):
         f.text(0.55, 0, effect_label, ha='center', va='center', fontweight='bold')
         f.text(0.99, 0.5, cost_label, va='center', rotation=-90, fontweight='bold')
         f.show()
-        f.savefig(file_name, bbox_inches='tight')
+        f.savefig(file_name, bbox_inches='tight', dpi=300)
 
     def __find_shifted_strategies(self):
         """ find shifted strategies.
@@ -1013,7 +1013,7 @@ class CBA(_EconEval):
 
     def graph_acceptability_curves(self, min_wtp, max_wtp,
                                    title=None, x_label=None, y_label=None, y_range=None,
-                                   show_legend=True, figure_size=(6, 6)):
+                                   show_legend=True, figure_size=(6, 6), file_name='CEAC.png'):
         """
         plots the acceptibility curves
         :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
@@ -1024,6 +1024,7 @@ class CBA(_EconEval):
         :param y_range: (list) range of y-axis
         :param show_legend: set true to show legend
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
+        :param file_name: file name
         """
 
         # make the acceptability curves
@@ -1043,6 +1044,7 @@ class CBA(_EconEval):
                          y_range=y_range, min_wtp=min_wtp, max_wtp=max_wtp)
 
         fig.show()
+        fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
     def __get_ys_lerrs_uerrs(self, nmb, wtps, interval_type='c'):
 
