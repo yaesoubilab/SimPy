@@ -9,7 +9,7 @@ def write_csv(rows, file_name='csvfile.csv', delimiter='\t', directory='', delet
     :param file_name: the file name to be given to the csv file
     :param delimiter: to separate by comma, use ',' and by tab, use '\t'
     :param directory: directory (relative to the current root) where the files should be located
-            for example use 'Example' to create put the csv file under the folder Example
+            for example use 'Example' to create and save the csv file under the folder Example
     :param delete_existing_files: set to True to delete the existing files in the directory
     """
 

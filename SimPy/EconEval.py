@@ -4,6 +4,8 @@ import matplotlib.cm as cm
 import SimPy.StatisticalClasses as Stat
 from SimPy.EconEvalClasses import *
 import SimPy.InOutFunctions as IO
+import string
+
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
 
@@ -59,6 +61,23 @@ class Strategy:
         self.cost = Stat.SummaryStat(name='Cost of '+name, data=self.costObs)
         self.effect = Stat.SummaryStat(name='Effect of '+name, data=self.effectObs)
 
+    def reset(self):
+        """ set class attributes that will be calculated later to None """
+
+        self.ifDominated = False
+        self.dCostObs = None
+        self.incCostObs = None
+        self.dCost = None
+        self.incCost = None
+
+        self.dEffectObs = None
+        self.incEffectObs = None
+        self.dEffect = None
+        self.incEffect = None
+
+        self.cer = None
+        self.icer = None
+
     def get_cost_err_interval(self, interval_type, alpha, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
@@ -95,13 +114,15 @@ class Strategy:
 class _EconEval:
     """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
-    def __init__(self, strategies, if_paired, health_measure='u'):
+    def __init__(self, strategies, if_paired, health_measure='u', if_reset_strategies=False):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: set to true to indicate that the strategies are paired
         :param health_measure: (string) choose 'u' if higher "effect" implies better health
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
+        :param if_reset_strategies: set to True if the cost and effect with respect to
+            base, incremental cost and effect, ICER, and CER of strategies should be recalculated.
         """
 
         if health_measure not in ['u', 'd']:
@@ -111,6 +132,8 @@ class _EconEval:
         # assign the index of each strategy
         for i, s in enumerate(strategies):
             s.idx = i
+            if if_reset_strategies:
+                s.reset()
 
         self._n = len(strategies)  # number of strategies
         self._ifPaired = if_paired  # if cost and effect outcomes are paired across strategies
@@ -121,27 +144,389 @@ class _EconEval:
 class CEA(_EconEval):
     """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
-    def __init__(self, strategies, if_paired, health_measure='u'):
+    def __init__(self, strategies, if_paired, health_measure='u', if_reset_strategies=False):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param if_paired: set to true to indicate that the strategies are paired
         :param health_measure: (string) choose 'u' if higher "effect" implies better health
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
+        :param if_reset_strategies: set to True if the cost and effect with respect to
+            base, incremental cost and effect, ICER, and CER of strategies should be recalculated.
         """
 
         _EconEval.__init__(self, strategies=strategies,
                            if_paired=if_paired,
-                           health_measure=health_measure)
+                           health_measure=health_measure,
+                           if_reset_strategies=if_reset_strategies)
 
         self._strategies_on_frontier = []   # list of strategies on the frontier
         self._ifFrontierIsCalculated = False  # CE frontier is not calculated yet
+        self._ifPairwiseCEAsAreCalculated = False
+        self._pairwise_ceas = []  # list of list to cea's
 
         # shift the strategies
         self.__find_shifted_strategies()
 
         # find the cost-effectiveness frontier
         self.__find_frontier()
+
+    def get_strategies_on_frontier(self):
+        """
+        :return: strategies on the frontier sorted in the increasing order of effect
+        """
+
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        return self._strategies_on_frontier
+    
+    def get_strategies_not_on_frontier(self):
+        """
+        :return: strategies not on the frontier 
+        """
+        
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+        
+        return [s for s in self.strategies if s.ifDominated]
+
+    def build_CE_table(self,
+                       interval_type='n',
+                       alpha=0.05,
+                       cost_digits=0, effect_digits=2, icer_digits=1,
+                       cost_multiplier=1, effect_multiplier=1,
+                       file_name='myCSV.csv', directory=''):
+        """
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param cost_digits: digits to round cost estimates to
+        :param effect_digits: digits to round effect estimate to
+        :param icer_digits: digits to round ICER estimates to
+        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
+                thousands or hundred thousands unit
+        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
+                thousands or hundred thousands unit
+        :param file_name: address and file name where the CEA results should be saved to
+        :param directory: directory (relative to the current root) where the files should be located
+            for example use 'Example' to create and save the csv file under the folder Example
+        """
+
+        # find the frontier if not calculated already
+        if not self._ifFrontierIsCalculated:
+            self.__find_frontier()
+
+        table = [['Strategy', 'Cost', 'Effect', 'Incremental Cost', 'Incremental Effect', 'ICER']]
+        # sort strategies in increasing order of cost
+        self.strategies.sort(key=get_d_cost)
+
+        for i, s in enumerate(self.strategies):
+            row=[]
+            # strategy name
+            row.append(s.name)
+            # strategy cost
+            row.append(s.cost.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                              alpha=alpha,
+                                                              deci=cost_digits,
+                                                              form=',',
+                                                              multiplier=cost_multiplier))
+            # strategy effect
+            row.append(s.effect.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                alpha=alpha,
+                                                                deci=effect_digits,
+                                                                form=',',
+                                                                multiplier=effect_multiplier))
+
+            # strategy incremental cost
+            if s.incCost is None:
+                row.append('-')
+            else:
+                row.append(s.incCost.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                     alpha=alpha,
+                                                                     deci=cost_digits,
+                                                                     form=',',
+                                                                     multiplier=cost_multiplier))
+            # strategy incremental effect
+            if s.incEffect is None:
+                row.append('-')
+            else:
+                row.append(s.incEffect.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                       alpha=alpha,
+                                                                       deci=effect_digits,
+                                                                       form=',',
+                                                                       multiplier=effect_multiplier))
+
+            # ICER
+            if s.ifDominated:
+                row.append('Dominated')
+            elif s.icer is not None:
+                row.append(s.icer.get_formatted_ICER_and_interval(interval_type=interval_type,
+                                                                  alpha=alpha,
+                                                                  deci=icer_digits,
+                                                                  form=',',
+                                                                  multiplier=1,
+                                                                  num_bootstrap_samples=NUM_OF_BOOTSTRAPS))
+            else:
+                row.append('-')
+
+            table.append(row)
+
+        IO.write_csv(file_name=file_name, directory=directory, rows=table, delimiter=',')
+
+        # sort strategies back
+        self.strategies.sort(key=get_index)
+
+    def get_dCost_dEffect_cer(self,
+                              interval_type='n',
+                              alpha=0.05,
+                              cost_digits=0, effect_digits=2, icer_digits=1,
+                              cost_multiplier=1, effect_multiplier=1):
+        """
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param cost_digits: digits to round cost estimates to
+        :param effect_digits: digits to round effect estimate to
+        :param icer_digits: digits to round ICER estimates to
+        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
+                thousands or hundred thousands unit
+        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
+                thousands or hundred thousands unit
+        :return: a dictionary of additional cost, additional effect, and cost-effectiveness ratio for
+                all strategies
+        """
+
+        dictionary_results = {}
+
+        for s in [s for s in self.strategies if s.idx > 0]:
+
+            d_cost_text = s.dCost.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                  alpha=alpha,
+                                                                  deci=cost_digits,
+                                                                  form=',',
+                                                                  multiplier=cost_multiplier)
+            d_effect_text = s.dEffect.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                                      alpha=alpha,
+                                                                      deci=effect_digits,
+                                                                      form=',',
+                                                                      multiplier=effect_multiplier)
+            cer_text = s.cer.get_formatted_mean_and_interval(interval_type=interval_type,
+                                                             alpha=alpha,
+                                                             deci=icer_digits,
+                                                             form=',',
+                                                             multiplier=1)
+            # add to the dictionary
+            dictionary_results[s.name] = [d_cost_text, d_effect_text, cer_text]
+
+        return dictionary_results
+
+    def add_ce_plane_to_ax(self, ax, add_clouds=True, show_legend=True,
+                           center_s=75, cloud_s=25, transparency=0.1,
+                           cost_multiplier=1, effect_multiplier=1):
+
+        # find the frontier (x, y)'s
+        frontier_d_effect = []
+        frontier_d_costs = []
+        for s in self.get_strategies_on_frontier():
+            frontier_d_effect.append(s.dEffect.get_mean()*effect_multiplier)
+            frontier_d_costs.append(s.dCost.get_mean()*cost_multiplier)
+
+        # add the frontier line
+        ax.plot(frontier_d_effect, frontier_d_costs,
+                c='k',  # color
+                alpha=0.6,  # transparency
+                linewidth=2,  # line width
+                label="Frontier")  # label to show in the legend
+
+        for s in self.strategies:
+            ax.scatter(s.dEffect.get_mean()*effect_multiplier, s.dCost.get_mean()*cost_multiplier,
+                       c=s.color,  # color
+                       alpha=1,  # transparency
+                       marker='o',  # markers
+                       s=center_s,  # marker size
+                       label=s.name  # name to show in the legend
+                       )
+            if add_clouds: # idx >= 2:
+                ax.scatter(s.dEffectObs*effect_multiplier, s.dCostObs*cost_multiplier,
+                           c=s.color,  # color of dots
+                           alpha=transparency,  # transparency of dots
+                           s=cloud_s,  # size of dots
+                           zorder=1
+                           )
+
+        if show_legend:
+            ax.legend()
+        ax.axhline(y=0, c='k', linewidth=0.5)
+        ax.axvline(x=0, c='k', linewidth=0.5)
+
+    def show_CE_plane(self, add_clouds=True):
+
+        fig, ax = plt.subplots()
+
+        # add the cost-effectiveness plane
+        self.add_ce_plane_to_ax(ax=ax, add_clouds=add_clouds)
+
+        fig.show()
+
+    def create_pairwise_ceas(self):
+        """
+        creates a list of list for pairwise cost-effectiveness analysis
+        """
+
+        # create CEA's for all pairs
+
+        self._pairwise_ceas = []
+        for s_base in self.strategies:
+            list_ceas = []
+            for s_new in self.strategies[1:]:
+
+                # if the base and the new strategies are the same
+                if s_base.name == s_new.name:
+                    list_ceas.append(None)
+                else:
+                    list_ceas.append(CEA(strategies=[s_base, s_new],
+                                         if_paired=self._ifPaired,
+                                         health_measure=self._healthMeasure)
+                                     )
+            self._pairwise_ceas.append(list_ceas)
+
+        self._ifPairwiseCEAsAreCalculated = True
+
+    def print_pairwise_cea(self, interval_type='n',
+                           alpha=0.05,
+                           cost_digits=0, effect_digits=2, icer_digits=1,
+                           cost_multiplier=1, effect_multiplier=1,
+                           directory='Pairwise_CEA'):
+        """
+        :param interval_type: (string) 'n' for no interval,
+                                       'c' for confidence interval,
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param cost_digits: digits to round cost estimates to
+        :param effect_digits: digits to round effect estimate to
+        :param icer_digits: digits to round ICER estimates to
+        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
+                thousands or hundred thousands unit
+        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
+                thousands or hundred thousands unit
+        :param directory: directory (relative to the current root) where the files should be located
+            for example use 'Example' to create and save the csv file under the folder Example
+        """
+
+        # create the pair-wise cost-effectiveness analyses
+        if not self._ifPairwiseCEAsAreCalculated:
+            self.create_pairwise_ceas()
+
+        # save the CEA tables
+        for row_of_ceas in self._pairwise_ceas:
+            for cea in row_of_ceas:
+                if cea is not None:
+                    name = cea.strategies[1].name + ' to ' + cea.strategies[0].name
+                    cea.build_CE_table(interval_type=interval_type,
+                                       alpha=alpha,
+                                       cost_digits=cost_digits,
+                                       effect_digits=effect_digits,
+                                       icer_digits=icer_digits,
+                                       cost_multiplier=cost_multiplier,
+                                       effect_multiplier=effect_multiplier,
+                                       file_name=name+'.csv',
+                                       directory=directory)
+
+    def plot_pairwise_ceas(self, figure_size=None, font_size=6, show_subplot_labels=False,
+                           effect_label='', cost_label='',
+                           center_s=50, cloud_s=25, transparency=0.2,
+                           x_range=None, y_range=None,
+                           cost_multiplier=1, effect_multiplier=1,
+                           column_titles=None, row_titles=None,
+                           file_name='pairwise_CEA.png'):
+
+        # set default properties
+        plt.rc('font', size=font_size) # fontsize of texts
+        plt.rc('axes', titlesize=font_size)  # fontsize of the figure title
+        plt.rc('axes', titleweight='semibold')  # fontweight of the figure title
+
+        # plot each panel
+        f, axarr = plt.subplots(nrows=self._n, ncols=self._n-1,
+                                sharex=True, sharey=True, figsize=figure_size)
+
+        # show subplot labels
+        Y_LABEL_COORD_X = -0.05     # increase to move right
+        # if show_subplot_labels:
+        #     axs = axarr.flat
+        #     for n, ax in enumerate(axs):
+        #         ax.text(Y_LABEL_COORD_X-0.05, 1.05, string.ascii_uppercase[n]+')', transform=ax.transAxes,
+        #                 size=DEFAULT_FONT_SIZE+1, weight='bold')
+        n = 0
+        for i in range(self._n):
+            for j in range(self._n-1):
+                # get the current axis
+                ax = axarr[i, j]
+
+                # if i == j + 1:
+                #     pass
+                #     ax.axis('off')
+                # else:
+                if show_subplot_labels:
+                    ax.text(Y_LABEL_COORD_X - 0.05, 1.05, string.ascii_uppercase[n] + ')',
+                            transform=ax.transAxes,
+                            size=font_size + 1, weight='bold')
+
+                # add titles for the figures in the first row
+                if i == 0:
+                    if column_titles is None:
+                        ax.set_title(self.strategies[j+1].name)
+                    else:
+                        ax.set_title(column_titles[j])
+
+                # add y_labels for the figures in the first column
+                if j == 0:
+                    if row_titles is None:
+                        ax.set_ylabel(self.strategies[i].name, fontweight='bold')
+                    else:
+                        ax.set_ylabel(row_titles[i], fontweight='bold')
+
+                if x_range is not None:
+                    ax.set_xlim(x_range)
+                if y_range is not None:
+                    ax.set_ylim(y_range)
+
+                cea = CEA(strategies=[self.strategies[i], self.strategies[j+1]],
+                          if_paired=self._ifPaired,
+                          health_measure=self._healthMeasure,
+                          if_reset_strategies=True)
+
+                cea.add_ce_plane_to_ax(ax=ax, show_legend=False,
+                                       center_s=center_s,
+                                       cloud_s=cloud_s,
+                                       transparency=transparency,
+                                       cost_multiplier=cost_multiplier,
+                                       effect_multiplier=effect_multiplier)
+
+                # add ICER
+                text = ''
+                if i != j+1 and cea.strategies[1].ifDominated:
+                    text = 'Dominated'
+                elif cea.strategies[1].dCost.get_mean()<0 and cea.strategies[1].dEffect.get_mean()>0:
+                    text = 'Cost-saving'
+                elif cea.strategies[1].icer is not None:
+                    text = F.format_number(cea.strategies[1].icer.get_ICER(), deci=1, format='$')
+                ax.text(0.95, 0.95, text, transform=ax.transAxes, fontsize=6,
+                        va='top', ha='right')
+
+                n += 1
+                # remove unnecessary labels for shared axis
+                # if i < self._n - 1:
+                #     ax.set(xlabel='')
+                if j > 0:
+                    ax.set(ylabel='')
+
+        f.text(0.55, 0, effect_label, ha='center', va='center', fontweight='bold')
+        f.text(0.99, 0.5, cost_label, va='center', rotation=-90, fontweight='bold')
+        f.show()
+        f.savefig(file_name, bbox_inches='tight')
 
     def __find_shifted_strategies(self):
         """ find shifted strategies.
@@ -285,13 +670,6 @@ class CEA(_EconEval):
         # calcualte the incremental outcomes
         self.__calculate_incremental_outcomes()
 
-    def get_strategies_on_frontier(self):
-
-        if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
-
-        return self._strategies_on_frontier
-
     def __calculate_incremental_outcomes(self):
 
         if self._ifPaired:
@@ -359,181 +737,6 @@ class CEA(_EconEval):
                                        effects_base=s_before.effectObs,
                                        health_measure=self._healthMeasure)
 
-    def build_CE_table(self,
-                       interval_type='n',
-                       alpha=0.05,
-                       cost_digits=0, effect_digits=2, icer_digits=1,
-                       cost_multiplier=1, effect_multiplier=1,
-                       file_name='myCSV.csv'):
-        """
-        :param interval_type: (string) 'n' for no interval,
-                                       'c' for confidence interval,
-                                       'p' for percentile interval
-        :param alpha: significance level
-        :param cost_digits: digits to round cost estimates to
-        :param effect_digits: digits to round effect estimate to
-        :param icer_digits: digits to round ICER estimates to
-        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
-                thousands or hundred thousands unit
-        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
-                thousands or hundred thousands unit
-        :param file_name: address and file name where the CEA results should be saved to
-        """
-
-        # find the frontier if not calculated already
-        if not self._ifFrontierIsCalculated:
-            self.__find_frontier()
-
-        table = [['Strategy', 'Cost', 'Effect', 'Incremental Cost', 'Incremental Effect', 'ICER']]
-        # sort strategies in increasing order of cost
-        self.strategies.sort(key=get_d_cost)
-
-        for i, s in enumerate(self.strategies):
-            row=[]
-            # strategy name
-            row.append(s.name)
-            # strategy cost
-            row.append(s.cost.get_formatted_mean_and_interval(interval_type=interval_type,
-                                                              alpha=alpha,
-                                                              deci=cost_digits,
-                                                              form=',',
-                                                              multiplier=cost_multiplier))
-            # strategy effect
-            row.append(s.effect.get_formatted_mean_and_interval(interval_type=interval_type,
-                                                                alpha=alpha,
-                                                                deci=effect_digits,
-                                                                form=',',
-                                                                multiplier=effect_multiplier))
-
-            # strategy incremental cost
-            if s.incCost is None:
-                row.append('-')
-            else:
-                row.append(s.incCost.get_formatted_mean_and_interval(interval_type=interval_type,
-                                                                     alpha=alpha,
-                                                                     deci=cost_digits,
-                                                                     form=',',
-                                                                     multiplier=cost_multiplier))
-            # strategy incremental effect
-            if s.incEffect is None:
-                row.append('-')
-            else:
-                row.append(s.incEffect.get_formatted_mean_and_interval(interval_type=interval_type,
-                                                                       alpha=alpha,
-                                                                       deci=effect_digits,
-                                                                       form=',',
-                                                                       multiplier=effect_multiplier))
-
-            # ICER
-            if s.ifDominated:
-                row.append('Dominated')
-            elif s.icer is not None:
-                row.append(s.icer.get_formatted_ICER_and_interval(interval_type=interval_type,
-                                                                  alpha=alpha,
-                                                                  deci=icer_digits,
-                                                                  form=',',
-                                                                  multiplier=1,
-                                                                  num_bootstrap_samples=NUM_OF_BOOTSTRAPS))
-            else:
-                row.append('-')
-
-            table.append(row)
-
-        IO.write_csv(file_name=file_name, rows=table, delimiter=',')
-
-        # sort strategies back
-        self.strategies.sort(key=get_index)
-
-    def get_dCost_dEffect_cer(self,
-                              interval_type='n',
-                              alpha=0.05,
-                              cost_digits=0, effect_digits=2, icer_digits=1,
-                              cost_multiplier=1, effect_multiplier=1):
-        """
-        :param interval_type: (string) 'n' for no interval,
-                                       'c' for confidence interval,
-                                       'p' for percentile interval
-        :param alpha: significance level
-        :param cost_digits: digits to round cost estimates to
-        :param effect_digits: digits to round effect estimate to
-        :param icer_digits: digits to round ICER estimates to
-        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
-                thousands or hundred thousands unit
-        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
-                thousands or hundred thousands unit
-        :return: a dictionary of additional cost, additional effect, and cost-effectiveness ratio for
-                all strategies
-        """
-
-        dictionary_results = {}
-
-        for s in [s for s in self.strategies if s.idx > 0]:
-
-            d_cost_text = s.dCost.get_formatted_mean_and_interval(interval_type=interval_type,
-                                                                  alpha=alpha,
-                                                                  deci=cost_digits,
-                                                                  form=',',
-                                                                  multiplier=cost_multiplier)
-            d_effect_text = s.dEffect.get_formatted_mean_and_interval(interval_type=interval_type,
-                                                                      alpha=alpha,
-                                                                      deci=effect_digits,
-                                                                      form=',',
-                                                                      multiplier=effect_multiplier)
-            cer_text = s.cer.get_formatted_mean_and_interval(interval_type=interval_type,
-                                                             alpha=alpha,
-                                                             deci=icer_digits,
-                                                             form=',',
-                                                             multiplier=1)
-            # add to the dictionary
-            dictionary_results[s.name] = [d_cost_text, d_effect_text, cer_text]
-
-        return dictionary_results
-
-    def add_ce_plane_to_ax(self, ax, include_clouds=True):
-
-        # find the frontier (x, y)'s
-        frontier_d_effect = []
-        frontier_d_costs = []
-        for s in self.get_strategies_on_frontier():
-            frontier_d_effect.append(s.dEffect.get_mean())
-            frontier_d_costs.append(s.dCost.get_mean())
-
-        # add the frontier line
-        plt.plot(frontier_d_effect, frontier_d_costs,
-                 c='k',  # color
-                 alpha=0.6,  # transparency
-                 linewidth=2,  # line width
-                 label="Frontier")  # label to show in the legend
-
-        for s in self.strategies:
-            ax.scatter(s.dEffect.get_mean(), s.dCost.get_mean(),
-                       c=s.color,  # color
-                       alpha=1,  # transparency
-                       marker='o',  # markers
-                       s=75,  # marker size
-                       label=s.name  # name to show in the legend
-                       )
-            # if include_clouds:
-            #     ax.scatter(s.dEffect.get_mean(), s.dCost.get_mean(),
-            #                c='black',  # color
-            #                alpha=1,  # transparency
-            #                marker='x',  # markers
-            #                s=75,  # marker size
-            #                )
-
-        ax.legend()
-        ax.axhline(y=0, c='k', linewidth=0.5)
-        ax.axvline(x=0, c='k', linewidth=0.5)
-
-    def show_CE_plane(self, include_clouds=True):
-
-        fig, ax = plt.subplots()
-
-        # add the cost-effectiveness plane
-        self.add_ce_plane_to_ax(ax=ax, include_clouds=include_clouds)
-
-        fig.show()
-
 
 class _Curve:
     def __init__(self, label, color, wtps):
@@ -600,13 +803,11 @@ class CBA(_EconEval):
         # decide about the color of each curve
         rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n - 1))
         colors = []
-        wtp_idx = 0
-        for s in self.strategies[1:]:
+        for i, s in enumerate(self.strategies[1:]):
             if s.color:
                 colors.append(s.color)
             else:
-                colors.append(rainbow_colors[wtp_idx])
-            wtp_idx += 1
+                colors.append(rainbow_colors[i])
 
         # create the NMB curves
         for strategy_i, color in zip(self.strategies[1:], colors):
