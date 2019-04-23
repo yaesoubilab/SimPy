@@ -389,11 +389,15 @@ class CEA(_EconEval):
                 else:
                     list_ceas.append(CEA(strategies=[s_base, s_new],
                                          if_paired=self._ifPaired,
-                                         health_measure=self._healthMeasure)
+                                         health_measure=self._healthMeasure,
+                                         if_reset_strategies=True)
                                      )
             self._pairwise_ceas.append(list_ceas)
 
         self._ifPairwiseCEAsAreCalculated = True
+
+        # since the relative performance of strategies (relative costs and relative effects) have changed.
+        self._ifFrontierIsCalculated = False
 
     def print_pairwise_cea(self, interval_type='n',
                            alpha=0.05,
@@ -509,7 +513,7 @@ class CEA(_EconEval):
                 text = ''
                 if i != j+1 and cea.strategies[1].ifDominated:
                     text = 'Dominated'
-                elif cea.strategies[1].dCost.get_mean()<0 and cea.strategies[1].dEffect.get_mean()>0:
+                elif cea.strategies[1].dCost.get_mean() < 0 and cea.strategies[1].dEffect.get_mean() > 0:
                     text = 'Cost-saving'
                 elif cea.strategies[1].icer is not None:
                     text = F.format_number(cea.strategies[1].icer.get_ICER(), deci=1, format='$')
@@ -527,6 +531,9 @@ class CEA(_EconEval):
         f.text(0.99, 0.5, cost_label, va='center', rotation=-90, fontweight='bold')
         f.show()
         f.savefig(file_name, bbox_inches='tight', dpi=300)
+
+        # since the relative performance of strategies (relative costs and relative effects) have changed.
+        self._ifFrontierIsCalculated = False
 
     def __find_shifted_strategies(self):
         """ find shifted strategies.
