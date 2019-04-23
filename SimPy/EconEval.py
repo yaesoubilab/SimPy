@@ -1,4 +1,5 @@
 import string
+import numpy as np
 
 import SimPy.InOutFunctions as IO
 from SimPy.EconEvalClasses import *
@@ -443,13 +444,33 @@ class CEA(_EconEval):
                            column_titles=None, row_titles=None,
                            file_name='pairwise_CEA.png'):
 
+        # valid_comparison = []
+        # for i, s_current in enumerate(self.strategies):
+        #     row = []
+        #     for j, s_new in enumerate(self.strategies[1:]):
+        #         if s_current.ifDominated == False and s_new.ifDominated == False:
+        #             row.append('*')
+        #         else:
+        #             row.append('')
+        #     valid_comparison.append(row)
+
+        valid_comparison = []
+        for i in range(self._n):
+            valid_comparison.append(['']*self._n)
+
+        on_frontier = self.get_strategies_on_frontier()
+        for idx in range(len(on_frontier)-1):
+            i = on_frontier[idx].idx
+            j = on_frontier[idx+1].idx
+            valid_comparison[i][j] = '*'
+
         # set default properties
         plt.rc('font', size=font_size) # fontsize of texts
         plt.rc('axes', titlesize=font_size)  # fontsize of the figure title
         plt.rc('axes', titleweight='semibold')  # fontweight of the figure title
 
         # plot each panel
-        f, axarr = plt.subplots(nrows=self._n, ncols=self._n-1,
+        f, axarr = plt.subplots(nrows=self._n, ncols=self._n,
                                 sharex=True, sharey=True, figsize=figure_size)
 
         # show subplot labels
@@ -459,9 +480,9 @@ class CEA(_EconEval):
         #     for n, ax in enumerate(axs):
         #         ax.text(Y_LABEL_COORD_X-0.05, 1.05, string.ascii_uppercase[n]+')', transform=ax.transAxes,
         #                 size=DEFAULT_FONT_SIZE+1, weight='bold')
-        n = 0
+        abc_idx = 0
         for i in range(self._n):
-            for j in range(self._n-1):
+            for j in range(self._n):
                 # get the current axis
                 ax = axarr[i, j]
 
@@ -470,14 +491,14 @@ class CEA(_EconEval):
                 #     ax.axis('off')
                 # else:
                 if show_subplot_labels:
-                    ax.text(Y_LABEL_COORD_X - 0.05, 1.05, string.ascii_uppercase[n] + ')',
+                    ax.text(Y_LABEL_COORD_X - 0.05, 1.05, string.ascii_uppercase[abc_idx] + ')',
                             transform=ax.transAxes,
                             size=font_size + 1, weight='bold')
 
                 # add titles for the figures in the first row
                 if i == 0:
                     if column_titles is None:
-                        ax.set_title(self.strategies[j+1].name)
+                        ax.set_title(self.strategies[j].name)
                     else:
                         ax.set_title(column_titles[j])
 
@@ -493,7 +514,7 @@ class CEA(_EconEval):
                 if y_range is not None:
                     ax.set_ylim(y_range)
 
-                cea = CEA(strategies=[self.strategies[i], self.strategies[j+1]],
+                cea = CEA(strategies=[self.strategies[i], self.strategies[j]],
                           if_paired=self._ifPaired,
                           health_measure=self._healthMeasure,
                           if_reset_strategies=True)
@@ -507,16 +528,16 @@ class CEA(_EconEval):
 
                 # add ICER
                 text = ''
-                if i != j+1 and cea.strategies[1].ifDominated:
+                if i != j and cea.strategies[1].ifDominated:
                     text = 'Dominated'
                 elif cea.strategies[1].dCost.get_mean() < 0 and cea.strategies[1].dEffect.get_mean() > 0:
-                    text = 'Cost-saving'
+                    text = 'Cost-saving' + valid_comparison[i][j]
                 elif cea.strategies[1].icer is not None:
-                    text = F.format_number(cea.strategies[1].icer.get_ICER(), deci=1, format='$')
+                    text = F.format_number(cea.strategies[1].icer.get_ICER(), deci=1, format='$') + valid_comparison[i][j]
                 ax.text(0.95, 0.95, text, transform=ax.transAxes, fontsize=6,
                         va='top', ha='right')
 
-                n += 1
+                abc_idx += 1
                 # remove unnecessary labels for shared axis
                 # if i < self._n - 1:
                 #     ax.set(xlabel='')

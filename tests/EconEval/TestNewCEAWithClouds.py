@@ -34,8 +34,16 @@ print('Not on frontier')
 for s in cea.get_strategies_not_on_frontier():
     print(s.name)
 
-#cea.show_CE_plane(add_clouds=True)
+cea.show_CE_plane(add_clouds=True)
 cea.build_CE_table(cost_digits=1, interval_type='c')
 
 #cea.print_pairwise_cea(interval_type='c')
-cea.plot_pairwise_ceas()
+cea.plot_pairwise_ceas(
+    figure_size=(7, 7),
+    font_size=7,
+    effect_label='DALY Averted (Thousands)',
+    cost_label='Additional Cost (Thousand Dollars)',
+    center_s=40,
+    cloud_s=10,
+    transparency=0.1,
+)
