@@ -1,11 +1,12 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy.stats as scs
-import scipy as sp
-from scipy.optimize import fmin_slsqp
-import matplotlib as mpl
-
 import warnings
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy as sp
+import scipy.stats as scs
+from scipy.optimize import fmin_slsqp
+
 warnings.filterwarnings("ignore")
 
 # -------------------------------------------------------------------------------------------------

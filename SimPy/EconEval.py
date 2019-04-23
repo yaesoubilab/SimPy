@@ -1,11 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import SimPy.StatisticalClasses as Stat
-from SimPy.EconEvalClasses import *
-import SimPy.InOutFunctions as IO
 import string
 
+import SimPy.InOutFunctions as IO
+from SimPy.EconEvalClasses import *
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
 

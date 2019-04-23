@@ -1,7 +1,8 @@
-from scipy import stats
 import numpy as np
 import statsmodels.api as sm
+from scipy import stats
 from statsmodels.sandbox.regression.predstd import wls_prediction_std
+
 
 # for additional information:
 # http://markthegraph.blogspot.com/2015/05/using-python-statsmodels-for-ols-linear.html

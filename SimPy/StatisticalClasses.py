@@ -1,8 +1,10 @@
 import sys
 import warnings
+
+import math
 import numpy as numpy
 import scipy.stats as stat
-import math
+
 from SimPy import FormatFunctions as F
 
 NUM_BOOTSTRAP_SAMPLES = 1000

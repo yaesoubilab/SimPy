@@ -1,5 +1,5 @@
-import scipy.stats as scipy
 import numpy as np
+import scipy.stats as scipy
 from numpy.random import RandomState
 
 

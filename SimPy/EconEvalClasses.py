@@ -1,15 +1,16 @@
-from enum import Enum
 import warnings
+import warnings
+
 import math as math
-import numpy as np
-import SimPy.StatisticalClasses as Stat
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+
+import SimPy.StatisticalClasses as Stat
 from SimPy import FigureSupport as Fig
 from SimPy import FormatFunctions as F
 from SimPy import RandomVariantGenerators as RVG
-
 
 NUM_WTPS_FOR_NMB_CURVES = 100       # number of wtp values to use to make net-monetary benefit curves
 

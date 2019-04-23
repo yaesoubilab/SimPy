@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
-from SimPy import FigureSupport as Fig
+
 import SimPy.StatisticalClasses as Stat
+from SimPy import FigureSupport as Fig
 
 
 class _PrevalenceSamplePath:
