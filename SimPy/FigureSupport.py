@@ -20,14 +20,16 @@ def output_figure(plt, output_type='show', filename='figure'):
                          "Valid values are: 'show', 'png', and 'pdf' ")
 
 
-def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None, transparency=1.0):
+def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None,
+                        transparency=1.0, label=None):
 
     ax.hist(data,
             bins=find_bins(data, x_range, bin_width),
             color=color,
             edgecolor='black',
             linewidth=1,
-            alpha=transparency)
+            alpha=transparency,
+            label=label)
 
 
 def graph_histogram(data, title,
@@ -112,11 +114,12 @@ def graph_histograms(data_sets, title,
                             bin_width=bin_width,
                             x_range=x_range,
                             color=color,
-                            transparency=transparency)
+                            transparency=transparency,
+                            label=legends[i])
 
     ax.set_xlim(x_range)
     ax.set_ylim(y_range)
-    ax.legend(legends)
+    ax.legend()
 
     # output figure
     output_figure(plt, output_type, title)
