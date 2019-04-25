@@ -767,6 +767,15 @@ class _Curve:
         self.label = label
         self.color = color
         self.wtps = wtps
+        # range of wtp values over which this curve has the highest value
+        self.rangeWTPHighestValue = [None, None]
+
+    def update_range_with_highest_value(self, wtp):
+
+        if self.rangeWTPHighestValue[0] is None:
+            self.rangeWTPHighestValue[0] = wtp
+
+        self.rangeWTPHighestValue[1] = wtp
 
 
 class NMBCurve(_Curve):
@@ -774,7 +783,7 @@ class NMBCurve(_Curve):
     def __init__(self, label, color, wtps, ys, l_errs, u_errs):
 
         _Curve.__init__(self, label, color, wtps)
-        self.ys = ys            # net monetary benefits over a range of wtp values
+        self.ys = ys            # expected net monetary benefits over a range of wtp values
         self.l_errs = l_errs    # lower error length of NMB over a range of wtp values
         self.u_errs = u_errs    # upper error length of NMB over a range of wtp values
 
@@ -784,17 +793,18 @@ class AcceptabilityCurve(_Curve):
     def __init__(self, label, color, wtps):
 
         _Curve.__init__(self, label, color, wtps)
-        self.probs = []      # probability that this strategy is optimal over a range of wtp values
-        self.optProbs = []
-        self.optWTPs = []
+        self.probs = []     # probability that this strategy is optimal over a range of wtp values
+        self.optWTPs = []   # wtp values over which this strategy has the highest expected net monetary benefit
+        self.optProbs = []  # probabilities that correspond to optWTPs
 
 
 class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
-    def __init__(self, strategies, if_paired, health_measure='u'):
+    def __init__(self, strategies, wtp_range, if_paired, health_measure='u'):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param wtp_range: ([l, u]) range of willingness-to-pay values over which the NMB analysis should be done
         :param if_paired: indicate whether the strategies are paired
         :param health_measure: (string) choose 'u' if higher "effect" implies better health
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
@@ -805,7 +815,11 @@ class CBA(_EconEval):
                            health_measure=health_measure)
 
         self.nmbCurves = []  # list of NMB curves
-        self.optStrategyIdx = []  # index of strategy with highest net-monetary benefit over the wtp range
+        # wtp values
+        self.wtp_values = np.linspace(wtp_range[0], wtp_range[1], num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
+        # index of strategy with the highest
+        # expected net-monetary benefit over the wtp range
+        self.strategyIndxHighestExpNMB = []
         self.acceptabilityCurves = []  # the list of acceptability curves
 
     def make_nmb_curves(self, min_wtp, max_wtp, interval_type='n'):
@@ -821,20 +835,17 @@ class CBA(_EconEval):
 
         self.nmbCurves = []  # list of NMB curves
 
-        # wtp values at which NMB should be evaluated
-        wtp_values = np.linspace(min_wtp, max_wtp, num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
-
         # decide about the color of each curve
-        rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n - 1))
+        rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n))
         colors = []
-        for i, s in enumerate(self.strategies[1:]):
+        for i, s in enumerate(self.strategies):
             if s.color:
                 colors.append(s.color)
             else:
                 colors.append(rainbow_colors[i])
 
         # create the NMB curves
-        for strategy_i, color in zip(self.strategies[1:], colors):
+        for strategy_i, color in zip(self.strategies, colors):
 
             if self._ifPaired:
                 # create a paired NMB object
@@ -847,11 +858,11 @@ class CBA(_EconEval):
 
                 # get the NMB values for each wtp
                 y_values, l_err, u_err = self.__get_ys_lerrs_uerrs(
-                    nmb=paired_nmb, wtps=wtp_values, interval_type=interval_type
+                    nmb=paired_nmb, wtps=self.wtp_values, interval_type=interval_type
                 )
 
             else:
-                # create an indp NMB object
+                # create an independent NMB object
                 ind_nmb = NMB_indp(name=strategy_i.name,
                                    costs_new=strategy_i.costObs,
                                    effects_new=strategy_i.effectObs,
@@ -861,20 +872,24 @@ class CBA(_EconEval):
 
                 # get the NMB values for each wtp
                 y_values, l_err, u_err = self.__get_ys_lerrs_uerrs(
-                    nmb=ind_nmb, wtps=wtp_values, interval_type=interval_type
+                    nmb=ind_nmb, wtps=self.wtp_values, interval_type=interval_type
                 )
 
             # make a NMB curve
             self.nmbCurves.append(NMBCurve(label=strategy_i.name,
                                            color=color,
-                                           wtps=wtp_values,
+                                           wtps=self.wtp_values,
                                            ys=y_values,
                                            l_errs=l_err,
                                            u_errs=u_err)
                                   )
 
+        self.__find_strategy_highest_exp_NMB()
+
+    def __find_strategy_highest_exp_NMB(self):
+
         # find the optimal strategy for each wtp value
-        for wtp_idx, wtp in enumerate(wtp_values):
+        for wtp_idx, wtp in enumerate(self.wtp_values):
 
             max_value = float('-inf')
             max_idx = 0
@@ -884,36 +899,44 @@ class CBA(_EconEval):
                     max_idx = s_idx
 
             # store the optimal the index of the strategy
-            if max_value > 0:
-                self.optStrategyIdx.append(max_idx + 1)
-            else:
-                self.optStrategyIdx.append(0)
+            self.strategyIndxHighestExpNMB.append(max_idx)
+            self.nmbCurves[max_idx].update_range_with_highest_value(wtp=wtp)
 
-    def make_acceptability_curves(self, min_wtp, max_wtp):
+    def get_highest_exp_NMB_wtp_range(self):
+
+        dict = {}
+        for curve in self.nmbCurves:
+            dict[curve.label] = curve.rangeWTPHighestValue
+        return dict
+
+    def get_prob_highest_NMB_wtp_range(self):
+
+        dict = {}
+        for curve in self.acceptabilityCurves:
+            dict[curve.label] = curve.rangeWTPHighestValue
+        return dict
+
+    def make_acceptability_curves(self):
         """
         prepares the information needed to plot the cost-effectiveness acceptability curves
-        :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
-        :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         """
 
         if not self._ifPaired:
             raise ValueError('Calculating the acceptability curves when outcomes are not paried'
                              'across strategies is not implemented.')
 
-        # wtp values at which NMB should be evaluated
-        wtp_values = np.linspace(min_wtp, max_wtp, num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
-
         # initialize acceptability curves
         self.acceptabilityCurves = []
         for s in self.strategies:
             self.acceptabilityCurves.append(AcceptabilityCurve(label=s.name,
                                                                color=s.color,
-                                                               wtps=wtp_values))
+                                                               wtps=self.wtp_values))
 
         n_obs = len(self.strategies[0].costObs)
 
-        for w in wtp_values:
+        for w in self.wtp_values:
 
+            # number of times that each strategy is optimal
             countMaximum = np.zeros(self._n)
 
             for obs_idx in range(n_obs):
@@ -931,26 +954,36 @@ class CBA(_EconEval):
 
                 countMaximum[max_idx] += 1
 
-            # calculate proportion maximum
+            # calculate probabilities that each strategy has been optimal
             probMaximum = countMaximum/n_obs
 
+            max_prob = 0
+            max_idx = 0
             for i in range(self._n):
                 self.acceptabilityCurves[i].probs.append(probMaximum[i])
 
-        # find the optimal strategy for each wtp value
-        for wtp_idx, wtp in enumerate(wtp_values):
+                if probMaximum[i] > max_prob:
+                    max_prob = probMaximum[i]
+                    max_idx = i
 
-            optIdx = self.optStrategyIdx[wtp_idx]
+            self.acceptabilityCurves[max_idx].update_range_with_highest_value(wtp=w)
+
+        if len(self.strategyIndxHighestExpNMB) == 0:
+            self.__find_strategy_highest_exp_NMB()
+
+        # find the optimal strategy for each wtp value
+        for wtp_idx, wtp in enumerate(self.wtp_values):
+
+            optIdx = self.strategyIndxHighestExpNMB[wtp_idx]
             self.acceptabilityCurves[optIdx].optWTPs.append(wtp)
             self.acceptabilityCurves[optIdx].optProbs.append(
                 self.acceptabilityCurves[optIdx].probs[wtp_idx])
 
     def add_incremental_NMBs_to_ax(self, ax,
-                                   min_wtp, max_wtp,
                                    title, x_label, y_label, y_range=None,
                                    transparency=0.4, show_legend=False):
 
-        for curve in self.nmbCurves:
+        for curve in self.nmbCurves[1:]:
             # plot line
             ax.plot(curve.wtps, curve.ys, c=curve.color, alpha=1, label=curve.label)
             # plot intervals
@@ -967,12 +1000,9 @@ class CBA(_EconEval):
 
         # do the other formatting
         self.__format_ax(ax=ax, title=title,x_label=x_label, y_label=y_label,
-                         y_range=y_range, min_wtp=min_wtp, max_wtp=max_wtp)
+                         y_range=y_range, min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
 
-    def add_acceptability_curves_to_ax(self, ax,
-                                       min_wtp, max_wtp,
-                                       title, x_label, y_label,
-                                       y_range=None, show_legend=False):
+    def add_acceptability_curves_to_ax(self, ax, show_legend=False):
 
         for curve in self.acceptabilityCurves:
             # plot line
@@ -994,7 +1024,7 @@ class CBA(_EconEval):
         ax.set_xticks(vals_x)
         ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
-        d = (max_wtp - min_wtp) / NUM_WTPS_FOR_NMB_CURVES
+        d = 2*(max_wtp - min_wtp) / NUM_WTPS_FOR_NMB_CURVES
         ax.set_xlim([min_wtp - d, max_wtp + d])
 
         ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
@@ -1029,19 +1059,15 @@ class CBA(_EconEval):
 
         # add the incremental NMB curves
         self.add_incremental_NMBs_to_ax(ax=ax,
-                                        min_wtp=min_wtp, max_wtp=max_wtp,
                                         title=title, x_label=x_label, y_label=y_label, y_range=y_range,
                                         transparency=transparency, show_legend=show_legend)
 
         fig.show()
 
-    def graph_acceptability_curves(self, min_wtp, max_wtp,
-                                   title=None, x_label=None, y_label=None, y_range=None,
+    def graph_acceptability_curves(self, title=None, x_label=None, y_label=None, y_range=None,
                                    show_legend=True, figure_size=(6, 6), file_name='CEAC.png'):
         """
         plots the acceptibility curves
-        :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
-        :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param title: title
         :param x_label: x-axis label
         :param y_label: y-axis label
@@ -1052,20 +1078,17 @@ class CBA(_EconEval):
         """
 
         # make the acceptability curves
-        self.make_acceptability_curves(min_wtp=min_wtp,
-                                       max_wtp=max_wtp)
+        self.make_acceptability_curves()
 
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        self.add_acceptability_curves_to_ax(ax=ax,
-                                            min_wtp=min_wtp, max_wtp=max_wtp,
-                                            title=title, x_label=x_label, y_label=y_label,
-                                            y_range=y_range, show_legend=show_legend)
+        self.add_acceptability_curves_to_ax(ax=ax, show_legend=show_legend)
 
         self.__format_ax(ax=ax, title=title, x_label=x_label, y_label=y_label,
-                         y_range=y_range, min_wtp=min_wtp, max_wtp=max_wtp)
+                         y_range=y_range,
+                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
 
         fig.show()
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
