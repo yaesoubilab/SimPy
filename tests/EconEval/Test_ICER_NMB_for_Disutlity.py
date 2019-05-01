@@ -1,4 +1,4 @@
-import SimPy.EconEvalClasses as EconEval
+import SimPy.EconEval as EconEval
 import numpy as np
 
 np.random.seed(573)
@@ -13,7 +13,7 @@ print('')
 # ICER calculation assuming paired observations
 ICER_paired = EconEval.ICER_paired('Testing paired ICER',
                                    cost_intervention, effect_intervention, cost_base, effect_base,
-                                   EconEval.HealthMeasure.DISUTILITY)
+                                   health_measure='d')
 print('Paired ICER (confidence and prediction interval): ',
       ICER_paired.get_ICER(),
       ICER_paired.get_CI(0.05, 1000),
@@ -22,7 +22,7 @@ print('Paired ICER (confidence and prediction interval): ',
 # ICER calculation assuming independent observations
 ICER_indp = EconEval.ICER_indp('Testing independent ICER',
                                cost_intervention, effect_intervention, cost_base, effect_base,
-                               EconEval.HealthMeasure.DISUTILITY)
+                               health_measure='d')
 print('Independent ICER (confidence and prediction interval): ',
       ICER_indp.get_ICER(),
       ICER_indp.get_CI(0.05, 1000),
@@ -31,7 +31,7 @@ print('Independent ICER (confidence and prediction interval): ',
 # try NMB
 NMB_paired = EconEval.NMB_paired("Testing paired NMB",
                                  cost_intervention, effect_intervention, cost_base, effect_base,
-                                 EconEval.HealthMeasure.DISUTILITY)
+                                 health_measure='d')
 print('Paired NMB (confidence and prediction interval): ',
       NMB_paired.get_NMB(wtp=10000),
       NMB_paired.get_CI(wtp=10000, alpha=.05),
@@ -39,7 +39,7 @@ print('Paired NMB (confidence and prediction interval): ',
 
 NMB_indp = EconEval.NMB_indp("Testing independent NMB",
                              cost_intervention, effect_intervention, cost_base, effect_base,
-                             EconEval.HealthMeasure.DISUTILITY)
+                             health_measure='d')
 print('Independent NMB (confidence and prediction interval): ',
       NMB_indp.get_NMB(wtp=10000),
       NMB_indp.get_CI(wtp=10000, alpha=.05),

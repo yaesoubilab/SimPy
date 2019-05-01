@@ -11,15 +11,12 @@ list = [
 ]
 
 print(list)
-
 list.sort(key=takeSecond)
 
 print(list)
-
 subset = [row for row in list if row[0]==2]
 
 print(subset)
-
 subset[0][1] = 23
 
 print(subset)

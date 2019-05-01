@@ -79,22 +79,23 @@ def graph_histogram(data, title,
         output_figure(fig, output_type, title)
 
 
-def graph_histograms(data_sets, title,
-                     x_label=None, y_label=None, bin_width=None,
+def graph_histograms(data_sets, legends, bin_width=None,
+                     title=None, x_label=None, y_label=None,
                      x_range=None, y_range=None, figure_size=None,
-                     legends=None, color_codes=None, output_type='show', transparency=1):
+                     color_codes=None, output_type='show', transparency=1):
     """
     plots multiple histograms on a single figure
     :param data_sets: (list of lists) observations
+    :param legends: (list) string for the legend
+    :param bin_width: bin width
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
-    :param bin_width: bin width
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
     :param y_range: (list with 2 elements) minimum and maximum of y-axis
     :param figure_size: (tuple) figure size
+    :param color_codes: (list) of colors
     :param output_type: select from 'show', 'png', or 'pdf'
-    :param legends: (list) string for the legend
     :param transparency: (float) 0.0 transparent through 1.0 opaque
     """
 

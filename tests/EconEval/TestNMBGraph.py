@@ -1,9 +1,9 @@
-from SimPy import EconEvalClasses as ce
+from SimPy import EconEval as ce
 import numpy as np
 
 
 np.random.seed(573)
-s_center = np.array([[10000, 0.2],[20000, 0.3],[50000, 0.35]])
+s_center = np.array([[10000, 0.2], [20000, 0.3], [50000, 0.35]])
 
 
 s0 = ce.Strategy("s1", s_center[0, 0]+np.random.normal(0, 1000, 10),
@@ -17,8 +17,8 @@ s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, 10),
                  color='green')
 
 
-nmb_paired = ce.CBA([s0, s1, s2], if_paired=True) # list of frontier strategies as input
-nmb_indp = ce.CBA([s0, s1, s2], if_paired=False) # list of frontier strategies as input
+nmb_paired = ce.CBA([s0, s1, s2], wtp_range=[0, 5000], if_paired=True)  # list of frontier strategies as input
+nmb_indp = ce.CBA([s0, s1, s2], wtp_range=[0, 5000], if_paired=False)  # list of frontier strategies as input
 
 # Try NMB_Lines figure - paired CI
 nmb_paired.graph_incremental_NMBs(0, 50000, "deltaNMB lines for paired CI", "wtp values", "NMB values",

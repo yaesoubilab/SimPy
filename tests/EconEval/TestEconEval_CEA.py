@@ -1,4 +1,4 @@
-from SimPy import EconEvalClasses as ce
+from SimPy import EconEval as ce
 import numpy as np
 
 

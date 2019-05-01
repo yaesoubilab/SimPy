@@ -1,4 +1,4 @@
-from SimPy import EconEvalClasses as EV
+from SimPy import EconEval as EV
 import numpy as np
 
 np.random.seed(seed=1)
@@ -29,6 +29,5 @@ print('Not on frontier')
 for s in cea.get_strategies_not_on_frontier():
     print(s.name)
 
-cea.show_CE_plane('CE plane', 'E[Effect]', 'E[Cost]',
-                  show_names=False, show_clouds=True, figure_size=6)
+cea.show_CE_plane(add_clouds=True)
 cea.build_CE_table(cost_digits=1, interval_type='c')

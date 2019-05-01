@@ -56,17 +56,23 @@ class _Statistics(object):
         :param alpha: significance level (between 0 and 1)
         :returns half-length of 100(1-alpha)% t-confidence interval """
 
-        return stat.t.ppf(1 - alpha / 2, self.get_n() - 1) * self.get_stdev() / numpy.sqrt(self.get_n())
+        if self._n > 1:
+            return stat.t.ppf(1 - alpha / 2, self.get_n() - 1) * self.get_stdev() / numpy.sqrt(self.get_n())
+        else:
+            return math.nan
 
     def get_t_CI(self, alpha):
         """ calculates t-based confidence interval for population mean
         :param alpha: significance level (between 0 and 1)
         :return: a list [l, u]
         """
-        mean = self.get_mean()
-        hl = self.get_t_half_length(alpha)
 
-        return [mean - hl, mean + hl]
+        if self._n > 1:
+            mean = self.get_mean()
+            hl = self.get_t_half_length(alpha)
+            return [mean - hl, mean + hl]
+        else:
+            return [math.nan, math.nan]
 
     def get_bootstrap_CI(self, alpha, num_samples):
         """ calculates empirical bootstrap confidence interval (abstract method to be overridden in derived classes)
@@ -160,7 +166,10 @@ class SummaryStat(_Statistics):
         self._n = len(self._data)
         self._total = numpy.sum(self._data)
         self._mean = numpy.mean(self._data)
-        self._stDev = numpy.std(self._data, ddof=1)  # unbiased estimator of the standard deviation
+        if self._n > 1:
+            self._stDev = numpy.std(self._data, ddof=1)  # unbiased estimator of the standard deviation
+        else:
+            self._stDev = math.nan
 
     def get_n(self):
         return self._n

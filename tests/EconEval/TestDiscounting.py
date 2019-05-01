@@ -1,4 +1,4 @@
-import SimPy.EconEvalClasses as Econ
+import SimPy.EconEval as Econ
 
 
 print('Present value of $10 collected in year 20 at discount rate 5%:')
