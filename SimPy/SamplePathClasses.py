@@ -4,6 +4,23 @@ import SimPy.StatisticalClasses as Stat
 from SimPy import FigureSupport as Fig
 
 
+class _SamplePath:
+
+    def __init__(self, deltaT=None):
+        """
+
+        :param deltaT: set to a float number to aggregate observations into equally-spaced observation periods
+        """
+
+
+class _PrevalenceSamplePath(_SamplePath):
+    pass
+
+
+class _IncidentSamplePath(_SamplePath):
+    pass
+
+
 class _PrevalenceSamplePath:
 
     def __init__(self, name, initial_size, sim_rep=0, collect_stat=True):
