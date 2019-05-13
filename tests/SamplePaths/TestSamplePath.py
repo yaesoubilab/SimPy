@@ -1,7 +1,7 @@
 from SimPy import SamplePathClasses as Path
 
 # a sample path with initial size = 1
-path1 = Path.PrevalencePathRealTimeUpdate('Path 1', 0, sim_rep=1)
+path1 = Path.PrevalencePathRealTimeUpdate('Path 1', 1, sim_rep=1)
 # record the observations
 path1.record(1.5, 2)
 path1.record(2, -1)

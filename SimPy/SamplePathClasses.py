@@ -70,13 +70,8 @@ class PrevalencePathRealTimeUpdate(_PrevalenceSamplePath):
         if self.ifCollectStat:
             self.stat.record(time=time, increment=increment)
 
-        # store the current size
         self._times.append(time)
-        self._values.append(self.currentSize)
-        # increment the current value
         self.currentSize += increment
-        # store the new value
-        self._times.append(time)
         self._values.append(self.currentSize)
 
     def get_times(self):
@@ -274,7 +269,8 @@ def add_sample_path_to_ax(sample_path, ax, color_code=None, legend=None, transpa
     y_values = sample_path.get_values()
 
     # plot the sample path
-    ax.plot(x_values, y_values, color=color_code, label=legend, alpha=transparency)
+    #ax.plot(x_values, y_values, color=color_code, label=legend, alpha=transparency)
+    ax.step(x=x_values, y=y_values, where='post', color=color_code, label=legend, alpha=transparency)
 
     # add legend if provided
     if legend is not None:
