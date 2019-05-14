@@ -16,7 +16,7 @@ class _SamplePath:
         self.name = name
         self.simRep = sim_rep
         self._t_index = 0
-        self._deltaT = None
+
         self._times = []  # times at which observations should be recorded
         self._values = []  # value of this sample path over time
         # statistics on this prevalence sample path
@@ -34,30 +34,19 @@ class _SamplePath:
     def get_values(self):
         return self._values
 
-    def _if_time_to_store(self, time):
-
-        if self._deltaT is None:
-            return True
-        elif time >= self._t_index * self._deltaT:
-            return True
-        else:
-            return False
-
 
 class PrevalenceSamplePath(_SamplePath):
 
-    def __init__(self, name, initial_size=0, sim_rep=0, delta_t=None, collect_stat=True, t_warm_up=0):
+    def __init__(self, name, initial_size=0, sim_rep=0, collect_stat=True, t_warm_up=0):
         """
         :param name: name of this sample path
         :param initial_size: value of the sample path at simulation time 0
         :param sim_rep: (int) simulation replication of this sample path
-        :param delta_t: set to a float number to aggregate observations into
-                        equally-spaced observation periods
+
         :param collect_stat: set to True to collect statistics
                         on average, max, min, stDev, etc for this sample path
         """
-        _SamplePath.__init__(name=name, sim_rep=sim_rep, collect_stat=collect_stat)
-        self._deltaT = delta_t
+        _SamplePath.__init__(self, name=name, sim_rep=sim_rep, collect_stat=collect_stat)
         self.currentSize = initial_size  # current size of the sample path
         self._times = [0]
         self._values = [initial_size]
@@ -77,19 +66,15 @@ class PrevalenceSamplePath(_SamplePath):
 
         self.currentSize += increment
 
-        if self._if_time_to_store(time=time):
-            # update stat
-            if self.ifCollectStat:
-                self.stat.record(time=time, increment=increment)
+        # update stat
+        if self.ifCollectStat:
+            self.stat.record(time=time, increment=increment)
 
-            if time == self._times[-1]:
-                self._values[-1] = self.currentSize
-            else:
-                self._times.append(time)
-                self._values.append(self.currentSize)
-
-            if self._deltaT is not None:
-                self._t_index += 1
+        if time == self._times[-1]:
+            self._values[-1] = self.currentSize
+        else:
+            self._times.append(time)
+            self._values.append(self.currentSize)
 
     def record_value(self, time, value):
         """
@@ -98,8 +83,6 @@ class PrevalenceSamplePath(_SamplePath):
         :param value:
         """
         self.record_increment(time=time, increment=value-self.currentSize)
-
-
 
 
 class IncidenceSamplePath(_SamplePath):
@@ -111,7 +94,7 @@ class IncidenceSamplePath(_SamplePath):
         :param collect_stat: set to True to collect statistics on average, max, min, stDev, etc for this sample path
 
         """
-        _SamplePath.__init__(name=name, sim_rep=sim_rep, collect_stat=collect_stat)
+        _SamplePath.__init__(self, name=name, sim_rep=sim_rep, collect_stat=collect_stat)
         self.deltaT = delta_t
         self._t_index = 1
         self._times = [self._t_index]  # times represent the index of the observation period
@@ -120,6 +103,14 @@ class IncidenceSamplePath(_SamplePath):
         if collect_stat:
             self.stat = Stat.DiscreteTimeStat(name=name)
 
+    def _if_time_to_store(self, time):
+
+        if self._deltaT is None:
+            return True
+        elif time >= self._t_index * self._deltaT:
+            return True
+        else:
+            return False
 
 
 class _PrevalenceSamplePath:
@@ -199,7 +190,7 @@ class PrevalencePathRealTimeUpdate(_PrevalenceSamplePath):
         return self._values
 
 
-class PrevalencePathBatchUpdate(_PrevalenceSamplePath):
+class PrevalencePathBatchUpdate(PrevalenceSamplePath):
     """ a sample path for which observations are recorded at the end of the simulation """
 
     def __init__(self, name, initial_size, times_of_changes, increments, sim_rep=0):
@@ -215,7 +206,7 @@ class PrevalencePathBatchUpdate(_PrevalenceSamplePath):
             raise ValueError('The list of times at which changes occurred should '
                              'be the same size as the list of changes.')
 
-        _PrevalenceSamplePath.__init__(self, name, initial_size, sim_rep)
+        PrevalenceSamplePath.__init__(self, name=name, initial_size=initial_size, sim_rep=sim_rep)
 
         # populate the list of [time, value] of recordings
         self._time_and_values = []
@@ -266,7 +257,7 @@ class PrevalencePathBatchUpdate(_PrevalenceSamplePath):
 def graph_sample_path(sample_path,
                       title=None, x_label=None, y_label=None,
                       figure_size=None, output_type='show',
-                      legend=None, color_code=None):
+                      legend=None, color_code=None, connect='step'):
     """
     plot a sample path
     :param sample_path: a sample path
@@ -277,11 +268,12 @@ def graph_sample_path(sample_path,
     :param output_type: select from 'show', 'pdf' or 'png'
     :param legend: string for the legend
     :param color_code: (string) 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
+    :param connect: (string) set to 'step' to produce an step graph and to 'line' to produce a line graph
     """
 
-    if not isinstance(sample_path, _PrevalenceSamplePath):
+    if not isinstance(sample_path, _SamplePath):
         raise ValueError(
-            'sample_path should be an instance of PrevalencePathRealTimeUpdate or PrevalencePathBatchUpdate.')
+            'sample_path should be an instance of PrevalenceSamplePath or PrevalencePathBatchUpdate.')
 
     fig, ax = plt.subplots(figsize=figure_size)
     ax.set_title(title)  # title
@@ -292,7 +284,8 @@ def graph_sample_path(sample_path,
     add_sample_path_to_ax(sample_path=sample_path,
                           ax=ax,
                           color_code=color_code,
-                          legend=legend)
+                          legend=legend,
+                          connect=connect)
     ax.set_ylim(bottom=0)  # the minimum has to be set after plotting the values
     # output figure
     Fig.output_figure(fig, output_type, title)
@@ -301,7 +294,7 @@ def graph_sample_path(sample_path,
 def graph_sample_paths(sample_paths,
                        title=None, x_label=None, y_label=None,
                        figure_size=None, output_type='show',
-                       legends=None, transparency=1, common_color_code=None):
+                       legends=None, transparency=1, common_color_code=None, connect='step'):
     """ graphs multiple sample paths
     :param sample_paths: a list of sample paths
     :param title: (string) title of the figure
@@ -313,6 +306,7 @@ def graph_sample_paths(sample_paths,
     :param transparency: float (0.0 transparent through 1.0 opaque)
     :param common_color_code: (string) color code if all sample paths should have the same color
         'b'	blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
+    :param connect: (string) set to 'step' to produce an step graph and to 'line' to produce a line graph
     """
 
     if len(sample_paths) == 1:
@@ -327,7 +321,8 @@ def graph_sample_paths(sample_paths,
     add_sample_paths_to_ax(sample_paths=sample_paths,
                            ax=ax,
                            common_color_code=common_color_code,
-                           transparency=transparency)
+                           transparency=transparency,
+                           connect=connect)
 
     # add legend if provided
     if legends is not None:
@@ -345,7 +340,7 @@ def graph_sample_paths(sample_paths,
 def graph_sets_of_sample_paths(sets_of_sample_paths,
                                title=None, x_label=None, y_label=None,
                                figure_size=None, output_type='show',
-                               legends=None, transparency=1, color_codes=None):
+                               legends=None, transparency=1, color_codes=None, connect='step'):
     """ graphs multiple sample paths
     :param sets_of_sample_paths: (list) of list of sample paths
     :param title: (string) title of the figure
@@ -357,6 +352,7 @@ def graph_sets_of_sample_paths(sets_of_sample_paths,
     :param transparency: float (0.0 transparent through 1.0 opaque)
     :param color_codes: (list of strings) color code of sample path sets
             e.g. 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
+    :param connect: (string) set to 'step' to produce an step graph and to 'line' to produce a line graph
     """
 
     if len(sets_of_sample_paths) == 1:
@@ -372,7 +368,8 @@ def graph_sets_of_sample_paths(sets_of_sample_paths,
                                    ax=ax,
                                    color_codes=color_codes,
                                    legends=legends,
-                                   transparency=transparency)
+                                   transparency=transparency,
+                                   connect=connect)
 
     # set the minimum of y-axis to zero
     ax.set_ylim(bottom=0)  # the minimum has to be set after plotting the values
@@ -380,32 +377,35 @@ def graph_sets_of_sample_paths(sets_of_sample_paths,
     Fig.output_figure(fig, output_type, title)
 
 
-def add_sample_path_to_ax(sample_path, ax, color_code=None, legend=None, transparency=1):
+def add_sample_path_to_ax(sample_path, ax, color_code=None, legend=None, transparency=1, connect='step'):
 
     # x and y values
     x_values = sample_path.get_times()
     y_values = sample_path.get_values()
 
     # plot the sample path
-    #ax.plot(x_values, y_values, color=color_code, label=legend, alpha=transparency)
-    ax.step(x=x_values, y=y_values, where='post', color=color_code, label=legend, alpha=transparency)
+    if connect == 'step':
+        ax.step(x=x_values, y=y_values, where='post', color=color_code, label=legend, alpha=transparency)
+    else:
+        ax.plot(x_values, y_values, color=color_code, label=legend, alpha=transparency)
 
     # add legend if provided
     if legend is not None:
         ax.legend()
 
 
-def add_sample_paths_to_ax(sample_paths, ax, common_color_code, transparency):
+def add_sample_paths_to_ax(sample_paths, ax, common_color_code, transparency, connect):
 
     # add every path
     for path in sample_paths:
         add_sample_path_to_ax(sample_path=path,
                               ax=ax,
                               color_code=common_color_code,
-                              transparency=transparency)
+                              transparency=transparency,
+                              connect=connect)
 
 
-def add_sets_of_sample_paths_to_ax(sets_of_sample_paths, ax, color_codes, legends, transparency):
+def add_sets_of_sample_paths_to_ax(sets_of_sample_paths, ax, color_codes, legends, transparency, connect):
 
     # add every path
     for i, sample_paths in enumerate(sets_of_sample_paths):
@@ -418,4 +418,5 @@ def add_sets_of_sample_paths_to_ax(sets_of_sample_paths, ax, color_codes, legend
                                   ax=ax,
                                   color_code=color_codes[i],
                                   legend=legend,
-                                  transparency=transparency)
+                                  transparency=transparency,
+                                  connect=connect)

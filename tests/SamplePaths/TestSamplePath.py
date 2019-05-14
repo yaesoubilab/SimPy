@@ -1,18 +1,18 @@
 from SimPy import SamplePathClasses as Path
 
 # a sample path with initial size = 1
-path1 = Path.PrevalencePathRealTimeUpdate('Path 1', 1, sim_rep=1)
+path1 = Path.PrevalenceSamplePath('Path 1', initial_size=1, sim_rep=1)
 # record the observations
-path1.record(1.5, 2)
-path1.record(2, -1)
-path1.record(5, 0)
+path1.record_increment(1.2, 2)
+path1.record_increment(2.3, -1)
+path1.record_increment(5.1, 0)
 
 # second sample path with initial size = 1
-path2 = Path.PrevalencePathRealTimeUpdate('Path 2', 0, sim_rep=1)
+path2 = Path.PrevalenceSamplePath('Path 2', initial_size=0, sim_rep=1)
 # record the observations
-path2.record(0.5, 4)
-path2.record(1.8, -2)
-path2.record(5.5, 1)
+path2.record_increment(0.5, 4)
+path2.record_increment(1.8, -2)
+path2.record_increment(5.5, 1)
 
 # third sample path with initial size = 1
 path3 = Path.PrevalencePathBatchUpdate(
@@ -31,7 +31,8 @@ Path.graph_sample_path(
     x_label='time',
     y_label='observed value',
     legend='Path 1',
-    color_code='r')
+    color_code='r',
+    connect='step')
 
 # plot path 3 only
 Path.graph_sample_path(
