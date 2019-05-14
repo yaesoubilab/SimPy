@@ -6,19 +6,117 @@ from SimPy import FigureSupport as Fig
 
 class _SamplePath:
 
-    def __init__(self, deltaT=None):
+    def __init__(self, name, sim_rep=0, collect_stat=True):
+        """
+        :param name: name of this sample path
+        :param sim_rep: (int) simulation replication of this sample path
+        :param collect_stat: set to True to collect statistics on
+                            average, max, min, stDev, etc for this sample path
+        """
+        self.name = name
+        self.simRep = sim_rep
+        self._t_index = 0
+        self._deltaT = None
+        self._times = []  # times at which observations should be recorded
+        self._values = []  # value of this sample path over time
+        # statistics on this prevalence sample path
+        self.ifCollectStat = collect_stat
+
+    def record_increment(self, time, increment):
+        raise NotImplemented()
+
+    def record_value(self, time, value):
+        raise NotImplemented()
+
+    def get_times(self):
+        return self._times
+
+    def get_values(self):
+        return self._values
+
+    def _if_time_to_store(self, time):
+
+        if self._deltaT is None:
+            return True
+        elif time >= self._t_index * self._deltaT:
+            return True
+        else:
+            return False
+
+
+class PrevalenceSamplePath(_SamplePath):
+
+    def __init__(self, name, initial_size=0, sim_rep=0, delta_t=None, collect_stat=True, t_warm_up=0):
+        """
+        :param name: name of this sample path
+        :param initial_size: value of the sample path at simulation time 0
+        :param sim_rep: (int) simulation replication of this sample path
+        :param delta_t: set to a float number to aggregate observations into
+                        equally-spaced observation periods
+        :param collect_stat: set to True to collect statistics
+                        on average, max, min, stDev, etc for this sample path
+        """
+        _SamplePath.__init__(name=name, sim_rep=sim_rep, collect_stat=collect_stat)
+        self._deltaT = delta_t
+        self.currentSize = initial_size  # current size of the sample path
+        self._times = [0]
+        self._values = [initial_size]
+        # statistics on this prevalence sample path
+        if collect_stat:
+            self.stat = Stat.ContinuousTimeStat(name=name, initial_time=t_warm_up)
+
+    def record_increment(self, time, increment):
+        """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param increment: (integer) change (+ or -) in value of this sample path
         """
 
-        :param deltaT: set to a float number to aggregate observations into equally-spaced observation periods
+        if time < self._times[-1]:
+            raise ValueError('Current time cannot be less than the last recorded time.')
+
+        self.currentSize += increment
+
+        if self._if_time_to_store(time=time):
+            # update stat
+            if self.ifCollectStat:
+                self.stat.record(time=time, increment=increment)
+
+            self._times.append(time)
+            self._values.append(self.currentSize)
+
+            if self._deltaT is not None:
+                self._t_index += 1
+
+    def record_value(self, time, value):
         """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param value:
+        """
+        self.record_increment(time=time, increment=value-self.currentSize)
 
 
-class _PrevalenceSamplePath(_SamplePath):
-    pass
 
 
-class _IncidentSamplePath(_SamplePath):
-    pass
+class IncidenceSamplePath(_SamplePath):
+    def __init__(self, name, delta_t, sim_rep=0, collect_stat=True, t_warm_up=0):
+        """
+        :param name: name of this sample path
+        :param delta_t: length of equally-spaced observation periods
+        :param sim_rep: (int) simulation replication of this sample path
+        :param collect_stat: set to True to collect statistics on average, max, min, stDev, etc for this sample path
+
+        """
+        _SamplePath.__init__(name=name, sim_rep=sim_rep, collect_stat=collect_stat)
+        self.deltaT = delta_t
+        self._t_index = 1
+        self._times = [self._t_index]  # times represent the index of the observation period
+        self._values = [0]
+        # statistics on this prevalence sample path
+        if collect_stat:
+            self.stat = Stat.DiscreteTimeStat(name=name)
+
 
 
 class _PrevalenceSamplePath:
