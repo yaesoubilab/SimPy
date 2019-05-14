@@ -82,8 +82,11 @@ class PrevalenceSamplePath(_SamplePath):
             if self.ifCollectStat:
                 self.stat.record(time=time, increment=increment)
 
-            self._times.append(time)
-            self._values.append(self.currentSize)
+            if time == self._times[-1]:
+                self._values[-1] = self.currentSize
+            else:
+                self._times.append(time)
+                self._values.append(self.currentSize)
 
             if self._deltaT is not None:
                 self._t_index += 1
