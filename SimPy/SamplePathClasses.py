@@ -62,7 +62,9 @@ class PrevalenceSamplePath(_SamplePath):
         """
 
         if time < self._times[-1]:
-            raise ValueError('Current time cannot be less than the last recorded time.')
+            raise ValueError(self.name + ' | Current time cannot be less than the last recorded time.')
+        if increment is None:
+            raise ValueError(self.name + ' | increment cannot be None.')
 
         self.currentSize += increment
 
@@ -82,6 +84,10 @@ class PrevalenceSamplePath(_SamplePath):
         :param time: time of this change
         :param value:
         """
+
+        if value is None:
+            raise ValueError(self.name + ' | value cannot be None.')
+
         self.record_increment(time=time, increment=value-self.currentSize)
 
 
