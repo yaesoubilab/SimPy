@@ -15,7 +15,7 @@ class _SamplePath:
         """
         self.name = name
         self.simRep = sim_rep
-        self._t_index = 0
+        self._period_num = 0
 
         self._times = []  # times at which observations should be recorded
         self._values = []  # value of this sample path over time
@@ -28,8 +28,8 @@ class _SamplePath:
     def record_value(self, time, value):
         raise NotImplemented()
 
-    def get_times(self):
-        return self._times
+    def close(self, time):
+        raise NotImplemented()
 
     def get_values(self):
         return self._values
@@ -90,6 +90,12 @@ class PrevalenceSamplePath(_SamplePath):
 
         self.record_increment(time=time, increment=value-self.currentSize)
 
+    def close(self, time):
+        self.record_increment(time=time, increment=0)
+
+    def get_times(self):
+        return self._times
+
 
 class IncidenceSamplePath(_SamplePath):
     def __init__(self, name, delta_t, sim_rep=0, collect_stat=True, t_warm_up=0):
@@ -101,99 +107,68 @@ class IncidenceSamplePath(_SamplePath):
 
         """
         _SamplePath.__init__(self, name=name, sim_rep=sim_rep, collect_stat=collect_stat)
-        self.deltaT = delta_t
-        self._t_index = 1
-        self._times = [self._t_index]  # times represent the index of the observation period
-        self._values = [0]
-        # statistics on this prevalence sample path
-        if collect_stat:
+        self._deltaT = delta_t
+        self._period_num = 0
+        self._t_warm_up = t_warm_up
+        self._period_nums = []  # times represent the observation period number
+        self._values = []
+        # statistics on this incidence sample path
+        if self.ifCollectStat:
             self.stat = Stat.DiscreteTimeStat(name=name)
 
-    def _if_time_to_store(self, time):
+    def record_increment(self, time, increment):
+        """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param increment: (integer) change (+ or -) in value of this sample path
+        """
 
-        if self._deltaT is None:
-            return True
-        elif time >= self._t_index * self._deltaT:
-            return True
+        if len(self._period_nums) > 0 and time < (self._period_nums[-1]-1)*self._deltaT:
+            raise ValueError(self.name + ' | Current time cannot be less than the last recorded time.')
+        if increment is None:
+            raise ValueError(self.name + ' | increment cannot be None.')
+        if increment < 0:
+            raise ValueError(self.name + ' | increment cannot be negative.')
+
+        if time > self._period_num * self._deltaT:
+            self.__fill_unrecorded_periods(time=time)
+
+            self._period_num += 1
+            self._values.append(increment)
+            self._period_nums.append(self._period_num)
+
+            if self.ifCollectStat:
+                self.stat.record(obs=self._values[-1])
+
         else:
-            return False
+            self._values[-1] += increment
 
-
-class _PrevalenceSamplePath:
-
-    def __init__(self, name, initial_size, sim_rep=0, collect_stat=True):
+    def record_value(self, time, value):
         """
-        :param name: name of this sample path
-        :param initial_size: (int) value of the sample path at simulation time 0
-        :param sim_rep: (int) simulation replication of this sample path
-        :param collect_stat: set to True to collect statistics on average, max, min, stDev, etc for this sample path
+        updates the value of this sample path (e.g. number of people diagnosed in the past year)
+        :param time:
+        :param value:
         """
 
-        self.name = name
-        self.simRep = sim_rep
-        self.currentSize = initial_size     # current size of the sample path
-        self._times = [0]                   # times at which changes occur
-        self._values = [initial_size]       # size of this sample path over time
-        # statistics on this prevalence sample path
-        self.ifCollectStat = collect_stat
-        if collect_stat:
-            self.stat = Stat.ContinuousTimeStat(name=name, initial_time=0)
+        if value is None:
+            raise ValueError(self.name + ' | value cannot be None.')
 
-    def record(self, time, increment):
-        """
-        updates the value of this sample path (e.g. number of people in the system)
-        :param time: time of this change
-        :param increment: (integer) change (+ or -) in value of this sample path
-        """
-        raise NotImplementedError("Abstract method not implemented.")
+        self.record_increment(time=time, increment=value)
 
-    def get_times(self):
-        """
-        :return: times when changes in the sample path recorded
-        """
-        raise NotImplementedError("Abstract method not implemented.")
+    def close(self, time):
+        self.__fill_unrecorded_periods(time=time)
 
-    def get_values(self):
-        """
-        :return: value of the sample path at times when changes in the sample path recorded
-        """
-        raise NotImplementedError("Abstract method not implemented.")
+    def get_period_numbers(self):
+        return self._period_nums
 
+    def __fill_unrecorded_periods(self, time):
+        while time > (self._period_num + 1) * self._deltaT:
+            self._period_num += 1
+            self._values.append(0)
+            self._period_nums.append(self._period_num)
 
-class PrevalencePathRealTimeUpdate(_PrevalenceSamplePath):
-    """ a sample path for which observations are recorded in real-time (throughout the simulation) """
-
-    def __init__(self, name, initial_size, sim_rep=0):
-        """
-        :param name: name of this sample path
-        :param initial_size: (int) value of the sample path at simulation time 0
-        :param sim_rep: (int) simulation replication of this sample path
-        """
-        _PrevalenceSamplePath.__init__(self, name, initial_size, sim_rep)
-
-    def record(self, time, increment):
-        """
-        updates the value of this sample path (e.g. number of people in the system)
-        :param time: time of this change
-        :param increment: (integer) change (+ or -) in value of this sample path
-        """
-
-        if time < self._times[-1]:
-            raise ValueError('New time could not be less than the last recorded time.')
-
-        # update stat
-        if self.ifCollectStat:
-            self.stat.record(time=time, increment=increment)
-
-        self._times.append(time)
-        self.currentSize += increment
-        self._values.append(self.currentSize)
-
-    def get_times(self):
-        return self._times
-
-    def get_values(self):
-        return self._values
+            if self.ifCollectStat:
+                self.stat.record(obs=self._values[-1])
 
 
 class PrevalencePathBatchUpdate(PrevalenceSamplePath):
@@ -220,7 +195,7 @@ class PrevalencePathBatchUpdate(PrevalenceSamplePath):
             self._time_and_values.append([times_of_changes[i], increments[i]])
 
         # the batch sample path will be converted to real-time sample path
-        self._samplePath = PrevalencePathRealTimeUpdate(name, initial_size, sim_rep)
+        self._samplePath = PrevalenceSamplePath(name, initial_size, sim_rep)
         self._ifProcessed = False   # set to True when the sample path is built
 
     def record(self, time, increment):
@@ -254,7 +229,7 @@ class PrevalencePathBatchUpdate(PrevalenceSamplePath):
 
         # create the sample path
         for item in new_list:
-            self._samplePath.record(item[0], item[1])
+            self._samplePath.record_increment(item[0], item[1])
 
         # proceed
         self._ifProcessed = True
@@ -293,6 +268,12 @@ def graph_sample_path(sample_path,
                           legend=legend,
                           connect=connect)
     ax.set_ylim(bottom=0)  # the minimum has to be set after plotting the values
+
+    if isinstance(sample_path, PrevalenceSamplePath):
+        ax.set_xlim(left=0)
+    elif isinstance(sample_path, IncidenceSamplePath):
+        ax.set_xlim(left=0.5)
+
     # output figure
     Fig.output_figure(fig, output_type, title)
 
@@ -386,7 +367,11 @@ def graph_sets_of_sample_paths(sets_of_sample_paths,
 def add_sample_path_to_ax(sample_path, ax, color_code=None, legend=None, transparency=1, connect='step'):
 
     # x and y values
-    x_values = sample_path.get_times()
+    if isinstance(sample_path, PrevalenceSamplePath):
+        x_values = sample_path.get_times()
+    elif isinstance(sample_path, IncidenceSamplePath):
+        x_values = sample_path.get_period_numbers()
+
     y_values = sample_path.get_values()
 
     # plot the sample path
