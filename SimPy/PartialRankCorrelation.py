@@ -21,11 +21,12 @@ class PartialRankCorrelation:
             # store [parameter name, Spearman coefficient, and p-value
             self.results.append([paramName, coef, p])
 
-    def export_to_csv(self, file_name='PartialRank.csv', decimal=3):
+    def export_to_csv(self, file_name='PartialRank.csv', decimal=3, delimiter=','):
         """
         formats the coefficients and p-value to the specified decimal point and export to a csv file
         :param file_name: file name
         :param decimal: decimal points to round the estimates to
+        :param delimiter: to separate by comma, use ',' and by tab, use '\t'
         """
         formatedResults = [['Parameter', 'Coefficient', 'P-Value']]
 
@@ -35,4 +36,4 @@ class PartialRankCorrelation:
             p = F.format_number(number=row[2], deci=decimal)
             formatedResults.append([name, coef, p])
 
-        IO.write_csv(file_name=file_name, rows=formatedResults)
+        IO.write_csv(file_name=file_name, rows=formatedResults, delimiter=delimiter)
