@@ -394,6 +394,7 @@ class CEA(_EconEval):
 
     def add_ce_plane_to_ax(self, ax, add_clouds=True, show_legend=True,
                            center_s=75, cloud_s=25, transparency=0.1,
+                           x_range = None, y_range = None,
                            cost_multiplier=1, effect_multiplier=1):
 
         # find the frontier (x, y)'s
@@ -428,15 +429,43 @@ class CEA(_EconEval):
 
         if show_legend:
             ax.legend()
+
+        # format x-axis
+        vals_x = ax.get_xticks()
+        ax.set_xticks(vals_x)
+        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
+
+        # format y-axis
+        vals_y = ax.get_yticks()
+        ax.set_yticks(vals_y)
+        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+
         ax.axhline(y=0, c='k', linewidth=0.5)
         ax.axvline(x=0, c='k', linewidth=0.5)
+        ax.set_xlim(x_range)  # x-axis range
+        ax.set_ylim(y_range)  # y-axis range
 
-    def show_CE_plane(self, add_clouds=True):
+    def show_CE_plane(self,
+                      title='Cost-Effectiveness Analysis',
+                      x_label='Additional Health',
+                      y_label='Additional Cost',
+                      add_clouds=True, fig_size=(5, 5),
+                      show_legend=True,
+                      center_s=75, cloud_s=25, transparency=0.1,
+                      cost_multiplier=1, effect_multiplier=1
+                      ):
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=fig_size)
+
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
 
         # add the cost-effectiveness plane
-        self.add_ce_plane_to_ax(ax=ax, add_clouds=add_clouds)
+        self.add_ce_plane_to_ax(ax=ax, add_clouds=add_clouds,
+                                show_legend=show_legend,
+                                center_s=center_s, cloud_s=cloud_s, transparency=transparency,
+                                cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier)
 
         fig.show()
 
@@ -1065,11 +1094,6 @@ class CBA(_EconEval):
         if show_legend:
             ax.legend()
 
-        # format y-axis
-        vals_y = ax.get_yticks()
-        ax.set_yticks(vals_y)
-        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
-
         # do the other formatting
         self.__format_ax(ax=ax, title=title,x_label=x_label, y_label=y_label,
                          y_range=y_range, min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
@@ -1098,6 +1122,11 @@ class CBA(_EconEval):
 
         d = 2*(max_wtp - min_wtp) / NUM_WTPS_FOR_NMB_CURVES
         ax.set_xlim([min_wtp - d, max_wtp + d])
+
+        # format y-axis
+        vals_y = ax.get_yticks()
+        ax.set_yticks(vals_y)
+        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
 
         ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
