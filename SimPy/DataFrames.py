@@ -23,7 +23,7 @@ class OneDimDataFrame:
         return self.yValues[x_index]
 
 
-class DataFrame:
+class _DataFrame:
     def __init__(self, list_x_min, list_x_max, list_x_delta):
 
         self.xMin = list_x_min[0]
@@ -43,10 +43,10 @@ class DataFrame:
                 self.values.append(0)
             else:
                 self.dataFrames.append(
-                    DataFrame(list_x_min=list_x_min[1:],
-                              list_x_max=list_x_max[1:],
-                              list_x_delta=list_x_delta[1:]
-                              )
+                    _DataFrame(list_x_min=list_x_min[1:],
+                               list_x_max=list_x_max[1:],
+                               list_x_delta=list_x_delta[1:]
+                               )
                 )
             x += self.xDelta
 
@@ -55,14 +55,14 @@ class DataFrame:
         if self.ifOneDim:
             self.values[self.__get_index(x_value)] = v
         else:
-            self.dataFrames[self.__get_index(x_value[0])].update_value(x_value=x_value[1:], v=v)
+            self.dataFrames[self.__get_index(x_value)].update_value(x_value=x_value[1:], v=v)
 
     def __get_index(self, x_value):
 
-        if x_value > self.xMax:
+        if x_value[0] > self.xMax:
             return len(self.values)-1
         else:
-            return round((x_value - self.xMin) / self.xDelta)
+            return round((x_value[0] - self.xMin) / self.xDelta)
 
     def get_index(self, x_value):
 
@@ -86,10 +86,11 @@ class DataFrame:
             return self.dataFrames[x_index[0]].get_value_by_index(x_index[1:])
 
 
-class MultiDimDataFrame(DataFrame):
+class MultiDimDataFrame(_DataFrame):
     def __init__(self, rows, list_x_min, list_x_max, list_x_delta):
 
-        DataFrame.__init__(self, list_x_min=list_x_min, list_x_max=list_x_max, list_x_delta=list_x_delta)
+        _DataFrame.__init__(self, list_x_min=list_x_min, list_x_max=list_x_max, list_x_delta=list_x_delta)
 
         for row in rows:
             self.update_value(x_value=row[0:-1], v=row[-1])
+

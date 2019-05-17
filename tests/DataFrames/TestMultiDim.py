@@ -14,5 +14,11 @@ df1 = df.MultiDimDataFrame(rows=rows,
                            list_x_max=[10, 1],
                            list_x_delta=[5, 1])
 
-df1.get_value(x_value=[1, 0])
+print('print: 10', df1.get_value(x_value=[0, 0]))
+print('print: 10', df1.get_value(x_value=[1, 0]))
+print('print: 20', df1.get_value(x_value=[2, 1]))
+print('print: 12', df1.get_value(x_value=[5, 1]))
+print('print: 15', df1.get_value(x_value=[9, 0]))
+print('print: 16', df1.get_value(x_value=[20, 1]))
+
 

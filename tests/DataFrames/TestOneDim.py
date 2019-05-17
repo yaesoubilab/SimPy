@@ -6,5 +6,3 @@ print('print 10: ', df1.get_value(x_value=0))
 print('print 10: ', df1.get_value(x_value=0.5))
 print('print 9: ', df1.get_value(x_value=1))
 print('print 40: ', df1.get_value(x_value=5))
-
-
