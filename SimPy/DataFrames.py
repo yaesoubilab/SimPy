@@ -1,3 +1,5 @@
+import SimPy.RandomVariantGenerators as RVGs
+import numpy as np
 
 class OneDimDataFrame:
     """
@@ -85,6 +87,15 @@ class _DataFrame:
             else:
                 return round((x_value[0] - self.xMin) / self.xDelta)
 
+    def get_sum_values(self):
+        if self.ifOneDim:
+            return sum(self.values)
+        else:
+            sum_df = 0
+            for df in self.dataFrames:
+                sum_df += df.get_sum_values()
+            return  sum_df
+
     def update_value(self, x_value, v):
 
         if self.ifOneDim:
@@ -113,6 +124,31 @@ class _DataFrame:
         else:
             return self.dataFrames[x_index[0]].get_value_by_index(x_index[1:])
 
+    def get_sample_indices(self, rng):
+        """
+        :param rng: random number generator
+        :return: (list) indices of categories
+                (in the example above, [1, 0] corresponds to age group 1 and sex group 0.
+        """
+
+        probs = []
+        if self.ifOneDim:
+            probs = self.values
+        else:
+            for df in self.dataFrames:
+                probs.append(df.get_sum_values())
+
+        emprical_dist = RVGs.Empirical(probabilities=np.array(probs)/sum(probs))
+
+        idx = emprical_dist.sample(rng=rng)
+
+        if self.ifOneDim:
+            return [idx]
+        else:
+            a = [idx]
+            a.extend(self.dataFrames[idx].get_sample_indices(rng))
+            return a
+
 
 class MultiDimDataFrame(_DataFrame):
     """
@@ -135,10 +171,50 @@ class MultiDimDataFrame(_DataFrame):
                     (in example above: [5, 'int'])
         """
 
-        _DataFrame.__init__(self, list_x_min=list_x_min,
+        _DataFrame.__init__(self,
+                            list_x_min=list_x_min,
                             list_x_max=list_x_max,
                             list_x_delta=list_x_delta)
 
         for row in rows:
             self.update_value(x_value=row[0:-1], v=row[-1])
 
+
+class ProbDistDataFrame(MultiDimDataFrame):
+    """
+    example:
+        age,   sex,      probability
+        0,     0,        0.1,
+        0,     1,        0.2,
+        5,     0,        0.3,
+        5,     1,        0.4,
+    """
+    def __init__(self, rows, list_x_min, list_x_max, list_x_delta):
+        """
+        :param rows: (list of list) the table above
+        :param list_x_min: list of minimum value of x (in example above: [0, 0])
+        :param list_x_max: list of maximum value of x (in example above: [10, 1])
+        :param list_x_delta: list of interval between break points of x
+                    if set to 'int', x is treated as categorical variable
+                    (in example above: [5, 'int'])
+        """
+
+        MultiDimDataFrame.__init__(self, rows=rows,
+                                   list_x_min=list_x_min,
+                                   list_x_max=list_x_max,
+                                   list_x_delta=list_x_delta)
+
+        # make sure probabilities add to 1
+        sum_probs = 0
+        for row in rows:
+            sum_probs += row[-1]
+        if sum_probs < 0.99999 or sum_probs > 1.000001:
+            raise ValueError('Sum of probabilities should add to 1.')
+
+
+    def get_sample_values(self, rng):
+        """
+        :param rng: random number generator
+        :return: (list) values of categories
+                (in the example above, [1.4, 0] corresponds to age 1.4 and sex group 0.
+        """
