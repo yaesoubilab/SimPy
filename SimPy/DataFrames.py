@@ -203,6 +203,7 @@ class ProbDistDataFrame(MultiDimDataFrame):
                                    list_x_min=list_x_min,
                                    list_x_max=list_x_max,
                                    list_x_delta=list_x_delta)
+        self.listXDelta = list_x_delta
 
         # make sure probabilities add to 1
         sum_probs = 0
@@ -211,10 +212,20 @@ class ProbDistDataFrame(MultiDimDataFrame):
         if sum_probs < 0.99999 or sum_probs > 1.000001:
             raise ValueError('Sum of probabilities should add to 1.')
 
-
     def get_sample_values(self, rng):
         """
         :param rng: random number generator
         :return: (list) values of categories
                 (in the example above, [1.4, 0] corresponds to age 1.4 and sex group 0.
         """
+
+        values = []
+        idx = self.get_sample_indices(rng=rng)
+        for i, deltaX in enumerate(self.listXDelta):
+            if deltaX == 'int':
+                values.append(idx[i])
+            else:
+                unif_dist = RVGs.Uniform(loc=0, scale=deltaX)
+                values.append(idx[i]*deltaX + unif_dist.sample(rng=rng))
+
+        return values
