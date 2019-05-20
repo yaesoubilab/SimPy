@@ -196,7 +196,7 @@ class _DataFrame:
             return a
 
 
-class MultiDimDataFrame(_DataFrame):
+class DataFrame(_DataFrame):
     """
     example:
         age,   sex,      mortality rate
@@ -226,7 +226,38 @@ class MultiDimDataFrame(_DataFrame):
             self.update_value(x_value=row[0:-1], v=row[-1])
 
 
-class ProbDistDataFrame(MultiDimDataFrame):
+class DataFrameWithExpDist(_DataFrame):
+    """
+    example:
+        age,   sex,      mortality rate
+        0,     0,        0.1,
+        0,     1,        0.11,
+        5,     0,        0.2,
+        5,     1,        0.21,
+        10,    0,        0.3
+        10,    1,        0.31
+    """
+    def __init__(self, rows, list_x_min, list_x_max, list_x_delta):
+        """
+        :param rows: (list of list) the table above
+        :param list_x_min: list of minimum value of x (in example above: [0, 0])
+        :param list_x_max: list of maximum value of x (in example above: [10, 1])
+        :param list_x_delta: list of interval between break points of x
+                    if set to 'int', x is treated as categorical variable
+                    (in example above: [5, 'int'])
+        """
+
+        _DataFrame.__init__(self,
+                            list_x_min=list_x_min,
+                            list_x_max=list_x_max,
+                            list_x_delta=list_x_delta)
+
+        for row in rows:
+            self.update_value(x_value=row[0:-1],
+                              v=RVGs.Exponential(scale=1/row[-1]))
+
+
+class DataFrameWithEmpiricalDist(DataFrame):
     """
     example:
         age,   sex,      probability
@@ -245,10 +276,10 @@ class ProbDistDataFrame(MultiDimDataFrame):
                     (in example above: [5, 'int'])
         """
 
-        MultiDimDataFrame.__init__(self, rows=rows,
-                                   list_x_min=list_x_min,
-                                   list_x_max=list_x_max,
-                                   list_x_delta=list_x_delta)
+        DataFrame.__init__(self, rows=rows,
+                           list_x_min=list_x_min,
+                           list_x_max=list_x_max,
+                           list_x_delta=list_x_delta)
         self.listXDelta = list_x_delta
 
         # make sure probabilities add to 1
