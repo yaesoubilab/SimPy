@@ -1,7 +1,70 @@
 import SimPy.RandomVariantGenerators as RVGs
 import numpy as np
 
+
 class OneDimDataFrame:
+    """
+    example:
+        age,    mortality rate
+        0,      0.1,
+        5,      0.2,
+        10,     0.3
+    """
+    def __init__(self, y_objects, x_min=0, x_max=1, x_delta=1):
+        """
+        :param y_objects: (list) of y objects (in example above: [0.1, 0.2, 0.3])
+                but it could also be list of other objects of the same type.
+        :param x_min: minimum value of x (in example above: 0)
+        :param x_max: maximum value of x (in example above: 10)
+        :param x_delta: interval between break points of x (in example above: 5)
+                    if set to 'int', x is treated as categorical variable
+        """
+
+        self.yValues = y_objects
+        self.xDelta = x_delta
+        self.xMin = x_min
+        self.xMax = x_max
+
+    def get_index(self, x_value):
+        """ :returns the index of the smallest x break point with x_value greater than or equal.
+            In the example above, it returns
+                0 for 0 <= x_value < 5,
+                1 for 5 <= x_value < 10, and
+                2 for x_value >= 10
+        """
+
+        if self.xDelta == 'int':
+            if type(x_value) is not int:
+                raise ValueError('x_value should be an integer for categorical variables.')
+            return x_value
+        else:
+            if x_value >= self.xMax:
+                return len(self.yValues) - 1
+            else:
+                return round((x_value-self.xMin)/self.xDelta)
+
+    def get_value(self, x_value):
+        """ :returns the the y-value of the smallest x break point with x_value greater than or equal.
+            In the example above, it returns
+                0.1 for 0 <= x_value < 5,
+                0.2 for 5 <= x_value < 10, and
+                0.3 for x_value >= 10
+        """
+
+        return self.yValues[self.get_index(x_value)]
+
+    def get_value_by_index(self, x_index):
+        """ :returns the the y-value of the x break point located at index x_index.
+            In the example above, it returns
+                0.1 for x_index = 0,
+                0.2 for x_index = 1, and
+                0.3 for x_index = 2
+        """
+
+        return self.yValues[x_index]
+
+
+class OneDimDataFrameWithExpDist (OneDimDataFrame):
     """
     example:
         age,    mortality rate
@@ -11,38 +74,21 @@ class OneDimDataFrame:
     """
     def __init__(self, y_values, x_min=0, x_max=1, x_delta=1):
         """
-        :param y_values: (list) of y values (in example above: [0.1, 0.2, 0.3]
+        :param y_values: (list) of rates (in example above: [0.1, 0.2, 0.3]
         :param x_min: minimum value of x (in example above: 0)
         :param x_max: maximum value of x (in example above: 10)
         :param x_delta: interval between break points of x (in example above: 5)
                     if set to 'int', x is treated as categorical variable
         """
 
-        self.yValues = y_values
-        self.xDelta = x_delta
-        self.xMin = x_min
-        self.xMax = x_max
+        y_objects = []
+        for v in y_values:
+            y_objects.append(RVGs.Exponential(scale=1/v))
 
-    def get_index(self, x_value):
-
-        if self.xDelta == 'int':
-            if type(x_value) is not int:
-                raise ValueError('x_value should be an integer for categorical variables.')
-            return x_value
-        else:
-
-            if x_value > self.xMax:
-                return len(self.yValues) - 1
-            else:
-                return round((x_value-self.xMin)/self.xDelta)
-
-    def get_value(self, x_value):
-
-        return self.yValues[self.get_index(x_value)]
-
-    def get_value_by_index(self, x_index):
-
-        return self.yValues[x_index]
+        OneDimDataFrame.__init__(self, y_objects=y_objects,
+                                 x_min=x_min,
+                                 x_max=x_max,
+                                 x_delta=x_delta)
 
 
 class _DataFrame:
