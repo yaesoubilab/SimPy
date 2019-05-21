@@ -4,6 +4,7 @@ import SimPy.RandomVariantGenerators as RVGs
 # last column includes the rate (e.g. mortality rate) of
 # exponential distributions that should be created for each group.
 rows = [
+    # age, sex, race, mortality rate
     [0,     0,  0,  10],
     [0,     0,  1,  11],
     [0,     1,  0,  20],
