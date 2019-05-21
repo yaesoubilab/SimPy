@@ -18,14 +18,14 @@ probDf = df.DataFrameWithEmpiricalDist(rows=rows,
                                        list_x_max=[10, 1],
                                        list_x_delta=[5, 'int'])
 # get a sample
-print('Get a sampled index:', probDf.get_sample_indices(rng=rng))
+print('Get a sampled index:', probDf.sample_indices(rng=rng))
 print('Get a sampled index:', probDf.get_sample_values(rng=rng))
 print('')
 
 # testing to make sure sample by index works
 counts = [0]*6
 for i in range(5000):
-    idx = probDf.get_sample_indices(rng=rng)
+    idx = probDf.sample_indices(rng=rng)
     counts[idx[0]*2 + idx[1]] += 1
 
 print('Testing the sampling by index:')

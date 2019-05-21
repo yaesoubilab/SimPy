@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from SimPy.SamplePathClasses import *
-
+import SimPy.Plots.FigSupport as Fig
 
 def graph_sample_path(sample_path,
                       title=None, x_label=None, y_label=None,

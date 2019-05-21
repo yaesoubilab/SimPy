@@ -20,7 +20,7 @@ class OneDimDataFrame:
                     if set to 'int', x is treated as categorical variable
         """
 
-        self.yValues = y_objects
+        self.objs = y_objects
         self.xDelta = x_delta
         self.xMin = x_min
         self.xMax = x_max
@@ -39,7 +39,7 @@ class OneDimDataFrame:
             return x_value
         else:
             if x_value >= self.xMax:
-                return len(self.yValues) - 1
+                return len(self.objs) - 1
             else:
                 return round((x_value-self.xMin)/self.xDelta)
 
@@ -51,7 +51,7 @@ class OneDimDataFrame:
                 0.3 for x_value >= 10
         """
 
-        return self.yValues[self.get_index(x_value)]
+        return self.objs[self.get_index(x_value)]
 
     def get_obj_by_index(self, x_index):
         """ :returns the the object in the x break point located at index x_index.
@@ -61,7 +61,7 @@ class OneDimDataFrame:
                 0.3 for x_index = 2
         """
 
-        return self.yValues[x_index]
+        return self.objs[x_index]
 
 
 class OneDimDataFrameWithExpDist (OneDimDataFrame):
@@ -113,89 +113,119 @@ class OneDimDataFrameWithExpDist (OneDimDataFrame):
 class _DataFrame:
     def __init__(self, list_x_min, list_x_max, list_x_delta):
 
-        self.xMin = list_x_min[0]
-        self.xMax = list_x_max[0]
-        self.xDelta = list_x_delta[0]
+        self._xMin = list_x_min[0]
+        self._xMax = list_x_max[0]
+        self._xDelta = list_x_delta[0]
 
-        self.ifOneDim = False
+        self._xs = []           # x breakpoints
+        self._ifOneDim = False
+        self._ifContinuous = True
+        self._objs = []      # objects of this data frame
+        self._dataFrames = []
+
         if len(list_x_min) == 1:
-            self.ifOneDim = True
+            self._ifOneDim = True
+        if list_x_delta[0] == 'int':
+            self._ifContinuous = False
 
-        self.objs = []      # objects of this data frame
-        self.dataFrames = []
-
-        x = self.xMin
-        while x <= self.xMax:
-            if self.ifOneDim:
-                self.objs.append(None)
+        # find x breakpoints
+        x = list_x_min[0]
+        while x <= list_x_max[0]:
+            self._xs.append(x)
+            if self._ifContinuous:
+                x += list_x_delta[0]
             else:
-                self.dataFrames.append(
+                x += 1
+
+        # build data frames
+        for x in self._xs:
+            if self._ifOneDim:
+                self._objs.append(0)
+            else:
+                self._dataFrames.append(
                     _DataFrame(list_x_min=list_x_min[1:],
                                list_x_max=list_x_max[1:],
                                list_x_delta=list_x_delta[1:]
                                )
                 )
-            if self.xDelta == 'int':
-                x += 1
-            else:
-                x += self.xDelta
 
     def __get_index(self, x_value):
 
-        if self.xDelta == 'int':
+        if self._xDelta == 'int':
             if type(x_value[0]) is not int:
                 raise ValueError('x_value should be an integer for categorical variables.')
-            return x_value[0] - self.xMin
+            return x_value[0] - self._xMin
         else:
-            if x_value[0] > self.xMax:
-                return len(self.objs) - 1
+            if x_value[0] > self._xMax:
+                return len(self._objs) - 1
             else:
-                return round((x_value[0] - self.xMin) / self.xDelta)
+                return round((x_value[0] - self._xMin) / self._xDelta)
 
-    def get_sum_values(self):
-        if self.ifOneDim:
-            return sum(self.objs)
+    def get_sum(self):
+        if self._ifOneDim:
+            return sum(self._objs)
         else:
             sum_df = 0
-            for df in self.dataFrames:
-                sum_df += df.get_sum_values()
-            return  sum_df
+            for df in self._dataFrames:
+                sum_df += df.get_sum()
+            return sum_df
+
+    def get_percentage(self):
+        total = self.get_sum()
+        rows = []
+        for row in self.get_rows():
+            a = row[:-1]
+            a.extend([row[-1]/total])
+            rows.append(a)
+
+        return rows
 
     def update_value(self, x_value, v):
 
-        if self.ifOneDim:
-            self.objs[self.__get_index(x_value)] = v
+        index = self.__get_index(x_value=x_value)
+        if self._ifOneDim:
+            self._objs[index] = v
         else:
-            self.dataFrames[self.__get_index(x_value)].update_value(x_value=x_value[1:], v=v)
+            self._dataFrames[index].update_value(x_value=x_value[1:], v=v)
 
     def get_index(self, x_value):
 
-        if self.ifOneDim:
-            return [self.__get_index(x_value=x_value)]
+        index = self.__get_index(x_value=x_value)
+        if self._ifOneDim:
+            return [index]
         else:
-            return self.dataFrames[self.__get_index(x_value=x_value)].get_index(x_value=x_value[1:])
+            return self._dataFrames[index].get_index(x_value=x_value[1:])
 
     def get_obj(self, x_value):
 
-        if self.ifOneDim:
-            return self.objs[self.__get_index(x_value=x_value)]
+        index = self.__get_index(x_value=x_value)
+        if self._ifOneDim:
+            return self._objs[index]
         else:
-            return self.dataFrames[self.__get_index(x_value=x_value)].get_obj(x_value[1:])
+            return self._dataFrames[index].get_obj(x_value[1:])
 
     def set_obj(self, x_value, obj):
-        if self.ifOneDim:
-            self.objs[self.__get_index(x_value=x_value)] = obj
+        index = self.__get_index(x_value=x_value)
+        if self._ifOneDim:
+            self._objs[index] = obj
         else:
-            self.dataFrames[self.__get_index(x_value=x_value)].set_obj(x_value[1:], obj)
+            self._dataFrames[index].set_obj(x_value[1:], obj)
+
+    def increment_obj(self, x_value, increment):
+        index = self.__get_index(x_value=x_value)
+        if self._ifOneDim:
+            self._objs[index] += increment
+        else:
+            self._dataFrames[index].increment_obj(x_value[1:], increment)
 
     def get_obj_by_index(self, x_index):
 
-        if self.ifOneDim:
-            return self.objs[x_index[0]]
+        if self._ifOneDim:
+            return self._objs[x_index[0]]
         else:
-            return self.dataFrames[x_index[0]].get_obj_by_index(x_index[1:])
+            return self._dataFrames[x_index[0]].get_obj_by_index(x_index[1:])
 
-    def get_sample_indices(self, rng):
+    def sample_indices(self, rng):
         """
         :param rng: random number generator
         :return: (list) indices of categories
@@ -203,22 +233,56 @@ class _DataFrame:
         """
 
         probs = []
-        if self.ifOneDim:
-            probs = self.objs
+        if self._ifOneDim:
+            probs = self._objs
         else:
-            for df in self.dataFrames:
-                probs.append(df.get_sum_values())
+            for df in self._dataFrames:
+                probs.append(df.get_sum())
 
         emprical_dist = RVGs.Empirical(probabilities=np.array(probs)/sum(probs))
 
         idx = emprical_dist.sample(rng=rng)
 
-        if self.ifOneDim:
+        if self._ifOneDim:
             return [idx]
         else:
             a = [idx]
-            a.extend(self.dataFrames[idx].get_sample_indices(rng))
+            a.extend(self._dataFrames[idx].sample_indices(rng))
             return a
+
+    def get_rows(self):
+        rows = []
+        if self._ifOneDim:
+            for x in self._xs:
+                rows.append([x, self.get_obj(x_value=[x])])
+        else:
+            for i, df in enumerate(self._dataFrames):
+                next_rows = df.get_rows()
+                for j, row in enumerate(next_rows):
+                    a = [self._xs[i]]
+                    a.extend(next_rows[j])
+                    rows.append(a)
+
+        return rows
+
+    def get_objs(self):
+        objs = []
+        if self._ifOneDim:
+            for x in self._xs:
+                objs.append(self.get_obj(x_value=[x]))
+        else:
+            for df in self._dataFrames:
+                objs.extend(df.get_objs())
+        return objs
+
+    def get_objs_gen(self):
+        if self._ifOneDim:
+            for x in self._xs:
+                yield self.get_obj(x_value=[x])
+        else:
+            for df in self._dataFrames:
+                for g in df.get_objs_gen():
+                    yield g
 
 
 class DataFrame(_DataFrame):
@@ -334,7 +398,7 @@ class DataFrameWithEmpiricalDist(DataFrame):
         """
 
         values = []
-        idx = self.get_sample_indices(rng=rng)
+        idx = self.sample_indices(rng=rng)
         for i, deltaX in enumerate(self.listXDelta):
             if deltaX == 'int':
                 values.append(idx[i])
@@ -343,3 +407,66 @@ class DataFrameWithEmpiricalDist(DataFrame):
                 values.append(idx[i]*deltaX + unif_dist.sample(rng=rng))
 
         return values
+
+
+class Pyramid(_DataFrame):
+    """
+    example:
+        age,   sex,      Prevalence
+        0,     0,        10,
+        0,     1,        20,
+        5,     0,        30,
+        5,     1,        40,
+        10,    0,        50,
+        10,    1,        60
+    """
+
+    def __init__(self, list_x_min, list_x_max, list_x_delta):
+        """
+        :param list_x_min: list of minimum value of x (in example above: [0, 0])
+        :param list_x_max: list of maximum value of x (in example above: [10, 1])
+        :param list_x_delta: list of interval between break points of x
+                    if set to 'int', x is treated as categorical variable
+                    (in example above: [5, 'int'])
+        """
+
+        _DataFrame.__init__(self,
+                            list_x_min=list_x_min,
+                            list_x_max=list_x_max,
+                            list_x_delta=list_x_delta)
+
+    def record_increment(self, x_values, increment):
+        """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param increment: (integer) change (+ or -) in value of this sample path
+        """
+
+        self.increment_obj(x_value=x_values, increment=increment)
+
+    def record_value(self, x_values, value):
+        """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param value:
+        """
+
+        self.set_obj(x_value=x_values, obj=value)
+
+    def record_values_from_another_pyramid(self, another_pyramid):
+
+        for row in another_pyramid.get_rows():
+            self.record_value(x_values=row[:-1],
+                              value= row[-1])
+
+    def get_current_value(self, x_values):
+        """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param value:
+        """
+
+        return self.get_obj(x_value=x_values)
+
+    def get_table_of_values(self):
+        return self.get_rows()
