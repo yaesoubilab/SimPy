@@ -32,6 +32,9 @@ class _SamplePath:
     def get_values(self):
         return self._values
 
+    def get_current_value(self):
+        return self._values[-1]
+
 
 class PrevalenceSamplePath(_SamplePath):
 
@@ -300,6 +303,15 @@ class PrevalencePyramidSamplePath:
 
         self.pyramid.get_obj(x_value=[age, sex]).record_value(
             time=time, value=value)
+
+    def get_current_value(self, age, sex):
+        """
+        updates the value of this sample path (e.g. number of people in the system)
+        :param time: time of this change
+        :param value:
+        """
+
+        self.pyramid.get_obj(x_value=[age, sex]).get_current_value()
 
     def close(self, time):
 
