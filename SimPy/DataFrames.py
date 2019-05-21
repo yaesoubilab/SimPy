@@ -43,8 +43,8 @@ class OneDimDataFrame:
             else:
                 return round((x_value-self.xMin)/self.xDelta)
 
-    def get_value(self, x_value):
-        """ :returns the the y-value of the smallest x break point with x_value greater than or equal.
+    def get_obj(self, x_value):
+        """ :returns the the object in the smallest x break point with x_value greater than or equal.
             In the example above, it returns
                 0.1 for 0 <= x_value < 5,
                 0.2 for 5 <= x_value < 10, and
@@ -53,8 +53,8 @@ class OneDimDataFrame:
 
         return self.yValues[self.get_index(x_value)]
 
-    def get_value_by_index(self, x_index):
-        """ :returns the the y-value of the x break point located at index x_index.
+    def get_obj_by_index(self, x_index):
+        """ :returns the the object in the x break point located at index x_index.
             In the example above, it returns
                 0.1 for x_index = 0,
                 0.2 for x_index = 1, and
@@ -90,6 +90,25 @@ class OneDimDataFrameWithExpDist (OneDimDataFrame):
                                  x_max=x_max,
                                  x_delta=x_delta)
 
+    def get_dist(self, x_value):
+        """ :returns the the exponential distribution in the smallest x break point
+            with x_value greater than or equal.
+            In the example above, it returns
+                exp(0.1) for 0 <= x_value < 5,
+                exp(0.2) for 5 <= x_value < 10, and
+                exp(0.3) for x_value >= 10
+        """
+        return self.get_obj(x_value)
+
+    def get_dist_by_index(self, x_index):
+        """ :returns the the exponential distribution in the x break point located at index x_index.
+            In the example above, it returns
+                exp(0.1) for x_index = 0,
+                exp(0.2) for x_index = 1, and
+                exp(0.3) for x_index = 2
+        """
+        return self.get_obj_by_index(x_index)
+
 
 class _DataFrame:
     def __init__(self, list_x_min, list_x_max, list_x_delta):
@@ -102,13 +121,13 @@ class _DataFrame:
         if len(list_x_min) == 1:
             self.ifOneDim = True
 
-        self.values = []
+        self.objs = []      # objects of this data frame
         self.dataFrames = []
 
         x = self.xMin
         while x <= self.xMax:
             if self.ifOneDim:
-                self.values.append(0)
+                self.objs.append(None)
             else:
                 self.dataFrames.append(
                     _DataFrame(list_x_min=list_x_min[1:],
@@ -126,16 +145,16 @@ class _DataFrame:
         if self.xDelta == 'int':
             if type(x_value[0]) is not int:
                 raise ValueError('x_value should be an integer for categorical variables.')
-            return x_value[0]
+            return x_value[0] - self.xMin
         else:
             if x_value[0] > self.xMax:
-                return len(self.values)-1
+                return len(self.objs) - 1
             else:
                 return round((x_value[0] - self.xMin) / self.xDelta)
 
     def get_sum_values(self):
         if self.ifOneDim:
-            return sum(self.values)
+            return sum(self.objs)
         else:
             sum_df = 0
             for df in self.dataFrames:
@@ -145,7 +164,7 @@ class _DataFrame:
     def update_value(self, x_value, v):
 
         if self.ifOneDim:
-            self.values[self.__get_index(x_value)] = v
+            self.objs[self.__get_index(x_value)] = v
         else:
             self.dataFrames[self.__get_index(x_value)].update_value(x_value=x_value[1:], v=v)
 
@@ -156,19 +175,19 @@ class _DataFrame:
         else:
             return self.dataFrames[self.__get_index(x_value=x_value)].get_index(x_value=x_value[1:])
 
-    def get_value(self, x_value):
+    def get_obj(self, x_value):
 
         if self.ifOneDim:
-            return self.values[self.__get_index(x_value=x_value)]
+            return self.objs[self.__get_index(x_value=x_value)]
         else:
-            return self.dataFrames[self.__get_index(x_value=x_value)].get_value(x_value[1:])
+            return self.dataFrames[self.__get_index(x_value=x_value)].get_obj(x_value[1:])
 
-    def get_value_by_index(self, x_index):
+    def get_obj_by_index(self, x_index):
 
         if self.ifOneDim:
-            return self.values[x_index[0]]
+            return self.objs[x_index[0]]
         else:
-            return self.dataFrames[x_index[0]].get_value_by_index(x_index[1:])
+            return self.dataFrames[x_index[0]].get_obj_by_index(x_index[1:])
 
     def get_sample_indices(self, rng):
         """
@@ -179,7 +198,7 @@ class _DataFrame:
 
         probs = []
         if self.ifOneDim:
-            probs = self.values
+            probs = self.objs
         else:
             for df in self.dataFrames:
                 probs.append(df.get_sum_values())
@@ -225,6 +244,14 @@ class DataFrame(_DataFrame):
         for row in rows:
             self.update_value(x_value=row[0:-1], v=row[-1])
 
+    def get_value_by_index(self, x_index):
+
+        return self.get_obj_by_index(x_index)
+
+    def get_value(self, x_value):
+
+        return self.get_obj(x_value)
+
 
 class DataFrameWithExpDist(_DataFrame):
     """
@@ -255,6 +282,10 @@ class DataFrameWithExpDist(_DataFrame):
         for row in rows:
             self.update_value(x_value=row[0:-1],
                               v=RVGs.Exponential(scale=1/row[-1]))
+
+    def get_dist(self, x_value):
+
+        return self.get_obj(x_value)
 
 
 class DataFrameWithEmpiricalDist(DataFrame):
