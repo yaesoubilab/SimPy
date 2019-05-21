@@ -1,4 +1,4 @@
-from SimPy import SamplePathClasses as Path
+from SimPy.Plots import SamplePaths as Path
 
 # a sample path with initial size = 1
 path1 = Path.PrevalenceSamplePath('Path 1', initial_size=1, sim_rep=1)

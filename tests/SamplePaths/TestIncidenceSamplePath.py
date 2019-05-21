@@ -1,4 +1,4 @@
-from SimPy import SamplePathClasses as Path
+import SimPy.Plots.SamplePaths as Path
 
 # a sample path with initial size = 1
 path1 = Path.IncidenceSamplePath('Path 1', delta_t=1, sim_rep=1)

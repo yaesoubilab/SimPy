@@ -1,9 +1,9 @@
 import numpy as np
-import SimPy.FigureSupport as cls
+import SimPy.Plots.FigSupport as cls
 
 obs = np.random.normal(4, 3, 1000)
 
-cls.graph_histogram(
+cls.plot_histogram(
     data=obs,
     title='Histogram',
     x_label='Values',
@@ -19,7 +19,7 @@ obs_sets = [
     np.random.normal(8, 3, 1000)
 ]
 
-cls.graph_histograms(
+cls.plot_histograms(
     data_sets=obs_sets,
     title='Two histograms',
     x_label='Values',

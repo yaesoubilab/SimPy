@@ -1,4 +1,4 @@
-import SimPy.FigureSupport as Fig
+import SimPy.Plots.FigSupport as Fig
 import numpy as np
 import matplotlib.pyplot as plt
 

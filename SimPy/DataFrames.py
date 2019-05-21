@@ -182,6 +182,12 @@ class _DataFrame:
         else:
             return self.dataFrames[self.__get_index(x_value=x_value)].get_obj(x_value[1:])
 
+    def set_obj(self, x_value, obj):
+        if self.ifOneDim:
+            self.objs[self.__get_index(x_value=x_value)] = obj
+        else:
+            self.dataFrames[self.__get_index(x_value=x_value)].set_obj(x_value[1:], obj)
+
     def get_obj_by_index(self, x_index):
 
         if self.ifOneDim:

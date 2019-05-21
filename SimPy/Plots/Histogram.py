@@ -1,23 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-def output_figure(plt, output_type='show', filename='figure'):
-    """
-    :param plt: reference to the plot
-    :param output_type: select from 'show', 'png', or 'pdf'
-    :param filename: filename to save this figure as
-    """
-    # output
-    if output_type == 'show':
-        plt.show()
-    elif output_type == 'png':
-        plt.savefig(filename + ".png")
-    elif output_type == 'pdf':
-        plt.savefig(filename + ".pdf")
-    else:
-        raise ValueError("Invalid value for figure output type. "
-                         "Valid values are: 'show', 'png', and 'pdf' ")
+from SimPy.Plots.FigSupport import output_figure
 
 
 def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None,
@@ -32,10 +15,10 @@ def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None,
             label=label)
 
 
-def graph_histogram(data, title,
-                    x_label=None, y_label=None, bin_width=None,
-                    x_range=None, y_range=None, figure_size=None,
-                    color=None, legend=None, output_type='show', file_name=None):
+def plot_histogram(data, title,
+                   x_label=None, y_label=None, bin_width=None,
+                   x_range=None, y_range=None, figure_size=None,
+                   color=None, legend=None, output_type='show', file_name=None):
     """ graphs a histogram
     :param data: (list) observations
     :param title: (string) title of the figure
@@ -79,10 +62,10 @@ def graph_histogram(data, title,
         output_figure(fig, output_type, title)
 
 
-def graph_histograms(data_sets, legends, bin_width=None,
-                     title=None, x_label=None, y_label=None,
-                     x_range=None, y_range=None, figure_size=None,
-                     color_codes=None, output_type='show', transparency=1):
+def plot_histograms(data_sets, legends, bin_width=None,
+                    title=None, x_label=None, y_label=None,
+                    x_range=None, y_range=None, figure_size=None,
+                    color_codes=None, output_type='show', transparency=1):
     """
     plots multiple histograms on a single figure
     :param data_sets: (list of lists) observations
@@ -126,38 +109,6 @@ def graph_histograms(data_sets, legends, bin_width=None,
     output_figure(plt, output_type, title)
 
 
-def get_moving_average(data, window=2):
-    """
-    calculates the moving average of a time-series
-    :param data: list of observations
-    :param window: the window (number of data points) over which the average should be calculated
-    :return: list of moving averages
-    """
-
-    if window < 2:
-        raise ValueError('The window over which the moving averages '
-                         'should be calculated should be greater than 1.')
-    if window >= len(data):
-        raise ValueError('The window over which the moving averages '
-                         'should be calculated should be less than the number of data points.')
-
-    averages = []
-
-    # the 'window - 1' averages cannot be calculated
-    for i in range(window-1):
-        averages.append(None)
-
-    # calculate the first moving average
-    moving_ave = sum(data[0:window])/window
-    averages.append(moving_ave)
-
-    for i in range(window, len(data)):
-        moving_ave = (moving_ave*window - data[i-window] + data[i])/window
-        averages.append(moving_ave)
-
-    return averages
-
-
 def find_bins(data, x_range, bin_width):
 
     if bin_width is None:
@@ -170,4 +121,3 @@ def find_bins(data, x_range, bin_width):
         l = min(data)
         u = max(data) + bin_width
     return np.arange(l, u, bin_width)
-
