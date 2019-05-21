@@ -390,7 +390,7 @@ class DataFrameWithEmpiricalDist(DataFrame):
         if sum_probs < 0.99999 or sum_probs > 1.000001:
             raise ValueError('Sum of probabilities should add to 1.')
 
-    def get_sample_values(self, rng):
+    def sample_values(self, rng):
         """
         :param rng: random number generator
         :return: (list) values of categories
@@ -437,36 +437,51 @@ class Pyramid(_DataFrame):
 
     def record_increment(self, x_values, increment):
         """
-        updates the value of this sample path (e.g. number of people in the system)
-        :param time: time of this change
-        :param increment: (integer) change (+ or -) in value of this sample path
+        updates the value of a group in the pyramid
+        :param x_values: (list) group to be updated
+                (e.g. [1.2, 0] corresponds to age 1.2 and sex 0 in the example above)
+        :param increment: (integer) change (+ or -) in the value of the pyramid at the specified group
         """
 
         self.increment_obj(x_value=x_values, increment=increment)
 
     def record_value(self, x_values, value):
         """
-        updates the value of this sample path (e.g. number of people in the system)
-        :param time: time of this change
-        :param value:
+        updates the value of a group in the pyramid
+        :param x_values: (list) group to be updated
+                (e.g. [1.2, 0] corresponds to age 1.2 and sex 0 in the example above)
+        :param value: value of the pyramid at the specified group
         """
 
         self.set_obj(x_value=x_values, obj=value)
 
     def record_values_from_another_pyramid(self, another_pyramid):
+        """ updates this pyramid using another pyramid """
 
         for row in another_pyramid.get_rows():
             self.record_value(x_values=row[:-1],
-                              value= row[-1])
+                              value=row[-1])
 
     def get_current_value(self, x_values):
         """
-        updates the value of this sample path (e.g. number of people in the system)
-        :param time: time of this change
-        :param value:
+        :returns the value of the pyramid at the specified group
+        :param x_values: (list) group
+                (e.g. [1.2, 0] corresponds to age 1.2 and sex 0 in the example above)
         """
 
         return self.get_obj(x_value=x_values)
 
     def get_table_of_values(self):
+        """ :returns the value of the pyramid in the table format
+            In the example above, it returns:
+            [
+            [0,     0,        10],
+            [0,     1,        20],
+            [5,     0,        30],
+            [5,     1,        40],
+            [10,    0,        50],
+            [10,    1,        60]
+            ]
+
+        """
         return self.get_rows()

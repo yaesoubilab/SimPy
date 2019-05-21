@@ -19,7 +19,7 @@ probDf = df.DataFrameWithEmpiricalDist(rows=rows,
                                        list_x_delta=[5, 'int'])
 # get a sample
 print('Get a sampled index:', probDf.sample_indices(rng=rng))
-print('Get a sampled index:', probDf.get_sample_values(rng=rng))
+print('Get a sampled index:', probDf.sample_values(rng=rng))
 print('')
 
 # testing to make sure sample by index works
@@ -34,7 +34,7 @@ print('')
 
 # testing to make sure sample by value is working
 for i in range(5000):
-    values = probDf.get_sample_values(rng=rng)
+    values = probDf.sample_values(rng=rng)
     i_0 = math.floor(values[0]/5)
     counts[i_0*2 + values[1]] += 1
 
