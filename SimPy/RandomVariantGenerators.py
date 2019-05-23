@@ -325,7 +325,7 @@ class NonHomogeneousExponential(RVG):
         if arg is None:
             i = 0
         else:
-            i = math.floor(arg/self.deltaT)
+            i = min(math.floor(arg/self.deltaT), len(self.rates)-1)
         while not if_occurred:
             if self.rates[i] > 0:
                 exp = Exponential(scale=1/self.rates[i])

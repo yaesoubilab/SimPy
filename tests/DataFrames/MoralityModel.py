@@ -18,12 +18,14 @@ rng = RVGs.RNG(seed=1)
 # mortality model
 mortalityModel = DF.MortalityModel(rows=rows,           # life table
                                    group_mins=0,        # minimum value of sex group
-                                   group_max=1,         # maximum value of sex group
+                                   group_maxs=1,        # maximum value of sex group
                                    group_delta='int',   # sex group is a category
                                    age_min=0,           # minimum age in this life table
                                    age_delta=5)         # age interval
 
 # get sample for time until death
 print(mortalityModel.sample_time_to_death(group=0, age=8.9, rng=rng))
+print(mortalityModel.sample_time_to_death(group=0, age=0, rng=rng))
+print(mortalityModel.sample_time_to_death(group=0, age=32, rng=rng))
 
 
