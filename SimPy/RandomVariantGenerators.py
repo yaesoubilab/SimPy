@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as scipy
 from numpy.random import RandomState
-
+import math
 
 class RNG(RandomState):
     def __init__(self, seed):
@@ -15,9 +15,10 @@ class RVG:
     def __init__(self):
         pass
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         """
         :param rng: an instant of RNG class
+        :param rng: optional arguments
         :returns one realization from the defined probability distribution """
 
         # abstract method to be overridden in derived classes to process an event
@@ -29,7 +30,7 @@ class Constant (RVG):
         RVG.__init__(self)
         self.value = value
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return self.value
 
 
@@ -43,7 +44,7 @@ class Exponential(RVG):
         self.scale = scale
         self.loc = loc
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.expon.rvs(loc=self.loc, scale=self.scale, random_state=rng)
 
 
@@ -56,7 +57,7 @@ class Bernoulli(RVG):
         RVG.__init__(self)
         self.p = p
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         sample = 0
         if rng.random_sample() <= self.p:
             sample = 1
@@ -77,7 +78,7 @@ class Beta(RVG):
         self.scale = scale
         self.loc = loc
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.beta.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
 
@@ -94,7 +95,7 @@ class BetaBinomial(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         """
         ref: https://blogs.sas.com/content/iml/2017/11/20/simulate-beta-binomial-sas.html
         :return: a realization from the Beta Binomial distribution
@@ -116,7 +117,7 @@ class Binomial(RVG):
         self.p = p
         self.loc = loc
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.binom.rvs(self.N, self.p, self.loc, random_state=rng)
 
 
@@ -130,7 +131,7 @@ class Dirichlet(RVG):
         RVG.__init__(self)
         self.a = a
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         """
         :return: (array) a realization from the Dirichlet distribution
         """
@@ -153,7 +154,7 @@ class Empirical(RVG):
             raise ValueError('Probabilities should sum to 1.')
         self.prob = probabilities
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         """
         :return: (int) from possible outcomes [0, 1, 2, 3, ...]
         """
@@ -173,7 +174,7 @@ class Gamma(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.gamma.rvs(self.a, self.loc, self.scale, random_state=rng)
 
 
@@ -192,7 +193,7 @@ class GammaPoisson(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         sample_rate = Gamma(a=self.a, scale=self.gamma_scale).sample(rng)
         sample_poisson = Poisson(mu=sample_rate)
         return sample_poisson.sample(rng) * self.scale + self.loc
@@ -208,7 +209,7 @@ class Geometric(RVG):
         self.p = p
         self.loc = loc
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.geom.rvs(self.p, self.loc, random_state=rng)
 
 
@@ -225,7 +226,7 @@ class JohnsonSb(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
 
@@ -242,7 +243,7 @@ class JohnsonSu(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
 
@@ -257,7 +258,7 @@ class LogNormal(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.lognorm.rvs(self.s, self.loc, self.scale, random_state=rng)
 
 
@@ -273,7 +274,7 @@ class Multinomial(RVG):
         self.N = N
         self.pvals = pvals
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return rng.multinomial(self.N, self.pvals)
 
 
@@ -291,12 +292,52 @@ class NegativeBinomial(RVG):
         self.p = p
         self.loc = loc
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         """
         :return: a realization from the NegativeBinomial distribution
         (the number of failure before a specified number of successes, n, occurs.)
         """
         return scipy.nbinom.rvs(self.n, self.p, self.loc, random_state=rng)
+
+
+class NonHomogeneousExponential(RVG):
+    def __init__(self, rates, delta_t=1):
+        """
+        :param rates: (list) of rates over each period (e.g. [1, 2])
+        :param delta_t: length of each period
+        """
+
+        if rates[-1] == 0:
+            raise ValueError('For a non-homogeneous exponential distribution, '
+                             'the rate of the last period should be greater than 0.')
+
+        RVG.__init__(self)
+        self.rates = rates
+        self.deltaT = delta_t
+
+    def sample(self, rng, arg=None):
+        """
+        :param arg: current time (age)
+        :return: a realization from the NonHomogeneousExponential distribution
+        """
+
+        if_occurred = False
+        if arg is None:
+            i = 0
+        else:
+            i = math.floor(arg/self.deltaT)
+        while not if_occurred:
+            if self.rates[i] > 0:
+                exp = Exponential(scale=1/self.rates[i])
+                t = exp.sample(rng)
+            else:
+                t = float('inf')
+
+            if i == len(self.rates)-1 or t < self.deltaT:
+                if_occurred = True
+                return t + i*self.deltaT
+            else:
+                i += 1
 
 
 class Normal(RVG):
@@ -309,7 +350,7 @@ class Normal(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.norm.rvs(self.loc, self.scale, random_state=rng)
 
 
@@ -323,7 +364,7 @@ class Poisson(RVG):
         self.mu = mu
         self.loc = loc
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.poisson.rvs(self.mu, self.loc, random_state=rng)
 
 
@@ -339,7 +380,7 @@ class Triangular(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.triang.rvs(self.c, self.loc, self.scale, random_state=rng)
 
 
@@ -354,7 +395,7 @@ class Uniform(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.uniform.rvs(self.loc, self.scale, random_state=rng)
 
 
@@ -370,7 +411,7 @@ class UniformDiscrete(RVG):
         self.l = l
         self.u = u
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return rng.randint(low=self.l, high=self.u + 1)
 
 
@@ -385,5 +426,5 @@ class Weibull(RVG):
         self.loc = loc
         self.scale = scale
 
-    def sample(self, rng):
+    def sample(self, rng, arg=None):
         return scipy.weibull_min.rvs(self.a, self.loc, self.scale, random_state=rng)

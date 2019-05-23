@@ -283,6 +283,20 @@ def test_negative_binomial(rnd, n, p, loc=0):
                        )
 
 
+def test_non_homogeneous_exponential(rnd, rates, delta_t=1):
+    # non homogeneous exponential random variate generator
+    nhexp_dist = RVGs.NonHomogeneousExponential(rates=rates, delta_t=delta_t)
+
+    # obtain samples
+    samples = get_samples(nhexp_dist, rnd)
+
+    # report mean and variance
+    print_test_results('Non-Homogeneous Exponential', samples,
+                       expectation=0,
+                       variance=0
+                       )
+
+
 def test_normal(rnd, loc=0, scale=1):
     #normal random variate generator
     normal_dist = RVGs.Normal(loc, scale)
