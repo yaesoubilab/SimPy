@@ -162,7 +162,7 @@ class _DataFrame:
             x_value = [x_value]
 
         if self._xDelta == 'int':
-            if type(x_value[0]) is not int:
+            if not (isinstance(x_value[0], np.integer) or isinstance(x_value[0], int)):
                 raise ValueError('x_value should be an integer for categorical variables.')
             return x_value[0] - self._xMin
         else:
