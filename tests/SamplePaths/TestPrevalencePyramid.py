@@ -24,7 +24,8 @@ pyramid.record_increment(x_values=[5.2, 1], increment=-2)
 # adding 1 persons of age 15 and sex = 0
 pyramid.record_increment(x_values=[15, 0], increment=1)
 
-print(pyramid.get_current_value(x_values=[1, 0]))
+print('Size of group with age 0-5 and sex 0:', pyramid.get_current_value(x_values=[0, 0]))
+print('Size of group with age 5-10 and sex 1:', pyramid.get_current_value(x_values=[5, 1]))
 
 # get the total population size
 print('Population size:', pyramid.get_sum())
