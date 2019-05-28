@@ -164,12 +164,12 @@ class _DataFrame:
         if self._xDelta == 'int':
             if not (isinstance(x_value[0], np.integer) or isinstance(x_value[0], int)):
                 raise ValueError('x_value should be an integer for categorical variables.')
-            return x_value[0] - self._xMin
+            return int(x_value[0] - self._xMin)
         else:
             if x_value[0] > self._xMax:
                 return len(self._objs) - 1
             else:
-                return round((x_value[0] - self._xMin) / self._xDelta)
+                return int(round((x_value[0] - self._xMin) / self._xDelta))
 
     def get_sum(self):
         if self._ifOneDim:
