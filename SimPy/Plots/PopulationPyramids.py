@@ -135,8 +135,8 @@ def plot_pyramids(observed_data, simulated_data,
     # legend1 = axis[1].legend(handlesy, labelsy)
     # legend1.get_texts()[0].set_text('Data_set')
 
-    axis[0].legend()
-    axis[1].legend()
+    axis[0].legend(markerscale=0.5)
+    axis[1].legend(markerscale=0.5)
 
     fig.tight_layout()
     # st.set_y(1)
