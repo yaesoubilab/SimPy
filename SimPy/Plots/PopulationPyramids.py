@@ -20,31 +20,26 @@ def plot_pyramids(observed_data, simulated_data,
     :return:
     """
 
-    # women_count/ men_count = array counter
-    women_count = 0
-    men_count = 0
     # men and women percent of population array
-    womens_list = []
-    mens_list = []
-    w_age = []
-    m_age = []
+    w_sizes = []
+    m_sizes = []
+    w_ages = []
+    m_ages = []
 
     # m_num_age/ w_num_age = keep track of the age of the men and women
-    length = len(observed_data)
+    num_of_groups = len(observed_data)
     i = 0
     # sort data into separate arrays
-    while i < length:
+    while i < num_of_groups:
         # woman
         if observed_data[i][1] == 1:
-            womens_list.insert(women_count, observed_data[i][2] * 100)
-            w_age.insert(women_count, observed_data[i][0])
-            women_count = women_count + 1
+            w_sizes.append(observed_data[i][2] * 100)
+            w_ages.append(observed_data[i][0])
             i = i + 1
         # men
         else:
-            mens_list.insert(men_count, observed_data[i][2] * 100)
-            m_age.insert(men_count, observed_data[i][0])
-            men_count = men_count + 1
+            m_sizes.append(observed_data[i][2] * 100)
+            m_ages.append(observed_data[i][0])
             i = i + 1
 
     # plot
@@ -67,10 +62,10 @@ def plot_pyramids(observed_data, simulated_data,
         = axis[0].axis([0, x_lim, -age_group_length/2-0.5, y_lim+0.5])
     axis[1].xmin, axis[1].xmax, axis[1].ymin, axis[1].ymax \
         = axis[1].axis([0, x_lim, -age_group_length/2-0.5, y_lim+0.5])
-    axis[0].barh(m_age, mens_list, age_group_length, align='center', color='brown', edgecolor='black', alpha=0.4)
+    axis[0].barh(m_ages, m_sizes, age_group_length, align='center', color='brown', edgecolor='black', alpha=0.4)
     axis[0].invert_xaxis()
     axis[0].set(title='\nMen')
-    axis[1].barh(w_age, womens_list, age_group_length, align='center', color='gray', edgecolor='black', alpha=0.4)
+    axis[1].barh(w_ages, w_sizes, age_group_length, align='center', color='gray', edgecolor='black', alpha=0.4)
     axis[1].set(title='\nWomen')
     axis[0].set_ylabel('Age')
     axis[0].set_xlabel('Percent of Population')
