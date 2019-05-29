@@ -335,7 +335,7 @@ class NonHomogeneousExponential(RVG):
 
             if i == len(self.rates)-1 or t < self.deltaT:
                 if_occurred = True
-                return t + i*self.deltaT
+                return max(0, t + i*self.deltaT - arg)
             else:
                 i += 1
 
