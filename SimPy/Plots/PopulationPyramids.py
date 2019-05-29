@@ -105,14 +105,13 @@ def plot_pyramids(observed_data, simulated_data,
 
 
 # testing
-# data_table = [[0, 0, 0.1], [0, 1, 0.2], [5, 0, 0.3], [5, 1, 0.4], [10, 0, 0.6], [10, 1, 0.4]]
-# sim_table = [
-#     [[0, 0, 0.5], [0, 1, 0.3], [5, 0, 0.5], [5, 1, 0.6]],
-#     [[0, 0, 0.2], [0, 1, 0.4], [5, 0, 0.9], [5, 1, 0.4]]
-# ]
-#
-# pyrfig = plot_pyramids(data_list=data_table, sim_list= sim_table, fig_size=(6, 4),
-#                       x_lim=100, y_lim=12.5,
-#                       title='Population Pyramid in U.S.')
-# pyrfig.show()
-# pyrfig.savefig("pyramid.png")
+data_table = [[0, 0, 0.1], [0, 1, 0.2], [5, 0, 0.3], [5, 1, 0.4], [10, 0, 0.6], [10, 1, 0.4]]
+sim_table = [
+    [[0, 0, 0.5], [0, 1, 0.3], [5, 0, 0.5], [5, 1, 0.6]],
+    [[0, 0, 0.2], [0, 1, 0.4], [5, 0, 0.9], [5, 1, 0.4]]
+]
+
+plot_pyramids(observed_data=data_table, simulated_data= sim_table,
+              fig_size=(6, 4),
+              x_lim=100, y_lim=12.5,
+              title='Population Pyramid in U.S.')
