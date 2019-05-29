@@ -1,4 +1,5 @@
 from SimPy.DataFrames import Pyramid
+from SimPy.Plots import PopulationPyramids as P
 
 """
 a pyramid to store population size by age and sex:
@@ -26,13 +27,18 @@ pyramid.record_increment(x_values=[15, 0], increment=1)
 
 print('Size of group with age 0-5 and sex 0:', pyramid.get_current_value(x_values=[0, 0]))
 print('Size of group with age 5-10 and sex 1:', pyramid.get_current_value(x_values=[5, 1]))
-
 # get the total population size
 print('Population size:', pyramid.get_sum())
 # get the size of each group
-print('Population size by age, sex:', pyramid.get_table_of_values())
+print('Population size by age, sex:', pyramid.get_values())
 # get the percentage of population in each group
-print('Population distribution by age, sex', pyramid.get_percentage())
+print('Population distribution by age, sex', pyramid.get_percentages())
+# plot the pyramid
+P.plot_pyramids(observed_pyramid=pyramid.get_percentage(),
+                simulated_pyramids=None,
+                x_lim=100,
+                y_lim=12.5,
+                title='Testing Pyramid')
 
 
 # updating a new pyramid based on the one above
@@ -45,6 +51,6 @@ print('\nTesting the new pyramid:')
 # get the total population size
 print('Population size:', newPyramid.get_sum())
 # get the size of each group
-print('Population size by age, sex:', newPyramid.get_table_of_values())
+print('Population size by age, sex:', newPyramid.get_values())
 # get the percentage of population in each group
-print('Population distribution by age, sex', newPyramid.get_percentage())
+print('Population distribution by age, sex', newPyramid.get_percentages())

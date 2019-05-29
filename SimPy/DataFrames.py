@@ -419,9 +419,6 @@ class DataFrameWithEmpiricalDist(DataFrame):
         return values
 
 
-
-
-
 class Pyramid(_DataFrame):
     """
     example:
@@ -484,7 +481,7 @@ class Pyramid(_DataFrame):
 
         return self.get_obj(x_value=x_values)
 
-    def get_table_of_values(self):
+    def get_values(self):
         """ :returns the value of the pyramid in the table format
             In the example above, it returns:
             [
@@ -498,3 +495,18 @@ class Pyramid(_DataFrame):
 
         """
         return self.get_rows()
+
+    def get_percentages(self):
+        """ :returns the percentage of the population in each group
+            In the example above, it returns:
+            [
+            [0,     0,        10/210],
+            [0,     1,        20/210],
+            [5,     0,        30/210],
+            [5,     1,        40/210],
+            [10,    0,        50/210],
+            [10,    1,        60/210]
+            ]
+
+        """
+        return self.get_percentage()
