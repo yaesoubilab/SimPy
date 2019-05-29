@@ -3,13 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_pyramids(observed_pyramid, simulated_pyramids,
+def plot_pyramids(observed_data, simulated_data,
                   x_lim, y_lim, title,
                   y_ticks_places=None, y_labels=None,
                   fig_size=None, age_group_length=5):
     """
-    :param observed_pyramid:
-    :param simulated_pyramids:
+    :param observed_data:
+    :param simulated_data:
     :param x_lim:
     :param y_lim:
     :param title:
@@ -30,20 +30,20 @@ def plot_pyramids(observed_pyramid, simulated_pyramids,
     m_age = []
 
     # m_num_age/ w_num_age = keep track of the age of the men and women
-    length = len(observed_pyramid)
+    length = len(observed_data)
     i = 0
     # sort data into separate arrays
     while i < length:
         # woman
-        if observed_pyramid[i][1] == 1:
-            womens_list.insert(women_count, observed_pyramid[i][2] * 100)
-            w_age.insert(women_count, observed_pyramid[i][0])
+        if observed_data[i][1] == 1:
+            womens_list.insert(women_count, observed_data[i][2] * 100)
+            w_age.insert(women_count, observed_data[i][0])
             women_count = women_count + 1
             i = i + 1
         # men
         else:
-            mens_list.insert(men_count, observed_pyramid[i][2] * 100)
-            m_age.insert(men_count, observed_pyramid[i][0])
+            mens_list.insert(men_count, observed_data[i][2] * 100)
+            m_age.insert(men_count, observed_data[i][0])
             men_count = men_count + 1
             i = i + 1
 
@@ -77,19 +77,19 @@ def plot_pyramids(observed_pyramid, simulated_pyramids,
     axis[1].set_xlabel('Percent of Population')
 
     # adding pyramids from simulation
-    if simulated_pyramids is not None:
-        num_length = len(simulated_pyramids)
+    if simulated_data is not None:
+        num_length = len(simulated_data)
         j = 0
         k = 0
         while j < num_length:
-            while k < len(simulated_pyramids[j]):
-                if simulated_pyramids[j][k][1] == 1:
-                    axis[0].plot(simulated_pyramids[j][k][2] * 100, simulated_pyramids[j][k][0],
+            while k < len(simulated_data[j]):
+                if simulated_data[j][k][1] == 1:
+                    axis[0].plot(simulated_data[j][k][2] * 100, simulated_data[j][k][0],
                                  marker='|', mec="blue",
                                  markersize=10*age_group_length/2, color="blue", alpha=0.6)
                     k = k + 1
                 else:
-                    axis[1].plot(simulated_pyramids[j][k][2] * 100, simulated_pyramids[j][k][0],
+                    axis[1].plot(simulated_data[j][k][2] * 100, simulated_data[j][k][0],
                                  marker='|', mec="blue",
                                  markersize=10*age_group_length/2, color="blue", alpha=0.6)
                     k = k + 1

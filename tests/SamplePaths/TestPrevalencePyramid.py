@@ -34,8 +34,8 @@ print('Population size by age, sex:', pyramid.get_values())
 # get the percentage of population in each group
 print('Population distribution by age, sex', pyramid.get_percentages())
 # plot the pyramid
-P.plot_pyramids(observed_pyramid=pyramid.get_percentage(),
-                simulated_pyramids=None,
+P.plot_pyramids(observed_data=pyramid.get_percentage(),
+                simulated_data=None,
                 x_lim=100,
                 y_lim=12.5,
                 title='Testing Pyramid')
