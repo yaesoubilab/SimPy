@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 
 def plot_pyramids(observed_data, simulated_data,
@@ -96,28 +97,53 @@ def plot_pyramids(observed_data, simulated_data,
         num_length = len(simulated_data)
         j = 0
         k = 0
+        sim_data_w = []
+        sim_data_m = []
+        sim_data_wa = []
+        sim_data_ma = []
+        w_count = 0
+        m_count = 0
         while j < num_length:
             while k < len(simulated_data[j]):
                 if simulated_data[j][k][1] == 1:
-                    axis[0].plot(simulated_data[j][k][2] * 100, simulated_data[j][k][0],
-                                 marker='|', mec="blue",
-                                 markersize=10*age_group_length/2,
-                                 mew=1.5,     # increase this for ticker bars
-                                 color="blue", alpha=transparency)
+                    sim_data_w.append(simulated_data[j][k][2] * 100)
+                    sim_data_wa.append(simulated_data[j][k][0])
+                    w_count +=1
                     k = k + 1
                 else:
-                    axis[1].plot(simulated_data[j][k][2] * 100, simulated_data[j][k][0],
-                                 marker='|', mec="blue",
-                                 markersize=10*age_group_length/2,
-                                 mew=1.5,  # increase this for ticker bars
-                                 color="blue", alpha=transparency)
+                    sim_data_m.append(simulated_data[j][k][2] * 100)
+                    sim_data_ma.append(simulated_data[j][k][0])
+                    m_count +=1
                     k = k + 1
             k = 0
             j = j + 1
+        axis[0].scatter(sim_data_w, sim_data_wa,
+                     marker='|', linewidths=5.0, s = (10*age_group_length/2)*20 , color="blue", alpha=transparency,
+                     label = 'sim_data')
+        axis[1].scatter(sim_data_m, sim_data_ma,
+                     marker='|', linewidths=5.0,s = (10*age_group_length/2)*20 ,
+                     color="blue", alpha=transparency,
+                     label = 'sim_data')
     else:
         pass
+
+
+    # handlesx, labelsx = axis[0].get_legend_handles_labels()
+    # legend0 = axis[0].legend(handlesx, labelsx)
+    # legend0.get_texts()[0].set_text('Data_set')
+    # handlesy, labelsy = axis[1].get_legend_handles_labels()
+    # legend1 = axis[1].legend(handlesy, labelsy)
+    # legend1.get_texts()[0].set_text('Data_set')
+
+    axis[0].legend()
+    axis[1].legend()
 
     fig.tight_layout()
     # st.set_y(1)
     # fig.subplots_adjust(top=1)
     fig.show()
+
+pyrfig = plot_pyramids([[0, 0, 0.1], [0, 1, 0.2], [5, 0, 0.3], [5, 1, 0.4], [10, 0, 0.6], [10, 1, 0.4]], [[[0, 0, 0.5], [0, 1, 0.3],
+[5, 0, 0.5], [5, 1, 0.6]], [[0, 0, 0.2], [0, 1, 0.4], [5, 0, 0.9], [5, 1, 0.4]]])
+
+plt.show(pyrfig)
