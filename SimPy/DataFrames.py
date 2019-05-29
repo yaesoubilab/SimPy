@@ -111,7 +111,7 @@ class OneDimDataFrameWithExpDist (OneDimDataFrame):
 
 
 class _DataFrame:
-    def __init__(self, list_x_min, list_x_max, list_x_delta):
+    def __init__(self, list_x_min, list_x_max, list_x_delta, name=''):
 
         if not isinstance(list_x_min, list):
             list_x_min = [list_x_min]
@@ -123,6 +123,7 @@ class _DataFrame:
         self._xMin = list_x_min[0]
         self._xMax = list_x_max[0]
         self._xDelta = list_x_delta[0]
+        self.name = name
 
         self._xs = []           # x breakpoints
         self._ifOneDim = False
@@ -180,7 +181,7 @@ class _DataFrame:
                 sum_df += df.get_sum()
             return sum_df
 
-    def get_percentage(self):
+    def get_percents(self):
         total = self.get_sum()
         rows = []
         for row in self.get_rows():
@@ -431,7 +432,7 @@ class Pyramid(_DataFrame):
         10,    1,        60
     """
 
-    def __init__(self, list_x_min, list_x_max, list_x_delta):
+    def __init__(self, list_x_min, list_x_max, list_x_delta, name=''):
         """
         :param list_x_min: list of minimum value of x (in example above: [0, 0])
         :param list_x_max: list of maximum value of x (in example above: [10, 1])
@@ -443,7 +444,8 @@ class Pyramid(_DataFrame):
         _DataFrame.__init__(self,
                             list_x_min=list_x_min,
                             list_x_max=list_x_max,
-                            list_x_delta=list_x_delta)
+                            list_x_delta=list_x_delta,
+                            name=name)
 
     def record_increment(self, x_values, increment):
         """
@@ -509,4 +511,4 @@ class Pyramid(_DataFrame):
             ]
 
         """
-        return self.get_percentage()
+        return self.get_percents()
