@@ -9,7 +9,9 @@ def plot_pyramids(observed_data, simulated_data,
                   age_group_width=5,
                   colors=('brown', 'grey', 'blue'),
                   legend=('Data', 'Model'),
-                  transparency=0.4):
+                  length_of_sim_bars=500,
+                  scale_of_sim_legend = 0.5,
+                  transparency=0.5):
     """
     :param observed_data: example:
                         [[0, 0, 0.1], [0, 1, 0.2], [5, 0, 0.3], [5, 1, 0.4], [10, 0, 0.6], [10, 1, 0.4]]
@@ -26,6 +28,8 @@ def plot_pyramids(observed_data, simulated_data,
     :param colors: (tuple) example: ('brown', 'grey', 'blue')
                                     for men, women and simulation bars
     :param legend: (tuple) default ('Data', 'Model'). legend will not display if set to None
+    :param length_of_sim_bars: length of simulation bars
+    :param scale_of_sim_legend: (between 0 and 1) to shrink simulation bars shown on the legends
     :param transparency: transparency of bars
     """
 
@@ -120,20 +124,20 @@ def plot_pyramids(observed_data, simulated_data,
             j = j + 1
         axis[0].scatter(sim_data_w, sim_data_wa,
                         marker='|', linewidths=5.0,
-                        s=(10 * age_group_width / 2) * 20,
+                        s=length_of_sim_bars,
                         color='blue', alpha=transparency,
                         label='Model')
         axis[1].scatter(sim_data_m, sim_data_ma,
                         marker='|', linewidths=5.0,
-                        s=(10 * age_group_width / 2) * 20,
+                        s=length_of_sim_bars,
                         color='blue', alpha=transparency,
                         label='Model')
     else:
         pass
 
     if legend is not None:
-        axis[0].legend(markerscale=0.5)
-        axis[1].legend(markerscale=0.5)
+        axis[0].legend(markerscale=scale_of_sim_legend)
+        axis[1].legend(markerscale=scale_of_sim_legend)
 
     fig.tight_layout()
     # st.set_y(1)
