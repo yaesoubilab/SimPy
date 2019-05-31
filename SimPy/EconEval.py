@@ -365,7 +365,7 @@ class CEA(_EconEval):
         :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
                 thousands or hundred thousands unit
         :return: a dictionary of additional cost, additional effect, and cost-effectiveness ratio for
-                all strategies
+                all strategies with respect to the Base strategy
         """
 
         dictionary_results = {}
@@ -392,9 +392,10 @@ class CEA(_EconEval):
 
         return dictionary_results
 
-    def add_ce_plane_to_ax(self, ax, add_clouds=True, show_legend=True,
+    def add_ce_plane_to_ax(self, ax,
+                           add_clouds=True, show_legend=True,
                            center_s=75, cloud_s=25, transparency=0.1,
-                           x_range = None, y_range = None,
+                           x_range=None, y_range=None,
                            cost_multiplier=1, effect_multiplier=1):
 
         # find the frontier (x, y)'s
@@ -411,7 +412,9 @@ class CEA(_EconEval):
                 linewidth=2,  # line width
                 label="Frontier")  # label to show in the legend
 
+        # add all strategies
         for s in self.strategies:
+            # the mean change in effect and cost
             ax.scatter(s.dEffect.get_mean()*effect_multiplier, s.dCost.get_mean()*cost_multiplier,
                        c=s.color,  # color
                        alpha=1,  # transparency
@@ -419,7 +422,8 @@ class CEA(_EconEval):
                        s=center_s,  # marker size
                        label=s.name  # name to show in the legend
                        )
-            if add_clouds: # idx >= 2:
+            # and the clouds
+            if add_clouds:
                 ax.scatter(s.dEffectObs*effect_multiplier, s.dCostObs*cost_multiplier,
                            c=s.color,  # color of dots
                            alpha=transparency,  # transparency of dots
@@ -472,14 +476,19 @@ class CEA(_EconEval):
     def create_pairwise_ceas(self):
         """
         creates a list of list for pairwise cost-effectiveness analysis
+        For example for strategies ['Base', 'A', 'B']:
+        [
+            ['Base wr Base',    'A wr Base',    'B wr Base'],
+            ['Base wr A',       'A wr A',       'B wr A'],
+            ['B wr B',          'A wr B',       'B wr B'],
+        ]
         """
 
         # create CEA's for all pairs
-
         self._pairwise_ceas = []
         for s_base in self.strategies:
             list_ceas = []
-            for s_new in self.strategies[1:]:
+            for s_new in self.strategies:#[1:]:
 
                 # if the base and the new strategies are the same
                 if s_base.name == s_new.name:
@@ -494,7 +503,8 @@ class CEA(_EconEval):
 
         self._ifPairwiseCEAsAreCalculated = True
 
-        # since the relative performance of strategies (relative costs and relative effects) have changed.
+        # since the relative performance of strategies
+        # (relative costs and relative effects) have changed.
         self._ifFrontierIsCalculated = False
 
     def print_pairwise_cea(self, interval_type='n',
@@ -537,7 +547,9 @@ class CEA(_EconEval):
                                        file_name=name+'.csv',
                                        directory=directory)
 
-    def plot_pairwise_ceas(self, figure_size=None, font_size=6, show_subplot_labels=False,
+    def plot_pairwise_ceas(self,
+                           figure_size=None, font_size=6,
+                           show_subplot_labels=False,
                            effect_label='', cost_label='',
                            center_s=50, cloud_s=25, transparency=0.2,
                            x_range=None, y_range=None,
@@ -545,27 +557,19 @@ class CEA(_EconEval):
                            column_titles=None, row_titles=None,
                            file_name='pairwise_CEA.png'):
 
-        # valid_comparison = []
-        # for i, s_current in enumerate(self.strategies):
-        #     row = []
-        #     for j, s_new in enumerate(self.strategies[1:]):
-        #         if s_current.ifDominated == False and s_new.ifDominated == False:
-        #             row.append('*')
-        #         else:
-        #             row.append('')
-        #     valid_comparison.append(row)
-
+        # identify which CEA is valid
+        # (i.e. comparing strategies that are on the frontier)
+        # valid comparisons are marked with '*'
         valid_comparison = []
         for i in range(self._n):
             valid_comparison.append(['']*self._n)
-
         on_frontier = self.get_strategies_on_frontier()
         for idx in range(len(on_frontier)-1):
             i = on_frontier[idx].idx
             j = on_frontier[idx+1].idx
             valid_comparison[i][j] = '*'
 
-        # set default properties
+        # set default properties of the figure
         plt.rc('font', size=font_size) # fontsize of texts
         plt.rc('axes', titlesize=font_size)  # fontsize of the figure title
         plt.rc('axes', titleweight='semibold')  # fontweight of the figure title
@@ -574,25 +578,17 @@ class CEA(_EconEval):
         f, axarr = plt.subplots(nrows=self._n, ncols=self._n,
                                 sharex=True, sharey=True, figsize=figure_size)
 
-        # show subplot labels
-        Y_LABEL_COORD_X = -0.05     # increase to move right
-        # if show_subplot_labels:
-        #     axs = axarr.flat
-        #     for n, ax in enumerate(axs):
-        #         ax.text(Y_LABEL_COORD_X-0.05, 1.05, string.ascii_uppercase[n]+')', transform=ax.transAxes,
-        #                 size=DEFAULT_FONT_SIZE+1, weight='bold')
+        Y_LABEL_COORD_X = -0.05     # increase to move the A-B-C labels to right
         abc_idx = 0
         for i in range(self._n):
             for j in range(self._n):
                 # get the current axis
                 ax = axarr[i, j]
 
-                # if i == j + 1:
-                #     pass
-                #     ax.axis('off')
-                # else:
+                # add the A-B-C label if needed
                 if show_subplot_labels:
-                    ax.text(Y_LABEL_COORD_X - 0.05, 1.05, string.ascii_uppercase[abc_idx] + ')',
+                    ax.text(Y_LABEL_COORD_X - 0.05, 1.05,
+                            string.ascii_uppercase[abc_idx] + ')',
                             transform=ax.transAxes,
                             size=font_size + 1, weight='bold')
 
@@ -610,16 +606,19 @@ class CEA(_EconEval):
                     else:
                         ax.set_ylabel(row_titles[i], fontweight='bold')
 
+                # specify ranges of x- and y-axis
                 if x_range is not None:
                     ax.set_xlim(x_range)
                 if y_range is not None:
                     ax.set_ylim(y_range)
 
+                # CEA of these 2 strategies
                 cea = CEA(strategies=[self.strategies[i], self.strategies[j]],
                           if_paired=self._ifPaired,
                           health_measure=self._healthMeasure,
                           if_reset_strategies=True)
 
+                # add the CE figure to this axis
                 cea.add_ce_plane_to_ax(ax=ax, show_legend=False,
                                        center_s=center_s,
                                        cloud_s=cloud_s,
@@ -627,30 +626,30 @@ class CEA(_EconEval):
                                        cost_multiplier=cost_multiplier,
                                        effect_multiplier=effect_multiplier)
 
-                # add ICER
+                # add ICER to the figure
+                # could be 'Dominated', 'Cost-Saving' or 'estimated ICER'
                 text = ''
                 if i != j and cea.strategies[1].ifDominated:
                     text = 'Dominated'
                 elif cea.strategies[1].dCost.get_mean() < 0 and cea.strategies[1].dEffect.get_mean() > 0:
-                    text = 'Cost-saving' + valid_comparison[i][j]
+                    text = 'Cost-Saving' + valid_comparison[i][j]
                 elif cea.strategies[1].icer is not None:
                     text = F.format_number(cea.strategies[1].icer.get_ICER(), deci=1, format='$') + valid_comparison[i][j]
+                # add the text of the ICER to the figure
                 ax.text(0.95, 0.95, text, transform=ax.transAxes, fontsize=6,
                         va='top', ha='right')
 
                 abc_idx += 1
-                # remove unnecessary labels for shared axis
-                # if i < self._n - 1:
-                #     ax.set(xlabel='')
-                if j > 0:
-                    ax.set(ylabel='')
 
+        # add the common effect and cost labels
         f.text(0.55, 0, effect_label, ha='center', va='center', fontweight='bold')
         f.text(0.99, 0.5, cost_label, va='center', rotation=-90, fontweight='bold')
+
         f.show()
         f.savefig(file_name, bbox_inches='tight', dpi=300)
 
-        # since the relative performance of strategies (relative costs and relative effects) have changed.
+        # since the relative performance of strategies 
+        # (relative costs and relative effects) have changed.
         self._ifFrontierIsCalculated = False
 
     def __find_shifted_strategies(self):
@@ -1126,7 +1125,7 @@ class CBA(_EconEval):
         # format y-axis
         vals_y = ax.get_yticks()
         ax.set_yticks(vals_y)
-        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=1) for x in vals_y])
 
         ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 

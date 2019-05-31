@@ -46,4 +46,6 @@ cea.plot_pairwise_ceas(
     center_s=40,
     cloud_s=10,
     transparency=0.1,
+    x_range=[-20, 20],
+    y_range=[-2500, 2500],
 )
