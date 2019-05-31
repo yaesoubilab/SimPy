@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 
 def plot_pyramids(observed_data, simulated_data,
@@ -127,12 +126,12 @@ def plot_pyramids(observed_data, simulated_data,
         axis[0].scatter(sim_data_w, sim_data_wa,
                         marker='|', linewidths=5.0,
                         s=length_of_sim_bars,
-                        color='blue', alpha=transparency,
+                        color=colors[2], alpha=transparency,
                         label='Model')
         axis[1].scatter(sim_data_m, sim_data_ma,
                         marker='|', linewidths=5.0,
                         s=length_of_sim_bars,
-                        color='blue', alpha=transparency,
+                        color=colors[2], alpha=transparency,
                         label='Model')
     else:
         pass
