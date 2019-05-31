@@ -3,6 +3,7 @@ import scipy.stats as scipy
 from numpy.random import RandomState
 import math
 
+
 class RNG(RandomState):
     def __init__(self, seed):
         RandomState.__init__(self, seed)
@@ -18,7 +19,7 @@ class RVG:
     def sample(self, rng, arg=None):
         """
         :param rng: an instant of RNG class
-        :param rng: optional arguments
+        :param arg: optional arguments
         :returns one realization from the defined probability distribution """
 
         # abstract method to be overridden in derived classes to process an event
