@@ -10,7 +10,8 @@ def plot_pyramids(observed_data, simulated_data,
                   legend=('Data', 'Model'),
                   length_of_sim_bars=500,
                   scale_of_sim_legend=0.5,
-                  transparency=0.5):
+                  transparency=0.5,
+                  file_name=None):
     """
     :param observed_data: example:
                         [[0, 0, 0.1], [0, 1, 0.2], [5, 0, 0.3], [5, 1, 0.4], [10, 0, 0.6], [10, 1, 0.4]]
@@ -32,6 +33,8 @@ def plot_pyramids(observed_data, simulated_data,
     :param scale_of_sim_legend: (between 0 and 1) to shrink simulation bars
                                 shown on the legends
     :param transparency: transparency of bars
+    :param file_name: (string) to save the figure. Example: 'Pyramid.png'.
+                    if not provided, the figure will be displayed.
     """
 
     w_sizes = []    # sizes of female age groups
@@ -145,4 +148,8 @@ def plot_pyramids(observed_data, simulated_data,
                        markerscale=scale_of_sim_legend)
 
     fig.tight_layout()
-    fig.show()
+
+    if file_name is None:
+        fig.show()
+    else:
+        fig.savefig(file_name, dpi=300)
