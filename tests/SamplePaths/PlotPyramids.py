@@ -11,4 +11,5 @@ sim_data = [
 P.plot_pyramids(observed_data=obs_data, simulated_data=sim_data,
                 fig_size=(6, 4),
                 x_lim=100,
-                title='Population Pyramid in U.S.')
+                title='Population Pyramid in U.S.'
+                )

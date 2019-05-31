@@ -10,7 +10,7 @@ def plot_pyramids(observed_data, simulated_data,
                   colors=('brown', 'grey', 'blue'),
                   legend=('Data', 'Model'),
                   length_of_sim_bars=500,
-                  scale_of_sim_legend = 0.5,
+                  scale_of_sim_legend=0.5,
                   transparency=0.5):
     """
     :param observed_data: example:
@@ -27,9 +27,11 @@ def plot_pyramids(observed_data, simulated_data,
     :param age_group_width: width of each age group in years.
     :param colors: (tuple) example: ('brown', 'grey', 'blue')
                                     for men, women and simulation bars
-    :param legend: (tuple) default ('Data', 'Model'). legend will not display if set to None
+    :param legend: (tuple) default ('Data', 'Model').
+                    legend will not be displayed if set to None
     :param length_of_sim_bars: length of simulation bars
-    :param scale_of_sim_legend: (between 0 and 1) to shrink simulation bars shown on the legends
+    :param scale_of_sim_legend: (between 0 and 1) to shrink simulation bars
+                                shown on the legends
     :param transparency: transparency of bars
     """
 
@@ -138,10 +140,10 @@ def plot_pyramids(observed_data, simulated_data,
     if legend is not None:
         handles, labels = axis[1].get_legend_handles_labels()
         handlesa, labelsa = axis[0].get_legend_handles_labels()
-        axis[0].legend(reversed(handlesa), reversed(labelsa), markerscale=scale_of_sim_legend)
-        axis[1].legend(reversed(handles), reversed(labels), markerscale=scale_of_sim_legend)
+        axis[0].legend(reversed(handlesa), reversed(labelsa),
+                       markerscale=scale_of_sim_legend)
+        axis[1].legend(reversed(handles), reversed(labels),
+                       markerscale=scale_of_sim_legend)
 
     fig.tight_layout()
-    # st.set_y(1)
-    # fig.subplots_adjust(top=1)
     fig.show()
