@@ -1,5 +1,6 @@
 import SimPy.RandomVariantGenerators as RVGs
 import numpy as np
+import math
 
 
 class OneDimDataFrame:
@@ -170,7 +171,7 @@ class _DataFrame:
             if x_value[0] > self._xMax:
                 return len(self._objs) - 1
             else:
-                return int(round((x_value[0] - self._xMin) / self._xDelta))
+                return int(math.floor((x_value[0] - self._xMin) / self._xDelta))
 
     def get_sum(self):
         if self._ifOneDim:

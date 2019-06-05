@@ -126,12 +126,12 @@ def plot_pyramids(observed_data, simulated_data,
                     k = k + 1
             k = 0
             j = j + 1
-        axis[0].scatter(sim_data_w, sim_data_wa,
+        axis[0].scatter(sim_data_m, sim_data_ma,
                         marker='|', linewidths=5.0,
                         s=length_of_sim_bars,
                         color=colors[2], alpha=transparency,
                         label='Model')
-        axis[1].scatter(sim_data_m, sim_data_ma,
+        axis[1].scatter(sim_data_w, sim_data_wa,
                         marker='|', linewidths=5.0,
                         s=length_of_sim_bars,
                         color=colors[2], alpha=transparency,
