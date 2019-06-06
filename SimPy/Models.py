@@ -1,4 +1,4 @@
-from SimPy.DataFrames import _DataFrame
+from SimPy.DataFrames import DataFrameOfObjects
 import SimPy.RandomVariantGenerators as RVGs
 
 
@@ -28,9 +28,9 @@ class MortalityModel:
         :param age_delta:
         """
 
-        self.df = _DataFrame(list_x_min=group_mins,
-                             list_x_max=group_maxs,
-                             list_x_delta=group_delta)
+        self.df = DataFrameOfObjects(list_x_min=group_mins,
+                                     list_x_max=group_maxs,
+                                     list_x_delta=group_delta)
 
         self.ageMin = age_min
 
@@ -39,8 +39,8 @@ class MortalityModel:
             for row in rows:
                 if df_row[:-1] == row[1:-1]:
                     rates.append(row[-1])
-            self.df.update_value(x_value=df_row[0:-1],
-                                 v=RVGs.NonHomogeneousExponential(rates=rates, delta_t=age_delta))
+            self.df.update_obj(x_value=df_row[0:-1],
+                               v=RVGs.NonHomogeneousExponential(rates=rates, delta_t=age_delta))
 
     def sample_time_to_death(self, group, age, rng):
 

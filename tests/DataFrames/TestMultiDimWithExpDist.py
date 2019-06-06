@@ -21,7 +21,7 @@ df2 = df.DataFrameWithExpDist(rows=rows,
                               list_x_delta=[5, 'int', 'int'])
 
 rng = RVGs.RNG(seed=1)
-print('Sample 1: ', df2.get_dist(x_value=[0, 0, 0]).sample(rng))
+print('Sample 1:', df2.get_dist(x_value=[0, 0, 0]).sample(rng))
 print('Sample 2', df2.get_dist(x_value=[1, 0, 0]).sample(rng))
 print('Sample 3', df2.get_dist(x_value=[2, 1, 0]).sample(rng))
 print('Sample 4', df2.get_dist(x_value=[5, 0, 1]).sample(rng))
