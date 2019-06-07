@@ -39,8 +39,8 @@ class MortalityModel:
             for row in rows:
                 if df_row[:-1] == row[1:-1]:
                     rates.append(row[-1])
-            self.df.update_obj(x_value=df_row[0:-1],
-                               v=RVGs.NonHomogeneousExponential(rates=rates, delta_t=age_delta))
+            self.df.set_obj(x_value=df_row[0:-1],
+                            obj=RVGs.NonHomogeneousExponential(rates=rates, delta_t=age_delta))
 
     def sample_time_to_death(self, group, age, rng):
 
