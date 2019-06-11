@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 
-def plot_pyramids(observed_data, simulated_data,
+def plot_pyramids(observed_data, simulated_data=None,
                   title=None, fig_size=None,
                   x_lim=100,
                   y_labels=None,
@@ -62,7 +63,7 @@ def plot_pyramids(observed_data, simulated_data,
         raise ValueError('Male and female age groups should be the same.')
 
     # find maximum value of the y_axis
-    y_lim = m_ages[-1] + age_group_width / 2
+    y_lim = m_ages[-1] - m_ages[0] + age_group_width / 2
 
     # either sets to default ticks or user input
     y_ticks_places = range(0, len(m_ages) * age_group_width, age_group_width)
@@ -86,13 +87,13 @@ def plot_pyramids(observed_data, simulated_data,
             = axis[i].axis([0, x_lim, -age_group_width * (1 / 2 + 1 / 10), y_lim + age_group_width * 1 / 10])
 
     # bar plot for males
-    axis[0].barh(m_ages, m_sizes, age_group_width,
+    axis[0].barh(np.array(m_ages)-m_ages[0], m_sizes, age_group_width,
                  align='center', color=colors[0],
                  edgecolor='black', alpha=transparency, label='Data')
     axis[0].invert_xaxis()
 
     # bar plot for females
-    axis[1].barh(w_ages, w_sizes, age_group_width,
+    axis[1].barh(np.array(w_ages)-w_ages[0], w_sizes, age_group_width,
                  align='center', color=colors[1],
                  edgecolor='black', alpha=transparency, label='Data')
 
