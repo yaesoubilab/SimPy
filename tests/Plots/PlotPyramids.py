@@ -38,6 +38,7 @@ age_sex_dist = [
     [16, 0, 0.057822037],  # 16, male
     [16, 1, 0.055305708]   # 16, female
 ]
+
 P.plot_pyramids(observed_data=age_sex_dist,
                 simulated_data=None,
                 fig_size=(6, 4),

@@ -108,25 +108,25 @@ def plot_pyramids(observed_data, simulated_data=None,
 
     # adding pyramids from simulation
     if simulated_data is not None:
-        num_length = len(simulated_data)
-        j = 0
-        k = 0
+        n_replications = len(simulated_data)
+        rep = 0     # simulation replication
+        g = 0       # age-sex group
         sim_data_w = []
         sim_data_m = []
         sim_data_wa = []
         sim_data_ma = []
-        while j < num_length:
-            while k < len(simulated_data[j]):
-                if simulated_data[j][k][1] == 1:
-                    sim_data_w.append(simulated_data[j][k][2] * 100)
-                    sim_data_wa.append(simulated_data[j][k][0])
-                    k = k + 1
+        while rep < n_replications:
+            while g < len(simulated_data[rep]):
+                if simulated_data[rep][g][1] == 1:
+                    sim_data_w.append(simulated_data[rep][g][2] * 100)
+                    sim_data_wa.append(simulated_data[rep][g][0] - w_ages[0])
+                    g = g + 1
                 else:
-                    sim_data_m.append(simulated_data[j][k][2] * 100)
-                    sim_data_ma.append(simulated_data[j][k][0])
-                    k = k + 1
-            k = 0
-            j = j + 1
+                    sim_data_m.append(simulated_data[rep][g][2] * 100)
+                    sim_data_ma.append(simulated_data[rep][g][0] - m_ages[0])
+                    g = g + 1
+            g = 0
+            rep = rep + 1
         axis[0].scatter(sim_data_m, sim_data_ma,
                         marker='|', linewidths=5.0,
                         s=length_of_sim_bars,
