@@ -144,6 +144,9 @@ class DataFrameOfObjects:
         if not isinstance(list_x_delta, list):
             list_x_delta = [list_x_delta]
 
+        self._list_x_min = list_x_min
+        self._list_x_max = list_x_max
+        self._list_x_delta = list_x_delta
         self._xMin = list_x_min[0]
         self._xMax = list_x_max[0]
         self._xDelta = list_x_delta[0]
@@ -507,10 +510,10 @@ class DataFrameWithEmpiricalDist(DataFrame):
         idx = self.sample_indices(rng=rng)
         for i, deltaX in enumerate(self.listXDelta):
             if deltaX == 'int':
-                values.append(idx[i])
+                values.append(idx[i]+self._list_x_min[i])
             else:
                 unif_dist = RVGs.Uniform(loc=0, scale=deltaX)
-                values.append(idx[i]*deltaX + unif_dist.sample(rng=rng))
+                values.append(idx[i]*deltaX + self._list_x_min[i] + unif_dist.sample(rng=rng))
 
         return values
 
