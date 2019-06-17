@@ -4,7 +4,7 @@ import os
 import numpy as numpy
 
 
-def write_csv(rows, file_name='csvfile.csv', delimiter='\t', directory='', delete_existing_files=False):
+def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete_existing_files=False):
     """ write a list to a csv file
     :param rows: list of lists to be imported to the csv file
     :param file_name: the file name to be given to the csv file
@@ -34,7 +34,7 @@ def write_csv(rows, file_name='csvfile.csv', delimiter='\t', directory='', delet
         file.close()
 
 
-def read_csv_rows(file_name, if_del_first_row, delimiter='\t', if_convert_float=False):
+def read_csv_rows(file_name, if_del_first_row, delimiter=',', if_convert_float=False):
     """ reads the rows of a csv file
     :param file_name: the csv file name
     :param if_del_first_row: set true to delete the first row
@@ -65,7 +65,7 @@ def read_csv_rows(file_name, if_del_first_row, delimiter='\t', if_convert_float=
         return rows
 
 
-def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter='\t', if_convert_float=False):
+def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_convert_float=False):
     """ reads the columns of a csv file
     :param file_name: the csv file name
     :param n_cols: number of columns in the csv file
@@ -103,7 +103,7 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter='\t', if_con
         return cols
 
 
-def read_csv_cols_to_dictionary(file_name, delimiter='\t', if_convert_float=False):
+def read_csv_cols_to_dictionary(file_name, delimiter=',', if_convert_float=False):
 
     dict_of_columns = {} # dictionary of columns   
     csv_file = open(file_name, "r")
