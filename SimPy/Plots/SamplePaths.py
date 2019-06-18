@@ -49,6 +49,7 @@ def graph_sample_path(sample_path,
 
 def graph_sample_paths(sample_paths,
                        title=None, x_label=None, y_label=None,
+                       x_range=None, y_range=None,
                        figure_size=None, output_type='show',
                        legends=None, transparency=1, common_color_code=None, connect='step'):
     """ graphs multiple sample paths
@@ -56,6 +57,8 @@ def graph_sample_paths(sample_paths,
     :param title: (string) title of the figure
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
+    :param x_range: (list) [x_min, x_max]
+    :param y_range: (list) [y_min, y_max]
     :param figure_size: (tuple) figure size
     :param output_type: select from 'show', 'pdf' or 'png'
     :param legends: list of strings for legend
@@ -72,6 +75,10 @@ def graph_sample_paths(sample_paths,
     ax.set_title(title)  # title
     ax.set_xlabel(x_label)  # x-axis label
     ax.set_ylabel(y_label)  # y-axis label
+    if x_range is not None:
+        ax.set_xlim(x_range)
+    if y_range is not None:
+        ax.set_ylim(y_range)
 
     # add all sample paths
     add_sample_paths_to_ax(sample_paths=sample_paths,
