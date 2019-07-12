@@ -5,7 +5,7 @@ import math
 import numpy as numpy
 import scipy.stats as stat
 
-from SimPy import FormatFunctions as F
+import SimPy.FormatFunctions as F
 
 NUM_BOOTSTRAP_SAMPLES = 1000
 
