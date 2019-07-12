@@ -1,6 +1,6 @@
 import csv
 import os
-
+import math
 import numpy as numpy
 
 
@@ -60,8 +60,15 @@ def read_csv_rows(file_name, if_del_first_row, delimiter=',', if_convert_float=F
                 try:
                     rows[i] = numpy.array(rows[i]).astype(numpy.float)
                 except:
-                    pass
+                    newRow = []
+                    for j in range(len(rows[i])):
+                        try:
+                            x = float(rows[i][j])
+                        except:
+                            x = math.nan
 
+                        newRow.append(x)
+                    rows[i] = newRow
         return rows
 
 

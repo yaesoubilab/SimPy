@@ -1104,7 +1104,7 @@ class CBA(_EconEval):
             ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=curve.label)
             ax.plot(curve.optWTPs, curve.optProbs, c=curve.color, linewidth=5)
         if show_legend:
-            ax.legend()
+            ax.legend(fontsize='7')  # xx-small, x-small, small, medium, large, x-large, xx-large
 
     def __format_ax(self, ax, title, x_label, y_label, y_range,
                     min_wtp, max_wtp,):
