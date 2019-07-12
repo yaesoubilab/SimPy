@@ -432,7 +432,7 @@ class CEA(_EconEval):
                            )
 
         if show_legend:
-            ax.legend()
+            ax.legend(fontsize='7')
 
         # format x-axis
         vals_x = ax.get_xticks()
