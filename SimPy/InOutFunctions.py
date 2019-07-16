@@ -68,7 +68,8 @@ def read_csv_rows(file_name, if_del_first_row, delimiter=',', if_convert_float=F
                             x = math.nan
 
                         newRow.append(x)
-                    rows[i] = newRow
+                    rows[i] = numpy.array(newRow)
+
         return rows
 
 
