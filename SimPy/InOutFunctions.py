@@ -113,7 +113,7 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_conv
 
 def read_csv_cols_to_dictionary(file_name, delimiter=',', if_convert_float=False):
 
-    dict_of_columns = {} # dictionary of columns   
+    dict_of_columns = {}  # dictionary of columns
     csv_file = open(file_name, "r")
     col_headers = next(csv.reader(csv_file, delimiter=delimiter))
     n_cols = len(col_headers)
