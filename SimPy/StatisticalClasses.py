@@ -586,7 +586,7 @@ class RatioStatPaired(_RatioStat):
                     ratio[i] = 1
                 else:  # else raise error
                     ratio[i] = math.nan
-                    warnings.warn('For the ratio statistics ' + name
+                    warnings.warn('For ' + name
                                   + ', the denominator of ratio with index {} is 0.'.format(i))
                     self._ifComputable = False
             else:
