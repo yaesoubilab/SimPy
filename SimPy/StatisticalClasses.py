@@ -426,6 +426,9 @@ class DifferenceStatPaired(_DifferenceStat):
     def get_percentile(self, q):
         return self._dStat.get_percentile(q)
 
+    def get_t_CI(self, alpha):
+        return self._dStat.get_t_CI(alpha)
+
     def get_bootstrap_CI(self, alpha, num_samples):
         return self._dStat.get_bootstrap_CI(alpha, num_samples)
 

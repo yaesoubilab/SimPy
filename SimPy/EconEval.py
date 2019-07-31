@@ -393,10 +393,11 @@ class CEA(_EconEval):
         return dictionary_results
 
     def add_ce_plane_to_ax(self, ax,
+                           x_range=None, y_range=None,
                            add_clouds=True, show_legend=True,
                            center_s=75, cloud_s=25, transparency=0.1,
-                           x_range=None, y_range=None,
-                           cost_multiplier=1, effect_multiplier=1):
+                           cost_multiplier=1, effect_multiplier=1,
+                           cost_digits=0, effect_digits=1):
 
         # find the frontier (x, y)'s
         frontier_d_effect = []
@@ -404,13 +405,6 @@ class CEA(_EconEval):
         for s in self.get_strategies_on_frontier():
             frontier_d_effect.append(s.dEffect.get_mean()*effect_multiplier)
             frontier_d_costs.append(s.dCost.get_mean()*cost_multiplier)
-
-        # add the frontier line
-        ax.plot(frontier_d_effect, frontier_d_costs,
-                c='k',  # color
-                alpha=0.6,  # transparency
-                linewidth=2,  # line width
-                label="Frontier")  # label to show in the legend
 
         # add all strategies
         for s in self.strategies:
@@ -422,37 +416,50 @@ class CEA(_EconEval):
                        s=center_s,  # marker size
                        label=s.name  # name to show in the legend
                        )
-            # and the clouds
-            if add_clouds:
-                ax.scatter(s.dEffectObs*effect_multiplier, s.dCostObs*cost_multiplier,
+
+        # add the frontier line
+        ax.plot(frontier_d_effect, frontier_d_costs,
+                c='k',  # color
+                alpha=0.6,  # transparency
+                linewidth=2,  # line width
+                zorder=1,
+                label='Frontier')  # label to show in the legend
+
+        if show_legend:
+            ax.legend(fontsize='7')
+
+        # and the clouds
+        if add_clouds:
+            # add all strategies
+            for s in self.strategies:
+                ax.scatter(s.dEffectObs * effect_multiplier, s.dCostObs * cost_multiplier,
                            c=s.color,  # color of dots
                            alpha=transparency,  # transparency of dots
                            s=cloud_s,  # size of dots
                            zorder=1
                            )
 
-        if show_legend:
-            ax.legend(fontsize='7')
+        ax.set_xlim(x_range)  # x-axis range
+        ax.set_ylim(y_range)  # y-axis range
 
         # format x-axis
         vals_x = ax.get_xticks()
         ax.set_xticks(vals_x)
-        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
+        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=effect_digits) for x in vals_x])
 
         # format y-axis
         vals_y = ax.get_yticks()
         ax.set_yticks(vals_y)
-        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=cost_digits) for x in vals_y])
 
         ax.axhline(y=0, c='k', linewidth=0.5)
         ax.axvline(x=0, c='k', linewidth=0.5)
-        ax.set_xlim(x_range)  # x-axis range
-        ax.set_ylim(y_range)  # y-axis range
 
     def show_CE_plane(self,
                       title='Cost-Effectiveness Analysis',
                       x_label='Additional Health',
                       y_label='Additional Cost',
+                      x_range=None, y_range=None,
                       add_clouds=True, fig_size=(5, 5),
                       show_legend=True,
                       center_s=75, cloud_s=25, transparency=0.1,
@@ -466,7 +473,9 @@ class CEA(_EconEval):
         ax.set_ylabel(y_label)
 
         # add the cost-effectiveness plane
-        self.add_ce_plane_to_ax(ax=ax, add_clouds=add_clouds,
+        self.add_ce_plane_to_ax(ax=ax,
+                                x_range=x_range, y_range=y_range,
+                                add_clouds=add_clouds,
                                 show_legend=show_legend,
                                 center_s=center_s, cloud_s=cloud_s, transparency=transparency,
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier)
