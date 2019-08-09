@@ -7,6 +7,9 @@ def format_number(number, deci, format=None):
         Use ',' to format as number, '%' to format as percentage, and '$' to format as currency
     :returns: the text of number with the specified format
     """
+
+    # deci should be an integer
+    deci = int(deci)
     if number is None:
         return ''
     else:
@@ -28,6 +31,8 @@ def format_interval(interval, deci, format=None):
         Use ',' to format as number, '%' to format as percentage, and '$' to format as currency
     :returns a text of form '(low, up)' where the numbers have the specified format """
 
+    # deci should be an integer
+    deci = int(deci)
     if interval is None:
         return ''
     else:

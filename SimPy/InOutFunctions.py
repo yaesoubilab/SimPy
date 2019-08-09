@@ -54,23 +54,27 @@ def read_csv_rows(file_name, if_del_first_row, delimiter=',', if_convert_float=F
         if if_del_first_row:
             del rows[0]
 
+        results = []
         # convert column values to float if needed
         if if_convert_float:
             for i in range(0, len(rows)):
+                new_row = []
                 try:
-                    rows[i] = numpy.array(rows[i]).astype(numpy.float)
+                    new_row = numpy.array(rows[i]).astype(numpy.float)
                 except:
-                    newRow = []
                     for j in range(len(rows[i])):
                         try:
                             x = float(rows[i][j])
                         except:
-                            x = math.nan
+                            if rows[i][j] in ('N/A', 'None', 'none'):
+                                x = math.nan
+                            else:
+                                x = rows[i][j]
+                        new_row.append(x)
 
-                        newRow.append(x)
-                    rows[i] = numpy.array(newRow)
+                results.append(new_row)
 
-        return rows
+        return results
 
 
 def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_convert_float=False):
