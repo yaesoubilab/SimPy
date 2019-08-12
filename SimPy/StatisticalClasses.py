@@ -122,8 +122,13 @@ class _Statistics(object):
             interval = None
         else:
             raise ValueError('Invalid interval type.')
-
-        return [v * multiplier for v in interval] if interval is not None else None
+        if interval is not None:
+            if multiplier > 0:
+                return [v * multiplier for v in interval]
+            else:
+                return [interval[1]*multiplier, interval[0]*multiplier]
+        else:
+            return None
 
     def get_formatted_mean_and_interval(self, interval_type='c',
                                         alpha=0.05, deci=0, form=None, multiplier=1):
