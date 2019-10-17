@@ -106,4 +106,7 @@ class SingleVarRegression:
         :return: x for which f(x) = 0
         """
         coeffs = np.fliplr([self.fitted.params])[0]
-        return np.roots(coeffs)
+        if np.linalg.norm(coeffs) == 0:
+            return np.zeros(len(coeffs))
+        else:
+            return np.roots(coeffs)

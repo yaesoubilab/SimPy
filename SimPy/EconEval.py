@@ -601,14 +601,14 @@ class CEA(_EconEval):
                             transform=ax.transAxes,
                             size=font_size + 1, weight='bold')
 
-                # add titles for the figures in the first row
+                # add titles for the figures_national in the first row
                 if i == 0:
                     if column_titles is None:
                         ax.set_title(self.strategies[j].name)
                     else:
                         ax.set_title(column_titles[j])
 
-                # add y_labels for the figures in the first column
+                # add y_labels for the figures_national in the first column
                 if j == 0:
                     if row_titles is None:
                         ax.set_ylabel(self.strategies[i].name, fontweight='bold')
