@@ -1106,14 +1106,18 @@ class CBA(_EconEval):
         self.__format_ax(ax=ax, title=title,x_label=x_label, y_label=y_label,
                          y_range=y_range, min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
 
-    def add_acceptability_curves_to_ax(self, ax, show_legend=False):
+    def add_acceptability_curves_to_ax(self, ax, show_legend=False, legends=None):
 
-        for curve in self.acceptabilityCurves:
+        for i, curve in enumerate(self.acceptabilityCurves):
             # plot line
-            ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=curve.label)
+            if legends is None:
+                ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=curve.label)
+            else:
+                ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=legends[i])
             ax.plot(curve.optWTPs, curve.optProbs, c=curve.color, linewidth=5)
         if show_legend:
             ax.legend(fontsize='7')  # xx-small, x-small, small, medium, large, x-large, xx-large
+
 
     def __format_ax(self, ax, title, x_label, y_label, y_range,
                     min_wtp, max_wtp,):
@@ -1174,7 +1178,8 @@ class CBA(_EconEval):
         fig.show()
 
     def graph_acceptability_curves(self, title=None, x_label=None, y_label=None, y_range=None,
-                                   show_legend=True, figure_size=(6, 6), file_name='CEAC.png'):
+                                   show_legend=True, figure_size=(6, 6), legends=None,
+                                   file_name='CEAC.png'):
         """
         plots the acceptibility curves
         :param title: title
@@ -1193,7 +1198,7 @@ class CBA(_EconEval):
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        self.add_acceptability_curves_to_ax(ax=ax, show_legend=show_legend)
+        self.add_acceptability_curves_to_ax(ax=ax, show_legend=show_legend, legends=legends)
 
         self.__format_ax(ax=ax, title=title, x_label=x_label, y_label=y_label,
                          y_range=y_range,

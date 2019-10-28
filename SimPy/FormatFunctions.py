@@ -1,5 +1,5 @@
 
-def format_number(number, deci, format=None):
+def format_number(number, deci=0, format=None):
     """
     :param number: number to be formatted
     :param deci: number of decimal places
