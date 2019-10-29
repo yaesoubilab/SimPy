@@ -4,7 +4,7 @@ from SimPy.Plots.FigSupport import output_figure
 
 
 def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None,
-                        transparency=1.0, label=None):
+                        transparency=1.0, label=None, format_deci=None):
 
     ax.hist(data,
             bins=find_bins(data, x_range, bin_width),
@@ -13,6 +13,17 @@ def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None,
             linewidth=1,
             alpha=transparency,
             label=label)
+
+    if format_deci is not None:
+        vals = ax.get_xticks()
+        if format_deci[0] is None or format_deci[0] == '':
+            ax.set_xticklabels(['{:.{prec}f}'.format(x, prec=format_deci[1]) for x in vals])
+        elif format_deci[0] == ',':
+            ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=format_deci[1]) for x in vals])
+        elif format_deci[0] == '$':
+            ax.set_xticklabels(['${:,.{prec}f}'.format(x, prec=format_deci[1]) for x in vals])
+        elif format_deci[0] == '%':
+            ax.set_xticklabels(['{:,.{prec}%}'.format(x, prec=format_deci[1]) for x in vals])
 
 
 def plot_histogram(data, title,
