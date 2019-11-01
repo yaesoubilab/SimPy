@@ -66,7 +66,7 @@ def read_csv_rows(file_name, if_del_first_row, delimiter=',', if_convert_float=F
                         try:
                             x = float(rows[i][j])
                         except:
-                            if rows[i][j] in ('N/A', 'None', 'none'):
+                            if rows[i][j] in ('N/A', 'None', 'none', ''):
                                 x = math.nan
                             else:
                                 x = rows[i][j]
@@ -110,8 +110,17 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_conv
                 try:
                     cols[j] = numpy.array(cols[j]).astype(numpy.float)
                 except:
-                    pass
-
+                    new_col = []
+                    for i in range(len(cols[j])):
+                        try:
+                            x = float(cols[j][i])
+                        except:
+                            if cols[j][i] in ('N/A', 'None', 'none', ''):
+                                x = math.nan
+                            else:
+                                x = cols[j][i]
+                        new_col.append(x)
+                    cols[j] = new_col
         return cols
 
 
