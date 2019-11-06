@@ -1,3 +1,5 @@
+import math
+
 
 def format_number(number, deci=0, format=None):
     """
@@ -9,11 +11,20 @@ def format_number(number, deci=0, format=None):
     """
 
     # deci should be an integer
-    deci = int(deci)
+    try:
+        deci = int(deci)
+    except ValueError:
+        raise ValueError('deci should be  integer or float.')
+    except TypeError:
+        raise ValueError('deci should be  integer or float.')
+
+    if format not in (None, ',', '%', '$'):
+        raise ValueError('Invalid value for format.')
+
     if number is None:
         return ''
     else:
-        if format is None or format == '':
+        if format is None or format == '' or format is math.nan:
             return '{:.{prec}f}'.format(number, prec=deci)
         elif format == ',':
             return '{:,.{prec}f}'.format(number, prec=deci)
