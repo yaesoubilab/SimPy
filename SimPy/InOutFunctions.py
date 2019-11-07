@@ -34,10 +34,10 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete
         file.close()
 
 
-def read_csv_rows(file_name, if_del_first_row, delimiter=',', if_convert_float=False):
+def read_csv_rows(file_name, if_ignore_first_row, delimiter=',', if_convert_float=False):
     """ reads the rows of a csv file
     :param file_name: the csv file name
-    :param if_del_first_row: set true to delete the first row
+    :param if_ignore_first_row: set true to ignore the first row
     :param delimiter: to separate by comma, use ',' and by tab, use '\t'
     :param if_convert_float: set true to convert row values to numbers (otherwise, the values are stored as string)
     :returns a list containing the rows of the csv file
@@ -45,36 +45,15 @@ def read_csv_rows(file_name, if_del_first_row, delimiter=',', if_convert_float=F
     with open(file_name, "r") as file:
         csv_file = csv.reader(file, delimiter=delimiter)
 
-        # read rows
-        rows = []
-        for row in csv_file:
-            rows.append(row)
+        rows = _csv_file_to_rows(csv_file=csv_file,
+                                 if_del_first_row=if_ignore_first_row)
 
-        # delete the first row if needed
-        if if_del_first_row:
-            del rows[0]
-
-        results = []
         # convert column values to float if needed
         if if_convert_float:
             for i in range(0, len(rows)):
-                new_row = []
-                try:
-                    new_row = numpy.array(rows[i]).astype(numpy.float)
-                except:
-                    for j in range(len(rows[i])):
-                        try:
-                            x = float(rows[i][j])
-                        except:
-                            if rows[i][j] in ('N/A', 'None', 'none', ''):
-                                x = None
-                            else:
-                                x = rows[i][j]
-                        new_row.append(x)
+                rows[i] = _convert_to_float(rows[i])
 
-                results.append(new_row)
-
-        return results
+        return rows
 
 
 def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_convert_float=False):
@@ -89,38 +68,15 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_conv
     with open(file_name, "r") as file:
         csv_file = csv.reader(file, delimiter=delimiter)
 
-        # initialize the list to store column values
-        cols = []
-        for j in range(0, n_cols):
-            cols.append([])
-
-        # read columns
-        for row in csv_file:
-            for j in range(0, n_cols):
-                cols[j].append(row[j])
-
-        # delete the first row if needed
-        if if_ignore_first_row:
-            for j in range(0, n_cols):
-                del cols[j][0]
+        cols = _rows_to_cols(rows=_csv_file_to_rows(csv_file=csv_file,
+                                                    if_del_first_row=if_ignore_first_row),
+                             n_cols=n_cols)
 
         # convert column values to float if needed
         if if_convert_float:
             for j in range(0, n_cols):
-                try:
-                    cols[j] = numpy.array(cols[j]).astype(numpy.float)
-                except:
-                    new_col = []
-                    for i in range(len(cols[j])):
-                        try:
-                            x = float(cols[j][i])
-                        except:
-                            if cols[j][i] in ('N/A', 'None', 'none', ''):
-                                x = None
-                            else:
-                                x = cols[j][i]
-                        new_col.append(x)
-                    cols[j] = new_col
+                cols[j] = _convert_to_float(cols[j])
+
         return cols
 
 
@@ -153,3 +109,54 @@ def delete_files(extension='.txt', path='..'):
     for f in os.listdir(path):
         if f.endswith(extension):
             os.remove(os.path.join(path, f))
+
+
+def _csv_file_to_rows(csv_file, if_del_first_row):
+
+    # read rows
+    rows = []
+    for row in csv_file:
+        rows.append(row)
+
+    # delete the first row if needed
+    if if_del_first_row:
+        del rows[0]
+
+    return rows
+
+
+def _rows_to_cols(rows, n_cols):
+
+    # initialize the list to store column values
+    cols = []
+    for j in range(0, n_cols):
+        cols.append([])
+
+    # read columns
+    for row in rows:
+        if len(row) != n_cols:
+            raise ValueError('All rows should have the same length.')
+
+        for j in range(0, n_cols):
+            cols[j].append(row[j])
+
+    return cols
+
+
+def _convert_to_float(list_of_objs):
+
+    try:
+        results = numpy.array(list_of_objs).astype(numpy.float)
+    except:
+        results = []
+        for i in range(len(list_of_objs)):
+            try:
+                x = float(list_of_objs[i])
+            except:
+                if list_of_objs[i] in ('N/A', 'None', 'none', ''):
+                    x = None
+                else:
+                    x = list_of_objs[i]
+            results.append(x)
+
+    return results
