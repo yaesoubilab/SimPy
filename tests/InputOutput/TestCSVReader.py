@@ -1,18 +1,30 @@
-from SimPy import InOutFunctions as InOutSupport
+from SimPy import InOutFunctions as io
+
+# ---------------
+# first run the TestCSVWritter.py to produce the csv file
+# ---------------
 
 # test reading by rows
-rows = InOutSupport.read_csv_rows('myCSV', if_del_first_row=True, if_convert_float=True)
+rows = io.read_csv_rows('CSVFolder/myCSV.csv',
+                        if_ignore_first_row=True,
+                        if_convert_float=True)
 print('Testing reading by rows:')
 for row in rows:
-    print(sum(row))
+    print(sum(row[1:]))
 
 # test reading by columns
-cols = InOutSupport.read_csv_cols('myCSV', n_cols=3, if_ignore_first_row=True, if_convert_float=True)
+cols = io.read_csv_cols('CSVFolder/myCSV.csv',
+                        n_cols=4,
+                        if_ignore_first_row=True,
+                        if_convert_float=True)
 print('Testing reading by columns:')
-for j in range(0, 3):
+for j in range(1, 4):
     print(sum(cols[j]))
 
 # rest reading by columns into a dictionary
-dict_cols = InOutSupport.read_csv_cols_to_dictionary('myCSV', if_convert_float=True)
+dict_cols = io.read_csv_cols_to_dictionary(
+    'CSVFolder/myCSV.csv',
+    if_convert_float=True)
+
 print('Testing reading by columns into a dictionary:')
 print(dict_cols)
