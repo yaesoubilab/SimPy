@@ -80,13 +80,15 @@ def equivalent_annual_value(present_value, discount_rate, discount_period):
 
 
 class Strategy:
-    def __init__(self, name, cost_obs, effect_obs, color=None):
+    def __init__(self, name, cost_obs, effect_obs, color=None, marker='o'):
         """
         :param name: name of the strategy
         :param cost_obs: list or numpy.array of cost observations
         :param effect_obs: list or numpy.array of effect observations
         :param color: (string) color code
                 (https://www.webucator.com/blog/2015/03/python-color-constants-module/)
+        :param marker: (string) marker code
+                (https://matplotlib.org/3.1.1/api/markers_api.html)
         """
 
         assert type(cost_obs) is list or type(cost_obs) is np.ndarray, \
@@ -99,6 +101,7 @@ class Strategy:
         self.name = name
         self.ifDominated = False
         self.color = color
+        self.marker = marker
 
         self.costObs = None     # (list) cost observations
         self.dCostObs = None    # (list) cost observations with respect to base
@@ -412,9 +415,11 @@ class CEA(_EconEval):
             ax.scatter(s.dEffect.get_mean()*effect_multiplier, s.dCost.get_mean()*cost_multiplier,
                        c=s.color,  # color
                        alpha=1,  # transparency
-                       marker='o',  # markers
+                       marker=s.marker,  # markers
                        s=center_s,  # marker size
-                       label=s.name  # name to show in the legend
+                       label=s.name,  # name to show in the legend
+                       zorder=2,
+                       #edgecolors='k'
                        )
 
         # add the frontier line
@@ -422,8 +427,9 @@ class CEA(_EconEval):
                 c='k',  # color
                 alpha=0.6,  # transparency
                 linewidth=2,  # line width
-                zorder=1,
-                label='Frontier')  # label to show in the legend
+                zorder=3,
+                label='Frontier', # label to show in the legend
+                )
 
         if show_legend:
             ax.legend(fontsize='7')
@@ -434,6 +440,7 @@ class CEA(_EconEval):
             for s in self.strategies:
                 ax.scatter(s.dEffectObs * effect_multiplier, s.dCostObs * cost_multiplier,
                            c=s.color,  # color of dots
+                           marker=s.marker, # marker
                            alpha=transparency,  # transparency of dots
                            s=cloud_s,  # size of dots
                            zorder=1
@@ -463,7 +470,8 @@ class CEA(_EconEval):
                       add_clouds=True, fig_size=(5, 5),
                       show_legend=True,
                       center_s=75, cloud_s=25, transparency=0.1,
-                      cost_multiplier=1, effect_multiplier=1
+                      cost_multiplier=1, effect_multiplier=1,
+                      file_name='CE.png'
                       ):
 
         fig, ax = plt.subplots(figsize=fig_size)
@@ -481,6 +489,7 @@ class CEA(_EconEval):
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier)
 
         fig.show()
+        fig.savefig(file_name, dpi=300)
 
     def create_pairwise_ceas(self):
         """
@@ -931,7 +940,7 @@ class CBA(_EconEval):
         self.strategyIndxHighestExpNMB = []
         self.acceptabilityCurves = []  # the list of acceptability curves
 
-    def make_nmb_curves(self, min_wtp, max_wtp, interval_type='n'):
+    def make_nmb_curves(self, interval_type='n'):
         """
         prepares the information needed to plot the incremental net-monetary benefit
         compared to the first strategy (base)
@@ -1096,8 +1105,9 @@ class CBA(_EconEval):
             # plot line
             ax.plot(curve.wtps, curve.ys, c=curve.color, alpha=1, label=curve.label)
             # plot intervals
-            ax.fill_between(curve.wtps, curve.ys - curve.l_errs, curve.ys + curve.u_errs,
-                            color=curve.color, alpha=transparency)
+            if curve.l_errs is not None and curve.u_errs is not None:
+                ax.fill_between(curve.wtps, curve.ys - curve.l_errs, curve.ys + curve.u_errs,
+                                color=curve.color, alpha=transparency)
 
         if show_legend:
             ax.legend()
@@ -1142,14 +1152,16 @@ class CBA(_EconEval):
 
         ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
-    def graph_incremental_NMBs(self, min_wtp, max_wtp,
-                               title, x_label, y_label, y_range=None,
+    def graph_incremental_NMBs(self,
+                               title='Incremental Net Monetary Benefit',
+                               x_label='Willingness-To-Pay Threshold',
+                               y_label='Expected Incremental Net Monetary Benefit',
+                               y_range=None,
                                interval_type='n', transparency=0.4,
-                               show_legend=True, figure_size=(6, 6)):
+                               show_legend=True, figure_size=(5, 5),
+                               file_name='NMB.png'):
         """
         plots the incremental net-monetary benefit compared to the first strategy (base)
-        :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
-        :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param title: title
         :param x_label: x-axis label
         :param y_label: y-axis label
@@ -1163,9 +1175,7 @@ class CBA(_EconEval):
         """
 
         # make the NMB curves
-        self.make_nmb_curves(min_wtp=min_wtp,
-                             max_wtp=max_wtp,
-                             interval_type=interval_type)
+        self.make_nmb_curves(interval_type=interval_type)
 
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
@@ -1176,9 +1186,15 @@ class CBA(_EconEval):
                                         transparency=transparency, show_legend=show_legend)
 
         fig.show()
+        if file_name is not None:
+            fig.savefig(file_name, dpi=300)
 
-    def graph_acceptability_curves(self, title=None, x_label=None, y_label=None, y_range=None,
-                                   show_legend=True, figure_size=(6, 6), legends=None,
+    def graph_acceptability_curves(self,
+                                   title=None,
+                                   x_label='Willingness-To-Pay Threshold',
+                                   y_label='Probability of Being the Optimal Strategy', y_range=None,
+                                   show_legend=True, figure_size=(5, 5),
+                                   legends=None,
                                    file_name='CEAC.png'):
         """
         plots the acceptibility curves
@@ -1190,6 +1206,9 @@ class CBA(_EconEval):
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
         :param file_name: file name
         """
+
+        # make the NMB curves
+        self.make_nmb_curves(interval_type='n')
 
         # make the acceptability curves
         self.make_acceptability_curves()
@@ -1216,25 +1235,33 @@ class CBA(_EconEval):
             y_ci = [nmb.get_CI(x, alpha=0.05) for x in wtps]
         elif interval_type == 'p':
             y_ci = [nmb.get_PI(x, alpha=0.05) for x in wtps]
+        elif interval_type == 'n':
+            y_ci = None
         else:
             raise ValueError('Invalid value for internal_type.')
 
         # reshape confidence interval to plot
-        u_err = np.array([p[1] for p in y_ci]) - y_values
-        l_err = y_values - np.array([p[0] for p in y_ci])
+        if y_ci is not None:
+            u_err = np.array([p[1] for p in y_ci]) - y_values
+            l_err = y_values - np.array([p[0] for p in y_ci])
+        else:
+            u_err, l_err = None, None
 
         return y_values, l_err, u_err
 
 
 def get_d_cost(strategy):
+    # this is defined for sorting strategies
     return strategy.dCost.get_mean()
 
 
 def get_d_effect(strategy):
+    # this is defined for sorting strategies
     return strategy.dEffect.get_mean()
 
 
 def get_index(strategy):
+    # this is defined for sorting strategies
     return strategy.idx
 
 
