@@ -932,7 +932,7 @@ class CBA(_EconEval):
                            if_paired=if_paired,
                            health_measure=health_measure)
 
-        self.nmbCurves = []  # list of NMB curves
+        self.inmbCurves = []  # list of NMB curves
         # wtp values
         self.wtp_values = np.linspace(wtp_range[0], wtp_range[1], num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
         # index of strategy with the highest
@@ -940,18 +940,16 @@ class CBA(_EconEval):
         self.strategyIndxHighestExpNMB = []
         self.acceptabilityCurves = []  # the list of acceptability curves
 
-    def make_nmb_curves(self, interval_type='n'):
+    def make_inmb_curves(self, interval_type='n'):
         """
         prepares the information needed to plot the incremental net-monetary benefit
         compared to the first strategy (base)
-        :param min_wtp: minimum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
-        :param max_wtp: maximum willingness-to-pay (or cost-effectiveness threshold) on the x-axis
         :param interval_type: (string) 'n' for no interval,
                                        'c' for confidence interval,
                                        'p' for percentile interval):
         """
 
-        self.nmbCurves = []  # list of NMB curves
+        self.inmbCurves = []  # list of incremental NMB curves
 
         # decide about the color of each curve
         rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n))
@@ -994,13 +992,13 @@ class CBA(_EconEval):
                 )
 
             # make a NMB curve
-            self.nmbCurves.append(NMBCurve(label=strategy_i.name,
-                                           color=color,
-                                           wtps=self.wtp_values,
-                                           ys=y_values,
-                                           l_errs=l_err,
-                                           u_errs=u_err)
-                                  )
+            self.inmbCurves.append(NMBCurve(label=strategy_i.name,
+                                            color=color,
+                                            wtps=self.wtp_values,
+                                            ys=y_values,
+                                            l_errs=l_err,
+                                            u_errs=u_err)
+                                   )
 
         self.__find_strategy_highest_exp_NMB()
 
@@ -1011,19 +1009,19 @@ class CBA(_EconEval):
 
             max_value = float('-inf')
             max_idx = 0
-            for s_idx in range(len(self.nmbCurves)):
-                if self.nmbCurves[s_idx].ys[wtp_idx] > max_value:
-                    max_value = self.nmbCurves[s_idx].ys[wtp_idx]
+            for s_idx in range(len(self.inmbCurves)):
+                if self.inmbCurves[s_idx].ys[wtp_idx] > max_value:
+                    max_value = self.inmbCurves[s_idx].ys[wtp_idx]
                     max_idx = s_idx
 
             # store the optimal the index of the strategy
             self.strategyIndxHighestExpNMB.append(max_idx)
-            self.nmbCurves[max_idx].update_range_with_highest_value(wtp=wtp)
+            self.inmbCurves[max_idx].update_range_with_highest_value(wtp=wtp)
 
     def get_highest_exp_NMB_wtp_range(self):
 
         dict = {}
-        for curve in self.nmbCurves:
+        for curve in self.inmbCurves:
             dict[curve.label] = curve.rangeWTPHighestValue
         return dict
 
@@ -1101,7 +1099,7 @@ class CBA(_EconEval):
                                    title, x_label, y_label, y_range=None,
                                    transparency=0.4, show_legend=False):
 
-        for curve in self.nmbCurves[1:]:
+        for curve in self.inmbCurves[1:]:
             # plot line
             ax.plot(curve.wtps, curve.ys, c=curve.color, alpha=1, label=curve.label)
             # plot intervals
@@ -1172,10 +1170,11 @@ class CBA(_EconEval):
         :param transparency: transparency of intervals (0.0 transparent through 1.0 opaque)
         :param show_legend: set true to show legend
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
+        :param file_name: (string) filename to save the figure as
         """
 
-        # make the NMB curves
-        self.make_nmb_curves(interval_type=interval_type)
+        # make incremental NMB curves
+        self.make_inmb_curves(interval_type=interval_type)
 
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
@@ -1208,7 +1207,7 @@ class CBA(_EconEval):
         """
 
         # make the NMB curves
-        self.make_nmb_curves(interval_type='n')
+        self.make_inmb_curves(interval_type='n')
 
         # make the acceptability curves
         self.make_acceptability_curves()
