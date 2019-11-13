@@ -8,6 +8,7 @@ import SimPy.InOutFunctions as IO
 import SimPy.StatisticalClasses as Stat
 import SimPy.RandomVariantGenerators as RVG
 import SimPy.FormatFunctions as F
+from SimPy.Support.EconEvalSupport import *
 
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
@@ -925,7 +926,7 @@ class AcceptabilityCurve(_Curve):
 class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
-    def __init__(self, strategies, wtp_range, if_paired, health_measure='u'):
+    def __init__(self, strategies, wtp_range, if_paired, health_measure='u', utility=None):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param wtp_range: ([l, u]) range of willingness-to-pay values over which the NMB analysis should be done
@@ -939,6 +940,14 @@ class CBA(_EconEval):
                            health_measure=health_measure)
 
         self.inmbCurves = []  # list of NMB curves
+
+        # use net monetary benefit for utility by default
+        if utility is None:
+            if health_measure == 'u':
+                self.utility = inmb_u
+            else:
+                self.utility = inmb_d
+
         # wtp values
         self.wtp_values = np.linspace(wtp_range[0], wtp_range[1], num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
         # index of strategy with the highest
@@ -1123,7 +1132,8 @@ class CBA(_EconEval):
         # do the other formatting
         self.__format_ax(ax=ax, title=title, x_label=x_label,
                          y_label=y_label, y_range=y_range,
-                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
+                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1],
+                         if_y_axis_prob=False)
 
     def add_acceptability_curves_to_ax(self, ax, show_legend=False, legends=None):
 
@@ -1138,7 +1148,7 @@ class CBA(_EconEval):
             ax.legend(fontsize='7')  # xx-small, x-small, small, medium, large, x-large, xx-large
 
     def __format_ax(self, ax, title, x_label, y_label, y_range,
-                    min_wtp, max_wtp,):
+                    min_wtp, max_wtp, if_y_axis_prob=True):
 
         ax.set_title(title)
         ax.set_xlabel(x_label)
@@ -1156,7 +1166,10 @@ class CBA(_EconEval):
         # format y-axis
         vals_y = ax.get_yticks()
         ax.set_yticks(vals_y)
-        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+        if if_y_axis_prob:
+            ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
+        else:
+            ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
 
         ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
@@ -1166,8 +1179,10 @@ class CBA(_EconEval):
                     y_label='Expected Net Monetary Benefit',
                     y_range=None,
                     y_axis_multiplier=1,
-                    interval_type='n', transparency=0.4,
-                    show_legend=True, figure_size=(5, 5),
+                    interval_type='n',
+                    transparency=0.4,
+                    show_legend=True,
+                    figure_size=(5, 5),
                     file_name='NMB.png'):
         """
         plots the incremental net-monetary benefit of each strategy
@@ -1237,7 +1252,8 @@ class CBA(_EconEval):
 
         self.__format_ax(ax=ax, title=title, x_label=x_label, y_label=y_label,
                          y_range=y_range,
-                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
+                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1],
+                         if_y_axis_prob=True)
 
         fig.show()
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
@@ -1264,6 +1280,53 @@ class CBA(_EconEval):
             u_err, l_err = None, None
 
         return y_values, l_err, u_err
+
+    def get_w_starts(self):
+
+        w_stars = []
+        s_stars = []
+
+        w = self.wtp_values[0]
+
+        # at initial w
+        max_nmb = float('-inf')
+        s_star = 0
+        for s in self.strategies:
+            u = self.utility(d_effect=s.dEffect.get_mean(),
+                             d_cost=s.dCost.get_mean())
+            u_value = u(w)
+            if u_value > max_nmb:
+                max_nmb = u_value
+                s_star = s.idx
+
+        w_stars.append(w)
+        s_stars.append(s_star)
+
+        #
+        while w <= self.wtp_values[-1] and len(s_stars) < len(self.strategies):
+
+            # find the intersect of the current strategy with other
+            w_min = float('inf')
+            for s in self.strategies:
+                if s.idx not in s_stars:
+
+                    w_star = find_intersecting_wtp(
+                        w0=w,
+                        u_new=self.utility(d_effect=s.dEffect.get_mean(),
+                                           d_cost=s.dCost.get_mean()),
+                        u_base=self.utility(d_effect=self.strategies[s_star].dEffect.get_mean(),
+                                            d_cost=self.strategies[s_star].dCost.get_mean()))
+
+                    if w_star is not None:
+                        if w_star < w_min:
+                            w_min = w_star
+                            s_star = s.idx
+
+            w = w_min
+            w_stars.append(w)
+            s_stars.append(s_star)
+
+        return w_stars, s_stars
 
 
 def get_d_cost(strategy):
@@ -1713,3 +1776,4 @@ class INMB_indp(_INMB):
         # to get PI for stat_new - stat_base
         diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
         return diff_stat.get_PI(alpha)
+
