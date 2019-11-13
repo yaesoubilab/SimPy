@@ -21,7 +21,7 @@ def find_intersecting_wtp(w0, u_new, u_base):
         res = minimize(f, (w0))
         w_star = res.x[0]
 
-        if abs(u_new(w_star)-u_base(w_star)) > 0.00001:
+        if abs(u_new(w_star)-u_base(w_star)) > 0.01:
             return None
 
         if w_star >= w0:

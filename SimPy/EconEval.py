@@ -1323,8 +1323,9 @@ class CBA(_EconEval):
                             s_star = s.idx
 
             w = w_min
-            w_stars.append(w)
-            s_stars.append(s_star)
+            if w != float('inf'):
+                w_stars.append(w)
+                s_stars.append(s_star)
 
         return w_stars, s_stars
 
