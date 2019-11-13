@@ -79,6 +79,24 @@ def equivalent_annual_value(present_value, discount_rate, discount_period):
     return discount_rate*present_value/(1-pow(1+discount_rate, -discount_period))
 
 
+def _assert_np_list(obs, error_message):
+    """
+    :param obs: list of observations to convert to np.array
+    :param error_message: error message to display if conversion failed
+    :return: np.array of obs
+    """
+
+    if type(obs) is not list and type(obs) is not np.ndarray:
+        raise ValueError(error_message)
+
+    try:
+        new_array = np.array(obs)
+    except ValueError:
+        raise ValueError(error_message)
+
+    return new_array
+
+
 class Strategy:
     def __init__(self, name, cost_obs, effect_obs, color=None, marker='o'):
         """
@@ -91,10 +109,6 @@ class Strategy:
                 (https://matplotlib.org/3.1.1/api/markers_api.html)
         """
 
-        assert type(cost_obs) is list or type(cost_obs) is np.ndarray, \
-            "cost_obs should be list or np.array."
-        assert type(effect_obs) is list or type(effect_obs) is np.ndarray, \
-            "effect_obs should be list or np.array."
         assert color is None or type(color) is str, "color argument should be a string."
 
         self.idx = 0        # index of the strategy
@@ -103,32 +117,24 @@ class Strategy:
         self.color = color
         self.marker = marker
 
-        self.costObs = None     # (list) cost observations
+        self.costObs = _assert_np_list(cost_obs,
+                                       error_message='cost_obs should be a list or a np.array')
         self.dCostObs = None    # (list) cost observations with respect to base
         self.incCostObs = None  # (list) incremental cost observations
         self.cost = None        # summary statistics for cost
         self.dCost = None       # summary statistics for cost with respect to base
         self.incCost = None     # summary statistics for incremental cost
 
-        self.effectObs = None       # (list) effect observations
+        self.effectObs = _assert_np_list(effect_obs,
+                                       error_message='effect_obs should be a list or a np.array')
         self.dEffectObs = None      # (list) effect observations with respect to base
         self.incEffectObs = None    # (list) incremental effect observations
-        self.effectObs = None       # effect observations
         self.effect = None          # summary statistics for effect
         self.dEffect = None         # summary statistics for effect with respect to base
         self.incEffect = None       # summary statistics for incremental effect
 
         self.cer = None         # cost-effectiveness ratio with respect to base
         self.icer = None        # icer summary statistics
-
-        if type(cost_obs) is list:
-            self.costObs = np.array(cost_obs)
-        else:
-            self.costObs = cost_obs
-        if type(effect_obs) is list:
-            self.effectObs = np.array(effect_obs)
-        else:
-            self.effectObs = effect_obs
 
         self.cost = Stat.SummaryStat(name='Cost of '+name, data=self.costObs)
         self.effect = Stat.SummaryStat(name='Effect of '+name, data=self.effectObs)
@@ -965,12 +971,12 @@ class CBA(_EconEval):
 
             if self._ifPaired:
                 # create a paired NMB object
-                paired_nmb = NMB_paired(name=strategy_i.name,
-                                        costs_new=strategy_i.costObs,
-                                        effects_new=strategy_i.effectObs,
-                                        costs_base=self.strategies[0].costObs,
-                                        effects_base=self.strategies[0].effectObs,
-                                        health_measure=self._healthMeasure)
+                paired_nmb = INMB_paired(name=strategy_i.name,
+                                         costs_new=strategy_i.costObs,
+                                         effects_new=strategy_i.effectObs,
+                                         costs_base=self.strategies[0].costObs,
+                                         effects_base=self.strategies[0].effectObs,
+                                         health_measure=self._healthMeasure)
 
                 # get the NMB values for each wtp
                 y_values, l_err, u_err = self.__get_ys_lerrs_uerrs(
@@ -979,12 +985,12 @@ class CBA(_EconEval):
 
             else:
                 # create an independent NMB object
-                ind_nmb = NMB_indp(name=strategy_i.name,
-                                   costs_new=strategy_i.costObs,
-                                   effects_new=strategy_i.effectObs,
-                                   costs_base=self.strategies[0].costObs,
-                                   effects_base=self.strategies[0].effectObs,
-                                   health_measure=self._healthMeasure)
+                ind_nmb = INMB_indp(name=strategy_i.name,
+                                    costs_new=strategy_i.costObs,
+                                    effects_new=strategy_i.effectObs,
+                                    costs_base=self.strategies[0].costObs,
+                                    effects_base=self.strategies[0].effectObs,
+                                    health_measure=self._healthMeasure)
 
                 # get the NMB values for each wtp
                 y_values, l_err, u_err = self.__get_ys_lerrs_uerrs(
@@ -1095,24 +1101,29 @@ class CBA(_EconEval):
             self.acceptabilityCurves[optIdx].optProbs.append(
                 self.acceptabilityCurves[optIdx].probs[wtp_idx])
 
-    def add_incremental_NMBs_to_ax(self, ax,
-                                   title, x_label, y_label, y_range=None,
-                                   transparency=0.4, show_legend=False):
+    def add_INMBs_to_ax(self, ax,
+                        title, x_label,
+                        y_label, y_range=None, y_axis_multiplier=1,
+                        transparency=0.4, show_legend=False):
 
         for curve in self.inmbCurves[1:]:
             # plot line
-            ax.plot(curve.wtps, curve.ys, c=curve.color, alpha=1, label=curve.label)
+            ax.plot(curve.wtps, curve.ys*y_axis_multiplier,
+                    c=curve.color, alpha=1, label=curve.label)
             # plot intervals
             if curve.l_errs is not None and curve.u_errs is not None:
-                ax.fill_between(curve.wtps, curve.ys - curve.l_errs, curve.ys + curve.u_errs,
+                ax.fill_between(curve.wtps,
+                                (curve.ys - curve.l_errs)*y_axis_multiplier,
+                                (curve.ys + curve.u_errs)*y_axis_multiplier,
                                 color=curve.color, alpha=transparency)
 
         if show_legend:
             ax.legend()
 
         # do the other formatting
-        self.__format_ax(ax=ax, title=title,x_label=x_label, y_label=y_label,
-                         y_range=y_range, min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
+        self.__format_ax(ax=ax, title=title, x_label=x_label,
+                         y_label=y_label, y_range=y_range,
+                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1])
 
     def add_acceptability_curves_to_ax(self, ax, show_legend=False, legends=None):
 
@@ -1125,7 +1136,6 @@ class CBA(_EconEval):
             ax.plot(curve.optWTPs, curve.optProbs, c=curve.color, linewidth=5)
         if show_legend:
             ax.legend(fontsize='7')  # xx-small, x-small, small, medium, large, x-large, xx-large
-
 
     def __format_ax(self, ax, title, x_label, y_label, y_range,
                     min_wtp, max_wtp,):
@@ -1146,24 +1156,28 @@ class CBA(_EconEval):
         # format y-axis
         vals_y = ax.get_yticks()
         ax.set_yticks(vals_y)
-        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=1) for x in vals_y])
+        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
 
         ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
-    def graph_incremental_NMBs(self,
-                               title='Incremental Net Monetary Benefit',
-                               x_label='Willingness-To-Pay Threshold',
-                               y_label='Expected Incremental Net Monetary Benefit',
-                               y_range=None,
-                               interval_type='n', transparency=0.4,
-                               show_legend=True, figure_size=(5, 5),
-                               file_name='NMB.png'):
+    def graph_INMBs(self,
+                    title='Incremental Net Monetary Benefit',
+                    x_label='Willingness-To-Pay Threshold',
+                    y_label='Expected Net Monetary Benefit',
+                    y_range=None,
+                    y_axis_multiplier=1,
+                    interval_type='n', transparency=0.4,
+                    show_legend=True, figure_size=(5, 5),
+                    file_name='NMB.png'):
         """
-        plots the incremental net-monetary benefit compared to the first strategy (base)
+        plots the incremental net-monetary benefit of each strategy
+                with respect to the base (the first strategy)
         :param title: title
         :param x_label: x-axis label
         :param y_label: y-axis label
         :param y_range: (list) range of y-axis
+        :param y_axis_multiplier: (float) multiplier to scale the y-axis
+            (e.g. 0.001 for thousands)
         :param interval_type: (string) 'n' for no interval,
                                        'c' for confidence interval,
                                        'p' for percentile interval
@@ -1180,9 +1194,12 @@ class CBA(_EconEval):
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        self.add_incremental_NMBs_to_ax(ax=ax,
-                                        title=title, x_label=x_label, y_label=y_label, y_range=y_range,
-                                        transparency=transparency, show_legend=show_legend)
+        self.add_INMBs_to_ax(ax=ax,
+                             title=title, x_label=x_label,
+                             y_label=y_label, y_range=y_range,
+                             y_axis_multiplier=y_axis_multiplier,
+                             transparency=transparency,
+                             show_legend=show_legend)
 
         fig.show()
         if file_name is not None:
@@ -1228,12 +1245,12 @@ class CBA(_EconEval):
     def __get_ys_lerrs_uerrs(self, nmb, wtps, interval_type='c'):
 
         # get the NMB values for each wtp
-        y_values = [nmb.get_NMB(x) for x in wtps]
+        y_values = np.array([nmb.get_INMB(x) for x in wtps])
 
         if interval_type == 'c':
-            y_ci = [nmb.get_CI(x, alpha=0.05) for x in wtps]
+            y_ci = np.array([nmb.get_CI(x, alpha=0.05) for x in wtps])
         elif interval_type == 'p':
-            y_ci = [nmb.get_PI(x, alpha=0.05) for x in wtps]
+            y_ci = np.array([nmb.get_PI(x, alpha=0.05) for x in wtps])
         elif interval_type == 'n':
             y_ci = None
         else:
@@ -1595,13 +1612,14 @@ class ICER_indp(_ICER):
             return [math.nan, math.nan]
 
 
-class _NMB(_ComparativeEconMeasure):
+class _INMB(_ComparativeEconMeasure):
+    # incremental net monetary benefit
     def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
-        :param effects_new: (list or numpy.array) health data for the new strategy
+        :param effects_new: (list or numpy.array) effect data for the new strategy
         :param costs_base: (list or numpy.array) cost data for the base line
-        :param effects_base: (list or numpy.array) health data for the base line
+        :param effects_base: (list or numpy.array) effect data for the base line
         :param health_measure: (string) choose 'u' if higher "effect" implies better health
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
@@ -1609,10 +1627,10 @@ class _NMB(_ComparativeEconMeasure):
         # initialize the base class
         _ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
-    def get_NMB(self, wtp):
+    def get_INMB(self, wtp):
         """
         :param wtp: willingness-to-pay ($ for QALY gained or $ for DALY averted)
-        :returns: the net monetary benefit at the provided willingness-to-pay value
+        :returns: the incremental net monetary benefit at the provided willingness-to-pay value
         """
         return wtp * self._delta_ave_effect - self._delta_ave_cost
 
@@ -1635,7 +1653,7 @@ class _NMB(_ComparativeEconMeasure):
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 
-class NMB_paired(_NMB):
+class INMB_paired(_INMB):
 
     def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
@@ -1647,7 +1665,7 @@ class NMB_paired(_NMB):
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
-        _NMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
+        _INMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # incremental observations
         self._deltaCost = self._costsNew - self._costsBase
@@ -1664,7 +1682,7 @@ class NMB_paired(_NMB):
         return stat.get_PI(alpha)
 
 
-class NMB_indp(_NMB):
+class INMB_indp(_INMB):
 
     def __init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure='u'):
         """
@@ -1676,7 +1694,7 @@ class NMB_indp(_NMB):
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
-        _NMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
+        _INMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
     def get_CI(self, wtp, alpha):
         # NMB observations of two alternatives

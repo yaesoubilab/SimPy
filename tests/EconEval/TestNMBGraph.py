@@ -16,35 +16,39 @@ s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, 10),
                  s_center[2, 1]+np.random.normal(0, 0.05, 10),
                  color='green')
 
-
-nmb_paired = ce.CBA([s0, s1, s2], wtp_range=[0, 5000], if_paired=True)  # list of frontier strategies as input
-nmb_indp = ce.CBA([s0, s1, s2], wtp_range=[0, 5000], if_paired=False)  # list of frontier strategies as input
+nmb_paired = ce.CBA([s0, s1, s2],
+                    wtp_range=[0, 5000],
+                    if_paired=True)
+nmb_indp = ce.CBA([s0, s1, s2],
+                  wtp_range=[0, 5000],
+                  if_paired=False)  # list of frontier strategies as input
 
 # Try NMB_Lines figure - paired CI
-nmb_paired.graph_incremental_NMBs(
+nmb_paired.graph_INMBs(
     title="deltaNMB lines for paired CI",
     x_label="wtp values",
     y_label="NMB values",
+    y_axis_multiplier=0.1,
     interval_type='c',
     show_legend=True,
     figure_size=(6, 5))
 
 # Try NMB_Lines figure - paired PI
-nmb_paired.graph_incremental_NMBs(
+nmb_paired.graph_INMBs(
     "deltaNMB lines for paired PI", "wtp values", "NMB values",
     interval_type='p',
     show_legend=True,
     figure_size=(6, 5))
 
 # Try NMB_Lines figure - indp CI
-nmb_indp.graph_incremental_NMBs(
+nmb_indp.graph_INMBs(
     "deltaNMB lines for indp CI", "wtp values", "NMB values",
     interval_type='c',
     show_legend=True,
     figure_size=(6, 5))
 
 # Try NMB_Lines figure - indp PI
-nmb_indp.graph_incremental_NMBs(
+nmb_indp.graph_INMBs(
     "deltaNMB lines for indp PI", "wtp values", "NMB values",
     interval_type='p',
     show_legend=True,
