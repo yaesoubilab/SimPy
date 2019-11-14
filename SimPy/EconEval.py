@@ -9,6 +9,7 @@ import SimPy.StatisticalClasses as Stat
 import SimPy.RandomVariantGenerators as RVG
 import SimPy.FormatFunctions as F
 from SimPy.Support.EconEvalSupport import *
+import matplotlib.patches as patches
 
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
@@ -136,6 +137,8 @@ class Strategy:
 
         self.cer = None         # cost-effectiveness ratio with respect to base
         self.icer = None        # icer summary statistics
+        self.eIncNMB = None     # summary statistics for expected incremental net health benefit
+                                # integrated over a wtp distribution
 
         self.cost = Stat.SummaryStat(name='Cost of '+name, data=self.costObs)
         self.effect = Stat.SummaryStat(name='Effect of '+name, data=self.effectObs)
@@ -1154,6 +1157,8 @@ class CBA(_EconEval):
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.set_ylim(y_range)
+        if if_y_axis_prob and y_range is None:
+            ax.set_ylim((0, 1))
 
         # format x-axis
         vals_x = ax.get_xticks()
@@ -1234,6 +1239,7 @@ class CBA(_EconEval):
         :param y_label: y-axis label
         :param y_range: (list) range of y-axis
         :param show_legend: set true to show legend
+        :param legends: (list) of legends to display on the figure
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
         :param file_name: file name
         """
@@ -1248,7 +1254,9 @@ class CBA(_EconEval):
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        self.add_acceptability_curves_to_ax(ax=ax, show_legend=show_legend, legends=legends)
+        self.add_acceptability_curves_to_ax(ax=ax,
+                                            show_legend=show_legend,
+                                            legends=legends)
 
         self.__format_ax(ax=ax, title=title, x_label=x_label, y_label=y_label,
                          y_range=y_range,
@@ -1302,7 +1310,6 @@ class CBA(_EconEval):
         w_stars.append(w)
         s_stars.append(s_star)
 
-        #
         while w <= self.wtp_values[-1] and len(s_stars) < len(self.strategies):
 
             # find the intersect of the current strategy with other
@@ -1328,6 +1335,75 @@ class CBA(_EconEval):
                 s_stars.append(s_star)
 
         return w_stars, s_stars
+
+    def calculate_exp_nmb_all_strategies(self, wtp_random_variate, n_samples, rnd):
+
+        for s in self.strategies[1:]:
+            s.eIncNMB = utility_sample_stat(
+                utility=self.utility,
+                d_cost_samples=s.dCostObs,
+                d_effect_samples=s.dEffectObs,
+                wtp_random_variate=wtp_random_variate,
+                n_samples=n_samples,
+                rnd=rnd
+            )
+
+    def report_exp_nmb(self, interval='c', deci=0):
+
+        report = []
+        for s in self.strategies[1:]:
+
+            mean_and_interval = s.eIncNMB.get_formatted_mean_and_interval(
+                     interval_type='c',
+                     deci=deci,
+                     form=','
+                 )
+
+            report.append([s.name, mean_and_interval])
+
+        return report
+
+    def plot_exp_nmb(self, figure_size=(4, 4), y_range=None,
+                     if_show_conf_interval=True):
+
+        # initialize plot
+        fig, ax = plt.subplots(figsize=figure_size)
+
+        for s in self.strategies[1:]:
+            ax.scatter(x=s.idx, y=s.eIncNMB.get_mean(),
+                       c=s.color, label=s.name)
+
+            interval = s.eIncNMB.get_interval(interval_type='p')
+            y = s.eIncNMB.get_mean()
+            err = [[y-interval[0]], [interval[1]-y]]
+
+            ax.errorbar(x=s.idx, y=y,
+                        yerr=err,
+                        c=s.color)
+
+            if if_show_conf_interval:
+                width = 0.1
+                interval = s.eIncNMB.get_interval(interval_type='c')
+                xy = [
+                    [s.idx, interval[0]],
+                    [s.idx - width, y],
+                    [s.idx, interval[1]],
+                    [s.idx + width, y]
+                ]
+                ax.add_patch(patches.Polygon(xy=xy, fill=False, edgecolor=s.color))
+
+        ax.set_xticks([])
+        ax.set_xlim([0.5, len(self.strategies)-0.5])
+        ax.axhline(y=0, c='k', ls='--', lw=1)
+
+        # format y-axis
+        ax.set_ylim(y_range)
+        vals_y = ax.get_yticks()
+        ax.set_yticks(vals_y)
+        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+
+        ax.legend()
+        fig.show()
 
 
 def get_d_cost(strategy):
