@@ -36,7 +36,7 @@ def utility_sample_stat(utility, d_cost_samples, d_effect_samples,
                         wtp_random_variate, n_samples, rnd):
 
     discrete_rnd = RVG.UniformDiscrete(
-        l=0, u=len(d_cost_samples))
+        l=0, u=len(d_cost_samples)-1)
 
     samples = []
     for i in range(n_samples):

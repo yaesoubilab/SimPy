@@ -1157,8 +1157,6 @@ class CBA(_EconEval):
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.set_ylim(y_range)
-        if if_y_axis_prob and y_range is None:
-            ax.set_ylim((0, 1))
 
         # format x-axis
         vals_x = ax.get_xticks()
@@ -1176,12 +1174,16 @@ class CBA(_EconEval):
         else:
             ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
 
-        ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
+        if if_y_axis_prob and y_range is None:
+            ax.set_ylim((-0.01, 1.01))
+
+        if not if_y_axis_prob:
+            ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
     def graph_INMBs(self,
                     title='Incremental Net Monetary Benefit',
                     x_label='Willingness-To-Pay Threshold',
-                    y_label='Expected Net Monetary Benefit',
+                    y_label='Expected Incremental Net Monetary Benefit',
                     y_range=None,
                     y_axis_multiplier=1,
                     interval_type='n',
@@ -1228,7 +1230,8 @@ class CBA(_EconEval):
     def graph_acceptability_curves(self,
                                    title=None,
                                    x_label='Willingness-To-Pay Threshold',
-                                   y_label='Probability of Being the Optimal Strategy', y_range=None,
+                                   y_label='Probability of Being the Optimal Strategy',
+                                   y_range=None,
                                    show_legend=True, figure_size=(5, 5),
                                    legends=None,
                                    file_name='CEAC.png'):
@@ -1293,6 +1296,7 @@ class CBA(_EconEval):
 
         w_stars = []
         s_stars = []
+        s_star_names = []
 
         w = self.wtp_values[0]
 
@@ -1309,6 +1313,7 @@ class CBA(_EconEval):
 
         w_stars.append(w)
         s_stars.append(s_star)
+        s_star_names.append(self.strategies[s_star].name)
 
         while w <= self.wtp_values[-1] and len(s_stars) < len(self.strategies):
 
@@ -1333,8 +1338,9 @@ class CBA(_EconEval):
             if w != float('inf'):
                 w_stars.append(w)
                 s_stars.append(s_star)
+                s_star_names.append(self.strategies[s_star].name)
 
-        return w_stars, s_stars
+        return w_stars, s_star_names, s_stars
 
     def calculate_exp_nmb_all_strategies(self, wtp_random_variate, n_samples, rnd):
 
@@ -1363,11 +1369,19 @@ class CBA(_EconEval):
 
         return report
 
-    def plot_exp_nmb(self, figure_size=(4, 4), y_range=None,
-                     if_show_conf_interval=True):
+    def plot_exp_nmb(self,
+                     title=None,
+                     y_label='Expected Net Monetary Benefit',
+                     y_range=None,
+                     figure_size=(5, 5),
+                     if_show_conf_interval=True,
+                     file_name='ENMB.png'):
 
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
+
+        ax.set_title(title)
+        ax.set_ylabel(y_label)
 
         for s in self.strategies[1:]:
             ax.scatter(x=s.idx, y=s.eIncNMB.get_mean(),
@@ -1404,6 +1418,7 @@ class CBA(_EconEval):
 
         ax.legend()
         fig.show()
+        fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
 
 def get_d_cost(strategy):

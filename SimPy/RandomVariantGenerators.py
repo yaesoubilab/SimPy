@@ -11,6 +11,9 @@ class RNG(RandomState):
     def sample(self):
         return self.random_sample()
 
+    def get_mean_st_dev(self):
+        pass
+
 
 class RVG:
     def __init__(self):
@@ -177,6 +180,9 @@ class Gamma(RVG):
 
     def sample(self, rng, arg=None):
         return scipy.gamma.rvs(self.a, self.loc, self.scale, random_state=rng)
+
+    def get_mean_st_dev(self):
+        return self.a*self.scale + self.loc, math.sqrt(self.a*self.scale**2)
 
 
 class GammaPoisson(RVG):
