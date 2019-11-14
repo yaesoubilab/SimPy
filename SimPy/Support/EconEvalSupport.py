@@ -13,6 +13,16 @@ def inmb_d(d_effect, d_cost):
     return lambda w: -w * d_effect - d_cost
 
 
+def inmb2_u(d_effect, d_cost):
+    return lambda w_gain, w_loss: \
+        inmb_u(d_effect, d_cost)(w_gain) if d_effect >= 0 else inmb_u(d_effect, d_cost)(w_loss)
+
+
+def inmb2_d(d_effect, d_cost):
+    return lambda w_gain, w_loss: \
+        inmb_d(d_effect, d_cost)(w_gain) if d_effect >= 0 else inmb_d(d_effect, d_cost)(w_loss)
+
+
 def find_intersecting_wtp(w0, u_new, u_base):
 
     if u_new(w0) > u_base(w0):
