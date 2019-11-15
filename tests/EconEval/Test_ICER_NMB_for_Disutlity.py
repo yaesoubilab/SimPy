@@ -11,7 +11,7 @@ effect_intervention = np.random.normal(loc=1, scale=.2, size=1000)
 print('')
 
 # ICER calculation assuming paired observations
-ICER_paired = EconEval.ICER_paired('Testing paired ICER',
+ICER_paired = EconEval.ICER_Paired('Testing paired ICER',
                                    cost_intervention, effect_intervention, cost_base, effect_base,
                                    health_measure='d')
 print('Paired ICER (confidence and prediction interval): ',
@@ -20,7 +20,7 @@ print('Paired ICER (confidence and prediction interval): ',
       ICER_paired.get_PI(0.05, ))
 
 # ICER calculation assuming independent observations
-ICER_indp = EconEval.ICER_indp('Testing independent ICER',
+ICER_indp = EconEval.ICER_Indp('Testing independent ICER',
                                cost_intervention, effect_intervention, cost_base, effect_base,
                                health_measure='d')
 print('Independent ICER (confidence and prediction interval): ',
@@ -29,7 +29,7 @@ print('Independent ICER (confidence and prediction interval): ',
       ICER_indp.get_PI(0.05, ))
 
 # try NMB
-NMB_paired = EconEval.INMB_paired("Testing paired NMB",
+NMB_paired = EconEval.INMB_Paired("Testing paired NMB",
                                   cost_intervention, effect_intervention, cost_base, effect_base,
                                   health_measure='d')
 print('Paired NMB (confidence and prediction interval): ',
@@ -37,7 +37,7 @@ print('Paired NMB (confidence and prediction interval): ',
       NMB_paired.get_CI(wtp=10000, alpha=.05),
       NMB_paired.get_PI(wtp=10000, alpha=.05))
 
-NMB_indp = EconEval.INMB_indp("Testing independent NMB",
+NMB_indp = EconEval.INMB_Indp("Testing independent NMB",
                               cost_intervention, effect_intervention, cost_base, effect_base,
                               health_measure='d')
 print('Independent NMB (confidence and prediction interval): ',
