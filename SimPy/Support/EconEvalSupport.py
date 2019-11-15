@@ -2,6 +2,8 @@ from scipy.optimize import minimize
 import SimPy.StatisticalClasses as Stat
 import SimPy.RandomVariantGenerators as RVG
 import numpy as np
+import math
+import SimPy.Support.SupportClasses as S
 
 
 def assert_np_list(obs, error_message):
@@ -143,31 +145,29 @@ class INMBCurve(_Curve):
         """
 
         _Curve.__init__(self, label, color, wtps)
+        self.inmbStat = inmb_stat
+        self.wtps = wtps
+        self.intervalType = interval_type
         self.ys = []        # expected net monetary benefits over a range of wtp values
         self.l_errs = []    # lower error length of NMB over a range of wtp values
         self.u_errs = []    # upper error length of NMB over a range of wtp values
 
-        self._calculate_ys_lerrs_uerrs(inmb_stat=inmb_stat, wtps=wtps, interval_type=interval_type)
+        self._calculate_ys_lerrs_uerrs()
 
-    def _calculate_ys_lerrs_uerrs(self, inmb_stat, wtps, interval_type):
+    def _calculate_ys_lerrs_uerrs(self):
         """
         calculates the expected incremental NMB and the confidence or prediction intervals over the specified
         range of wtp values.
-        :param inmb_stat: incremental NMB statistics
-        :param wtps: list of wtp values
-        :param interval_type: (string) 'n' for no interval
-                                       'c' for t-based confidence interval,
-                                       'p' for percentile interval
         """
 
         # get the NMB values for each wtp
-        self.ys = np.array([inmb_stat.get_INMB(x) for x in wtps])
+        self.ys = np.array([self.inmbStat.get_INMB(x) for x in self.wtps])
 
-        if interval_type == 'c':
-            y_intervals = np.array([inmb_stat.get_CI(x, alpha=0.05) for x in wtps])
-        elif interval_type == 'p':
-            y_intervals = np.array([inmb_stat.get_PI(x, alpha=0.05) for x in wtps])
-        elif interval_type == 'n':
+        if self.intervalType == 'c':
+            y_intervals = np.array([self.inmbStat.get_CI(x, alpha=0.05) for x in self.wtps])
+        elif self.intervalType == 'p':
+            y_intervals = np.array([self.inmbStat.get_PI(x, alpha=0.05) for x in self.wtps])
+        elif self.intervalType == 'n':
             y_intervals = None
         else:
             raise ValueError('Invalid value for internal_type.')
@@ -178,6 +178,42 @@ class INMBCurve(_Curve):
             self.l_errs = self.ys - np.array([p[0] for p in y_intervals])
         else:
             self.u_errs, self.l_errs = None, None
+
+    def get_switch_wtp_and_interval(self):
+
+        try:
+            wtp = self.inmbStat.get_ave_d_cost()/self.inmbStat.get_ave_d_effect()
+        except ValueError:
+            wtp = math.nan
+
+        if self.intervalType == 'n':
+            return wtp, None
+        elif self.intervalType == 'c':
+            interval_at_min_wtp = self.inmbStat.get_CI(wtp=self.wtps[0])
+            interval_at_max_wtp = self.inmbStat.get_CI(wtp=self.wtps[-1])
+        elif self.intervalType == 'p':
+            interval_at_min_wtp = self.inmbStat.get_PI(wtp=self.wtps[0])
+            interval_at_max_wtp = self.inmbStat.get_PI(wtp=self.wtps[-1])
+        else:
+            raise ValueError('Invalid value for interval_type.')
+
+        line_lower_err = S.Line(x1=self.wtps[0],
+                                x2=self.wtps[-1],
+                                y1=interval_at_min_wtp[0],
+                                y2=interval_at_max_wtp[0])
+        line_upper_err = S.Line(x1=self.wtps[0],
+                                x2=self.wtps[-1],
+                                y1=interval_at_min_wtp[1],
+                                y2=interval_at_max_wtp[1])
+
+        if self.inmbStat.get_ave_d_effect() >= 0:
+            interval = [line_upper_err.get_intercept_with_x_axis(),
+                        line_lower_err.get_intercept_with_x_axis()]
+        else:
+            interval = [line_lower_err.get_intercept_with_x_axis(),
+                        line_upper_err.get_intercept_with_x_axis()]
+
+        return wtp, interval
 
 
 class AcceptabilityCurve(_Curve):

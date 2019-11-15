@@ -97,12 +97,15 @@ class Strategy:
 
         self.idx = 0        # index of the strategy
         self.name = name
-        self.ifDominated = False
         self.color = color
         self.marker = marker
 
+        self.ifDominated = False
+        self.switchingWTP = 0
+        self.switchingWTPInterval = []
+
         self.costObs = assert_np_list(cost_obs,
-                                       error_message='cost_obs should be a list or a np.array')
+                                      error_message='cost_obs should be a list or a np.array')
         self.dCostObs = None    # (list) cost observations with respect to base
         self.incCostObs = None  # (list) incremental cost observations
         self.cost = None        # summary statistics for cost
@@ -110,7 +113,7 @@ class Strategy:
         self.incCost = None     # summary statistics for incremental cost
 
         self.effectObs = assert_np_list(effect_obs,
-                                       error_message='effect_obs should be a list or a np.array')
+                                        error_message='effect_obs should be a list or a np.array')
         self.dEffectObs = None      # (list) effect observations with respect to base
         self.incEffectObs = None    # (list) incremental effect observations
         self.effect = None          # summary statistics for effect
@@ -142,7 +145,7 @@ class Strategy:
         self.cer = None
         self.icer = None
 
-    def get_cost_err_interval(self, interval_type, alpha, multiplier=1):
+    def get_cost_err_interval(self, interval_type, alpha=0.05, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
@@ -1058,6 +1061,60 @@ class CBA(_EconEval):
             self.idxHighestExpNMB.append(max_idx)
             self.inmbCurves[max_idx].update_range_with_highest_value(wtp=wtp)
 
+    def find_optimal_switching_wtp_values(self):
+
+        w_stars = []
+        s_stars = []
+        s_star_names = []
+
+        w = self.wtp_values[0]
+
+        # at initial w
+        max_nmb = float('-inf')
+        s_star = 0
+        for s in self.strategies:
+            u = self.utility(d_effect=s.dEffect.get_mean(),
+                             d_cost=s.dCost.get_mean())
+            u_value = u(w)
+            if u_value > max_nmb:
+                max_nmb = u_value
+                s_star = s.idx
+
+        w_stars.append(w)
+        s_stars.append(s_star)
+        s_star_names.append(self.strategies[s_star].name)
+
+        while w <= self.wtp_values[-1] and len(s_stars) < len(self.strategies):
+
+            # find the intersect of the current strategy with other
+            w_min = float('inf')
+            for s in self.strategies:
+                if s.idx not in s_stars:
+
+                    w_star = find_intersecting_wtp(
+                        w0=w,
+                        u_new=self.utility(d_effect=s.dEffect.get_mean(),
+                                           d_cost=s.dCost.get_mean()),
+                        u_base=self.utility(d_effect=self.strategies[s_star].dEffect.get_mean(),
+                                            d_cost=self.strategies[s_star].dCost.get_mean()))
+
+                    if w_star is not None:
+                        if w_star < w_min:
+                            w_min = w_star
+                            s_star = s.idx
+
+            w = w_min
+            if w != float('inf'):
+                w_stars.append(w)
+                s_stars.append(s_star)
+                s_star_names.append(self.strategies[s_star].name)
+
+        return w_stars, s_star_names, s_stars
+
+        for curve in self.inmbCurves[1:]:
+            print(curve.get_switch_wtp_and_interval())
+
+
     def graph_incremental_nmbs(self,
                                title='Incremental Net Monetary Benefit',
                                x_label='Willingness-To-Pay Threshold',
@@ -1234,7 +1291,13 @@ class CBA(_EconEval):
 
         return w_stars, s_star_names, s_stars
 
-    def calculate_exp_nmb_all_strategies(self, wtp_random_variate, n_samples, rnd):
+    def calculate_exp_incremental_nmbs(self, wtp_random_variate, n_samples, rnd):
+        """ create summary statistics of incremental NMB of all strategies given the
+        provided probability distribution of WTP value.
+        :param wtp_random_variate: random variate generator for the probability distribution of wtp value
+        :param n_samples: number of monte carlo samples
+        :param rnd: the random number generator
+        """
 
         for s in self.strategies[1:]:
             s.eIncNMB = utility_sample_stat(
@@ -1246,13 +1309,13 @@ class CBA(_EconEval):
                 rnd=rnd
             )
 
-    def report_exp_nmb(self, interval='c', deci=0):
+    def report_exp_incremental_nmb(self, interval='c', deci=0):
 
         report = []
         for s in self.strategies[1:]:
 
             mean_and_interval = s.eIncNMB.get_formatted_mean_and_interval(
-                     interval_type='c',
+                     interval_type=interval,
                      deci=deci,
                      form=','
                  )
@@ -1261,13 +1324,13 @@ class CBA(_EconEval):
 
         return report
 
-    def plot_exp_nmb(self,
-                     title=None,
-                     y_label='Expected Net Monetary Benefit',
-                     y_range=None,
-                     figure_size=(5, 5),
-                     if_show_conf_interval=True,
-                     file_name='ENMB.png'):
+    def plot_exp_incremental_nmb(self,
+                                 title=None,
+                                 y_label='Expected Net Monetary Benefit',
+                                 y_range=None,
+                                 figure_size=(5, 5),
+                                 if_show_conf_interval=True,
+                                 file_name='ENMB.png'):
 
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
@@ -1355,15 +1418,6 @@ class _ComparativeEconMeasure:
         (e.g. when DALYS is used)
         """
 
-        assert type(costs_new) is list or type(costs_new) is np.ndarray, \
-            "cost_new should be list or np.array."
-        assert type(effects_new) is list or type(effects_new) is np.ndarray, \
-            "effect_new should be list or np.array."
-        assert type(costs_base) is list or type(costs_base) is np.ndarray, \
-            "cost_base should be list or np.array."
-        assert type(effects_base) is list or type(effects_base) is np.ndarray, \
-            "effect_base should be list or np.array."
-
         if health_measure not in ['u', 'd']:
             raise ValueError("health_measure can be either 'u' (for utility) or 'd' (for disutility).")
 
@@ -1376,20 +1430,28 @@ class _ComparativeEconMeasure:
         self._effect_multiplier = 1 if health_measure == 'u' else -1
 
         # convert input data to numpy.array if needed
-        if type(costs_new) == list:
-            self._costsNew = np.array(costs_new)
-        if type(effects_new) == list:
-            self._effectsNew = np.array(effects_new)
-        if type(costs_base) == list:
-            self._costsBase = np.array(costs_base)
-        if type(effects_base) == list:
-            self._effectsBase = np.array(effects_base)
+        self._costsNew = assert_np_list(costs_new, "cost_new should be list or np.array.")
+        self._effectsNew = assert_np_list(effects_new, "effects_new should be list or np.array.")
+        self._costsBase = assert_np_list(costs_base, "costs_base should be list or np.array.")
+        self._effectsBase = assert_np_list(effects_base, "effects_base should be list or np.array.")
 
-        # calculate the difference in average cost and effect
+        # calculate the difference in average cost
         self._delta_ave_cost = np.average(self._costsNew) - np.average(self._costsBase)
         # change in effect: DALY averted or QALY gained
         self._delta_ave_effect = (np.average(self._effectsNew) - np.average(self._effectsBase)) \
                                  * self._effect_multiplier
+
+    def get_ave_d_cost(self):
+        """
+        :return: average incremental cost
+        """
+        return self._delta_ave_cost
+
+    def get_ave_d_effect(self):
+        """
+        :return: average incremental effect
+        """
+        return self._delta_ave_effect
 
 
 class _ICER(_ComparativeEconMeasure):
@@ -1422,7 +1484,7 @@ class _ICER(_ComparativeEconMeasure):
         """ return ICER """
         return self._ICER
 
-    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
+    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
@@ -1432,7 +1494,7 @@ class _ICER(_ComparativeEconMeasure):
         # abstract method to be overridden in derived classes to process an event
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
-    def get_PI(self, alpha):
+    def get_PI(self, alpha=0.05):
         """
         :param alpha: significance level, a value from [0, 1]
         :return: percentile interval in the format of list [l, u]
@@ -1506,7 +1568,7 @@ class ICER_Paired(_ICER):
         if self._isDefined:
             self._icers = np.divide(self._deltaCosts, self._deltaEffects)
 
-    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
+    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
@@ -1549,7 +1611,7 @@ class ICER_Paired(_ICER):
         # return the bootstrap interval
         return self._ICER - np.percentile(icer_bootstrap_means, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
 
-    def get_PI(self, alpha):
+    def get_PI(self, alpha=0.05):
         """
         :param alpha: significance level, a value from [0, 1]
         :return: prediction interval in the format of list [l, u]
@@ -1581,7 +1643,7 @@ class ICER_Indp(_ICER):
         # initialize the base class
         _ICER.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
-    def get_CI(self, alpha, num_bootstrap_samples, rng=None):
+    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
@@ -1636,7 +1698,7 @@ class ICER_Indp(_ICER):
         else:
             return [math.nan, math.nan]
 
-    def get_PI(self, alpha, num_bootstrap_samples=0, rng=None):
+    def get_PI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
@@ -1696,7 +1758,7 @@ class _INMB(_ComparativeEconMeasure):
         """
         return wtp * self._delta_ave_effect - self._delta_ave_cost
 
-    def get_CI(self, wtp, alpha):
+    def get_CI(self, wtp, alpha=0.05):
         """
         :param wtp: willingness-to-pay value ($ for QALY gained or $ for DALY averted)
         :param alpha: significance level, a value from [0, 1]
@@ -1705,7 +1767,7 @@ class _INMB(_ComparativeEconMeasure):
         # abstract method to be overridden in derived classes
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
-    def get_PI(self, wtp, alpha):
+    def get_PI(self, wtp, alpha=0.05):
         """
         :param wtp: willingness-to-pay value ($ for QALY gained or $ for DALY averted)
         :param alpha: significance level, a value from [0, 1]
@@ -1733,12 +1795,12 @@ class INMB_Paired(_INMB):
         self._deltaCost = self._costsNew - self._costsBase
         self._deltaHealth = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
-    def get_CI(self, wtp, alpha):
+    def get_CI(self, wtp, alpha=0.05):
         # create a summary statistics
         stat = Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost)
         return stat.get_t_CI(alpha)
 
-    def get_PI(self, wtp, alpha):
+    def get_PI(self, wtp, alpha=0.05):
         # create a summary statistics
         stat = Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost)
         return stat.get_PI(alpha)
@@ -1758,7 +1820,7 @@ class INMB_Indp(_INMB):
         """
         _INMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
-    def get_CI(self, wtp, alpha):
+    def get_CI(self, wtp, alpha=0.05):
         # NMB observations of two alternatives
         stat_new = wtp * self._effectsNew * self._effect_multiplier - self._costsNew
         stat_base = wtp * self._effectsBase * self._effect_multiplier - self._costsBase
@@ -1767,7 +1829,7 @@ class INMB_Indp(_INMB):
         diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
         return diff_stat.get_t_CI(alpha)
 
-    def get_PI(self, wtp, alpha):
+    def get_PI(self, wtp, alpha=0.05):
         # NMB observations of two alternatives
         stat_new = wtp * self._effectsNew * self._effect_multiplier - self._costsNew
         stat_base = wtp * self._effectsBase * self._effect_multiplier - self._costsBase
