@@ -178,42 +178,16 @@ class INMBCurve(_Curve):
             self.l_errs = self.ys - np.array([p[0] for p in y_intervals])
         else:
             self.u_errs, self.l_errs = None, None
-
+    
+    def get_switch_wtp(self):
+        
+        return self.inmbStat.get_switch_wtp()
+    
     def get_switch_wtp_and_interval(self):
 
-        try:
-            wtp = self.inmbStat.get_ave_d_cost()/self.inmbStat.get_ave_d_effect()
-        except ValueError:
-            wtp = math.nan
-
-        if self.intervalType == 'n':
-            return wtp, None
-        elif self.intervalType == 'c':
-            interval_at_min_wtp = self.inmbStat.get_CI(wtp=self.wtps[0])
-            interval_at_max_wtp = self.inmbStat.get_CI(wtp=self.wtps[-1])
-        elif self.intervalType == 'p':
-            interval_at_min_wtp = self.inmbStat.get_PI(wtp=self.wtps[0])
-            interval_at_max_wtp = self.inmbStat.get_PI(wtp=self.wtps[-1])
-        else:
-            raise ValueError('Invalid value for interval_type.')
-
-        line_lower_err = S.Line(x1=self.wtps[0],
-                                x2=self.wtps[-1],
-                                y1=interval_at_min_wtp[0],
-                                y2=interval_at_max_wtp[0])
-        line_upper_err = S.Line(x1=self.wtps[0],
-                                x2=self.wtps[-1],
-                                y1=interval_at_min_wtp[1],
-                                y2=interval_at_max_wtp[1])
-
-        if self.inmbStat.get_ave_d_effect() >= 0:
-            interval = [line_upper_err.get_intercept_with_x_axis(),
-                        line_lower_err.get_intercept_with_x_axis()]
-        else:
-            interval = [line_lower_err.get_intercept_with_x_axis(),
-                        line_upper_err.get_intercept_with_x_axis()]
-
-        return wtp, interval
+        return self.inmbStat.get_switch_wtp_and_interval(
+            wtp_range=[self.wtps[0], self.wtps[-1]], 
+            interval_type=self.intervalType)    
 
 
 class AcceptabilityCurve(_Curve):

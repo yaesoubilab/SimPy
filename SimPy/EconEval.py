@@ -5,10 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import SimPy.InOutFunctions as IO
-import SimPy.StatisticalClasses as Stat
-import SimPy.RandomVariantGenerators as RVG
 import SimPy.FormatFunctions as F
 from SimPy.Support.EconEvalSupport import *
+from SimPy.Support.SupportClasses import *
 import matplotlib.patches as patches
 
 
@@ -1061,15 +1060,17 @@ class CBA(_EconEval):
             self.idxHighestExpNMB.append(max_idx)
             self.inmbCurves[max_idx].update_range_with_highest_value(wtp=wtp)
 
-    def find_optimal_switching_wtp_values(self):
+    def find_optimal_switching_wtp_values(self, interval_type='n', deci=None):
 
-        w_stars = []
-        s_stars = []
-        s_star_names = []
+        w_stars = []  # wtp values to switch between strategies
+        w_star_intervals = [] # confidence or projection intervals of optimal wtp values
+        s_stars = []  # indices of optimal strategies between wtp values
+        s_star_names = []   # names of optimal strategies
 
+        # working wtp value
         w = self.wtp_values[0]
 
-        # at initial w
+        # find the optimal strategy at wtp = 0
         max_nmb = float('-inf')
         s_star = 0
         for s in self.strategies:
@@ -1080,10 +1081,13 @@ class CBA(_EconEval):
                 max_nmb = u_value
                 s_star = s.idx
 
+        # record the information of the optimal strategy at wtp = 0
         w_stars.append(w)
+        w_star_intervals.append([w, w])
         s_stars.append(s_star)
         s_star_names.append(self.strategies[s_star].name)
 
+        # find the optimal switching wtp values
         while w <= self.wtp_values[-1] and len(s_stars) < len(self.strategies):
 
             # find the intersect of the current strategy with other
@@ -1091,14 +1095,13 @@ class CBA(_EconEval):
             for s in self.strategies:
                 if s.idx not in s_stars:
 
-                    w_star = find_intersecting_wtp(
-                        w0=w,
-                        u_new=self.utility(d_effect=s.dEffect.get_mean(),
-                                           d_cost=s.dCost.get_mean()),
-                        u_base=self.utility(d_effect=self.strategies[s_star].dEffect.get_mean(),
-                                            d_cost=self.strategies[s_star].dCost.get_mean()))
+                    line = Line(x1=self.strategies[s_star].dEffect.get_mean(),
+                                x2=s.dEffect.get_mean(),
+                                y1=self.strategies[s_star].dCost.get_mean(),
+                                y2=s.dCost.get_mean())
+                    w_star = line.slope
 
-                    if w_star is not None:
+                    if w_star is not math.nan:
                         if w_star < w_min:
                             w_min = w_star
                             s_star = s.idx
@@ -1109,11 +1112,45 @@ class CBA(_EconEval):
                 s_stars.append(s_star)
                 s_star_names.append(self.strategies[s_star].name)
 
-        return w_stars, s_star_names, s_stars
+        for i in s_stars[0:-1]:
+            if self._ifPaired:
+                inmb = INMB_Paired(
+                    name='',
+                    costs_new=self.strategies[i+1].costObs,
+                    effects_new=self.strategies[i+1].effectObs,
+                    costs_base=self.strategies[i].costObs,
+                    effects_base=self.strategies[i].effectObs,
+                    health_measure=self._healthMeasure
+                )
+            else:
+                inmb = INMB_Indp(
+                    name='',
+                    costs_new=self.strategies[i + 1].costObs,
+                    effects_new=self.strategies[i + 1].effectObs,
+                    costs_base=self.strategies[i].costObs,
+                    effects_base=self.strategies[i].effectObs,
+                    health_measure=self._healthMeasure
+                )
 
-        for curve in self.inmbCurves[1:]:
-            print(curve.get_switch_wtp_and_interval())
+            w_star, interval = inmb.get_switch_wtp_and_interval(
+                wtp_range=[self.wtp_values[0], self.wtp_values[-1]],
+                interval_type=interval_type
+            )
+            w_star_intervals.append(interval)
 
+
+        result = [['Strategy', 'ID', 'WTP', 'Interval']]
+        for i in range(len(s_stars)):
+            result.append(
+                [
+                    s_star_names[i],
+                    s_stars[i],
+                    F.format_number(w_stars[i], deci=deci, format=','),
+                    F.format_interval(w_star_intervals[i], deci=deci, format=',')
+                ]
+            )
+
+        return result
 
     def graph_incremental_nmbs(self,
                                title='Incremental Net Monetary Benefit',
@@ -1775,6 +1812,48 @@ class _INMB(_ComparativeEconMeasure):
         """
         # abstract method to be overridden in derived classes
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
+
+    def get_switch_wtp(self):
+
+        try:
+            wtp = self.get_ave_d_cost() / self.get_ave_d_effect()
+        except ValueError:
+            wtp = math.nan
+
+        return wtp
+
+    def get_switch_wtp_and_interval(self, wtp_range, interval_type='n'):
+
+        wtp = self.get_switch_wtp()
+
+        if interval_type == 'n':
+            return wtp, None
+        elif interval_type == 'c':
+            interval_at_min_wtp = self.get_CI(wtp=wtp_range[0])
+            interval_at_max_wtp = self.get_CI(wtp=wtp_range[1])
+        elif interval_type == 'p':
+            interval_at_min_wtp = self.get_PI(wtp=wtp_range[0])
+            interval_at_max_wtp = self.get_PI(wtp=wtp_range[1])
+        else:
+            raise ValueError('Invalid value for interval_type.')
+
+        line_lower_err = S.Line(x1=wtp_range[0],
+                                x2=wtp_range[1],
+                                y1=interval_at_min_wtp[0],
+                                y2=interval_at_max_wtp[0])
+        line_upper_err = S.Line(x1=wtp_range[0],
+                                x2=wtp_range[1],
+                                y1=interval_at_min_wtp[1],
+                                y2=interval_at_max_wtp[1])
+
+        if self.get_ave_d_effect() >= 0:
+            interval = [line_upper_err.get_intercept_with_x_axis(),
+                        line_lower_err.get_intercept_with_x_axis()]
+        else:
+            interval = [line_lower_err.get_intercept_with_x_axis(),
+                        line_upper_err.get_intercept_with_x_axis()]
+
+        return wtp, interval
 
 
 class INMB_Paired(_INMB):

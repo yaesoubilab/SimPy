@@ -1,3 +1,4 @@
+import math
 
 
 class Line:
@@ -17,8 +18,13 @@ class Line:
         return self.slope * (x - self.x1) + self.y1
 
     def get_intercept_with_x_axis(self):
-
-        return - self.y1/self.slope + self.x1
+        
+        try:
+            value = - self.y1/self.slope + self.x1
+        except ValueError:
+            value = math.nan
+        
+        return value
 
 
 test = Line(x1=1, x2=2, y1=0, y2=2)
