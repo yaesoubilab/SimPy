@@ -1101,7 +1101,7 @@ class CBA(_EconEval):
                                 y2=s.dCost.get_mean())
                     w_star = line.slope
 
-                    if w_star is not math.nan:
+                    if w_star is not math.nan and w_star >= 0:
                         if w_star < w_min:
                             w_min = w_star
                             s_star = s.idx
@@ -1112,23 +1112,26 @@ class CBA(_EconEval):
                 s_stars.append(s_star)
                 s_star_names.append(self.strategies[s_star].name)
 
-        for i in s_stars[0:-1]:
+        # find and store the confidence or projection intervals of
+        # switching wtp values
+        for i, s_index in enumerate(s_stars[0:-1]):
+            next_s_index = s_stars[i+1]
             if self._ifPaired:
                 inmb = INMB_Paired(
                     name='',
-                    costs_new=self.strategies[i+1].costObs,
-                    effects_new=self.strategies[i+1].effectObs,
-                    costs_base=self.strategies[i].costObs,
-                    effects_base=self.strategies[i].effectObs,
+                    costs_new=self.strategies[next_s_index].costObs,
+                    effects_new=self.strategies[next_s_index].effectObs,
+                    costs_base=self.strategies[s_index].costObs,
+                    effects_base=self.strategies[s_index].effectObs,
                     health_measure=self._healthMeasure
                 )
             else:
                 inmb = INMB_Indp(
                     name='',
-                    costs_new=self.strategies[i + 1].costObs,
-                    effects_new=self.strategies[i + 1].effectObs,
-                    costs_base=self.strategies[i].costObs,
-                    effects_base=self.strategies[i].effectObs,
+                    costs_new=self.strategies[next_s_index].costObs,
+                    effects_new=self.strategies[next_s_index].effectObs,
+                    costs_base=self.strategies[s_index].costObs,
+                    effects_base=self.strategies[s_index].effectObs,
                     health_measure=self._healthMeasure
                 )
 
@@ -1138,7 +1141,18 @@ class CBA(_EconEval):
             )
             w_star_intervals.append(interval)
 
+        # update status of strategies
+        i = 0
+        for s in self.strategies:
+            if s.idx in s_stars:
+                s.ifDominated = False
+                s.switchingWTP = w_stars[i]
+                s.switchingWTPInterval = w_star_intervals[i]
+                i += 1
+            else:
+                s.ifDominated = True
 
+        # populate the results to report back
         result = [['Strategy', 'ID', 'WTP', 'Interval']]
         for i in range(len(s_stars)):
             result.append(
