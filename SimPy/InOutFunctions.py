@@ -115,7 +115,7 @@ def _csv_file_to_rows(csv_file, if_del_first_row):
 
     # read rows
     rows = []
-    for row in csv_file:
+    for i, row in enumerate(csv_file):
         rows.append(row)
 
     # delete the first row if needed
