@@ -1172,7 +1172,8 @@ class CBA(_EconEval):
                                y_label='Expected Incremental Net Monetary Benefit',
                                y_range=None,
                                y_axis_multiplier=1,
-                               interval_type='n',
+                               interval_type = 'c',
+                               delta_wtp=None,
                                transparency=0.4,
                                show_legend=True,
                                figure_size=(5, 5),
@@ -1204,7 +1205,7 @@ class CBA(_EconEval):
         # add the incremental NMB curves
         self.add_incremental_nmbs_to_ax(ax=ax,
                                         title=title, x_label=x_label,
-                                        y_label=y_label, y_range=y_range,
+                                        y_label=y_label, y_range=y_range, delta_wtp=delta_wtp,
                                         y_axis_multiplier=y_axis_multiplier,
                                         transparency=transparency,
                                         show_legend=show_legend)
@@ -1216,6 +1217,7 @@ class CBA(_EconEval):
     def add_incremental_nmbs_to_ax(self, ax,
                                    title, x_label,
                                    y_label, y_range=None, y_axis_multiplier=1,
+                                   delta_wtp=None,
                                    transparency=0.4, show_legend=False):
 
         for curve in self.inmbCurves[1:]:
@@ -1239,7 +1241,7 @@ class CBA(_EconEval):
 
         # do the other formatting
         self.__format_ax(ax=ax, y_range=y_range,
-                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1],
+                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1], delta_wtp=delta_wtp,
                          if_y_axis_prob=False)
 
     def graph_acceptability_curves(self,
@@ -1438,7 +1440,6 @@ class CBA(_EconEval):
         ax.legend()
         fig.show()
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
-
 
     def __format_ax(self, ax, y_range, min_wtp, max_wtp, delta_wtp=None, if_y_axis_prob=True):
 
