@@ -392,7 +392,7 @@ class CEA(_EconEval):
     def add_ce_plane_to_ax(self, ax,
                            x_range=None, y_range=None,
                            add_clouds=True, show_legend=True,
-                           center_s=75, cloud_s=25, transparency=0.1,
+                           center_s=50, cloud_s=10, transparency=0.1,
                            cost_multiplier=1, effect_multiplier=1,
                            cost_digits=0, effect_digits=1):
 
@@ -426,7 +426,7 @@ class CEA(_EconEval):
                 )
 
         if show_legend:
-            ax.legend(fontsize='7')
+            ax.legend(fontsize='7.5')
 
         # and the clouds
         if add_clouds:
@@ -1232,9 +1232,13 @@ class CBA(_EconEval):
         if show_legend:
             ax.legend()
 
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_ylim(y_range)
+
         # do the other formatting
-        self.__format_ax(ax=ax, title=title, x_label=x_label,
-                         y_label=y_label, y_range=y_range,
+        self.__format_ax(ax=ax, y_range=y_range,
                          min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1],
                          if_y_axis_prob=False)
 
@@ -1272,15 +1276,17 @@ class CBA(_EconEval):
                                             show_legend=show_legend,
                                             legends=legends)
 
-        self.__format_ax(ax=ax, title=title, x_label=x_label, y_label=y_label,
-                         y_range=y_range,
-                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1],
-                         if_y_axis_prob=True)
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_ylim(y_range)
 
         fig.show()
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
-    def add_acceptability_curves_to_ax(self, ax, show_legend=False, legends=None):
+    def add_acceptability_curves_to_ax(self,
+                                       ax, wtp_delta=None,
+                                       y_range=None, show_legend=True, legends=None):
 
         for i, curve in enumerate(self.acceptabilityCurves):
             # plot line
@@ -1288,9 +1294,16 @@ class CBA(_EconEval):
                 ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=curve.label)
             else:
                 ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=legends[i])
-            ax.plot(curve.optWTPs, curve.optProbs, c=curve.color, linewidth=5)
+            ax.plot(curve.optWTPs, curve.optProbs, c=curve.color, linewidth=4)
+
+        self.__format_ax(ax=ax, y_range=y_range,
+                         min_wtp=self.wtp_values[0],
+                         max_wtp=self.wtp_values[-1],
+                         delta_wtp=wtp_delta,
+                         if_y_axis_prob=True)
+
         if show_legend:
-            ax.legend(fontsize='7')  # xx-small, x-small, small, medium, large, x-large, xx-large
+            ax.legend(fontsize='7.5')  # xx-small, x-small, small, medium, large, x-large, xx-large
 
     def get_w_starts(self):
 
@@ -1426,16 +1439,19 @@ class CBA(_EconEval):
         fig.show()
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
-    def __format_ax(self, ax, title, x_label, y_label, y_range,
-                    min_wtp, max_wtp, if_y_axis_prob=True):
 
-        ax.set_title(title)
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        ax.set_ylim(y_range)
+    def __format_ax(self, ax, y_range, min_wtp, max_wtp, delta_wtp=None, if_y_axis_prob=True):
 
         # format x-axis
-        vals_x = ax.get_xticks()
+        if delta_wtp is None:
+            vals_x = ax.get_xticks()
+        else:
+            vals_x = []
+            wtp = min_wtp
+            while wtp <= max_wtp:
+                vals_x.append(wtp)
+                wtp += delta_wtp
+
         ax.set_xticks(vals_x)
         ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
