@@ -1172,9 +1172,9 @@ class CBA(_EconEval):
                                y_label='Expected Incremental Net Monetary Benefit',
                                y_range=None,
                                y_axis_multiplier=1,
-                               interval_type = 'c',
+                               interval_type='c',
                                delta_wtp=None,
-                               transparency=0.4,
+                               transparency=0.2,
                                show_legend=True,
                                figure_size=(5, 5),
                                file_name='NMB.png'):
@@ -1249,7 +1249,8 @@ class CBA(_EconEval):
                                    x_label='Willingness-To-Pay Threshold',
                                    y_label='Probability of Being the Optimal Strategy',
                                    y_range=None,
-                                   show_legend=True, figure_size=(5, 5),
+                                   wtp_delta=None,
+                                   show_legend=True, fig_size=(5, 5),
                                    legends=None,
                                    file_name='CEAC.png'):
         """
@@ -1260,7 +1261,7 @@ class CBA(_EconEval):
         :param y_range: (list) range of y-axis
         :param show_legend: set true to show legend
         :param legends: (list) of legends to display on the figure
-        :param figure_size: (tuple) size of the figure (e.g. (2, 3)
+        :param fig_size: (tuple) size of the figure (e.g. (2, 3)
         :param file_name: file name
         """
 
@@ -1271,10 +1272,11 @@ class CBA(_EconEval):
         self.build_acceptability_curves()
 
         # initialize plot
-        fig, ax = plt.subplots(figsize=figure_size)
+        fig, ax = plt.subplots(figsize=fig_size)
 
         # add the incremental NMB curves
         self.add_acceptability_curves_to_ax(ax=ax,
+                                            wtp_delta=wtp_delta,
                                             show_legend=show_legend,
                                             legends=legends)
 
