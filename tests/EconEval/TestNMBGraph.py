@@ -1,26 +1,30 @@
 from SimPy import EconEval as ce
 import numpy as np
 
+N = 100
 
 np.random.seed(573)
-s_center = np.array([[10000, 0.2], [20000, 0.3], [50000, 0.35]])
+s_center = np.array([[10000, 0.2], [20000, 0.7], [50000, 1.2]])
 
 
-s0 = ce.Strategy("s1", s_center[0, 0]+np.random.normal(0, 1000, 10),
-                 s_center[0, 1]+np.random.normal(0, 0.01, 10),
+s0 = ce.Strategy("s0", s_center[0, 0]+np.random.normal(0, 1000, N),
+                 s_center[0, 1]+np.random.normal(0, 0.01, N),
                  color='red')
-s1 = ce.Strategy("s1", s_center[1, 0]+np.random.normal(0, 1000, 10),
-                 s_center[1, 1]+np.random.normal(0, 0.01, 10),
+s1 = ce.Strategy("s1", s_center[1, 0]+np.random.normal(0, 1000, N),
+                 s_center[1, 1]+np.random.normal(0, 0.01, N),
                  color='blue')
-s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, 10),
-                 s_center[2, 1]+np.random.normal(0, 0.05, 10),
+s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, N),
+                 s_center[2, 1]+np.random.normal(0, 0.05, N),
                  color='green')
 
+cea = ce.CEA([s0, s1, s2], if_paired=True)
+cea.show_CE_plane()
+
 nmb_paired = ce.CBA([s0, s1, s2],
-                    wtp_range=[0, 5000],
+                    wtp_range=[0, 100000],
                     if_paired=True)
 nmb_indp = ce.CBA([s0, s1, s2],
-                  wtp_range=[0, 5000],
+                  wtp_range=[0, 100000],
                   if_paired=False)  # list of frontier strategies as input
 
 # Try NMB_Lines figure - paired CI

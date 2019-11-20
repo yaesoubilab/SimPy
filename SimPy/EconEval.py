@@ -916,10 +916,6 @@ class CBA(_EconEval):
                                        'p' for percentile interval):
         """
 
-        # check if the incremental nmb curves are already built
-        if len(self.inmbCurves) == len(self.strategies):
-            return
-
         self.inmbCurves = []  # list of incremental NMB curves
 
         # decide about the color of each curve
@@ -1226,9 +1222,10 @@ class CBA(_EconEval):
     def add_incremental_nmbs_to_ax(self, ax,
                                    title, x_label, y_label, y_range=None,
                                    y_axis_multiplier=1, delta_wtp=None,
-                                   transparency_lines=0.5,
+                                   transparency_lines=0.4,
                                    transparency_intervals=0.2,
-                                   show_legend=False):
+                                   show_legend=False,
+                                   show_frontier=True):
 
         for curve in self.inmbCurves[0:]:
             # plot line
@@ -1240,6 +1237,19 @@ class CBA(_EconEval):
                                 (curve.ys - curve.l_errs) * y_axis_multiplier,
                                 (curve.ys + curve.u_errs) * y_axis_multiplier,
                                 color=curve.color, alpha=transparency_intervals)
+            # plot frontier
+            if show_frontier:
+                # check if this strategy is not dominated
+                if curve.rangeWTPHighestValue != [None, None]:
+                    frontier_wtps = []
+                    frontier_ys = []
+                    for wtp_idx, wtp in enumerate(self.wtp_values):
+                        if curve.rangeWTPHighestValue[0] <= wtp <= curve.rangeWTPHighestValue[1]:
+                            frontier_wtps = np.append(frontier_wtps, wtp)
+                            frontier_ys = np.append(frontier_ys, curve.ys[wtp_idx])
+
+                    ax.plot(frontier_wtps, frontier_ys * y_axis_multiplier,
+                            c=curve.color, alpha=1, linewidth=3)
 
         if show_legend:
             ax.legend()
@@ -1259,7 +1269,7 @@ class CBA(_EconEval):
                                    x_label='Willingness-To-Pay Threshold',
                                    y_label='Probability of Being the Optimal Strategy',
                                    y_range=None,
-                                   wtp_delta=None,
+                                   delta_wtp=None,
                                    show_legend=True, fig_size=(5, 5),
                                    legends=None,
                                    file_name='CEAC.png'):
@@ -1269,6 +1279,7 @@ class CBA(_EconEval):
         :param x_label: x-axis label
         :param y_label: y-axis label
         :param y_range: (list) range of y-axis
+        :param delta_wtp: distance between the labels of WTP values shown on the x-axis
         :param show_legend: set true to show legend
         :param legends: (list) of legends to display on the figure
         :param fig_size: (tuple) size of the figure (e.g. (2, 3)
@@ -1286,7 +1297,7 @@ class CBA(_EconEval):
 
         # add the incremental NMB curves
         self.add_acceptability_curves_to_ax(ax=ax,
-                                            wtp_delta=wtp_delta,
+                                            wtp_delta=delta_wtp,
                                             show_legend=show_legend,
                                             legends=legends)
 
