@@ -899,8 +899,9 @@ class CBA(_EconEval):
         else:
             self.utility = inmb_d
 
-        # wtp values
-        self.wtp_values = np.linspace(wtp_range[0], wtp_range[1], num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
+        # wtp values (includes the specified minimum and maximum wtp value)
+        self.wtp_values = np.linspace(wtp_range[0], wtp_range[1],
+                                      num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
 
         # index of strategy with the highest
         # expected net-monetary benefit over the wtp range
@@ -914,6 +915,10 @@ class CBA(_EconEval):
                                        'c' for confidence interval,
                                        'p' for percentile interval):
         """
+
+        # check if the incremental nmb curves are already built
+        if len(self.inmbCurves) == len(self.strategies):
+            return
 
         self.inmbCurves = []  # list of incremental NMB curves
 
@@ -1174,7 +1179,8 @@ class CBA(_EconEval):
                                y_axis_multiplier=1,
                                interval_type='c',
                                delta_wtp=None,
-                               transparency=0.2,
+                               transparency_lines=0.5,
+                               transparency_intervals=0.2,
                                show_legend=True,
                                figure_size=(5, 5),
                                file_name='NMB.png'):
@@ -1190,7 +1196,9 @@ class CBA(_EconEval):
         :param interval_type: (string) 'n' for no interval,
                                        'c' for confidence interval,
                                        'p' for percentile interval
-        :param transparency: transparency of intervals (0.0 transparent through 1.0 opaque)
+        :param delta_wtp: distance between the labels of WTP values shown on the x-axis
+        :param transparency_lines: transparency of net monetary benefit lines (0.0 transparent through 1.0 opaque)
+        :param transparency_intervals: transparency of intervals (0.0 transparent through 1.0 opaque)
         :param show_legend: set true to show legend
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
         :param file_name: (string) filename to save the figure as
@@ -1207,7 +1215,8 @@ class CBA(_EconEval):
                                         title=title, x_label=x_label,
                                         y_label=y_label, y_range=y_range, delta_wtp=delta_wtp,
                                         y_axis_multiplier=y_axis_multiplier,
-                                        transparency=transparency,
+                                        transparency_lines=transparency_lines,
+                                        transparency_intervals=transparency_intervals,
                                         show_legend=show_legend)
 
         fig.show()
@@ -1215,21 +1224,22 @@ class CBA(_EconEval):
             fig.savefig(file_name, dpi=300)
 
     def add_incremental_nmbs_to_ax(self, ax,
-                                   title, x_label,
-                                   y_label, y_range=None, y_axis_multiplier=1,
-                                   delta_wtp=None,
-                                   transparency=0.4, show_legend=False):
+                                   title, x_label, y_label, y_range=None,
+                                   y_axis_multiplier=1, delta_wtp=None,
+                                   transparency_lines=0.5,
+                                   transparency_intervals=0.2,
+                                   show_legend=False):
 
-        for curve in self.inmbCurves[1:]:
+        for curve in self.inmbCurves[0:]:
             # plot line
             ax.plot(curve.wtps, curve.ys*y_axis_multiplier,
-                    c=curve.color, alpha=1, label=curve.label)
+                    c=curve.color, alpha=transparency_lines, label=curve.label)
             # plot intervals
             if curve.l_errs is not None and curve.u_errs is not None:
                 ax.fill_between(curve.wtps,
-                                (curve.ys - curve.l_errs)*y_axis_multiplier,
-                                (curve.ys + curve.u_errs)*y_axis_multiplier,
-                                color=curve.color, alpha=transparency)
+                                (curve.ys - curve.l_errs) * y_axis_multiplier,
+                                (curve.ys + curve.u_errs) * y_axis_multiplier,
+                                color=curve.color, alpha=transparency_intervals)
 
         if show_legend:
             ax.legend()
