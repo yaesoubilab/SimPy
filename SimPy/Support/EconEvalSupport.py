@@ -98,37 +98,37 @@ def utility_sample_stat(utility, d_cost_samples, d_effect_samples,
 
 
 class _Curve:
-    def __init__(self, label, color, wtps):
+    def __init__(self, label, color, xs):
         self.label = label
         self.color = color
-        self.wtps = wtps
+        self.wtps = xs
 
-        # range of wtp values over which this curve has the highest value
-        self.rangeWTPHighestValue = [None, None]
+        # range of x values over which this curve has the highest value
+        self.rangeXWithHighestYValue = [None, None]
 
-        # this is to make sure that whenever the range of wtp values over which
-        # this curve hast the highest value gets updated, the new wtp value
-        # is larger than the last recorded wtp value.
-        self.lastWTPValue = 0
+        # this is to make sure that whenever the range of x values over which
+        # this curve has the highest value gets updated, the new x value
+        # is larger than the last recorded x value.
+        self.lastXValue = 0
 
-    def update_range_with_highest_value(self, wtp):
+    def update_range_with_highest_value(self, x):
         """
-        updates the range of wtp values over which this curve has the highest value
-        :param wtp: the new wtp value
+        updates the range of x values over which this curve has the highest value
+        :param x: the new x value
         """
 
         # check if the wtp values are increasing
-        if wtp < self.lastWTPValue:
-            raise ValueError('Recorded WTP values should be increasing.')
+        if x < self.lastXValue:
+            raise ValueError('Recorded x values should be increasing.')
         else:
-            self.lastWTPValue = wtp
+            self.lastXValue = x
 
         # if the lower range is not recorded, use this wtp to determine the lower bound
-        if self.rangeWTPHighestValue[0] is None:
-            self.rangeWTPHighestValue[0] = wtp
+        if self.rangeXWithHighestYValue[0] is None:
+            self.rangeXWithHighestYValue[0] = x
 
         # update the upper range
-        self.rangeWTPHighestValue[1] = wtp
+        self.rangeXWithHighestYValue[1] = x
 
 
 class INMBCurve(_Curve):
@@ -192,9 +192,35 @@ class INMBCurve(_Curve):
 
 class AcceptabilityCurve(_Curve):
     # cost-effectiveness acceptability curve of one strategy
-    def __init__(self, label, color, wtps):
+    def __init__(self, label, color, xs):
 
-        _Curve.__init__(self, label, color, wtps)
+        _Curve.__init__(self, label, color, xs)
         self.probs = []     # probability that this strategy is optimal over a range of wtp values
         self.optWTPs = []   # wtp values over which this strategy has the highest expected net monetary benefit
         self.optProbs = []  # probabilities that correspond to optWTPs
+
+
+class ExpHealthCurve(_Curve):
+
+    def __init__(self, label, color, budget_values, effect_stat, interval_type='n'):
+        """
+        :param label: (string) label of this incremental NMB curve
+        :param color: color code of this curve
+        :param budget_values: budget values over which this curve should be calculated
+        :param effect_stat: statistics of health outcomes
+        :param interval_type: (string) 'n' for no interval
+                                       'c' for t-based confidence interval,
+                                       'p' for percentile interval
+        """
+
+        _Curve.__init__(self, label, color, budget_values)
+
+        self.effectStat = effect_stat
+        self.budgeValues = budget_values
+        self.intervalType = interval_type
+        self.ys = []        # expected health outcome over a range of budget values
+        self.l_errs = []  # lower error length of health outcome over a range of budget values
+        self.u_errs = []  # upper error length of health outcome over a range of budget values
+
+
+

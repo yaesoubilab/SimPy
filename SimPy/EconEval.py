@@ -12,7 +12,6 @@ import matplotlib.patches as patches
 
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
-NUM_WTPS_FOR_NMB_CURVES = 200 # number of willingness-to-pay values to construct net monetary benefit curves
 
 
 def pv_single_payment(payment, discount_rate, discount_period, discount_continuously=False):
@@ -877,7 +876,7 @@ class CEA(_EconEval):
 class CBA(_EconEval):
     """ class for doing cost-benefit analysis """
 
-    def __init__(self, strategies, wtp_range, if_paired, health_measure='u'):
+    def __init__(self, strategies, wtp_range, if_paired, health_measure='u', n_of_wtp_values=200):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param wtp_range: ([l, u]) range of willingness-to-pay values over which the NMB analysis should be done
@@ -885,6 +884,7 @@ class CBA(_EconEval):
         :param health_measure: (string) choose 'u' if higher "effect" implies better health
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
+        :param n_of_wtp_values: number of willingness-to-pay values to construct net monetary benefit curves
         """
         _EconEval.__init__(self, strategies=strategies,
                            if_paired=if_paired,
@@ -901,7 +901,7 @@ class CBA(_EconEval):
 
         # wtp values (includes the specified minimum and maximum wtp value)
         self.wtp_values = np.linspace(wtp_range[0], wtp_range[1],
-                                      num=NUM_WTPS_FOR_NMB_CURVES, endpoint=True)
+                                      num=n_of_wtp_values, endpoint=True)
 
         # index of strategy with the highest
         # expected net-monetary benefit over the wtp range
@@ -972,7 +972,7 @@ class CBA(_EconEval):
         for s in self.strategies:
             self.acceptabilityCurves.append(AcceptabilityCurve(label=s.name,
                                                                color=s.color,
-                                                               wtps=self.wtp_values))
+                                                               xs=self.wtp_values))
 
         n_obs = len(self.strategies[0].costObs)
 
@@ -1008,7 +1008,7 @@ class CBA(_EconEval):
                     max_prob = prob_maximum[i]
                     max_idx = i
 
-            self.acceptabilityCurves[max_idx].update_range_with_highest_value(wtp=w)
+            self.acceptabilityCurves[max_idx].update_range_with_highest_value(x=w)
 
         if len(self.idxHighestExpNMB) == 0:
             self.__find_strategies_with_highest_einmb()
@@ -1059,7 +1059,7 @@ class CBA(_EconEval):
 
             # store the index of the optimal strategy
             self.idxHighestExpNMB.append(max_idx)
-            self.inmbCurves[max_idx].update_range_with_highest_value(wtp=wtp)
+            self.inmbCurves[max_idx].update_range_with_highest_value(x=wtp)
 
     def find_optimal_switching_wtp_values(self, interval_type='n', deci=None):
 
@@ -1240,11 +1240,11 @@ class CBA(_EconEval):
             # plot frontier
             if show_frontier:
                 # check if this strategy is not dominated
-                if curve.rangeWTPHighestValue != [None, None]:
+                if curve.rangeXWithHighestYValue != [None, None]:
                     frontier_wtps = []
                     frontier_ys = []
                     for wtp_idx, wtp in enumerate(self.wtp_values):
-                        if curve.rangeWTPHighestValue[0] <= wtp <= curve.rangeWTPHighestValue[1]:
+                        if curve.rangeXWithHighestYValue[0] <= wtp <= curve.rangeXWithHighestYValue[1]:
                             frontier_wtps = np.append(frontier_wtps, wtp)
                             frontier_ys = np.append(frontier_ys, curve.ys[wtp_idx])
 
@@ -1479,7 +1479,7 @@ class CBA(_EconEval):
         ax.set_xticks(vals_x)
         ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
-        d = 2*(max_wtp - min_wtp) / NUM_WTPS_FOR_NMB_CURVES
+        d = 2 * (max_wtp - min_wtp) / 200
         ax.set_xlim([min_wtp - d, max_wtp + d])
 
         # format y-axis
@@ -1495,6 +1495,35 @@ class CBA(_EconEval):
 
         if not if_y_axis_prob:
             ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
+
+
+class ConstrainedBudgetOpt(_EconEval):
+    """ a class for selecting the alternative with the highest expected health outcomes
+    subject to a budget constraint """
+
+    def __init__(self, strategies, budget_range, if_paired, health_measure='u',
+                 n_of_budget_values=200, epsilon=0.05):
+        """
+        :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
+        :param budget_range: ([l, u]) range of budget values over which the analysis should be done
+        :param if_paired: indicate whether the strategies are paired
+        :param health_measure: (string) choose 'u' if higher "effect" implies better health
+        (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
+        (e.g. when DALYS is used)
+        :param n_of_budget_values: number of budget values to construct curves of optimal strategies
+        :param epsilon: decision maker's tolorance in violating the budget
+        """
+        _EconEval.__init__(self, strategies=strategies,
+                           if_paired=if_paired,
+                           health_measure=health_measure)
+
+        self.upperDCosts = []   # list of cost percentile of strategies
+        self.effectCurves = []  # list of expected effect curves
+
+        for s in strategies:
+            self.upperDCosts.append(s.dCost.get_percentile(q=(1-epsilon)*100))
+
+
 
 
 class _ComparativeEconMeasure:
