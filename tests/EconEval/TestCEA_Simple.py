@@ -19,5 +19,5 @@ for s in cea.get_strategies_not_on_frontier():
     print(s.name)
 
 
-cea.show_CE_plane(add_clouds=False)
+cea.plot_CE_plane(add_clouds=False)
 cea.build_CE_table(cost_digits=0, interval_type='n')

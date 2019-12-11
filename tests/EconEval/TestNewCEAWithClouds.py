@@ -34,7 +34,7 @@ print('Not on frontier')
 for s in cea.get_strategies_not_on_frontier():
     print(s.name)
 
-cea.show_CE_plane(add_clouds=True)
+cea.plot_CE_plane(add_clouds=True)
 cea.build_CE_table(cost_digits=1, interval_type='c')
 
 #cea.print_pairwise_cea(interval_type='c')

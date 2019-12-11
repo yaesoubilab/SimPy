@@ -13,7 +13,7 @@ S7 = EV.Strategy(name='A7', cost_obs=[1100], effect_obs=[7.3])
 cea = EV.CEA(strategies=[S0, S1, S2, S3, S4, S5, S6, S7], if_paired=False, health_measure='u')
 
 # show the ce plane:
-cea.show_CE_plane()
+cea.plot_CE_plane()
 
 # build table
 cea.build_CE_table(interval_type='n')

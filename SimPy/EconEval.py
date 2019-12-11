@@ -278,7 +278,7 @@ class _EconEval:
                                                y_ref=s.dEffectObs)
 
     @staticmethod
-    def _format_ax(ax, y_range, min_x, max_x, delta_x=None, if_y_axis_prob=True):
+    def _format_ax(ax, y_range, min_x, max_x, delta_x=None, if_y_axis_prob=True, if_format_y_numbers=True):
 
         # format x-axis
         if delta_x is None:
@@ -301,7 +301,7 @@ class _EconEval:
         ax.set_yticks(vals_y)
         if if_y_axis_prob:
             ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
-        else:
+        elif if_format_y_numbers:
             ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
 
         if if_y_axis_prob and y_range is None:
@@ -315,7 +315,9 @@ class _EconEval:
                           transparency_lines=0.4,
                           transparency_intervals=0.2,
                           show_legend=False,
-                          show_frontier=True):
+                          show_frontier=True,
+                          if_y_axis_prob=False,
+                          if_format_y_numbers=True):
 
         for curve in curves:
             # plot line
@@ -345,7 +347,8 @@ class _EconEval:
         # do the other formatting
         self._format_ax(ax=ax, y_range=y_range,
                         min_x=x_values[0], max_x=x_values[-1], delta_x=delta_x,
-                        if_y_axis_prob=False)
+                        if_y_axis_prob=if_y_axis_prob,
+                        if_format_y_numbers=if_format_y_numbers)
 
 
 class CEA(_EconEval):
@@ -594,10 +597,10 @@ class CEA(_EconEval):
         ax.set_yticks(vals_y)
         ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=cost_digits) for x in vals_y])
 
-        ax.axhline(y=0, c='k', linewidth=0.5)
-        ax.axvline(x=0, c='k', linewidth=0.5)
+        ax.axhline(y=0, c='k', linestyle='--', linewidth=0.5)
+        ax.axvline(x=0, c='k', linestyle='--', linewidth=0.5)
 
-    def show_CE_plane(self,
+    def plot_CE_plane(self,
                       title='Cost-Effectiveness Analysis',
                       x_label='Additional Health',
                       y_label='Additional Cost',
@@ -624,7 +627,8 @@ class CEA(_EconEval):
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier)
 
         fig.show()
-        fig.savefig(file_name, dpi=300)
+        if file_name is not None:
+            fig.savefig(file_name, dpi=300)
 
     def create_pairwise_ceas(self):
         """
@@ -1302,6 +1306,22 @@ class CBA(_EconEval):
         if file_name is not None:
             fig.savefig(file_name, dpi=300)
 
+    def add_inmb_curves_to_ax(self, ax, title, x_label, y_label, y_range=None,
+                              y_axis_multiplier=1, delta_wtp=None,
+                              transparency_lines=0.4,
+                              transparency_intervals=0.2,
+                              show_legend=True,
+                              show_frontier=True):
+
+        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtp_values,
+                               title=title, x_label=x_label,
+                               y_label=y_label, y_range=y_range, delta_x=delta_wtp,
+                               y_axis_multiplier=y_axis_multiplier,
+                               transparency_lines=transparency_lines,
+                               transparency_intervals=transparency_intervals,
+                               show_legend=show_legend,
+                               show_frontier=show_frontier)
+
     def plot_acceptability_curves(self,
                                   title=None,
                                   x_label='Willingness-To-Pay Threshold',
@@ -1503,7 +1523,7 @@ class CBA(_EconEval):
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
 
-class ConstrainedBudgetOpt(_EconEval):
+class ConstrainedOptimization(_EconEval):
     """ a class for selecting the alternative with the highest expected health outcomes
     subject to a budget constraint """
 
@@ -1590,11 +1610,33 @@ class ConstrainedBudgetOpt(_EconEval):
                                y_axis_multiplier=y_axis_multiplier,
                                transparency_lines=transparency_lines,
                                transparency_intervals=transparency_intervals,
-                               show_legend=show_legend)
+                               show_legend=show_legend,
+                               if_format_y_numbers=False)
 
         fig.show()
         if file_name is not None:
             fig.savefig(file_name, dpi=300)
+
+    def add_plot_to_ax(self, ax, delta_budget=None,
+                       title=None, x_label=None, y_label=None,
+                       y_range=None, y_axis_multiplier=1,
+                       transparency_lines=0.4,
+                       transparency_intervals=0.2,
+                       show_legend=True,
+                       show_frontier=True,
+                       ):
+
+        self._add_curves_to_ax(ax=ax,
+                               curves=self.effectCurves,
+                               x_values=self.budget_values,
+                               delta_x=delta_budget,
+                               title=title, x_label=x_label, y_label=y_label,
+                               y_range=y_range, y_axis_multiplier=y_axis_multiplier,
+                               transparency_lines=transparency_lines,
+                               transparency_intervals=transparency_intervals,
+                               show_legend=show_legend,
+                               show_frontier=show_frontier,
+                               if_format_y_numbers=False)
 
 
 class _ComparativeEconMeasure:

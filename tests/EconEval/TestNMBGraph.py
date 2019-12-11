@@ -18,7 +18,7 @@ s2 = ce.Strategy("s2", s_center[2, 0]+np.random.normal(0, 1000, N),
                  color='green')
 
 cea = ce.CEA([s0, s1, s2], if_paired=True)
-cea.show_CE_plane()
+cea.plot_CE_plane()
 
 nmb_paired = ce.CBA([s0, s1, s2],
                     wtp_range=[0, 100000],
