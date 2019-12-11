@@ -205,6 +205,78 @@ class _EconEval:
         self._healthMeasure = health_measure  # utility of disutility
         self._u_or_d = 1 if health_measure == 'u' else -1
 
+        # assign colors to strategies
+        self.__assign_colors()
+
+    def __assign_colors(self):
+
+        # decide about the color of each curve
+        rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n))
+        for i, s in enumerate(self.strategies):
+            if s.color is None:
+                s.color = rainbow_colors[i]
+
+    def _find_shifted_strategies(self):
+        """ find shifted strategies.
+        In calculating the change in effect, it accounts for whether QALY or DALY is used.
+        """
+
+        # shift all strategies such that the base strategy (first in the list) lies on the origin
+        # if observations are paired across strategies
+        if self._ifPaired:
+
+            for i, s in enumerate(self.strategies):
+
+                s.dCostObs = s.costObs - self.strategies[0].costObs
+                s.dCost = Stat.DifferenceStatPaired(name='Cost with respect to base',
+                                                    x=s.costObs,
+                                                    y_ref=self.strategies[0].costObs)
+                # if health measure is utility
+                if self._healthMeasure == 'u':
+                    s.dEffectObs = s.effectObs - self.strategies[0].effectObs
+                    s.dEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
+                                                          x=s.effectObs,
+                                                          y_ref=self.strategies[0].effectObs)
+
+                else:  # if health measure is disutility
+                    s.dEffectObs = self.strategies[0].effectObs - s.effectObs
+                    s.dEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
+                                                          x=self.strategies[0].effectObs,
+                                                          y_ref=s.effectObs)
+                # cost-effectiveness ratio
+                if i > 0:
+                    s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio of ' + s.name,
+                                                 x=s.dCostObs,
+                                                 y_ref=s.dEffectObs)
+
+        else:  # if not paired
+            # get average cost and effect of the base strategy
+            base_ave_cost = self.strategies[0].cost.get_mean()
+            base_ave_effect = self.strategies[0].effect.get_mean()
+
+            for i, s in enumerate(self.strategies):
+                s.dCostObs = s.costObs - base_ave_cost
+                s.dCost = Stat.DifferenceStatIndp(name='Cost with respect to base',
+                                                  x=s.costObs,
+                                                  y_ref=self.strategies[0].costObs)
+                if self._healthMeasure == 'u':
+                    s.dEffectObs = s.effectObs - base_ave_effect
+                    s.dEffect = Stat.DifferenceStatIndp(name='Effect with respect to base',
+                                                        x=s.effectObs,
+                                                        y_ref=self.strategies[0].effectObs)
+
+                else:  # if health measure is disutility
+                    s.dEffectObs = base_ave_effect - s.effectObs
+                    s.dEffect = Stat.DifferenceStatIndp(name='Effect with respect to base',
+                                                        x=self.strategies[0].effectObs,
+                                                        y_ref=s.effectObs)
+
+                # cost-effectiveness ratio
+                if i > 0:
+                    s.cer = Stat.RatioStatIndp(name='Cost-effectiveness ratio',
+                                               x=s.dCostObs,
+                                               y_ref=s.dEffectObs)
+
 
 class CEA(_EconEval):
     """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
@@ -231,7 +303,7 @@ class CEA(_EconEval):
         self._pairwise_ceas = []  # list of list to cea's
 
         # shift the strategies
-        self.__find_shifted_strategies()
+        self._find_shifted_strategies()
 
         # find the cost-effectiveness frontier
         self.__find_frontier()
@@ -663,66 +735,7 @@ class CEA(_EconEval):
         # (relative costs and relative effects) have changed.
         self._ifFrontierIsCalculated = False
 
-    def __find_shifted_strategies(self):
-        """ find shifted strategies.
-        In calculating the change in effect, it accounts for whether QALY or DALY is used.
-        """
 
-        # shift all strategies such that the base strategy (first in the list) lies on the origin
-        # if observations are paired across strategies
-        if self._ifPaired:
-
-            for i, s in enumerate(self.strategies):
-
-                s.dCostObs = s.costObs - self.strategies[0].costObs
-                s.dCost = Stat.DifferenceStatPaired(name='Cost with respect to base',
-                                                    x=s.costObs,
-                                                    y_ref=self.strategies[0].costObs)
-                # if health measure is utility
-                if self._healthMeasure == 'u':
-                    s.dEffectObs = s.effectObs - self.strategies[0].effectObs
-                    s.dEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
-                                                          x=s.effectObs,
-                                                          y_ref=self.strategies[0].effectObs)
-
-                else:  # if health measure is disutility
-                    s.dEffectObs = self.strategies[0].effectObs - s.effectObs
-                    s.dEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
-                                                          x=self.strategies[0].effectObs,
-                                                          y_ref=s.effectObs)
-                # cost-effectiveness ratio
-                if i > 0:
-                    s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio of ' + s.name,
-                                                 x=s.dCostObs,
-                                                 y_ref=s.dEffectObs)
-
-        else:  # if not paired
-            # get average cost and effect of the base strategy
-            base_ave_cost = self.strategies[0].cost.get_mean()
-            base_ave_effect = self.strategies[0].effect.get_mean()
-
-            for i, s in enumerate(self.strategies):
-                s.dCostObs = s.costObs - base_ave_cost
-                s.dCost = Stat.DifferenceStatIndp(name='Cost with respect to base',
-                                                  x=s.costObs,
-                                                  y_ref=self.strategies[0].costObs)
-                if self._healthMeasure == 'u':
-                    s.dEffectObs = s.effectObs - base_ave_effect
-                    s.dEffect = Stat.DifferenceStatIndp(name='Effect with respect to base',
-                                                        x=s.effectObs,
-                                                        y_ref=self.strategies[0].effectObs)
-
-                else:  # if health measure is disutility
-                    s.dEffectObs = base_ave_effect - s.effectObs
-                    s.dEffect = Stat.DifferenceStatIndp(name='Effect with respect to base',
-                                                        x=self.strategies[0].effectObs,
-                                                        y_ref=s.effectObs)
-
-                # cost-effectiveness ratio
-                if i > 0:
-                    s.cer = Stat.RatioStatIndp(name='Cost-effectiveness ratio',
-                                               x=s.dCostObs,
-                                               y_ref=s.dEffectObs)
 
     def __find_frontier(self):
 
@@ -918,40 +931,31 @@ class CBA(_EconEval):
 
         self.inmbCurves = []  # list of incremental NMB curves
 
-        # decide about the color of each curve
-        rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n))
-        colors = []
-        for i, s in enumerate(self.strategies):
-            if s.color:
-                colors.append(s.color)
-            else:
-                colors.append(rainbow_colors[i])
-
         # create the NMB curves
-        for strategy_i, color in zip(self.strategies, colors):
+        for s in self.strategies:
 
             if self._ifPaired:
                 # create a paired NMB object
-                inmb = INMB_Paired(name=strategy_i.name,
-                                   costs_new=strategy_i.costObs,
-                                   effects_new=strategy_i.effectObs,
+                inmb = INMB_Paired(name=s.name,
+                                   costs_new=s.costObs,
+                                   effects_new=s.effectObs,
                                    costs_base=self.strategies[0].costObs,
                                    effects_base=self.strategies[0].effectObs,
                                    health_measure=self._healthMeasure)
 
             else:
                 # create an independent NMB object
-                inmb = INMB_Indp(name=strategy_i.name,
-                                 costs_new=strategy_i.costObs,
-                                 effects_new=strategy_i.effectObs,
+                inmb = INMB_Indp(name=s.name,
+                                 costs_new=s.costObs,
+                                 effects_new=s.effectObs,
                                  costs_base=self.strategies[0].costObs,
                                  effects_base=self.strategies[0].effectObs,
                                  health_measure=self._healthMeasure)
 
             # make a NMB curve
-            self.inmbCurves.append(INMBCurve(label=strategy_i.name,
-                                             color=color,
-                                             wtps=self.wtp_values,
+            self.inmbCurves.append(INMBCurve(label=s.name,
+                                             color=s.color,
+                                             wtp_values=self.wtp_values,
                                              inmb_stat=inmb,
                                              interval_type=interval_type)
                                    )
@@ -972,7 +976,7 @@ class CBA(_EconEval):
         for s in self.strategies:
             self.acceptabilityCurves.append(AcceptabilityCurve(label=s.name,
                                                                color=s.color,
-                                                               xs=self.wtp_values))
+                                                               wtp_values=self.wtp_values))
 
         n_obs = len(self.strategies[0].costObs)
 
@@ -1229,11 +1233,11 @@ class CBA(_EconEval):
 
         for curve in self.inmbCurves[0:]:
             # plot line
-            ax.plot(curve.wtps, curve.ys*y_axis_multiplier,
+            ax.plot(curve.wtp_values, curve.ys*y_axis_multiplier,
                     c=curve.color, alpha=transparency_lines, label=curve.label)
             # plot intervals
             if curve.l_errs is not None and curve.u_errs is not None:
-                ax.fill_between(curve.wtps,
+                ax.fill_between(curve.wtp_values,
                                 (curve.ys - curve.l_errs) * y_axis_multiplier,
                                 (curve.ys + curve.u_errs) * y_axis_multiplier,
                                 color=curve.color, alpha=transparency_intervals)
@@ -1517,13 +1521,41 @@ class ConstrainedBudgetOpt(_EconEval):
                            if_paired=if_paired,
                            health_measure=health_measure)
 
-        self.upperDCosts = []   # list of cost percentile of strategies
-        self.effectCurves = []  # list of expected effect curves
+        # shift the strategies
+        self._find_shifted_strategies()
 
+        self.dCostUpPercentile = []     # list of upper percentile of strategy delta costs
+        self.dEffect = []                    # list of expected delta effect
+        self.effectCurves = []          # list of expected effect curves
+
+        # determine budget values
+        self.budget_values = np.linspace(budget_range[0], budget_range[1],
+                                         num=n_of_budget_values, endpoint=True)
+
+        # set up curves
         for s in strategies:
-            self.upperDCosts.append(s.dCost.get_percentile(q=(1-epsilon)*100))
+            self.dCostUpPercentile.append(s.dCost.get_percentile(q=(1 - epsilon) * 100))
+            self.dEffect.append(s.dEffect.get_mean())
+            self.effectCurves.append(
+                ExpHealthCurve(
+                    label=s.name,
+                    color=s.color,
+                    effect_stat=s.dEffect,
+                    interval_type='c')
+            )
 
+        for b in self.budget_values:
+            max_effect = -float('inf')
+            max_s_i = None
+            for s_i, s in enumerate(self.strategies):
+                # if this strategy is feasible
+                if self.dCostUpPercentile[s_i] <= b:
+                    self.effectCurves[s_i].update_feasibility(b=b)
+                    if self.dEffect[s_i] > max_effect:
+                        max_effect = self.dEffect[s_i]
+                        max_s_i = s_i
 
+            self.effectCurves[max_s_i].update_range_with_highest_value(x=b)
 
 
 class _ComparativeEconMeasure:

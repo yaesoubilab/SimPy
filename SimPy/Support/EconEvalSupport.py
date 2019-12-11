@@ -98,10 +98,9 @@ def utility_sample_stat(utility, d_cost_samples, d_effect_samples,
 
 
 class _Curve:
-    def __init__(self, label, color, xs):
+    def __init__(self, label, color):
         self.label = label
         self.color = color
-        self.wtps = xs
 
         # range of x values over which this curve has the highest value
         self.rangeXWithHighestYValue = [None, None]
@@ -133,20 +132,20 @@ class _Curve:
 
 class INMBCurve(_Curve):
     # incremental net monetary benefit curve of one strategy
-    def __init__(self, label, color, wtps, inmb_stat, interval_type='n'):
+    def __init__(self, label, color, wtp_values, inmb_stat, interval_type='n'):
         """
         :param label: (string) label of this incremental NMB curve
         :param color: color code of this curve
-        :param wtps: wtp values over which this curve should be calcualted
+        :param wtp_values: wtp values over which this curve should be calcualted
         :param inmb_stat: incremental NMB statistics
         :param interval_type: (string) 'n' for no interval
                                        'c' for t-based confidence interval,
                                        'p' for percentile interval
         """
 
-        _Curve.__init__(self, label, color, wtps)
+        _Curve.__init__(self, label, color)
         self.inmbStat = inmb_stat
-        self.wtps = wtps
+        self.wtp_values = wtp_values
         self.intervalType = interval_type
         self.ys = []        # expected net monetary benefits over a range of wtp values
         self.l_errs = []    # lower error length of NMB over a range of wtp values
@@ -161,12 +160,12 @@ class INMBCurve(_Curve):
         """
 
         # get the NMB values for each wtp
-        self.ys = np.array([self.inmbStat.get_INMB(x) for x in self.wtps])
+        self.ys = np.array([self.inmbStat.get_INMB(x) for x in self.wtp_values])
 
         if self.intervalType == 'c':
-            y_intervals = np.array([self.inmbStat.get_CI(x, alpha=0.05) for x in self.wtps])
+            y_intervals = np.array([self.inmbStat.get_CI(x, alpha=0.05) for x in self.wtp_values])
         elif self.intervalType == 'p':
-            y_intervals = np.array([self.inmbStat.get_PI(x, alpha=0.05) for x in self.wtps])
+            y_intervals = np.array([self.inmbStat.get_PI(x, alpha=0.05) for x in self.wtp_values])
         elif self.intervalType == 'n':
             y_intervals = None
         else:
@@ -186,15 +185,16 @@ class INMBCurve(_Curve):
     def get_switch_wtp_and_interval(self):
 
         return self.inmbStat.get_switch_wtp_and_interval(
-            wtp_range=[self.wtps[0], self.wtps[-1]], 
+            wtp_range=[self.wtp_values[0], self.wtp_values[-1]],
             interval_type=self.intervalType)    
 
 
 class AcceptabilityCurve(_Curve):
     # cost-effectiveness acceptability curve of one strategy
-    def __init__(self, label, color, xs):
+    def __init__(self, label, color, wtp_values):
 
-        _Curve.__init__(self, label, color, xs)
+        _Curve.__init__(self, label, color)
+        self.wtps = wtp_values
         self.probs = []     # probability that this strategy is optimal over a range of wtp values
         self.optWTPs = []   # wtp values over which this strategy has the highest expected net monetary benefit
         self.optProbs = []  # probabilities that correspond to optWTPs
@@ -202,25 +202,43 @@ class AcceptabilityCurve(_Curve):
 
 class ExpHealthCurve(_Curve):
 
-    def __init__(self, label, color, budget_values, effect_stat, interval_type='n'):
+    def __init__(self, label, color, effect_stat, interval_type='n'):
         """
         :param label: (string) label of this incremental NMB curve
         :param color: color code of this curve
-        :param budget_values: budget values over which this curve should be calculated
         :param effect_stat: statistics of health outcomes
         :param interval_type: (string) 'n' for no interval
                                        'c' for t-based confidence interval,
                                        'p' for percentile interval
         """
 
-        _Curve.__init__(self, label, color, budget_values)
+        _Curve.__init__(self, label, color)
 
-        self.effectStat = effect_stat
-        self.budgeValues = budget_values
-        self.intervalType = interval_type
+        if interval_type == 'c':
+            interval = effect_stat.get_t_CI(alpha=0.05)
+        elif interval_type == 'p':
+            interval = effect_stat.get_PI(alpha=0.05)
+        elif interval_type == 'n':
+            interval = None
+        else:
+            raise ValueError('Invalid value for internal_type.')
+
+        if interval:
+            self.l_err = effect_stat.get_mean() - interval[0]
+            self.u_err = interval[1] - effect_stat.get_mean()
+        else:
+            self.l_err = None
+            self.u_err = None
+
         self.ys = []        # expected health outcome over a range of budget values
         self.l_errs = []  # lower error length of health outcome over a range of budget values
         self.u_errs = []  # upper error length of health outcome over a range of budget values
+
+    def update_feasibility(self, b):
+        self.ys.append(b)
+        self.l_errs.append(self.l_err)
+        self.u_errs.append(self.u_err)
+
 
 
 
