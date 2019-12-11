@@ -101,33 +101,16 @@ class _Curve:
     def __init__(self, label, color):
         self.label = label
         self.color = color
+        self.xs = []
+        self.ys = []
+        self.optXs = []
+        self.optYs = []
 
-        # range of x values over which this curve has the highest value
-        self.rangeXWithHighestYValue = [None, None]
-
-        # this is to make sure that whenever the range of x values over which
-        # this curve has the highest value gets updated, the new x value
-        # is larger than the last recorded x value.
-        self.lastXValue = 0
-
-    def update_range_with_highest_value(self, x):
-        """
-        updates the range of x values over which this curve has the highest value
-        :param x: the new x value
-        """
-
-        # check if the wtp values are increasing
-        if x < self.lastXValue:
-            raise ValueError('Recorded x values should be increasing.')
-        else:
-            self.lastXValue = x
-
-        # if the lower range is not recorded, use this wtp to determine the lower bound
-        if self.rangeXWithHighestYValue[0] is None:
-            self.rangeXWithHighestYValue[0] = x
-
-        # update the upper range
-        self.rangeXWithHighestYValue[1] = x
+    def convert_lists_to_arrays(self):
+        self.xs = np.array(self.xs)
+        self.ys = np.array(self.ys)
+        self.optXs = np.array(self.optXs)
+        self.optYs = np.array(self.optYs)
 
 
 class INMBCurve(_Curve):
@@ -145,9 +128,8 @@ class INMBCurve(_Curve):
 
         _Curve.__init__(self, label, color)
         self.inmbStat = inmb_stat
-        self.wtp_values = wtp_values
+        self.xs = wtp_values
         self.intervalType = interval_type
-        self.ys = []        # expected net monetary benefits over a range of wtp values
         self.l_errs = []    # lower error length of NMB over a range of wtp values
         self.u_errs = []    # upper error length of NMB over a range of wtp values
 
@@ -160,12 +142,12 @@ class INMBCurve(_Curve):
         """
 
         # get the NMB values for each wtp
-        self.ys = np.array([self.inmbStat.get_INMB(x) for x in self.wtp_values])
+        self.ys = [self.inmbStat.get_INMB(x) for x in self.xs]
 
         if self.intervalType == 'c':
-            y_intervals = np.array([self.inmbStat.get_CI(x, alpha=0.05) for x in self.wtp_values])
+            y_intervals = [self.inmbStat.get_CI(x, alpha=0.05) for x in self.xs]
         elif self.intervalType == 'p':
-            y_intervals = np.array([self.inmbStat.get_PI(x, alpha=0.05) for x in self.wtp_values])
+            y_intervals = [self.inmbStat.get_PI(x, alpha=0.05) for x in self.xs]
         elif self.intervalType == 'n':
             y_intervals = None
         else:
@@ -185,7 +167,7 @@ class INMBCurve(_Curve):
     def get_switch_wtp_and_interval(self):
 
         return self.inmbStat.get_switch_wtp_and_interval(
-            wtp_range=[self.wtp_values[0], self.wtp_values[-1]],
+            wtp_range=[self.xs[0], self.xs[-1]],
             interval_type=self.intervalType)    
 
 
@@ -194,10 +176,6 @@ class AcceptabilityCurve(_Curve):
     def __init__(self, label, color, wtp_values):
 
         _Curve.__init__(self, label, color)
-        self.wtps = wtp_values
-        self.probs = []     # probability that this strategy is optimal over a range of wtp values
-        self.optWTPs = []   # wtp values over which this strategy has the highest expected net monetary benefit
-        self.optProbs = []  # probabilities that correspond to optWTPs
 
 
 class ExpHealthCurve(_Curve):
@@ -213,6 +191,8 @@ class ExpHealthCurve(_Curve):
         """
 
         _Curve.__init__(self, label, color)
+
+        self.dEffectMean = effect_stat.get_mean()
 
         if interval_type == 'c':
             interval = effect_stat.get_t_CI(alpha=0.05)
@@ -230,15 +210,14 @@ class ExpHealthCurve(_Curve):
             self.l_err = None
             self.u_err = None
 
-        self.ys = []        # expected health outcome over a range of budget values
         self.l_errs = []  # lower error length of health outcome over a range of budget values
         self.u_errs = []  # upper error length of health outcome over a range of budget values
 
     def update_feasibility(self, b):
-        self.ys.append(b)
+        self.xs.append(b)
+        self.ys.append(self.dEffectMean)
         self.l_errs.append(self.l_err)
         self.u_errs.append(self.u_err)
-
 
 
 

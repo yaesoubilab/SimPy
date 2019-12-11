@@ -277,6 +277,76 @@ class _EconEval:
                                                x=s.dCostObs,
                                                y_ref=s.dEffectObs)
 
+    @staticmethod
+    def _format_ax(ax, y_range, min_x, max_x, delta_x=None, if_y_axis_prob=True):
+
+        # format x-axis
+        if delta_x is None:
+            vals_x = ax.get_xticks()
+        else:
+            vals_x = []
+            x = min_x
+            while x <= max_x:
+                vals_x.append(x)
+                x += delta_x
+
+        ax.set_xticks(vals_x)
+        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
+
+        d = 2 * (max_x - min_x) / 200
+        ax.set_xlim([min_x - d, max_x + d])
+
+        # format y-axis
+        vals_y = ax.get_yticks()
+        ax.set_yticks(vals_y)
+        if if_y_axis_prob:
+            ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
+        else:
+            ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+
+        if if_y_axis_prob and y_range is None:
+            ax.set_ylim((-0.01, 1.01))
+
+        if not if_y_axis_prob:
+            ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
+
+    def _add_curves_to_ax(self, ax, curves, x_values, title, x_label, y_label, y_range=None,
+                          y_axis_multiplier=1, delta_x=None,
+                          transparency_lines=0.4,
+                          transparency_intervals=0.2,
+                          show_legend=False,
+                          show_frontier=True):
+
+        for curve in curves:
+            # plot line
+            ax.plot(curve.xs, curve.ys * y_axis_multiplier,
+                    c=curve.color, alpha=transparency_lines, label=curve.label)
+            # plot intervals
+            if curve.l_errs is not None and curve.u_errs is not None:
+                ax.fill_between(curve.xs,
+                                (curve.ys - curve.l_errs) * y_axis_multiplier,
+                                (curve.ys + curve.u_errs) * y_axis_multiplier,
+                                color=curve.color, alpha=transparency_intervals)
+            # plot frontier
+            if show_frontier:
+                # check if this strategy is not dominated
+                if curve.optXs is not None:
+                    ax.plot(curve.optXs, curve.optYs * y_axis_multiplier,
+                            c=curve.color, alpha=1, linewidth=4)
+
+        if show_legend:
+            ax.legend(loc=2)
+
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_ylim(y_range)
+
+        # do the other formatting
+        self._format_ax(ax=ax, y_range=y_range,
+                        min_x=x_values[0], max_x=x_values[-1], delta_x=delta_x,
+                        if_y_axis_prob=False)
+
 
 class CEA(_EconEval):
     """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
@@ -980,6 +1050,8 @@ class CBA(_EconEval):
 
         n_obs = len(self.strategies[0].costObs)
 
+        # for each WTP value, calculate the number of times that
+        # each strategy has the highest NMB value
         for w in self.wtp_values:
 
             # number of times that each strategy is optimal
@@ -989,40 +1061,42 @@ class CBA(_EconEval):
 
                 # find which strategy has the maximum:
                 max_nmb = float('-inf')
-                max_idx = 0
-                for idx, s in enumerate(self.strategies):
+                max_s_i = 0  # index of the optimal strategy for this observation
+                for s_i, s in enumerate(self.strategies):
                     d_effect = (s.effectObs[obs_idx] - self.strategies[0].effectObs[obs_idx]) * self._u_or_d
                     d_cost = s.costObs[obs_idx] - self.strategies[0].costObs[obs_idx]
                     nmb = w * d_effect - d_cost
                     if nmb > max_nmb:
                         max_nmb = nmb
-                        max_idx = idx
+                        max_s_i = s_i
 
-                count_maximum[max_idx] += 1
+                count_maximum[max_s_i] += 1
 
             # calculate probabilities that each strategy has been optimal
             prob_maximum = count_maximum / n_obs
 
-            max_prob = 0
-            max_idx = 0
+            # max_prob = 0
+            # max_s_i = 0
             for i in range(self._n):
-                self.acceptabilityCurves[i].probs.append(prob_maximum[i])
-
-                if prob_maximum[i] > max_prob:
-                    max_prob = prob_maximum[i]
-                    max_idx = i
-
-            self.acceptabilityCurves[max_idx].update_range_with_highest_value(x=w)
+                self.acceptabilityCurves[i].xs.append(w)
+                self.acceptabilityCurves[i].ys.append(prob_maximum[i])
+                #
+                # if prob_maximum[i] > max_prob:
+                #     max_prob = prob_maximum[i]
+                #     max_s_i = i
 
         if len(self.idxHighestExpNMB) == 0:
             self.__find_strategies_with_highest_einmb()
 
         # find the optimal strategy for each wtp value
         for wtp_idx, wtp in enumerate(self.wtp_values):
-            optIdx = self.idxHighestExpNMB[wtp_idx]
-            self.acceptabilityCurves[optIdx].optWTPs.append(wtp)
-            self.acceptabilityCurves[optIdx].optProbs.append(
-                self.acceptabilityCurves[optIdx].probs[wtp_idx])
+            opt_idx = self.idxHighestExpNMB[wtp_idx]
+            self.acceptabilityCurves[opt_idx].optXs.append(wtp)
+            self.acceptabilityCurves[opt_idx].optYs.append(
+                self.acceptabilityCurves[opt_idx].ys[wtp_idx])
+
+        for c in self.acceptabilityCurves:
+            c.convert_lists_to_arrays()
 
     def get_wtp_ranges_with_highest_exp_nmb(self):
         """
@@ -1063,7 +1137,12 @@ class CBA(_EconEval):
 
             # store the index of the optimal strategy
             self.idxHighestExpNMB.append(max_idx)
-            self.inmbCurves[max_idx].update_range_with_highest_value(x=wtp)
+            # self.inmbCurves[max_idx].update_range_with_highest_value(x=wtp)
+            self.inmbCurves[max_idx].optXs.append(wtp)
+            self.inmbCurves[max_idx].optYs.append(max_value)
+
+        for curve in self.inmbCurves:
+            curve.convert_lists_to_arrays()
 
     def find_optimal_switching_wtp_values(self, interval_type='n', deci=None):
 
@@ -1106,7 +1185,7 @@ class CBA(_EconEval):
                                 y2=s.dCost.get_mean())
                     w_star = line.slope
 
-                    if w_star is not math.nan and w_star >= 0:
+                    if w_star is not math.nan and w_star >= w:
                         if w_star < w_min:
                             w_min = w_star
                             s_star = s.idx
@@ -1171,19 +1250,19 @@ class CBA(_EconEval):
 
         return result
 
-    def graph_incremental_nmbs(self,
-                               title='Incremental Net Monetary Benefit',
-                               x_label='Willingness-To-Pay Threshold',
-                               y_label='Expected Incremental Net Monetary Benefit',
-                               y_range=None,
-                               y_axis_multiplier=1,
-                               interval_type='c',
-                               delta_wtp=None,
-                               transparency_lines=0.5,
-                               transparency_intervals=0.2,
-                               show_legend=True,
-                               figure_size=(5, 5),
-                               file_name='NMB.png'):
+    def plot_incremental_nmbs(self,
+                              title='Incremental Net Monetary Benefit',
+                              x_label='Willingness-To-Pay Threshold',
+                              y_label='Expected Incremental Net Monetary Benefit',
+                              y_range=None,
+                              y_axis_multiplier=1,
+                              interval_type='c',
+                              delta_wtp=None,
+                              transparency_lines=0.5,
+                              transparency_intervals=0.2,
+                              show_legend=True,
+                              figure_size=(5, 5),
+                              file_name='NMB.png'):
         """
         plots the incremental net-monetary benefit of each strategy
                 with respect to the base (the first strategy)
@@ -1211,72 +1290,27 @@ class CBA(_EconEval):
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        self.add_incremental_nmbs_to_ax(ax=ax,
-                                        title=title, x_label=x_label,
-                                        y_label=y_label, y_range=y_range, delta_wtp=delta_wtp,
-                                        y_axis_multiplier=y_axis_multiplier,
-                                        transparency_lines=transparency_lines,
-                                        transparency_intervals=transparency_intervals,
-                                        show_legend=show_legend)
+        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtp_values,
+                               title=title, x_label=x_label,
+                               y_label=y_label, y_range=y_range, delta_x=delta_wtp,
+                               y_axis_multiplier=y_axis_multiplier,
+                               transparency_lines=transparency_lines,
+                               transparency_intervals=transparency_intervals,
+                               show_legend=show_legend)
 
         fig.show()
         if file_name is not None:
             fig.savefig(file_name, dpi=300)
 
-    def add_incremental_nmbs_to_ax(self, ax,
-                                   title, x_label, y_label, y_range=None,
-                                   y_axis_multiplier=1, delta_wtp=None,
-                                   transparency_lines=0.4,
-                                   transparency_intervals=0.2,
-                                   show_legend=False,
-                                   show_frontier=True):
-
-        for curve in self.inmbCurves[0:]:
-            # plot line
-            ax.plot(curve.wtp_values, curve.ys*y_axis_multiplier,
-                    c=curve.color, alpha=transparency_lines, label=curve.label)
-            # plot intervals
-            if curve.l_errs is not None and curve.u_errs is not None:
-                ax.fill_between(curve.wtp_values,
-                                (curve.ys - curve.l_errs) * y_axis_multiplier,
-                                (curve.ys + curve.u_errs) * y_axis_multiplier,
-                                color=curve.color, alpha=transparency_intervals)
-            # plot frontier
-            if show_frontier:
-                # check if this strategy is not dominated
-                if curve.rangeXWithHighestYValue != [None, None]:
-                    frontier_wtps = []
-                    frontier_ys = []
-                    for wtp_idx, wtp in enumerate(self.wtp_values):
-                        if curve.rangeXWithHighestYValue[0] <= wtp <= curve.rangeXWithHighestYValue[1]:
-                            frontier_wtps = np.append(frontier_wtps, wtp)
-                            frontier_ys = np.append(frontier_ys, curve.ys[wtp_idx])
-
-                    ax.plot(frontier_wtps, frontier_ys * y_axis_multiplier,
-                            c=curve.color, alpha=1, linewidth=3)
-
-        if show_legend:
-            ax.legend()
-
-        ax.set_title(title)
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        ax.set_ylim(y_range)
-
-        # do the other formatting
-        self.__format_ax(ax=ax, y_range=y_range,
-                         min_wtp=self.wtp_values[0], max_wtp=self.wtp_values[-1], delta_wtp=delta_wtp,
-                         if_y_axis_prob=False)
-
-    def graph_acceptability_curves(self,
-                                   title=None,
-                                   x_label='Willingness-To-Pay Threshold',
-                                   y_label='Probability of Being the Optimal Strategy',
-                                   y_range=None,
-                                   delta_wtp=None,
-                                   show_legend=True, fig_size=(5, 5),
-                                   legends=None,
-                                   file_name='CEAC.png'):
+    def plot_acceptability_curves(self,
+                                  title=None,
+                                  x_label='Willingness-To-Pay Threshold',
+                                  y_label='Probability of Being the Optimal Strategy',
+                                  y_range=None,
+                                  delta_wtp=None,
+                                  show_legend=True, fig_size=(5, 5),
+                                  legends=None,
+                                  file_name='CEAC.png'):
         """
         plots the acceptibility curves
         :param title: title
@@ -1320,16 +1354,16 @@ class CBA(_EconEval):
         for i, curve in enumerate(self.acceptabilityCurves):
             # plot line
             if legends is None:
-                ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=curve.label)
+                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1, label=curve.label)
             else:
-                ax.plot(curve.wtps, curve.probs, c=curve.color, alpha=1, label=legends[i])
-            ax.plot(curve.optWTPs, curve.optProbs, c=curve.color, linewidth=4)
+                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1, label=legends[i])
+            ax.plot(curve.optXs, curve.optYs, c=curve.color, linewidth=4)
 
-        self.__format_ax(ax=ax, y_range=y_range,
-                         min_wtp=self.wtp_values[0],
-                         max_wtp=self.wtp_values[-1],
-                         delta_wtp=wtp_delta,
-                         if_y_axis_prob=True)
+        self._format_ax(ax=ax, y_range=y_range,
+                        min_x=self.wtp_values[0],
+                        max_x=self.wtp_values[-1],
+                        delta_x=wtp_delta,
+                        if_y_axis_prob=True)
 
         if show_legend:
             ax.legend(fontsize='7.5')  # xx-small, x-small, small, medium, large, x-large, xx-large
@@ -1468,38 +1502,6 @@ class CBA(_EconEval):
         fig.show()
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
-    def __format_ax(self, ax, y_range, min_wtp, max_wtp, delta_wtp=None, if_y_axis_prob=True):
-
-        # format x-axis
-        if delta_wtp is None:
-            vals_x = ax.get_xticks()
-        else:
-            vals_x = []
-            wtp = min_wtp
-            while wtp <= max_wtp:
-                vals_x.append(wtp)
-                wtp += delta_wtp
-
-        ax.set_xticks(vals_x)
-        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
-
-        d = 2 * (max_wtp - min_wtp) / 200
-        ax.set_xlim([min_wtp - d, max_wtp + d])
-
-        # format y-axis
-        vals_y = ax.get_yticks()
-        ax.set_yticks(vals_y)
-        if if_y_axis_prob:
-            ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
-        else:
-            ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
-
-        if if_y_axis_prob and y_range is None:
-            ax.set_ylim((-0.01, 1.01))
-
-        if not if_y_axis_prob:
-            ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
-
 
 class ConstrainedBudgetOpt(_EconEval):
     """ a class for selecting the alternative with the highest expected health outcomes
@@ -1555,7 +1557,44 @@ class ConstrainedBudgetOpt(_EconEval):
                         max_effect = self.dEffect[s_i]
                         max_s_i = s_i
 
-            self.effectCurves[max_s_i].update_range_with_highest_value(x=b)
+            # self.effectCurves[max_s_i].update_range_with_highest_value(x=b)
+            self.effectCurves[max_s_i].optXs.append(b)
+            self.effectCurves[max_s_i].optYs.append(max_effect)
+
+        # convert lists to arrays
+        for c in self.effectCurves:
+            c.convert_lists_to_arrays()
+
+    def plot(self,
+             title='Expected Increase in Effect',
+             x_label='Budget',
+             y_label='Expected Increase in Effect',
+             y_range=None,
+             y_axis_multiplier=1,
+             delta_budget=None,
+             transparency_lines=0.5,
+             transparency_intervals=0.2,
+             show_legend=True,
+             figure_size=(5, 5),
+             file_name='Budget.png'):
+
+        # initialize plot
+        fig, ax = plt.subplots(figsize=figure_size)
+
+        # add plot to the ax
+        self._add_curves_to_ax(ax=ax,
+                               curves=self.effectCurves,
+                               x_values=self.budget_values,
+                               title=title, x_label=x_label,
+                               y_label=y_label, y_range=y_range, delta_x=delta_budget,
+                               y_axis_multiplier=y_axis_multiplier,
+                               transparency_lines=transparency_lines,
+                               transparency_intervals=transparency_intervals,
+                               show_legend=show_legend)
+
+        fig.show()
+        if file_name is not None:
+            fig.savefig(file_name, dpi=300)
 
 
 class _ComparativeEconMeasure:
