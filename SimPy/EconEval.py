@@ -609,6 +609,7 @@ class CEA(_EconEval):
                       show_legend=True,
                       center_s=75, cloud_s=25, transparency=0.1,
                       cost_multiplier=1, effect_multiplier=1,
+                      cost_digits=0, effect_digits=1,
                       file_name='CE.png'
                       ):
 
@@ -624,7 +625,8 @@ class CEA(_EconEval):
                                 add_clouds=add_clouds,
                                 show_legend=show_legend,
                                 center_s=center_s, cloud_s=cloud_s, transparency=transparency,
-                                cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier)
+                                cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier,
+                                cost_digits=cost_digits, effect_digits=effect_digits)
 
         fig.show()
         if file_name is not None:
