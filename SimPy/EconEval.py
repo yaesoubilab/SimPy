@@ -1530,7 +1530,7 @@ class ConstrainedOptimization(_EconEval):
     subject to a budget constraint """
 
     def __init__(self, strategies, budget_range, if_paired, health_measure='u',
-                 n_of_budget_values=200, epsilon=0.05):
+                 n_of_budget_values=200, epsilon=None):
         """
         :param strategies: the list of strategies (assumes that the first strategy represents the "base" strategy)
         :param budget_range: ([l, u]) range of budget values over which the analysis should be done
@@ -1539,7 +1539,10 @@ class ConstrainedOptimization(_EconEval):
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         :param n_of_budget_values: number of budget values to construct curves of optimal strategies
-        :param epsilon: decision maker's tolorance in violating the budget
+        :param epsilon: (float, 0 <= epsilon <= 1)
+                        decision maker's tolerance in violating the budget constraint.
+                        (i.e. epsilon in Prob{DCost_i > B} <= epsilon)
+                        If set to None, this constraint will be considered: E[DCost_i] <= B.
         """
         _EconEval.__init__(self, strategies=strategies,
                            if_paired=if_paired,
@@ -1548,9 +1551,14 @@ class ConstrainedOptimization(_EconEval):
         # shift the strategies
         self._find_shifted_strategies()
 
-        self.dCostUpPercentile = []     # list of upper percentile of strategy delta costs
-        self.dEffect = []                    # list of expected delta effect
-        self.effectCurves = []          # list of expected effect curves
+        # list of cost values which the budget should be below
+        # if epsilon = None, it takes the expected dCost of strategies,
+        # otherwise, it takes the upper percentile of dCost of strategies.
+        self.dCostUp = []
+        # list of expected delta effect
+        self.dEffect = []
+        # list of expected effect curves
+        self.effectCurves = []
 
         # determine budget values
         self.budget_values = np.linspace(budget_range[0], budget_range[1],
@@ -1558,7 +1566,7 @@ class ConstrainedOptimization(_EconEval):
 
         # set up curves
         for s in strategies:
-            self.dCostUpPercentile.append(s.dCost.get_percentile(q=(1 - epsilon) * 100))
+            self.dCostUp.append(s.dCost.get_percentile(q=(1 - epsilon) * 100))
             self.dEffect.append(s.dEffect.get_mean())
             self.effectCurves.append(
                 ExpHealthCurve(
@@ -1573,7 +1581,7 @@ class ConstrainedOptimization(_EconEval):
             max_s_i = None
             for s_i, s in enumerate(self.strategies):
                 # if this strategy is feasible
-                if self.dCostUpPercentile[s_i] <= b:
+                if self.dCostUp[s_i] <= b:
                     self.effectCurves[s_i].update_feasibility(b=b)
                     if self.dEffect[s_i] > max_effect:
                         max_effect = self.dEffect[s_i]
