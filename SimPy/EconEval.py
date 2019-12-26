@@ -1525,7 +1525,7 @@ class CBA(_EconEval):
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
 
-class ConstrainedOptimization(_EconEval):
+class HealthMaxSubjectToBudget(_EconEval):
     """ a class for selecting the alternative with the highest expected health outcomes
     subject to a budget constraint """
 
@@ -1566,7 +1566,10 @@ class ConstrainedOptimization(_EconEval):
 
         # set up curves
         for s in strategies:
-            self.dCostUp.append(s.dCost.get_percentile(q=(1 - epsilon) * 100))
+            if epsilon is None:
+                self.dCostUp.append(s.dCost.get_mean())
+            else:
+                self.dCostUp.append(s.dCost.get_percentile(q=(1 - epsilon) * 100))
             self.dEffect.append(s.dEffect.get_mean())
             self.effectCurves.append(
                 ExpHealthCurve(
