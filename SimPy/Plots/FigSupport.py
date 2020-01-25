@@ -10,9 +10,9 @@ def output_figure(plt, output_type='show', filename='figure'):
     if output_type == 'show':
         plt.show()
     elif output_type == 'png':
-        plt.savefig(filename + ".png")
+        plt.savefig(filename + ".png", dpi=300)
     elif output_type == 'pdf':
-        plt.savefig(filename + ".pdf")
+        plt.savefig(filename + ".pdf", dpi=300)
     else:
         raise ValueError("Invalid value for figure output type. "
                          "Valid values are: 'show', 'png', and 'pdf' ")

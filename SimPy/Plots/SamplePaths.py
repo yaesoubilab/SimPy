@@ -4,10 +4,10 @@ from SimPy.SamplePathClasses import *
 import SimPy.Plots.FigSupport as Fig
 
 
-def graph_sample_path(sample_path,
-                      title=None, x_label=None, y_label=None,
-                      figure_size=None, output_type='show',
-                      legend=None, color_code=None, connect='step'):
+def plot_sample_path(sample_path,
+                     title=None, x_label=None, y_label=None,
+                     figure_size=None, output_type='show',
+                     legend=None, color_code=None, connect='step'):
     """
     plot a sample path
     :param sample_path: a sample path
@@ -16,8 +16,8 @@ def graph_sample_path(sample_path,
     :param y_label: (string) y-axis label
     :param figure_size: (tuple) figure size
     :param output_type: select from 'show', 'pdf' or 'png'
-    :param legend: string for the legend
-    :param color_code: (string) 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
+    :param legend: (string) the legend
+    :param color_code: (string) for example: 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     :param connect: (string) set to 'step' to produce an step graph and to 'line' to produce a line graph
     """
 
@@ -47,11 +47,11 @@ def graph_sample_path(sample_path,
     Fig.output_figure(fig, output_type, title)
 
 
-def graph_sample_paths(sample_paths,
-                       title=None, x_label=None, y_label=None,
-                       x_range=None, y_range=None,
-                       figure_size=None, output_type='show',
-                       legends=None, transparency=1, common_color_code=None, connect='step'):
+def plot_sample_paths(sample_paths,
+                      title=None, x_label=None, y_label=None,
+                      x_range=None, y_range=None,
+                      figure_size=None, output_type='show',
+                      legends=None, transparency=1, common_color_code=None, connect='step'):
     """ graphs multiple sample paths
     :param sample_paths: a list of sample paths
     :param title: (string) title of the figure
@@ -61,8 +61,8 @@ def graph_sample_paths(sample_paths,
     :param y_range: (list) [y_min, y_max]
     :param figure_size: (tuple) figure size
     :param output_type: select from 'show', 'pdf' or 'png'
-    :param legends: list of strings for legend
-    :param transparency: float (0.0 transparent through 1.0 opaque)
+    :param legends: (list) of strings for legend
+    :param transparency: (float) 0.0 transparent through 1.0 opaque
     :param common_color_code: (string) color code if all sample paths should have the same color
         'b'	blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     :param connect: (string) set to 'step' to produce an step graph and to 'line' to produce a line graph
@@ -100,11 +100,11 @@ def graph_sample_paths(sample_paths,
     Fig.output_figure(fig, output_type, title)
 
 
-def graph_sets_of_sample_paths(sets_of_sample_paths,
-                               title=None, x_label=None, y_label=None,
-                               x_range=None, y_range=None,
-                               figure_size=None, output_type='show',
-                               legends=None, transparency=1, color_codes=None, connect='step'):
+def plot_sets_of_sample_paths(sets_of_sample_paths,
+                              title=None, x_label=None, y_label=None,
+                              x_range=None, y_range=None,
+                              figure_size=None, output_type='show',
+                              legends=None, transparency=1, color_codes=None, connect='step'):
     """ graphs multiple sample paths
     :param sets_of_sample_paths: (list) of list of sample paths
     :param title: (string) title of the figure
@@ -114,7 +114,7 @@ def graph_sets_of_sample_paths(sets_of_sample_paths,
     :param y_range: (list) [y_min, y_max]
     :param figure_size: (tuple) figure size
     :param output_type: select from 'show', 'pdf' or 'png'
-    :param legends: list of strings for legend
+    :param legends: (list of strings) for legends
     :param transparency: float (0.0 transparent through 1.0 opaque)
     :param color_codes: (list of strings) color code of sample path sets
             e.g. 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black

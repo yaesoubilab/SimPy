@@ -21,7 +21,7 @@ path2.close(6)
 print(path2.stat.get_mean())
 
 # plot path 1 only
-Path.graph_sample_path(
+Path.plot_sample_path(
     sample_path=path1,
     title='Plotting a single sample path',
     x_label='Time Period',
@@ -30,7 +30,7 @@ Path.graph_sample_path(
     color_code='r',
     connect='line')
 
-Path.graph_sample_path(
+Path.plot_sample_path(
     sample_path=path2,
     title='Plotting a single sample path',
     x_label='Time Period',

@@ -25,7 +25,7 @@ print(path1.stat.get_mean())
 
 
 # plot path 1 only
-Path.graph_sample_path(
+Path.plot_sample_path(
     sample_path=path1,
     title='Plotting a single sample path',
     x_label='time',
@@ -35,7 +35,7 @@ Path.graph_sample_path(
     connect='step')
 
 # plot path 3 only
-Path.graph_sample_path(
+Path.plot_sample_path(
     sample_path=path3,
     title='Plotting a single sample path that is updated in batch',
     x_label='time',
@@ -44,7 +44,7 @@ Path.graph_sample_path(
     color_code='r')
 
 # plot both paths
-Path.graph_sample_paths(
+Path.plot_sample_paths(
     sample_paths=[path1, path2],
     title='Plot two sample paths with different color',
     x_label='time',
@@ -52,7 +52,7 @@ Path.graph_sample_paths(
     legends=['Path 1', 'Path 2'],
     transparency=0.75)
 
-Path.graph_sample_paths(
+Path.plot_sample_paths(
     sample_paths=[path1, path2],
     title='Plot 2 sample paths with the same color',
     x_label='time',
@@ -61,7 +61,7 @@ Path.graph_sample_paths(
     transparency=0.5,
     common_color_code='g')
 
-Path.graph_sets_of_sample_paths(
+Path.plot_sets_of_sample_paths(
     sets_of_sample_paths=[[path1, path2], [path3, path4]],
     title='Plot 2 sets of sample paths',
     x_label='time',
