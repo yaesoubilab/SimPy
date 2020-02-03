@@ -5,6 +5,9 @@ import SimPy.RandomVariantGenerators as RVG
 
 class Gillespie:
     def __init__(self, transition_rate_matrix):
+        """
+        :param transition_rate_matrix: transition rate matrix of the continuous-time Markov model
+        """
 
         self._rateMatrix = transition_rate_matrix
         self._expDists = []
@@ -40,7 +43,7 @@ class Gillespie:
         :param current_state_index: index of the current state
         :param rng: random number generator object
         :return: (dt, i) where dt is the time until next event, and i is the index of the next state
-        it returns (None, None) if the process has reached an absorbing state
+         it returns None for dt if the process is in an absorbing state
         """
 
         if not (0 <= current_state_index < len(self._rateMatrix)):
@@ -61,30 +64,35 @@ class Gillespie:
         return dt, i
 
 
-def continuous_to_discrete(rate_matrix, delta_t):
+def continuous_to_discrete(trans_rate_matrix, delta_t):
     """
-    :param rate_matrix: (list of lists) transition rate matrix (assumes None or 0 for diagonal elements)
+    :param trans_rate_matrix: (list of lists) transition rate matrix (assumes None or 0 for diagonal elements)
     :param delta_t: cycle length
     :return: transition probability matrix (list of lists)
              and the upper bound for the probability of two transitions within delta_t (float)
+        converting [p_ij] to [lambda_ij] where
+            mu_i = sum of rates out of state i
+            p_ij = exp(-mu_i*delta_t),      if i = j,
+            p_ij = (1-exp(-mu_i*delta_t))*lambda_ij/mu_i,      if i != j.
+
     """
 
     # list of rates out of each row
     rates_out = []
-    for row in rate_matrix:
+    for row in trans_rate_matrix:
         rates_out.append(out_rate(row))
 
     prob_matrix = []
-    for i in range(len(rate_matrix)):
+    for i in range(len(trans_rate_matrix)):
         prob_row = []   # list of probabilities
         # calculate probabilities
-        for j in range(len(rate_matrix[i])):
+        for j in range(len(trans_rate_matrix[i])):
             prob = 0
             if i == j:
                 prob = np.exp(-rates_out[i] * delta_t)
             else:
                 if rates_out[i] > 0:
-                    prob = (1 - np.exp(-rates_out[i] * delta_t)) * rate_matrix[i][j] / rates_out[i]
+                    prob = (1 - np.exp(-rates_out[i] * delta_t)) * trans_rate_matrix[i][j] / rates_out[i]
             # append this probability
             prob_row.append(prob)
 
@@ -92,13 +100,13 @@ def continuous_to_discrete(rate_matrix, delta_t):
         prob_matrix.append(prob_row)
 
     # probability that transition occurs within delta_t for each state
-    probs_out=[]
+    probs_out = []
     for rate in rates_out:
         probs_out.append(1-np.exp(-delta_t*rate))
 
     # calculate the probability of two transitions within delta_t for each state
     prob_out_out = []
-    for i in range(len(rate_matrix)):
+    for i in range(len(trans_rate_matrix)):
 
         # probability of leaving state i withing delta_t
         prob_out_i = probs_out[i]
@@ -106,13 +114,13 @@ def continuous_to_discrete(rate_matrix, delta_t):
         # probability of leaving the new state after i withing delta_t
         prob_out_again = 0
 
-        for j in range(len(rate_matrix[i])):
+        for j in range(len(trans_rate_matrix[i])):
             if not i == j:
 
                 # probability of transition from i to j
                 prob_i_j = 0
                 if rates_out[i]>0:
-                    prob_i_j = rate_matrix[i][j]/rates_out[i]
+                    prob_i_j = trans_rate_matrix[i][j] / rates_out[i]
                 # probability of transition from i to j and then out of j within delta_t
                 prob_i_j_out = prob_i_j * probs_out[j]
                 # update the probability of transition out of i and again leaving the new state
@@ -139,19 +147,22 @@ def out_rate(rates, idx):
     return sum_rates
 
 
-def discrete_to_continuous(prob_matrix, delta_t):
+def discrete_to_continuous(trans_prob_matrix, delta_t):
     """
-    :param prob_matrix: (list of lists) transition probability matrix
+    :param trans_prob_matrix: (list of lists) transition probability matrix
     :param delta_t: cycle length
     :return: (list of lists) transition rate matrix
+        Converting [p_ij] to [lambda_ij] where
+            lambda_ii = None, and
+            lambda_ij = -ln(p_ii) * p_ij / ((1-p_ii)*Delta_t)
     """
 
-    assert type(prob_matrix) == list, \
+    assert type(trans_prob_matrix) == list, \
         "prob_matrix is a matrix that should be represented as a list of lists: " \
         "For example: [ [0.1, 0.9], [0.8, 0.2] ]."
 
     rate_matrix = []
-    for i, row in enumerate(prob_matrix):
+    for i, row in enumerate(trans_prob_matrix):
         rate_row = []   # list of rates
         # calculate rates
         for j in range(len(row)):
@@ -159,10 +170,11 @@ def discrete_to_continuous(prob_matrix, delta_t):
             if i == j:
                 rate = None
             else:
-                if prob_matrix[i][i] == 1:
+                # rate is zero if this is an absorbing state
+                if trans_prob_matrix[i][i] == 1:
                     rate = 0
                 else:
-                    rate = -np.log(prob_matrix[i][i]) * prob_matrix[i][j] / ((1 - prob_matrix[i][i]) * delta_t)
+                    rate = -np.log(trans_prob_matrix[i][i]) * trans_prob_matrix[i][j] / ((1 - trans_prob_matrix[i][i]) * delta_t)
             # append this rate
             rate_row.append(rate) 
         # append this row of rates
