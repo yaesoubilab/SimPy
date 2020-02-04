@@ -3,6 +3,38 @@ import numpy as np
 import SimPy.RandomVariantGenerators as RVG
 
 
+class MarkovJumpProcess:
+
+    def __init__(self, transition_prob_matrix):
+        """
+        :param transition_prob_matrix: (list) transition probability matrix of a discrete-time Markov model
+        """
+
+        assert type(transition_prob_matrix) is list, \
+            'Transition probability matrix should be a list'
+
+        self._probMatrix = transition_prob_matrix
+        self._empiricalDists = []
+
+        for i, row in enumerate(transition_prob_matrix):
+            # create an empirical distribution over the future states from this state
+            self._empiricalDists.append(RVG.Empirical(row))
+
+    def get_next_state(self, current_state_index, rng):
+        """
+        :param current_state_index: index of the current state
+        :param rng: random number generator object
+        :return: (dt, i) where dt is the time until next event, and i is the index of the next state
+         it returns None for dt if the process is in an absorbing state
+        """
+
+        if not (0 <= current_state_index < len(self._probMatrix)):
+            raise ValueError('The value of the current state index should be greater '
+                             'than 0 and smaller than the number of states.')
+
+        return self._empiricalDists[current_state_index].sample(rng=rng)
+
+
 class Gillespie:
     def __init__(self, transition_rate_matrix):
         """
