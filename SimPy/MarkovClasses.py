@@ -13,25 +13,33 @@ class MarkovJumpProcess:
         assert type(transition_prob_matrix) is list, \
             'Transition probability matrix should be a list'
 
-        self._probMatrix = transition_prob_matrix
         self._empiricalDists = []
 
-        for i, row in enumerate(transition_prob_matrix):
+        for i, probs in enumerate(transition_prob_matrix):
+
+            # check if the sum of probabilities in this row is 1.
+            s = sum(probs)
+            if s < 0.99999 or s > 1.00001:
+                raise ValueError('Sum of each row in a probability matrix should be 1. '
+                                 'Sum of row {0} is {1}.'.format(i, s))
+
             # create an empirical distribution over the future states from this state
-            self._empiricalDists.append(RVG.Empirical(row))
+            self._empiricalDists.append(RVG.Empirical(probabilities=probs))
 
     def get_next_state(self, current_state_index, rng):
         """
         :param current_state_index: index of the current state
         :param rng: random number generator object
-        :return: (dt, i) where dt is the time until next event, and i is the index of the next state
-         it returns None for dt if the process is in an absorbing state
+        :return: the index of the next state
         """
 
-        if not (0 <= current_state_index < len(self._probMatrix)):
+        if not (0 <= current_state_index < len(self._empiricalDists)):
             raise ValueError('The value of the current state index should be greater '
-                             'than 0 and smaller than the number of states.')
+                             'than 0 and smaller than the number of states.'
+                             'Value provided for current state index is {}.'.format(current_state_index))
 
+        # find the next state index by drawing a sample from
+        # the empirical distribution associated with this state
         return self._empiricalDists[current_state_index].sample(rng=rng)
 
 
