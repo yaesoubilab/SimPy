@@ -15,6 +15,10 @@ class PartialRankCorrelation:
 
         for paramName, paramValues in parameter_values.items():
 
+            if len(paramValues) != len(output_values):
+                raise ValueError('Number of parameter values should be equal to the number of output values. '
+                                 'Error in parameter "{}".'.format(paramName))
+
             # calculate Spearman rank-order correlation coefficient
             coef, p = spearmanr(paramValues, output_values)
 
