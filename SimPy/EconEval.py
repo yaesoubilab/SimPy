@@ -297,6 +297,9 @@ class _EconEval:
         ax.set_xlim([min_x - d, max_x + d])
 
         # format y-axis
+        if y_range is not None:
+            ax.set_ylim(y_range)
+
         vals_y = ax.get_yticks()
         ax.set_yticks(vals_y)
         if if_y_axis_prob:
@@ -1358,13 +1361,13 @@ class CBA(_EconEval):
         # add the incremental NMB curves
         self.add_acceptability_curves_to_ax(ax=ax,
                                             wtp_delta=delta_wtp,
+                                            y_range=y_range,
                                             show_legend=show_legend,
                                             legends=legends)
 
         ax.set_title(title)
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
-        ax.set_ylim(y_range)
 
         fig.show()
         fig.savefig(file_name, bbox_inches='tight', dpi=300)
