@@ -55,9 +55,10 @@ class LinearFit:
         assert type(dic_parameter_values) == dict, 'Parameter values should be in a dictionary'
         assert type(dic_output_values) == dict, 'Output values should be in a dictionary'
 
-
-        self.results = []  # each row [parameter name, coeff for output 1, p-value for output 1,
-                                                     # coeff for output 2, p=value for output 2, ...]
+        # each row [parameter name,
+        #           coeff for output 1, p-value for output 1,
+        #           coeff for output 2, p=value for output 2, ...]
+        self.results = []
 
         self.header = ['Parameter']
         for outputName in dic_output_values:
@@ -87,12 +88,13 @@ class LinearFit:
 
             self.results.append(this_row)
 
-    def export_to_csv(self, file_name='LinearFit.csv', decimal=3, delimiter=','):
+    def export_to_csv(self, file_name='LinearFit.csv', decimal=3, delimiter=',', max_p_value=1):
         """
         formats the coefficients and p-value to the specified decimal point and export to a csv file
         :param file_name: file name
         :param decimal: decimal points to round the estimates to
         :param delimiter: to separate by comma, use ',' and by tab, use '\t'
+        :param max_p_value: coefficients with p-value less than this will be included in the report
         """
 
         formatted_results = [self.header]
@@ -100,8 +102,17 @@ class LinearFit:
         for row in self.results:
             # parameter name
             this_row = [row[0]]
-            for v in row[1:]:
-                this_row.append(F.format_number(v, deci=decimal))
+
+            n_of_outputs = (len(row)-1)/2
+            for out_i in range(int(n_of_outputs)):
+
+                p_value = row[2*out_i+2]
+                if p_value is not None and p_value <= max_p_value:
+                    this_row.append(F.format_number(row[2*out_i+1], deci=decimal))
+                    this_row.append(F.format_number(p_value, deci=decimal))
+                else:
+                    this_row.append(None)
+                    this_row.append(None)
 
             formatted_results.append(this_row)
 
