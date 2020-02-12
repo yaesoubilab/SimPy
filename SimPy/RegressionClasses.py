@@ -51,8 +51,7 @@ class SingleVarRegression:
         self.x = x
         self.X = self.f.get_X(x)
         self.y = y
-        model = sm.OLS(self.y, self.X)
-        self.fitted = model.fit()
+        self.fitted = sm.OLS(self.y, self.X).fit()
 
     def get_predicted_y(self, x_pred):
         """ :returns predicted y values at the provided x values """
@@ -90,6 +89,10 @@ class SingleVarRegression:
         """ :returns coefficients of the fitted model """
 
         return self.fitted.params
+
+    def get_pvalues(self):
+        """ :returns p-values of coefficients """
+        return self.fitted.pvalues
 
     def get_derivative(self, x):
         """ :returns derivative of the polynomial function at x """

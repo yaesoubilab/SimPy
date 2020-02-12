@@ -15,10 +15,13 @@ fig.tight_layout(pad=2)
 ax.grid(True)
 
 # create the regression model
-single_var_poly_reg = Reg.SingleVarRegression(x, y, degree=2)
+single_var_poly_reg = Reg.SingleVarRegression(x, y, degree=1)
 
 # print the coefficients of the fitted model
 print('Estimated coefficients:', single_var_poly_reg.get_coeffs())
+
+print(single_var_poly_reg.fitted.summary())
+print(single_var_poly_reg.fitted.pvalues)
 
 # print derivative
 print('Derivative at x=1:', single_var_poly_reg.get_derivative(x=1))

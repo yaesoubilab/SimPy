@@ -1,4 +1,4 @@
-import SimPy.PartialRankCorrelation as PRC
+import SimPy.SensitivityAnalysis as PRC
 from numpy.random import rand
 
 # prepare data
@@ -9,7 +9,7 @@ output = param1 + 2*param2 + rand(100) * 10
 parameterValues = {'Par1': param1, 'Par2': param2}
 
 prc = PRC.PartialRankCorrelation(
-    parameter_values=parameterValues,
+    dic_parameter_values=parameterValues,
     output_values=output)
 
 print(prc.results)
