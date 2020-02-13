@@ -807,7 +807,7 @@ class CEA(_EconEval):
         f.text(0.55, 0, effect_label, ha='center', va='center', fontweight='bold')
         f.text(0.99, 0.5, cost_label, va='center', rotation=-90, fontweight='bold')
 
-        f.show()
+        # f.show()
         f.savefig(file_name, bbox_inches='tight', dpi=300)
 
         # since the relative performance of strategies 
@@ -1271,7 +1271,7 @@ class CBA(_EconEval):
                               transparency_intervals=0.2,
                               show_legend=True,
                               figure_size=(5, 5),
-                              file_name='NMB.png'):
+                              file_name=None):
         """
         plots the incremental net-monetary benefit of each strategy
                 with respect to the base (the first strategy)
@@ -1307,8 +1307,9 @@ class CBA(_EconEval):
                                transparency_intervals=transparency_intervals,
                                show_legend=show_legend)
 
-        fig.show()
-        if file_name is not None:
+        if file_name is None:
+            fig.show()
+        else:
             fig.savefig(file_name, dpi=300)
 
     def add_inmb_curves_to_ax(self, ax, title, x_label, y_label, y_range=None,
@@ -1335,7 +1336,7 @@ class CBA(_EconEval):
                                   delta_wtp=None,
                                   show_legend=True, fig_size=(5, 5),
                                   legends=None,
-                                  file_name='CEAC.png'):
+                                  file_name=None):
         """
         plots the acceptibility curves
         :param title: title
@@ -1369,8 +1370,10 @@ class CBA(_EconEval):
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
 
-        fig.show()
-        fig.savefig(file_name, bbox_inches='tight', dpi=300)
+        if file_name is None:
+            fig.show()
+        else:
+            fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
     def add_acceptability_curves_to_ax(self,
                                        ax, wtp_delta=None,
@@ -1482,7 +1485,7 @@ class CBA(_EconEval):
                                  y_range=None,
                                  figure_size=(5, 5),
                                  if_show_conf_interval=True,
-                                 file_name='ENMB.png'):
+                                 file_name=None):
 
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
@@ -1524,8 +1527,10 @@ class CBA(_EconEval):
         ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
 
         ax.legend()
-        fig.show()
-        fig.savefig(file_name, bbox_inches='tight', dpi=300)
+        if file_name is None:
+            fig.show()
+        else:
+            fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
 
 class HealthMaxSubjectToBudget(_EconEval):
