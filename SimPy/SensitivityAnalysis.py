@@ -58,15 +58,19 @@ class LinearFit:
         # each row [parameter name,
         #           coeff for output 1, p-value for output 1,
         #           coeff for output 2, p=value for output 2, ...]
-        self.results = []
+        self.results_linear_fit = []    # for linear fit
+        self.results_prc = []           # for partial rank correlation
 
+        # make the header if need to export to cvs files
         self.header = ['Parameter']
         for outputName in dic_output_values:
             self.header.append(outputName + ' | Coeff')
             self.header.append(outputName + ' | P-Value')
 
+        # calculate linear fit and prc
         for paramName, paramValues in dic_parameter_values.items():
-            this_row = [paramName]
+            this_row_linear_fit = [paramName]
+            this_row_prc = [paramName]
 
             for outputName, outputValues in dic_output_values.items():
 
@@ -74,19 +78,23 @@ class LinearFit:
                     raise ValueError('Number of parameter values should be equal to the number of output values. '
                                      'Error in parameter "{0}", output "{1}".'.format(paramName, outputName))
 
-                param_values_with_constant = sm.add_constant(paramValues)
-
                 # make a regression model
+                param_values_with_constant = sm.add_constant(paramValues)
                 fitted = sm.OLS(outputValues, param_values_with_constant).fit()
-                #print(fitted.summary())
                 if fitted.rsquared < 0.000001:
-                    this_row.append(None)
-                    this_row.append(None)
+                    this_row_linear_fit.append(None)
+                    this_row_linear_fit.append(None)
                 else:
-                    this_row.append(fitted.params[1])
-                    this_row.append(fitted.pvalues[1])
+                    this_row_linear_fit.append(fitted.params[1])
+                    this_row_linear_fit.append(fitted.pvalues[1])
 
-            self.results.append(this_row)
+                # calculate Spearman rank-order correlation coefficient
+                coef, p = spearmanr(paramValues, outputValues)
+                this_row_prc.append(coef)
+                this_row_prc.append(p)
+
+            self.results_linear_fit.append(this_row_linear_fit)
+            self.results_prc.append(this_row_prc)
 
     def export_to_csv(self, file_name='LinearFit.csv', decimal=3, delimiter=',', max_p_value=1):
         """
@@ -99,7 +107,7 @@ class LinearFit:
 
         formatted_results = [self.header]
 
-        for row in self.results:
+        for row in self.results_linear_fit:
             # parameter name
             this_row = [row[0]]
 
