@@ -43,7 +43,7 @@ class PartialRankCorrelation:
         IO.write_csv(file_name=file_name, rows=formated_results, delimiter=delimiter)
 
 
-class LinearFit:
+class ParameterSA:
 
     def __init__(self, dic_parameter_values, dic_output_values):
         """
@@ -55,11 +55,15 @@ class LinearFit:
         assert type(dic_parameter_values) == dict, 'Parameter values should be in a dictionary'
         assert type(dic_output_values) == dict, 'Output values should be in a dictionary'
 
+        self.results_linear_fit = []  # for linear fit
         # each row [parameter name,
         #           coeff for output 1, p-value for output 1,
         #           coeff for output 2, p=value for output 2, ...]
-        self.results_linear_fit = []    # for linear fit
-        self.results_prc = []           # for partial rank correlation
+
+        self.results_prcc = []  # for partial rank correlation
+        # each row [parameter name,
+        #           correlation for output 1, p-value for output 1,
+        #           correlation for output 2, p=value for output 2, ...]
 
         # make the header if need to export to cvs files
         self.header = ['Parameter']
@@ -67,7 +71,7 @@ class LinearFit:
             self.header.append(outputName + ' | Coeff')
             self.header.append(outputName + ' | P-Value')
 
-        # calculate linear fit and prc
+        # calculate linear fit and prcc
         for paramName, paramValues in dic_parameter_values.items():
             this_row_linear_fit = [paramName]
             this_row_prc = [paramName]
@@ -94,34 +98,56 @@ class LinearFit:
                 this_row_prc.append(p)
 
             self.results_linear_fit.append(this_row_linear_fit)
-            self.results_prc.append(this_row_prc)
+            self.results_prcc.append(this_row_prc)
 
-    def export_to_csv(self, file_name='LinearFit.csv', decimal=3, delimiter=',', max_p_value=1):
+    def export_to_csv(self, file_name_linear_fit='LinearFit.csv', file_name_prcc='PRCC.csv',
+                      decimal=3, delimiter=',', max_p_value=1):
         """
         formats the coefficients and p-value to the specified decimal point and export to a csv file
-        :param file_name: file name
+        :param file_name_linear_fit: file name to store the results of linear fit
+        :param file_name_prcc: file name to store the results of PRCC
         :param decimal: decimal points to round the estimates to
         :param delimiter: to separate by comma, use ',' and by tab, use '\t'
         :param max_p_value: coefficients with p-value less than this will be included in the report
         """
 
-        formatted_results = [self.header]
+        formatted_results_linear_fit = [self.header]
+        formatted_results_prcc = [self.header]
 
-        for row in self.results_linear_fit:
+        n_of_outputs = (len(self.results_linear_fit[0]) - 1) / 2
+        n_of_params = len(self.results_linear_fit)
+
+        # format the results of linear fit analysis
+        for i in range(n_of_params):
             # parameter name
-            this_row = [row[0]]
+            this_row_linear_fit = [self.results_linear_fit[i][0]]
+            this_row_prcc = [self.results_prcc[i][0]]
 
-            n_of_outputs = (len(row)-1)/2
-            for out_i in range(int(n_of_outputs)):
+            for j in range(int(n_of_outputs)):
 
-                p_value = row[2*out_i+2]
-                if p_value is not None and p_value <= max_p_value:
-                    this_row.append(F.format_number(row[2*out_i+1], deci=decimal))
-                    this_row.append(F.format_number(p_value, deci=decimal))
+                coeff_linear_fit = self.results_linear_fit[i][2*j+1]
+                p_value_linear_fit = self.results_linear_fit[i][2*j+2]
+                coeff_prcc = self.results_prcc[i][2*j+1]
+                p_value_prcc = self.results_prcc[i][2*j+2]
+
+                # format results of linear fit
+                if p_value_linear_fit is not None and p_value_linear_fit <= max_p_value:
+                    this_row_linear_fit.append(F.format_number(coeff_linear_fit, deci=decimal))
+                    this_row_linear_fit.append(F.format_number(p_value_linear_fit, deci=decimal))
                 else:
-                    this_row.append(None)
-                    this_row.append(None)
+                    this_row_linear_fit.append(None)
+                    this_row_linear_fit.append(None)
 
-            formatted_results.append(this_row)
+                # format results of linear prcc
+                if p_value_prcc is not None and p_value_prcc <= max_p_value:
+                    this_row_prcc.append(F.format_number(coeff_prcc, deci=decimal))
+                    this_row_prcc.append(F.format_number(p_value_prcc, deci=decimal))
+                else:
+                    this_row_prcc.append(None)
+                    this_row_prcc.append(None)
 
-        IO.write_csv(file_name=file_name, rows=formatted_results, delimiter=delimiter)
+            formatted_results_linear_fit.append(this_row_linear_fit)
+            formatted_results_prcc.append(this_row_prcc)
+
+        IO.write_csv(file_name=file_name_linear_fit, rows=formatted_results_linear_fit, delimiter=delimiter)
+        IO.write_csv(file_name=file_name_prcc, rows=formatted_results_prcc, delimiter=delimiter)
