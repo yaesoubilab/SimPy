@@ -10,9 +10,12 @@ class SimulationEvent:
         self.time = time            # event time
         self.priority = priority    # event priority
 
-    def process(self):
+    def process(self, rng=None):
         """ implements instruction to process this event once occurs
-        abstract method to be overridden in derived classes to process an event """
+        abstract method to be overridden in derived classes to process an event
+        :param rng: random number generator
+        """
+
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
 
