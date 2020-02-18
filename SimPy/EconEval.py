@@ -12,6 +12,7 @@ import matplotlib.patches as patches
 
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
+LEGEND_FONT_SIZE = 7.5
 
 
 def pv_single_payment(payment, discount_rate, discount_period, discount_continuously=False):
@@ -278,7 +279,11 @@ class _EconEval:
                                                y_ref=s.dEffectObs)
 
     @staticmethod
-    def _format_ax(ax, y_range, min_x, max_x, delta_x=None, if_y_axis_prob=True, if_format_y_numbers=True):
+    def _format_ax(ax,
+                   y_range,
+                   min_x, max_x, delta_x=None,
+                   delta_y=None, if_y_axis_prob=True,
+                   if_format_y_numbers=True, y_axis_decimal=1):
 
         # format x-axis
         if delta_x is None:
@@ -290,22 +295,32 @@ class _EconEval:
                 vals_x.append(x)
                 x += delta_x
 
+        # format y-axis
+        if y_range is not None:
+            ax.set_ylim(y_range)
+
+        if delta_y is None:
+            vals_y = ax.get_yticks()
+        else:
+            vals_y = []
+            y = y_range[0]
+            while y <= y_range[1]:
+                vals_y.append(y)
+                y += delta_y
+
         ax.set_xticks(vals_x)
         ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
         d = 2 * (max_x - min_x) / 200
         ax.set_xlim([min_x - d, max_x + d])
 
-        # format y-axis
-        if y_range is not None:
-            ax.set_ylim(y_range)
 
-        vals_y = ax.get_yticks()
+
         ax.set_yticks(vals_y)
         if if_y_axis_prob:
             ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
         elif if_format_y_numbers:
-            ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_y])
+            ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=y_axis_decimal) for x in vals_y])
 
         if if_y_axis_prob and y_range is None:
             ax.set_ylim((-0.01, 1.01))
@@ -314,7 +329,8 @@ class _EconEval:
             ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
     def _add_curves_to_ax(self, ax, curves, x_values, title, x_label, y_label, y_range=None,
-                          y_axis_multiplier=1, delta_x=None,
+                          y_axis_multiplier=1, y_axis_decimal=1,
+                          delta_x=None,
                           transparency_lines=0.4,
                           transparency_intervals=0.2,
                           show_legend=False,
@@ -340,7 +356,7 @@ class _EconEval:
                             c=curve.color, alpha=1, linewidth=4)
 
         if show_legend:
-            ax.legend(loc=2)
+            ax.legend(loc=2, fontsize=LEGEND_FONT_SIZE)
 
         ax.set_title(title)
         ax.set_xlabel(x_label)
@@ -351,7 +367,8 @@ class _EconEval:
         self._format_ax(ax=ax, y_range=y_range,
                         min_x=x_values[0], max_x=x_values[-1], delta_x=delta_x,
                         if_y_axis_prob=if_y_axis_prob,
-                        if_format_y_numbers=if_format_y_numbers)
+                        if_format_y_numbers=if_format_y_numbers,
+                        y_axis_decimal=y_axis_decimal)
 
 
 class CEA(_EconEval):
@@ -1265,6 +1282,7 @@ class CBA(_EconEval):
                               y_label='Expected Incremental Net Monetary Benefit',
                               y_range=None,
                               y_axis_multiplier=1,
+                              y_axis_decimal=1,
                               interval_type='c',
                               delta_wtp=None,
                               transparency_lines=0.5,
@@ -1281,6 +1299,7 @@ class CBA(_EconEval):
         :param y_range: (list) range of y-axis
         :param y_axis_multiplier: (float) multiplier to scale the y-axis
             (e.g. 0.001 for thousands)
+        :param y_axis_decimal: (float) decimal of y_axis numbers
         :param interval_type: (string) 'n' for no interval,
                                        'c' for confidence interval,
                                        'p' for percentile interval
@@ -1303,9 +1322,12 @@ class CBA(_EconEval):
                                title=title, x_label=x_label,
                                y_label=y_label, y_range=y_range, delta_x=delta_wtp,
                                y_axis_multiplier=y_axis_multiplier,
+                               y_axis_decimal=y_axis_decimal,
                                transparency_lines=transparency_lines,
                                transparency_intervals=transparency_intervals,
                                show_legend=show_legend)
+
+        fig.tight_layout()
 
         if file_name is None:
             fig.show()
@@ -1394,7 +1416,7 @@ class CBA(_EconEval):
                         if_y_axis_prob=True)
 
         if show_legend:
-            ax.legend(fontsize='7.5')  # xx-small, x-small, small, medium, large, x-large, xx-large
+            ax.legend(fontsize=LEGEND_FONT_SIZE)  # xx-small, x-small, small, medium, large, x-large, xx-large
 
     def get_w_starts(self):
 
