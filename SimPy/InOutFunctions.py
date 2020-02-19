@@ -2,6 +2,7 @@ import csv
 import os
 import math
 import numpy as numpy
+from collections import OrderedDict
 
 
 def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete_existing_files=False):
@@ -82,7 +83,7 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_conv
 
 def read_csv_cols_to_dictionary(file_name, delimiter=',', if_convert_float=False):
 
-    dict_of_columns = {}  # dictionary of columns
+    dict_of_columns = OrderedDict()  # dictionary of columns
     csv_file = open(file_name, "r", encoding='utf-8', errors='ignore')
     col_headers = next(csv.reader(csv_file, delimiter=delimiter))
     n_cols = len(col_headers)
@@ -92,9 +93,13 @@ def read_csv_cols_to_dictionary(file_name, delimiter=',', if_convert_float=False
         if_ignore_first_row=True,
         delimiter=delimiter,
         if_convert_float=if_convert_float)
-    
+
+    # add columns to the dictionary
     for j, col in enumerate(cols):
-        dict_of_columns[col_headers[j]] = col
+        if col_headers[j] in dict_of_columns:
+            raise ValueError("Key '{}' already exists in the dictionary of parameters.".format(col_headers[j]))
+        else:
+            dict_of_columns[col_headers[j]] = col
 
     return dict_of_columns
 
