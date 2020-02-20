@@ -1,10 +1,8 @@
 import sys
 import warnings
-
 import math
-import numpy as numpy
+import numpy as np
 import scipy.stats as stat
-
 import SimPy.FormatFunctions as F
 
 NUM_BOOTSTRAP_SAMPLES = 1000
@@ -57,7 +55,7 @@ class _Statistics(object):
         :returns half-length of 100(1-alpha)% t-confidence interval """
 
         if self._n > 1:
-            return stat.t.ppf(1 - alpha / 2, self.get_n() - 1) * self.get_stdev() / numpy.sqrt(self.get_n())
+            return stat.t.ppf(1 - alpha / 2, self.get_n() - 1) * self.get_stdev() / np.sqrt(self.get_n())
         else:
             return math.nan
 
@@ -159,8 +157,8 @@ class SummaryStat(_Statistics):
         _Statistics.__init__(self, name)
         # convert data to numpy array if needed
         if type(data) == list:
-            self._data = numpy.array(data)
-        elif type(data) == numpy.ndarray:
+            self._data = np.array(data)
+        elif type(data) == np.ndarray:
             self._data = data
         else:
             raise ValueError("The argument data can be either a list of numbers or a numpy.array.")
@@ -169,10 +167,10 @@ class SummaryStat(_Statistics):
             raise ValueError("The data provided for summary statistics '" + name + "' is empty.")
 
         self._n = len(self._data)
-        self._total = numpy.sum(self._data)
-        self._mean = numpy.mean(self._data)
+        self._total = np.sum(self._data)
+        self._mean = np.mean(self._data)
         if self._n > 1:
-            self._stDev = numpy.std(self._data, ddof=1)  # unbiased estimator of the standard deviation
+            self._stDev = np.std(self._data, ddof=1)  # unbiased estimator of the standard deviation
         else:
             self._stDev = math.nan
 
@@ -189,17 +187,17 @@ class SummaryStat(_Statistics):
         return self._stDev
 
     def get_min(self):
-        return numpy.min(self._data)
+        return np.min(self._data)
 
     def get_max(self):
-        return numpy.max(self._data)
+        return np.max(self._data)
 
     def get_percentile(self, q):
         """
         :param q: percentile to compute (q in range [0, 100])
         :returns: qth percentile """
 
-        return numpy.percentile(self._data, q)
+        return np.percentile(self._data, q)
 
     def get_bootstrap_CI(self, alpha, num_samples):
         """ calculates the empirical bootstrap confidence interval
@@ -209,18 +207,18 @@ class SummaryStat(_Statistics):
         """
 
         # set random number generator seed
-        numpy.random.seed(1)
+        np.random.seed(1)
 
         # initialize delta array
-        delta = numpy.zeros(num_samples)
+        delta = np.zeros(num_samples)
 
         # obtain bootstrap samples
         for i in range(num_samples):
-            sample_i = numpy.random.choice(self._data, size=self._n, replace=True)
+            sample_i = np.random.choice(self._data, size=self._n, replace=True)
             delta[i] = sample_i.mean() - self.get_mean()
 
         # return [l, u]
-        return self.get_mean() - numpy.percentile(delta, [100*(1-alpha / 2.0), 100*alpha / 2.0])
+        return self.get_mean() - np.percentile(delta, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
 
     def get_PI(self, alpha):
         """
@@ -366,15 +364,15 @@ class _ComparativeStat(_Statistics):
         _Statistics.__init__(self, name)
 
         if type(x) == list:
-            self._x = numpy.array(x)
-        elif type(x) == numpy.ndarray:
+            self._x = np.array(x)
+        elif type(x) == np.ndarray:
             self._x = x
         else:
             raise ValueError("The argument x can be either a list of numbers or a numpy.array.")
 
         if type(y_ref) == list:
-            self._y_ref = numpy.array(y_ref)
-        elif type(y_ref) == numpy.ndarray:
+            self._y_ref = np.array(y_ref)
+        elif type(y_ref) == np.ndarray:
             self._y_ref = y_ref
         else:
             raise ValueError("The argument y_ref can be either a list of numbers or a numpy.array.")
@@ -456,11 +454,11 @@ class DifferenceStatIndp(_DifferenceStat):
 
         # generate random realizations for random variable X - Y
         # this will be used for calculating the projection interval
-        numpy.random.seed(1)
+        np.random.seed(1)
         # find the maximum of the number of observations
         max_n = max(self._x_n, self._y_n, 1000)
-        x_i = numpy.random.choice(self._x, size=max_n, replace=True)
-        y_i = numpy.random.choice(self._y_ref, size=max_n, replace=True)
+        x_i = np.random.choice(self._x, size=max_n, replace=True)
+        y_i = np.random.choice(self._y_ref, size=max_n, replace=True)
         self._sum_stat_sample_delta = SummaryStat(self.name, x_i - y_i)
 
         self._XMinusYSimulated = False
@@ -470,16 +468,16 @@ class DifferenceStatIndp(_DifferenceStat):
         for independent variable x and y, E(x-y) = E(x) - E(y)
         :return: sample mean of (x-y)
         """
-        return numpy.mean(self._x) - numpy.mean(self._y_ref)
+        return np.mean(self._x) - np.mean(self._y_ref)
 
     def get_stdev(self):
         """
         for independent variable x and y, var(x-y) = var_x + var_y
         :returns: sample standard deviation
         """
-        var_x = numpy.var(self._x)
-        var_y = numpy.var(self._y_ref)
-        return numpy.sqrt(var_x + var_y)
+        var_x = np.var(self._x)
+        var_y = np.var(self._y_ref)
+        return np.sqrt(var_x + var_y)
 
     def get_min(self):
         return None
@@ -506,20 +504,20 @@ class DifferenceStatIndp(_DifferenceStat):
         :return: empirical bootstrap confidence interval
         """
         # set random number generator seed
-        numpy.random.seed(1)
+        np.random.seed(1)
 
         # initialize difference array
-        diff = numpy.zeros(num_samples)
+        diff = np.zeros(num_samples)
 
         # obtain bootstrap samples
         n = max(self._x_n, self._y_n, 1000)
         for i in range(num_samples):
-            x_i = numpy.random.choice(self._x, size=n, replace=True)
-            y_i = numpy.random.choice(self._y_ref, size=n, replace=True)
+            x_i = np.random.choice(self._x, size=n, replace=True)
+            y_i = np.random.choice(self._y_ref, size=n, replace=True)
             d_temp = x_i - y_i
-            diff[i] = numpy.mean(d_temp)
+            diff[i] = np.mean(d_temp)
 
-        return numpy.percentile(diff, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        return np.percentile(diff, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
 
     def get_t_half_length(self, alpha):
         """
@@ -529,8 +527,8 @@ class DifferenceStatIndp(_DifferenceStat):
         :return: confidence interval of x_bar - y_bar
         """
 
-        sig_x = numpy.std(self._x)
-        sig_y = numpy.std(self._y_ref)
+        sig_x = np.std(self._x)
+        sig_y = np.std(self._y_ref)
 
         alpha = alpha / 100.0
 
@@ -549,7 +547,7 @@ class DifferenceStatIndp(_DifferenceStat):
     def get_t_CI(self, alpha):
 
         interval = self.get_t_half_length(alpha)
-        diff = numpy.mean(self._x) - numpy.mean(self._y_ref)
+        diff = np.mean(self._x) - np.mean(self._y_ref)
 
         return [diff - interval, diff + interval]
 
@@ -586,7 +584,7 @@ class RatioStatPaired(_RatioStat):
             raise ValueError('Two samples should have the same size.')
 
         # add element-wise ratio
-        ratio = numpy.zeros(len(self._x))
+        ratio = np.zeros(len(self._x))
         for i in range(len(self._x)):
             # for 0 in the denominator variable, check whether numerator is also 0
             if self._y_ref[i] == 0:
@@ -644,13 +642,13 @@ class RatioStatIndp(_RatioStat):
             raise ValueError('invalid value of y_ref, the ratio is not computable')
 
         # generate random realizations for random variable X/Y
-        numpy.random.seed(1)
+        np.random.seed(1)
         # find the maximum of the number of observations
         max_n = max(self._x_n, self._y_n, 1000)
-        x_resample = numpy.random.choice(self._x, size=max_n, replace=True)
-        y_resample = numpy.random.choice(self._y_ref, size=max_n, replace=True)
+        x_resample = np.random.choice(self._x, size=max_n, replace=True)
+        y_resample = np.random.choice(self._y_ref, size=max_n, replace=True)
 
-        self._sum_stat_sample_ratio = SummaryStat(name, numpy.divide(x_resample, y_resample))
+        self._sum_stat_sample_ratio = SummaryStat(name, np.divide(x_resample, y_resample))
 
     def get_mean(self):
         return self._sum_stat_sample_ratio.get_mean()
@@ -663,9 +661,9 @@ class RatioStatIndp(_RatioStat):
         if self._y_ref.mean() == 0:
             raise ValueError('invalid value of mean of y_ref, the ratio is not computable')
 
-        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_ref ** 2) - \
-              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_ref) ** 2)
-        return numpy.sqrt(var)
+        var = np.mean(self._x ** 2) * np.mean(1.0 / self._y_ref ** 2) - \
+              (np.mean(self._x) ** 2) * (np.mean(1.0 / self._y_ref) ** 2)
+        return np.sqrt(var)
 
     def get_min(self):
         return self._sum_stat_sample_ratio.get_min()
@@ -694,20 +692,20 @@ class RatioStatIndp(_RatioStat):
         :return: empirical bootstrap confidence interval
         """
         # set random number generator seed
-        numpy.random.seed(1)
+        np.random.seed(1)
 
         # initialize ratio array
-        ratio = numpy.zeros(num_samples)
+        ratio = np.zeros(num_samples)
 
         # obtain bootstrap samples
         n = max(self._x_n, self._y_n)
         for i in range(num_samples):
-            x_i = numpy.random.choice(self._x, size=n, replace=True)
-            y_i = numpy.random.choice(self._y_ref, size=n, replace=True)
-            r_temp = numpy.divide(x_i, y_i)
-            ratio[i] = numpy.mean(r_temp)
+            x_i = np.random.choice(self._x, size=n, replace=True)
+            y_i = np.random.choice(self._y_ref, size=n, replace=True)
+            r_temp = np.divide(x_i, y_i)
+            ratio[i] = np.mean(r_temp)
 
-        return numpy.percentile(ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        return np.percentile(ratio, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
 
     def get_PI(self, alpha):
         return self._sum_stat_sample_ratio.get_PI(alpha)
@@ -740,7 +738,7 @@ class RelativeDifferencePaired(_RelativeDifference):
             raise ValueError('Two samples should have the same size.')
 
         # add element-wise ratio
-        ratio = numpy.zeros(len(self._x))
+        ratio = np.zeros(len(self._x))
 
         for i in range(len(self._x)):
             # for 0 in the denominator variable, check whether numerator is also 0
@@ -798,16 +796,16 @@ class RelativeDifferenceIndp(_RelativeDifference):
             raise ValueError('invalid value of y_ref, the ratio is not computable')
 
         # generate random realizations for random variable (X-Y)/Y
-        numpy.random.seed(1)
+        np.random.seed(1)
         # find the maximum of the number of observations
         max_n = max(self._x_n, self._y_n, 1000)
-        x_resample = numpy.random.choice(self._x, size=max_n, replace=True)
-        y_resample = numpy.random.choice(self._y_ref, size=max_n, replace=True)
+        x_resample = np.random.choice(self._x, size=max_n, replace=True)
+        y_resample = np.random.choice(self._y_ref, size=max_n, replace=True)
 
         if self._order == 0:
-            self._sum_stat_sample_relativeRatio = SummaryStat(name, numpy.divide(x_resample, y_resample) - 1)
+            self._sum_stat_sample_relativeRatio = SummaryStat(name, np.divide(x_resample, y_resample) - 1)
         else:
-            self._sum_stat_sample_relativeRatio = SummaryStat(name, 1 - numpy.divide(x_resample, y_resample))
+            self._sum_stat_sample_relativeRatio = SummaryStat(name, 1 - np.divide(x_resample, y_resample))
 
     def get_mean(self):
         return self._sum_stat_sample_relativeRatio.get_mean()
@@ -821,9 +819,9 @@ class RelativeDifferenceIndp(_RelativeDifference):
         if self._y_ref.mean() == 0:
             raise ValueError('invalid value of mean of y_ref, the ratio is not computable')
 
-        var = numpy.mean(self._x ** 2) * numpy.mean(1.0 / self._y_ref ** 2) - \
-              (numpy.mean(self._x) ** 2) * (numpy.mean(1.0 / self._y_ref) ** 2)
-        return numpy.sqrt(var)
+        var = np.mean(self._x ** 2) * np.mean(1.0 / self._y_ref ** 2) - \
+              (np.mean(self._x) ** 2) * (np.mean(1.0 / self._y_ref) ** 2)
+        return np.sqrt(var)
 
     def get_min(self):
         return self._sum_stat_sample_relativeRatio.get_min()
@@ -852,20 +850,21 @@ class RelativeDifferenceIndp(_RelativeDifference):
         :return: empirical bootstrap confidence interval
         """
         # set random number generator seed
-        numpy.random.seed(1)
+        np.random.seed(1)
 
         # initialize ratio array
-        ratio = numpy.zeros(num_samples)
+        ratio = np.zeros(num_samples)
 
         # obtain bootstrap samples
         n = max(self._x_n, self._y_n)
         for i in range(num_samples):
-            x_i = numpy.random.choice(self._x, size=n, replace=True)
-            y_i = numpy.random.choice(self._y_ref, size=n, replace=True)
-            r_temp = numpy.divide(x_i, y_i) - 1
-            ratio[i] = numpy.mean(r_temp)
+            x_i = np.random.choice(self._x, size=n, replace=True)
+            y_i = np.random.choice(self._y_ref, size=n, replace=True)
+            r_temp = np.divide(x_i, y_i) - 1
+            ratio[i] = np.mean(r_temp)
 
-        return numpy.percentile(ratio, [100*alpha/2.0, 100*(1-alpha/2.0)])
+        return np.percentile(ratio, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
 
     def get_PI(self, alpha):
         return self._sum_stat_sample_relativeRatio.get_PI(alpha)
+

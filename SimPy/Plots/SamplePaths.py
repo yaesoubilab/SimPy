@@ -6,7 +6,7 @@ import SimPy.Plots.FigSupport as Fig
 
 def plot_sample_path(sample_path,
                      title=None, x_label=None, y_label=None,
-                     figure_size=None, output_type='show',
+                     figure_size=None, file_name=None,
                      legend=None, color_code=None, connect='step'):
     """
     plot a sample path
@@ -15,7 +15,7 @@ def plot_sample_path(sample_path,
     :param x_label: (string) x-axis label
     :param y_label: (string) y-axis label
     :param figure_size: (tuple) figure size
-    :param output_type: select from 'show', 'pdf' or 'png'
+    :param file_name: (string) filename to to save the histogram as (e.g. 'fig.png')
     :param legend: (string) the legend
     :param color_code: (string) for example: 'b' blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     :param connect: (string) set to 'step' to produce an step graph and to 'line' to produce a line graph
@@ -44,13 +44,13 @@ def plot_sample_path(sample_path,
         ax.set_xlim(left=0.5)
 
     # output figure
-    Fig.output_figure(fig, output_type, title)
+    Fig.output_figure(fig, file_name)
 
 
 def plot_sample_paths(sample_paths,
                       title=None, x_label=None, y_label=None,
                       x_range=None, y_range=None,
-                      figure_size=None, output_type='show',
+                      figure_size=None, file_name=None,
                       legends=None, transparency=1, common_color_code=None, connect='step'):
     """ graphs multiple sample paths
     :param sample_paths: a list of sample paths
@@ -60,7 +60,7 @@ def plot_sample_paths(sample_paths,
     :param x_range: (list) [x_min, x_max]
     :param y_range: (list) [y_min, y_max]
     :param figure_size: (tuple) figure size
-    :param output_type: select from 'show', 'pdf' or 'png'
+    :param file_name: (string) filename to to save the histogram as (e.g. 'fig.png')
     :param legends: (list) of strings for legend
     :param transparency: (float) 0.0 transparent through 1.0 opaque
     :param common_color_code: (string) color code if all sample paths should have the same color
@@ -97,13 +97,13 @@ def plot_sample_paths(sample_paths,
     # set the minimum of y-axis to zero
     ax.set_ylim(bottom=0)  # the minimum has to be set after plotting the values
     # output figure
-    Fig.output_figure(fig, output_type, title)
+    Fig.output_figure(fig, file_name)
 
 
 def plot_sets_of_sample_paths(sets_of_sample_paths,
                               title=None, x_label=None, y_label=None,
                               x_range=None, y_range=None,
-                              figure_size=None, output_type='show',
+                              figure_size=None, file_name=None,
                               legends=None, transparency=1, color_codes=None, connect='step'):
     """ graphs multiple sample paths
     :param sets_of_sample_paths: (list) of list of sample paths
@@ -113,7 +113,7 @@ def plot_sets_of_sample_paths(sets_of_sample_paths,
     :param x_range: (list) [x_min, x_max]
     :param y_range: (list) [y_min, y_max]
     :param figure_size: (tuple) figure size
-    :param output_type: select from 'show', 'pdf' or 'png'
+    :param file_name: (string) filename to to save the histogram as (e.g. 'fig.png')
     :param legends: (list of strings) for legends
     :param transparency: float (0.0 transparent through 1.0 opaque)
     :param color_codes: (list of strings) color code of sample path sets
@@ -144,7 +144,7 @@ def plot_sets_of_sample_paths(sets_of_sample_paths,
     # set the minimum of y-axis to zero
     ax.set_ylim(bottom=0)  # the minimum has to be set after plotting the values
     # output figure
-    Fig.output_figure(fig, output_type, title)
+    Fig.output_figure(fig, file_name)
 
 
 def add_sample_path_to_ax(sample_path, ax, color_code=None, legend=None, transparency=1, connect='step'):

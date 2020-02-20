@@ -29,7 +29,7 @@ def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None,
 def plot_histogram(data, title,
                    x_label=None, y_label=None, bin_width=None,
                    x_range=None, y_range=None, figure_size=None,
-                   color=None, legend=None, output_type='show', file_name=None):
+                   color=None, legend=None, file_name=None):
     """ graphs a histogram
     :param data: (list) observations
     :param title: (string) title of the figure
@@ -39,10 +39,9 @@ def plot_histogram(data, title,
     :param x_range: (list with 2 elements) minimum and maximum of x-axis
     :param y_range: (list with 2 elements) minimum and maximum of y-axis
     :param figure_size: (tuple) figure size
-    :param output_type: select from 'show', 'png', or 'pdf'
     :param color: (string) color
     :param legend: string for the legend
-    :param file_name: (string) filename to to save the histogram as
+    :param file_name: (string) filename to to save the histogram as (e.g. 'fig.png')
     """
 
     fig, ax = plt.subplots(figsize=figure_size)
@@ -67,16 +66,13 @@ def plot_histogram(data, title,
         ax.legend([legend])
 
     # output figure
-    if not (file_name is None):
-        output_figure(fig, output_type, file_name)
-    else:
-        output_figure(fig, output_type, title)
+    output_figure(fig, file_name)
 
 
 def plot_histograms(data_sets, legends, bin_width=None,
                     title=None, x_label=None, y_label=None,
                     x_range=None, y_range=None, figure_size=None,
-                    color_codes=None, output_type='show', transparency=1):
+                    color_codes=None, transparency=1, file_name=None):
     """
     plots multiple histograms on a single figure
     :param data_sets: (list of lists) observations
@@ -89,8 +85,8 @@ def plot_histograms(data_sets, legends, bin_width=None,
     :param y_range: (list with 2 elements) minimum and maximum of y-axis
     :param figure_size: (tuple) figure size
     :param color_codes: (list) of colors
-    :param output_type: select from 'show', 'png', or 'pdf'
     :param transparency: (float) 0.0 transparent through 1.0 opaque
+    :param file_name: (string) filename to to save the histogram as (e.g. 'fig.png')
     """
 
     fig, ax = plt.subplots(figsize=figure_size)
@@ -117,7 +113,7 @@ def plot_histograms(data_sets, legends, bin_width=None,
     ax.legend()
 
     # output figure
-    output_figure(plt, output_type, title)
+    output_figure(plt, file_name)
 
 
 def find_bins(data, x_range, bin_width):
