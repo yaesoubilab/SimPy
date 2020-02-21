@@ -1124,27 +1124,27 @@ class CBA(_EconEval):
         for c in self.acceptabilityCurves:
             c.convert_lists_to_arrays()
 
-    def get_wtp_ranges_with_highest_exp_nmb(self):
-        """
-        :return: dictionary (with strategy names as keys) of wtp ranges over which
-        each strategy has the highest expected incremental net monetary benefit.
-        """
-
-        dict = {}
-        for curve in self.inmbCurves:
-            dict[curve.label] = curve.rangeWTPHighestValue
-        return dict
-
-    def get_wtp_range_with_highest_prob_of_optimal(self):
-        """
-        :return: dictionary (with strategy names as keys) of wtp ranges over which
-        each strategy has the highest probability of being optimal.
-        """
-
-        dict = {}
-        for curve in self.acceptabilityCurves:
-            dict[curve.label] = curve.rangeWTPHighestValue
-        return dict
+    # def get_wtp_ranges_with_highest_exp_nmb(self):
+    #     """
+    #     :return: dictionary (with strategy names as keys) of wtp ranges over which
+    #     each strategy has the highest expected incremental net monetary benefit.
+    #     """
+    #
+    #     dict = {}
+    #     for curve in self.inmbCurves:
+    #         dict[curve.label] = curve.rangeWTPHighestValue
+    #     return dict
+    #
+    # def get_wtp_range_with_highest_prob_of_optimal(self):
+    #     """
+    #     :return: dictionary (with strategy names as keys) of wtp ranges over which
+    #     each strategy has the highest probability of being optimal.
+    #     """
+    #
+    #     dict = {}
+    #     for curve in self.acceptabilityCurves:
+    #         dict[curve.label] = curve.rangeWTPHighestValue
+    #     return dict
 
     def __find_strategies_with_highest_einmb(self):
         """ find strategies with the highest expected incremental net monetary benefit.
@@ -1170,7 +1170,7 @@ class CBA(_EconEval):
         for curve in self.inmbCurves:
             curve.convert_lists_to_arrays()
 
-    def find_optimal_switching_wtp_values(self, interval_type='n', deci=None):
+    def find_optimal_switching_wtp_values(self, interval_type='n', deci=0):
 
         w_stars = []  # wtp values to switch between strategies
         w_star_intervals = [] # confidence or projection intervals of optimal wtp values
