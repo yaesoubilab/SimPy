@@ -30,8 +30,8 @@ def plot_eff_sample_size(likelihood_weights, if_randomize=True,
     ax.plot(range(1, len(likelihood_weights) + 1), effs)
 
     ax.set_title(title)
-    ax.set_xlabel('Iteration')
-    ax.set_ylabel('Effective Sample Size')
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
     ax.set_xlim(x_range)
     ax.set_ylim(y_range)
 
