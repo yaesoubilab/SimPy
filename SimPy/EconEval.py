@@ -296,6 +296,8 @@ class _EconEval:
                 x += delta_x
 
         # format y-axis
+        if if_y_axis_prob and y_range is None:
+            ax.set_ylim((-0.01, 1.01))
         if y_range is not None:
             ax.set_ylim(y_range)
 
@@ -314,16 +316,13 @@ class _EconEval:
         d = 2 * (max_x - min_x) / 200
         ax.set_xlim([min_x - d, max_x + d])
 
-
-
         ax.set_yticks(vals_y)
         if if_y_axis_prob:
             ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
         elif if_format_y_numbers:
             ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=y_axis_decimal) for x in vals_y])
 
-        if if_y_axis_prob and y_range is None:
-            ax.set_ylim((-0.01, 1.01))
+
 
         if not if_y_axis_prob:
             ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
@@ -1334,9 +1333,16 @@ class CBA(_EconEval):
         else:
             fig.savefig(file_name, dpi=300)
 
-    def add_inmb_curves_to_ax(self, ax, title, x_label, y_label, y_range=None,
-                              y_axis_multiplier=1, delta_wtp=None,
-                              transparency_lines=0.4,
+    def add_inmb_curves_to_ax(self, ax,
+                              title='Incremental Net Monetary Benefit',
+                              x_label='Willingness-To-Pay Threshold',
+                              y_label='Expected Incremental Net Monetary Benefit',
+                              y_range=None,
+                              y_axis_multiplier=1,
+                              y_axis_decimal=1,
+                              interval_type='c',
+                              delta_wtp=None,
+                              transparency_lines=0.5,
                               transparency_intervals=0.2,
                               show_legend=True,
                               show_frontier=True):
@@ -1344,6 +1350,7 @@ class CBA(_EconEval):
         self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtp_values,
                                title=title, x_label=x_label,
                                y_label=y_label, y_range=y_range, delta_x=delta_wtp,
+                               y_axis_decimal=y_axis_decimal,
                                y_axis_multiplier=y_axis_multiplier,
                                transparency_lines=transparency_lines,
                                transparency_intervals=transparency_intervals,
@@ -1837,8 +1844,7 @@ class ICER_Paired(_ICER):
         # check if ICER is computable
         if min(self._deltaEffects) < 0:
             self._isDefined = False
-            warnings.warn('\nFor "' + name + '" one of ICERs is not computable'
-                                             '\nbecause at least one incremental effect is negative.')
+            warnings.warn("\nFor '{0}' one of ICERs is not computable because at least one incremental effect is negative.".format(name))
 
         # calculate ICERs
         if self._isDefined:

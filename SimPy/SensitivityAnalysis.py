@@ -2,6 +2,7 @@ from scipy.stats import spearmanr
 import statsmodels.api as sm
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
+from collections import OrderedDict
 
 
 class PartialRankCorrelation:
@@ -52,8 +53,10 @@ class ParameterSA:
                                 names as the key
         """
 
-        assert type(dic_parameter_values) == dict, 'Parameter values should be in a dictionary'
-        assert type(dic_output_values) == dict, 'Output values should be in a dictionary'
+        assert isinstance(dic_parameter_values, dict), \
+            'Parameter values should be a dictionary.'
+        assert isinstance(dic_output_values, dict), \
+            'Output values should be a dictionary.'
 
         self.results_linear_fit = []  # for linear fit
         # each row [parameter name,
