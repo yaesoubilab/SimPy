@@ -1,6 +1,15 @@
 import numpy as np
 
 
+def proper_file_name(text):
+    """
+    :param text: filename
+    :return: filename where invalid characters are removed
+    """
+
+    return text.replace('|', ',').replace(':', ',').replace('<', 'l').replace('>', 'g').replace('\n', '')
+
+
 def get_moving_average(data, window=2):
     """
     calculates the moving average of a time-series

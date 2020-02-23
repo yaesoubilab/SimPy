@@ -1,12 +1,4 @@
-
-
-def proper_file_name(text):
-    """
-    :param text: filename
-    :return: filename where invalid characters are removed
-    """
-
-    return text.replace('|', ',').replace(':', ',').replace('<', 'l').replace('>', 'g').replace('\n', '')
+from SimPy.Support.MiscFunctions import *
 
 
 def output_figure(plt, filename=None, dpi=300):
