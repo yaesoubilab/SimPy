@@ -4,16 +4,18 @@ import SimPy.DataFrames as DF
 
 class _SamplePath:
 
-    def __init__(self, name, sim_rep=0, collect_stat=True):
+    def __init__(self, name, sim_rep=0, collect_stat=True, warm_up_period=0):
         """
         :param name: name of this sample path
         :param sim_rep: (int) simulation replication of this sample path
         :param collect_stat: set to True to collect statistics on
                             average, max, min, stDev, etc for this sample path
+        :param warm_up_period: warm up period (observations before this time will not be used to calculate statistics)
         """
         self.name = name
         self.simRep = sim_rep
         self._period_num = 0
+        self._warm_up_period = warm_up_period
 
         self._times = []  # times at which observations should be recorded
         self._values = []  # value of this sample path over time
@@ -38,7 +40,7 @@ class _SamplePath:
 
 class PrevalenceSamplePath(_SamplePath):
 
-    def __init__(self, name, initial_size=0, sim_rep=0, collect_stat=True, t_warm_up=0):
+    def __init__(self, name, initial_size=0, sim_rep=0, collect_stat=True, warm_up_period=0):
         """
         :param name: name of this sample path
         :param initial_size: value of the sample path at simulation time 0
@@ -46,14 +48,16 @@ class PrevalenceSamplePath(_SamplePath):
 
         :param collect_stat: set to True to collect statistics
                         on average, max, min, stDev, etc for this sample path
+        :param warm_up_period: warm up period (observations before this time will not be used to calculate statistics)
         """
-        _SamplePath.__init__(self, name=name, sim_rep=sim_rep, collect_stat=collect_stat)
+        _SamplePath.__init__(self, name=name, sim_rep=sim_rep,
+                             collect_stat=collect_stat, warm_up_period=warm_up_period)
         self.currentSize = initial_size  # current size of the sample path
         self._times = [0]
         self._values = [initial_size]
         # statistics on this prevalence sample path
         if collect_stat:
-            self.stat = Stat.ContinuousTimeStat(name=name, initial_time=t_warm_up)
+            self.stat = Stat.ContinuousTimeStat(name=name, initial_time=warm_up_period)
 
     def record_increment(self, time, increment):
         """
@@ -69,7 +73,7 @@ class PrevalenceSamplePath(_SamplePath):
 
         self.currentSize += increment
 
-        # update stat
+        # update continuous-time stat
         if self.ifCollectStat:
             self.stat.record(time=time, increment=increment)
 
@@ -83,11 +87,8 @@ class PrevalenceSamplePath(_SamplePath):
         """
         updates the value of this sample path (e.g. number of people in the system)
         :param time: time of this change
-        :param value:
+        :param value: the current value of this sample path
         """
-
-        if value is None:
-            raise ValueError(self.name + ' | value cannot be None.')
 
         self.record_increment(time=time, increment=value-self.currentSize)
 
@@ -99,18 +100,19 @@ class PrevalenceSamplePath(_SamplePath):
 
 
 class IncidenceSamplePath(_SamplePath):
-    def __init__(self, name, delta_t, sim_rep=0, collect_stat=True, t_warm_up=0):
+    def __init__(self, name, delta_t, sim_rep=0, collect_stat=True, warm_up_period=0):
         """
         :param name: name of this sample path
         :param delta_t: length of equally-spaced observation periods
         :param sim_rep: (int) simulation replication of this sample path
         :param collect_stat: set to True to collect statistics on average, max, min, stDev, etc for this sample path
-
+        :param warm_up_period: warm up period (observations before this time will not be used to calculate statistics)
         """
-        _SamplePath.__init__(self, name=name, sim_rep=sim_rep, collect_stat=collect_stat)
+        _SamplePath.__init__(self, name=name, sim_rep=sim_rep,
+                             collect_stat=collect_stat, warm_up_period=warm_up_period)
         self._deltaT = delta_t
         self._period_num = 0
-        self._t_warm_up = t_warm_up
+        self._warm_up_period = warm_up_period
         self._period_nums = []  # times represent the observation period number
         self._values = []
         # statistics on this incidence sample path
@@ -138,7 +140,7 @@ class IncidenceSamplePath(_SamplePath):
             self._values.append(increment)
             self._period_nums.append(self._period_num)
 
-            if self.ifCollectStat:
+            if self.ifCollectStat and time > self._warm_up_period:
                 self.stat.record(obs=self._values[-1])
 
         else:
@@ -150,9 +152,6 @@ class IncidenceSamplePath(_SamplePath):
         :param time:
         :param value:
         """
-
-        if value is None:
-            raise ValueError(self.name + ' | value cannot be None.')
 
         self.record_increment(time=time, increment=value)
 

@@ -305,7 +305,11 @@ class ContinuousTimeStat(_Statistics):
         """
 
         if time < self._initialTime:
+            self._lastObsTime = time
+            self._lastObsValue += increment
             return
+        else:
+            self._lastObsTime = max(self._lastObsTime, self._initialTime)
 
         if self._lastObsValue > self._max:
             self._max = self._lastObsValue
