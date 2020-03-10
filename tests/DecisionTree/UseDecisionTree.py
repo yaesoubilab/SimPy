@@ -34,6 +34,7 @@ dictTerminals = {'t1': [0,      1],
 
 # build the decision tree
 myDT = dt.DecisionNode('d1', dictDecisions, dictChances, dictTerminals)
+myDT.evaluate()
 
 # print the expected cost and utility of each alternative
 print('\nExpected cost and utility:')
