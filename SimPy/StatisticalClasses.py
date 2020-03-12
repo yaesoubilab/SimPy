@@ -33,6 +33,9 @@ class _Statistics(object):
         :returns standard deviation (to be calculated in the subclass) """
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
+    def get_var(self):
+        return self.get_stdev()**2
+
     def get_min(self):
         """ abstract method to be overridden in derived classes
         :returns minimum (to be calculated in the subclass) """

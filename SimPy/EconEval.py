@@ -2,6 +2,7 @@ import string
 import warnings
 import math
 import numpy as np
+import scipy.stats as stat
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import SimPy.InOutFunctions as IO
@@ -321,8 +322,6 @@ class _EconEval:
             ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
         elif if_format_y_numbers:
             ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=y_axis_decimal) for x in vals_y])
-
-
 
         if not if_y_axis_prob:
             ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
@@ -2113,21 +2112,40 @@ class INMB_Paired(_INMB):
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
+
+        # all cost and effects should have the same length
+        if not (len(costs_new) == len(effects_new) == len(costs_base) == len(effects_base)):
+            raise ValueError(
+                'Paired incremental NMB assumes the same number of observations for all cost and health outcomes.')
+
         _INMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # incremental observations
         self._deltaCost = self._costsNew - self._costsBase
         self._deltaHealth = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
+        self._n = len(costs_new)
+        self._statDeltaCost = Stat.SummaryStat(self.name, self._deltaCost)
+        self._statDeltaHealth = Stat.SummaryStat(self.name, self._deltaHealth)
+
     def get_CI(self, wtp, alpha=0.05):
-        # create a summary statistics
-        stat = Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost)
-        return stat.get_t_CI(alpha)
+
+        mean = wtp * self._statDeltaHealth.get_mean() - self._statDeltaCost.get_mean()
+
+        t = math.nan
+        if self._n > 1:
+            t = stat.t.ppf(1 - alpha / 2, self._n - 1)
+
+        st_dev = math.sqrt(wtp ** 2 * self._statDeltaHealth.get_var() + self._statDeltaCost.get_var())
+        st_err = st_dev/math.sqrt(self._n)
+
+        l = mean - t * st_err
+        u = mean + t * st_err
+        return [l, u]
 
     def get_PI(self, wtp, alpha=0.05):
-        # create a summary statistics
-        stat = Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost)
-        return stat.get_PI(alpha)
+
+        return Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost).get_PI(alpha)
 
 
 class INMB_Indp(_INMB):
@@ -2142,6 +2160,13 @@ class INMB_Indp(_INMB):
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
         """
+
+        # all costs and effects should have the same length for each strategy
+        if not (len(costs_new) == len(effects_new) and len(costs_base) == len(effects_base)):
+            raise ValueError(
+                'Independent incremental NMB assumes that for each strategy there are '
+                'the same number of observations for cost and health outcomes.')
+
         _INMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
     def get_CI(self, wtp, alpha=0.05):
