@@ -3,6 +3,15 @@ import SimPy.RandomVariantGenerators as RVGs
 from SimPy.DiscreteEventSim import *
 
 
+class Parameters:
+
+    def __init__(self):
+        pass
+
+    def update(self, rng, time):
+        pass
+
+
 class _Compartment:
 
     def __init__(self, id, name, size):
