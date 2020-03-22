@@ -26,14 +26,18 @@ class _Compartment:
 
 class Compartment(_Compartment):
 
-    def __init__(self, id, name, size=0):
+    def __init__(self, id, name, size=0, if_empty_to_eradicate=False):
         _Compartment.__init__(self, id, name, size)
         self.events = []
+        self.ifEmptyToEradicate = if_empty_to_eradicate
 
     def add_event(self, epi_event):
         self.events.append(epi_event)
 
     def sample_outgoing(self, rng, delta_t):
+
+        if self.size == 0:
+            return
 
         rates_out = []
         for e in self.events:
@@ -41,16 +45,18 @@ class Compartment(_Compartment):
 
         probs_out = []
         sum_rates = sum(rates_out)
-        probs_out.append(math.exp(-sum_rates*delta_t))
 
-        for e in self.events:
-            probs_out.append((1-probs_out[0]) * e.rate/sum_rates)
+        if sum_rates > 0:
+            probs_out.append(math.exp(-sum_rates*delta_t))
 
-        outs = RVGs.Multinomial(N=self.size, pvals=probs_out).sample(rng=rng)
+            for e in self.events:
+                probs_out.append((1-probs_out[0]) * e.rate/sum_rates)
 
-        for i, e in enumerate(self.events):
-            e.destComp.n_incoming += outs[i+1]
-            self.size -= outs[i+1]
+            outs = RVGs.Multinomial(N=self.size, pvals=probs_out).sample(rng=rng)
+
+            for i, e in enumerate(self.events):
+                e.destComp.n_incoming += outs[i+1]
+                self.size -= outs[i+1]
 
 
 class ChanceNode(_Compartment):
@@ -136,9 +142,20 @@ class EpiModel:
             c.sample_outgoing(rng=rng, delta_t=self.deltaT)
         for c in self.comparts:
             c.update_size()
+            c.n_incoming = 0
 
-        self.simCal.add_event(event=UpdateCompartments(time=self.simCal.time + self.deltaT,
-                                                       epi_model=self))
+        if not self.if_eradicated():
+            self.simCal.add_event(event=UpdateCompartments(time=self.simCal.time + self.deltaT,
+                                                           epi_model=self))
+
+    def if_eradicated(self):
+
+        if_erad = True
+        for c in self.comparts:
+            if c.ifEmptyToEradicate and c.size > 0:
+                if_erad = False
+
+        return if_erad
 
     def get_epi_state(self):
 
