@@ -5,15 +5,15 @@ class _Parameter:
         self.id = id
         self.value = None
 
-    def sample(self, rnd=None):
+    def sample(self, rng=None, time=None):
         pass
 
 
 class Constant(_Parameter):
-    def __init__(self, id, value):
+    def __init__(self,  id, value):
 
         _Parameter.__init__(self, id=id)
         self.value = value
 
-    def sample(self, rnd=None):
+    def sample(self, rng=None, time=None):
         pass

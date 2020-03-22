@@ -28,14 +28,14 @@ class Compartment(_Compartment):
 
         rates_out = []
         for e in self.events:
-            rates_out.append(e.get_rate())
+            rates_out.append(e.rate)
 
-        probs_out =[]
+        probs_out = []
         sum_rates = sum(rates_out)
-        probs_out.append(1-math.exp(-sum_rates*delta_t))
+        probs_out.append(math.exp(-sum_rates*delta_t))
 
         for e in self.events:
-            probs_out.append((1-probs_out[0]) * e.get_rate())
+            probs_out.append((1-probs_out[0]) * e.rate/sum_rates)
 
         outs = RVGs.Multinomial(N=self.size, pvals=probs_out).sample(rng=rng)
 
@@ -88,9 +88,18 @@ class EpiModel:
         self.params = parameters
         self.deltaT = delta_t
         self.comparts = []
+        self.events = []
         self.simCal = SimulationCalendar()
 
-    def initialize(self):
+    def __initialize(self):
+
+        for c in self.comparts:
+            for e in c.events:
+                self.events.append(e)
+
+        self.simCal.add_event(event=UpdateCompartments(time=0, epi_model=self))
+
+    def build_model(self):
         pass
 
     def process_end_of_sim(self):
@@ -99,28 +108,38 @@ class EpiModel:
     def simulate(self, sim_duration):
 
         rng = RVGs.RNG(seed=self.id)
-        self.initialize()
+        self.build_model()
 
+        self.__initialize()
         while self.simCal.n_events() > 0 and self.simCal.time <= sim_duration:
             self.simCal.get_next_event().process(rng=rng)
 
         self.process_end_of_sim()
 
-    def evalulate_comparts(self, rng):
+    def update_compartments(self, rng):
 
+        print(self.get_epi_state())
+
+        self.params.update(rng=rng, time=self.simCal.time)
+        for e in self.events:
+            e.update_rate()
         for c in self.comparts:
             c.sample_outgoing(rng=rng, delta_t=self.deltaT)
         for c in self.comparts:
             c.update_size()
 
-        self.simCal.add_event(event=EvaluateCompartments(time=self.simCal.time+self.deltaT,
-                                                         epi_model=self))
+        self.simCal.add_event(event=UpdateCompartments(time=self.simCal.time + self.deltaT,
+                                                       epi_model=self))
+
+    def get_epi_state(self):
+
+        return [c.size for c in self.comparts]
 
 
-class EvaluateCompartments(SimulationEvent):
+class UpdateCompartments(SimulationEvent):
     def __init__(self, time, epi_model):
-        SimulationEvent.__init__(time=time, priority=0)
+        SimulationEvent.__init__(self, time=time, priority=0)
         self.epiModel = epi_model
 
     def process(self, rng=None):
-        self.epiModel.evalulate_comparts(rng)
+        self.epiModel.update_compartments(rng)
