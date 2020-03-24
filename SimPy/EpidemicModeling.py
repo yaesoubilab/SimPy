@@ -1,10 +1,11 @@
 import math
 import SimPy.RandomVariantGenerators as RVGs
 from SimPy.DiscreteEventSim import *
+from SimPy.Support.EpiModelSupport import *
+import SimPy.SamplePathClasses as Path
 
 
-class Parameters:
-
+class EpiParameters:
     def __init__(self):
         pass
 
@@ -162,10 +163,17 @@ class EpiModel:
         return [c.size for c in self.comparts]
 
 
-class UpdateCompartments(SimulationEvent):
-    def __init__(self, time, epi_model):
-        SimulationEvent.__init__(self, time=time, priority=0)
-        self.epiModel = epi_model
+class EpiHistory:
 
-    def process(self, rng=None):
-        self.epiModel.update_compartments(rng)
+    def __init__(self):
+        self.prevComparts = []
+        self.incdComparts = []
+        self.prevSamplePaths = []
+
+    def trace_prev(self, compart):
+        self.prevComparts.append(compart)
+        self.prevSamplePaths.append(
+            Path.PrevalenceSamplePath(
+                name=compart.name, initial_size=compart.size, sim_rep=0, collect_stat=False, warm_up_period=0)
+        )
+
