@@ -1302,7 +1302,7 @@ class CBA(_EconEval):
                               y_label='Expected Incremental Net Monetary Benefit',
                               y_range=None,
                               y_axis_multiplier=1,
-                              y_axis_decimal=1,
+                              y_axis_decimal=0,
                               interval_type='c',
                               delta_wtp=None,
                               transparency_lines=0.5,
