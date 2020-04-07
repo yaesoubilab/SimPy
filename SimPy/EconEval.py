@@ -433,9 +433,9 @@ class CEA(_EconEval):
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
         :param icer_digits: digits to round ICER estimates to
-        :param cost_multiplier: set to 1/1000 or 1/100,000 to represent cost in terms of
+        :param cost_multiplier: set to 1/1000 or 1/100000 to represent cost in terms of
                 thousands or hundred thousands unit
-        :param effect_multiplier: set to 1/1000 or 1/100,000 to represent effect in terms of
+        :param effect_multiplier: set to 1/1000 or 1/100000 to represent effect in terms of
                 thousands or hundred thousands unit
         :param file_name: address and file name where the CEA results should be saved to
         :param directory: directory (relative to the current root) where the files should be located
@@ -628,8 +628,29 @@ class CEA(_EconEval):
                       center_s=75, cloud_s=25, transparency=0.1,
                       cost_multiplier=1, effect_multiplier=1,
                       cost_digits=0, effect_digits=1,
-                      file_name='CE.png'
+                      file_name=None
                       ):
+        ''' plots a cost-effectiveness plane
+        :param title: (string) title of the figure
+        :param x_label: (string) label of x-axis
+        :param y_label: (string) label of y-axis
+        :param x_range: (tuple) (minimum value, maximum value) of the y-axis
+        :param y_range: (tuple) (minimum value, maximum value) of the y-axis
+        :param add_clouds: (boolean) set to True to show the projection clouds
+        :param fig_size: (tuple) (width, height) of the figure
+        :param show_legend: (boolean) set to True to show the legends
+        :param center_s: (float) size of dots that show the mean cost and health of each strategy
+        :param cloud_s: (float) size of dots that form the clouds
+        :param transparency: (float between 0 and 1) transparency of dots that form the clouds
+        :param cost_multiplier: (float) set to 1/1000 or 1/100000 to represent cost in terms of
+                thousands or hundred thousands unit
+        :param effect_multiplier: (float) set to 1/1000 or 1/100000 to represent effect in terms of
+                thousands or hundred thousands unit
+        :param cost_digits: (int) number of digits to round cost labels to
+        :param effect_digits: (int) number of digits to round effect labels to
+        :param file_name: (string) file name to save the figure as
+        :return:
+        '''
 
         fig, ax = plt.subplots(figsize=fig_size)
 
@@ -646,8 +667,9 @@ class CEA(_EconEval):
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier,
                                 cost_digits=cost_digits, effect_digits=effect_digits)
 
-        fig.show()
-        if file_name is not None:
+        if file_name is None or file_name == '':
+            fig.show()
+        else:
             fig.savefig(file_name, dpi=300)
 
     def create_pairwise_ceas(self):
