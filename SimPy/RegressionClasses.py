@@ -1,8 +1,24 @@
-import numpy as np
+from numpy.polynomial import polynomial as P
 import statsmodels.api as sm
 from scipy import stats
 from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
+
+class PolyRegression:
+    # regression of form: f(x) = c0 + c1*x + c2*x^2 + c3*x^3 + ... + cn*x^n
+    def __init__(self, x, y, degree=1):
+
+        self._coeffs = P.polyfit(x=x, y=y, deg=degree)
+
+    def get_coeffs(self):
+        return self._coeffs
+
+    def get_predicted_y(self, x):
+
+        f = 0
+        for i, coeff in enumerate(self._coeffs):
+            f += coeff * pow(x, i)
+        return f
 
 # for additional information:
 # http://markthegraph.blogspot.com/2015/05/using-python-statsmodels-for-ols-linear.html
