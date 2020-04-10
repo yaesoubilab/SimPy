@@ -51,7 +51,9 @@ def plot_sample_paths(sample_paths,
                       title=None, x_label=None, y_label=None,
                       x_range=None, y_range=None,
                       figure_size=None, file_name=None,
-                      legends=None, transparency=1, common_color_code=None, connect='step'):
+                      legends=None, transparency=1,
+                      color_codes=None,
+                      common_color_code=None, connect='step'):
     """ graphs multiple sample paths
     :param sample_paths: a list of sample paths
     :param title: (string) title of the figure
@@ -63,6 +65,7 @@ def plot_sample_paths(sample_paths,
     :param file_name: (string) filename to to save the histogram as (e.g. 'fig.png')
     :param legends: (list) of strings for legend
     :param transparency: (float) 0.0 transparent through 1.0 opaque
+    :param color_codes: (list) of color code for sample paths
     :param common_color_code: (string) color code if all sample paths should have the same color
         'b'	blue 'g' green 'r' red 'c' cyan 'm' magenta 'y' yellow 'k' black
     :param connect: (string) set to 'step' to produce an step graph and to 'line' to produce a line graph
@@ -83,6 +86,7 @@ def plot_sample_paths(sample_paths,
     # add all sample paths
     add_sample_paths_to_ax(sample_paths=sample_paths,
                            ax=ax,
+                           color_codes=color_codes,
                            common_color_code=common_color_code,
                            transparency=transparency,
                            connect=connect)
@@ -168,13 +172,19 @@ def add_sample_path_to_ax(sample_path, ax, color_code=None, legend=None, transpa
         ax.legend()
 
 
-def add_sample_paths_to_ax(sample_paths, ax, common_color_code, transparency, connect):
+def add_sample_paths_to_ax(sample_paths, ax, color_codes, common_color_code, transparency, connect):
 
     # add every path
-    for path in sample_paths:
+    for i, path in enumerate(sample_paths):
+        if color_codes is not None:
+            color = color_codes[i]
+        elif common_color_code is not None:
+            color = common_color_code
+        else:
+            color = None
         add_sample_path_to_ax(sample_path=path,
                               ax=ax,
-                              color_code=common_color_code,
+                              color_code=color,
                               transparency=transparency,
                               connect=connect)
 
