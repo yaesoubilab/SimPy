@@ -3,9 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # generate x values (observations)
-x = np.random.randn(100)
+x = np.random.randn(200)
+#x = np.linspace(100000, 150000, 20)
 # generate y values (assuming y = x^2 -2 + error)
-y = x*x + np.random.randn(100) - 2
+y = pow(x,3) - 4 * pow(x, 2) + x - 2 + np.random.randn(200)
 
 # create the scatter plot of (x, y) points
 fig, ax = plt.subplots(figsize=(8, 4))
@@ -15,7 +16,7 @@ fig.tight_layout(pad=2)
 ax.grid(True)
 
 # create the regression model
-single_var_poly_reg = Reg.SingleVarRegression(x, y, degree=1)
+single_var_poly_reg = Reg.SingleVarRegression(x, y, degree=3)
 
 # print the coefficients of the fitted model
 print('Estimated coefficients:', single_var_poly_reg.get_coeffs())
