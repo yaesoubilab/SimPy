@@ -146,13 +146,13 @@ def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, density=True, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # Maximum-Likelihood Algorithm
     # ref: http://www.channelgrubb.com/blog/2015/2/27/beta-binomial-in-python
     # define log_likelihood (log(pmf) of beta binomial)
     def BetaBinom(a, b, n, k):
-        part_1 = sp.misc.comb(n, k)
+        part_1 = sp.special.comb(n, k)
         part_2 = sp.special.betaln(k + a, n - k + b)
         part_3 = sp.special.betaln(a, b)
         result = (np.log(part_1) + part_2) - part_3
@@ -297,7 +297,7 @@ def fit_gamma(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, density=True, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters of gamma
     # alpha = a, beta = 1/scale
@@ -337,7 +337,7 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, density=True, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # Maximum-Likelihood Algorithm
     # ref: https://en.wikipedia.org/wiki/Negative_binomial_distribution#Gamma%E2%80%93Poisson_mixture
@@ -345,7 +345,7 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
 
     # define density function of gamma-poisson
     def gamma_poisson(r,p,k):
-        part1 = 1.0*sp.special.gamma(r+k)/(sp.special.gamma(r) * sp.misc.factorial(k))
+        part1 = 1.0*sp.special.gamma(r+k)/(sp.special.gamma(r) * sp.special.factorial(k))
         part2 = (p**k)*((1-p)**r)
         return part1*part2
 
@@ -398,7 +398,7 @@ def fit_gamma_poisson(data, x_label, fixed_location=0, fixed_scale=1, figure_siz
     )
 
     # report results in the form of a dictionary
-    return {"a": a, "gamma_scale": scale, "AIC": aic, "loc": fixed_location, "scale": fixed_scale}
+    return {"a": a, "gamma_scale": scale, "loc": fixed_location, "scale": fixed_scale, "AIC": aic}
 
 
 # Geometric
@@ -534,7 +534,7 @@ def fit_lognorm(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
+    ax.hist(data, density=True, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
 
     # estimate the parameters
     s, loc, scale = scs.lognorm.fit(data, floc=fixed_location)
@@ -683,7 +683,7 @@ def fit_poisson(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=find_bins(data, bin_width), #int(np.max(data)),#+1, #range=[-0.5, np.max(data)+0.5],
+    ax.hist(data, density=True, bins=find_bins(data, bin_width), #int(np.max(data)),#+1, #range=[-0.5, np.max(data)+0.5],
             edgecolor='black', alpha=0.5, label='Frequency')
 
     # plot poisson-deviation with fitted parameter
@@ -705,7 +705,7 @@ def fit_poisson(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     )
 
     # report results in the form of a dictionary
-    return {"mu": mu, "AIC": aic, "loc": fixed_location}
+    return {"mu": mu, "loc": fixed_location, "AIC": aic}
 
 
 # Triangular
