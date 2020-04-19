@@ -82,7 +82,7 @@ def equivalent_annual_value(present_value, discount_rate, discount_period):
 
 
 class Strategy:
-    def __init__(self, name, cost_obs, effect_obs, color=None, marker='o'):
+    def __init__(self, name, cost_obs, effect_obs, color=None, marker='o', label=None):
         """
         :param name: name of the strategy
         :param cost_obs: list or numpy.array of cost observations
@@ -91,6 +91,7 @@ class Strategy:
                 (https://www.webucator.com/blog/2015/03/python-color-constants-module/)
         :param marker: (string) marker code
                 (https://matplotlib.org/3.1.1/api/markers_api.html)
+        :param label: (string) label to show on the legend (if None, name is used)
         """
 
         assert color is None or type(color) is str, "color argument should be a string."
@@ -99,6 +100,10 @@ class Strategy:
         self.name = name
         self.color = color
         self.marker = marker
+        if label is None:
+            self.label = name
+        else:
+            self.label = label
 
         self.ifDominated = False
         self.switchingWTP = 0
@@ -573,7 +578,7 @@ class CEA(_EconEval):
                        alpha=1,  # transparency
                        marker=s.marker,  # markers
                        s=center_s,  # marker size
-                       label=s.name,  # name to show in the legend
+                       label=s.label,  # label to show in the legend
                        zorder=2,
                        #edgecolors='k'
                        )
@@ -1090,7 +1095,7 @@ class CBA(_EconEval):
         # initialize acceptability curves
         self.acceptabilityCurves = []
         for s in self.strategies:
-            self.acceptabilityCurves.append(AcceptabilityCurve(label=s.name,
+            self.acceptabilityCurves.append(AcceptabilityCurve(label=s.label,
                                                                color=s.color,
                                                                wtp_values=self.wtp_values))
 
@@ -1545,7 +1550,7 @@ class CBA(_EconEval):
 
         for s in self.strategies[1:]:
             ax.scatter(x=s.idx, y=s.eIncNMB.get_mean(),
-                       c=s.color, label=s.name)
+                       c=s.color, label=s.label)
 
             interval = s.eIncNMB.get_interval(interval_type='p')
             y = s.eIncNMB.get_mean()
