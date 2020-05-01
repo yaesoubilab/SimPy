@@ -21,6 +21,16 @@ class PolyRegression:
             f += coeff * pow(x, i)
         return f
 
+    def get_derivative(self, x):
+        result = 0
+        for i in range(len(self._coeffs) - 1):
+            result += (i + 1) * self._coeffs[i + 1] * pow(x, i)
+
+        return result
+
+    def get_roots(self):
+        return P.polyroots(self._coeffs)
+
 # for additional information:
 # http://markthegraph.blogspot.com/2015/05/using-python-statsmodels-for-ols-linear.html
 
