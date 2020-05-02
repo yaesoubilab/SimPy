@@ -14,11 +14,11 @@ def format_number(number, deci=0, format=None):
     try:
         deci = int(deci)
     except ValueError:
-        raise ValueError('deci should be  integer or float.')
+        raise ValueError('deci should be integer or float.')
     except TypeError:
-        raise ValueError('deci should be  integer or float.')
+        raise ValueError('deci should be integer or float.')
 
-    if format not in (None, ',', '%', '$',''):
+    if format not in (None, ',', '%', '$', ''):
         raise ValueError('Invalid value for format.')
 
     if number is None:
