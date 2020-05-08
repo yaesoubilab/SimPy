@@ -146,9 +146,26 @@ class SingleVarRegression:
 class ExpRegression:
     # regression of form f(x) = c0 + c1*exp(c2*x)
 
-    def __init__(self, x, y):
-        self.para, cov = curve_fit(self.exp_func, x, y)
+    def __init__(self, x, y, if_zero_at_limit=False):
+
+        self._ifZeroAtLimit = if_zero_at_limit
+        if if_zero_at_limit:
+            self._coeffs, cov = curve_fit(self.exp_func_zero_at_limit, x, y)
+        else:
+            self._coeffs, cov = curve_fit(self.exp_func, x, y)
+
+    def get_coeffs(self):
+        return self._coeffs
+
+    def get_predicted_y(self, x):
+        if self._ifZeroAtLimit:
+            return self.exp_func_zero_at_limit(x, *self._coeffs)
+        else:
+            return self.exp_func(x, *self._coeffs)
 
     @staticmethod
     def exp_func(x, c0, c1, c2):
         return c0 + c1 * np.exp(c2 * x)
+    @staticmethod
+    def exp_func_zero_at_limit(x, c1, c2):
+        return c1 * np.exp(c2 * x)
