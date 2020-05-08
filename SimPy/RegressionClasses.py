@@ -3,6 +3,7 @@ import numpy as np
 import statsmodels.api as sm
 from scipy import stats
 from statsmodels.sandbox.regression.predstd import wls_prediction_std
+from scipy.optimize import curve_fit
 
 
 class PolyRegression:
@@ -140,3 +141,14 @@ class SingleVarRegression:
             return np.zeros(len(coeffs))
         else:
             return np.roots(coeffs)
+
+
+class ExpRegression:
+    # regression of form f(x) = c0 + c1*exp(c2*x)
+
+    def __init__(self, x, y):
+        self.para, cov = curve_fit(self.exp_func, x, y)
+
+    @staticmethod
+    def exp_func(x, c0, c1, c2):
+        return c0 + c1 * np.exp(c2 * x)
