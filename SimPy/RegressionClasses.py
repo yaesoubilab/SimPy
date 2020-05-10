@@ -6,10 +6,28 @@ from statsmodels.sandbox.regression.predstd import wls_prediction_std
 from scipy.optimize import curve_fit
 
 
-class PolyRegression:
+class _OneVarRegression:
+    def __init__(self, x, y):
+        self._coeffs = None
+
+    def get_coeffs(self):
+        pass
+
+    def get_predicted_y(self, x):
+        pass
+
+    def get_derivative(self, x):
+        pass
+
+    def get_roots(self):
+        pass
+
+
+class PolyRegression(_OneVarRegression):
     # regression of form: f(x) = c0 + c1*x + c2*x^2 + c3*x^3 + ... + cn*x^n
     def __init__(self, x, y, degree=1):
 
+        _OneVarRegression.__init__(self, x, y)
         self._coeffs = P.polyfit(x=x, y=y, deg=degree)
 
     def get_coeffs(self):
@@ -31,6 +49,69 @@ class PolyRegression:
 
     def get_roots(self):
         return P.polyroots(self._coeffs)
+
+
+class ExpRegression (_OneVarRegression):
+    # regression of form f(x) = c0 + c1*exp(c2*x)
+
+    def __init__(self, x, y, if_c0_zero=False):
+
+        _OneVarRegression.__init__(self, x, y)
+        self._ifC0Zero = if_c0_zero
+        if if_c0_zero:
+            self._coeffs, cov = curve_fit(self.exp_func_c0_zero, x, y)
+        else:
+            self._coeffs, cov = curve_fit(self.exp_func, x, y)
+
+    def get_coeffs(self):
+        return self._coeffs
+
+    def get_predicted_y(self, x):
+        if self._ifC0Zero:
+            return self.exp_func_c0_zero(x, *self._coeffs)
+        else:
+            return self.exp_func(x, *self._coeffs)
+
+    @staticmethod
+    def exp_func(x, c0, c1, c2):
+        return c0 + c1 * np.exp(c2 * x)
+    @staticmethod
+    def exp_func_c0_zero(x, c1, c2):
+        return c1 * np.exp(c2 * x)
+
+
+class PowerRegression (_OneVarRegression):
+    # regression of form f(x) = c0 + c1*pow(x, c3)
+
+    def __init__(self, x, y, if_c0_zero):
+        _OneVarRegression.__init__(self, x, y)
+        self._ifC0Zero = if_c0_zero
+        if if_c0_zero:
+            self._coeffs, cov = curve_fit(self.power_func_c0_zero, x, y)
+        else:
+            self._coeffs, cov = curve_fit(self.power_func, x, y)
+
+
+    def get_coeffs(self):
+        return self._coeffs
+
+
+    def get_predicted_y(self, x):
+        if self._ifC0Zero:
+            return self.power_func_c0_zero(x, *self._coeffs)
+        else:
+            return self.power_func(x, *self._coeffs)
+
+
+    @staticmethod
+    def power_func(x, c0, c1, c2):
+        return c0 + c1 * np.power(x, c2)
+
+
+    @staticmethod
+    def power_func_c0_zero(x, c1, c2):
+        return c1 * np.power(x, c2)
+
 
 # for additional information:
 # http://markthegraph.blogspot.com/2015/05/using-python-statsmodels-for-ols-linear.html
@@ -143,29 +224,4 @@ class SingleVarRegression:
             return np.roots(coeffs)
 
 
-class ExpRegression:
-    # regression of form f(x) = c0 + c1*exp(c2*x)
 
-    def __init__(self, x, y, if_zero_at_limit=False):
-
-        self._ifZeroAtLimit = if_zero_at_limit
-        if if_zero_at_limit:
-            self._coeffs, cov = curve_fit(self.exp_func_zero_at_limit, x, y)
-        else:
-            self._coeffs, cov = curve_fit(self.exp_func, x, y)
-
-    def get_coeffs(self):
-        return self._coeffs
-
-    def get_predicted_y(self, x):
-        if self._ifZeroAtLimit:
-            return self.exp_func_zero_at_limit(x, *self._coeffs)
-        else:
-            return self.exp_func(x, *self._coeffs)
-
-    @staticmethod
-    def exp_func(x, c0, c1, c2):
-        return c0 + c1 * np.exp(c2 * x)
-    @staticmethod
-    def exp_func_zero_at_limit(x, c1, c2):
-        return c1 * np.exp(c2 * x)
