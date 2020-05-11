@@ -4,10 +4,13 @@ import statsmodels.api as sm
 from scipy import stats
 from statsmodels.sandbox.regression.predstd import wls_prediction_std
 from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
 
 
 class _OneVarRegression:
     def __init__(self, x, y):
+        self._x = x
+        self._y = y
         self._coeffs = None
 
     def get_coeffs(self):
@@ -21,6 +24,23 @@ class _OneVarRegression:
 
     def get_roots(self):
         pass
+
+    def plot_fit(self, x_range=None, fig_size=None):
+
+        fig, ax = plt.subplots(figsize=fig_size)
+        self.add_to_ax(ax=ax, x_range=x_range)
+        fig.show()
+
+    def add_to_ax(self, ax, x_range=None):
+
+        if x_range:
+            xs = np.linspace(x_range[0], x_range[-1], 50)
+        else:
+            xs = np.linspace(self._x[0], self._x[-1], 50)
+
+        ys = self.get_predicted_y(xs)
+        ax.scatter(self._x, self._y)
+        ax.plot(xs, ys, color='red')
 
 
 class PolyRegression(_OneVarRegression):
@@ -54,14 +74,14 @@ class PolyRegression(_OneVarRegression):
 class ExpRegression (_OneVarRegression):
     # regression of form f(x) = c0 + c1*exp(c2*x)
 
-    def __init__(self, x, y, if_c0_zero=False):
+    def __init__(self, x, y, if_c0_zero=False, p0=None):
 
         _OneVarRegression.__init__(self, x, y)
         self._ifC0Zero = if_c0_zero
         if if_c0_zero:
-            self._coeffs, cov = curve_fit(self.exp_func_c0_zero, x, y)
+            self._coeffs, cov = curve_fit(self.exp_func_c0_zero, x, y, p0=p0)
         else:
-            self._coeffs, cov = curve_fit(self.exp_func, x, y)
+            self._coeffs, cov = curve_fit(self.exp_func, x, y, p0=p0)
 
     def get_coeffs(self):
         return self._coeffs
@@ -83,24 +103,23 @@ class ExpRegression (_OneVarRegression):
 class PowerRegression (_OneVarRegression):
     # regression of form f(x) = c0 + c1*pow(x, c3)
 
-    def __init__(self, x, y, if_c0_zero):
-        _OneVarRegression.__init__(self, x, y)
+    def __init__(self, x, y, if_c0_zero=False, p0=None):
+        _OneVarRegression.__init__(self, x, y, )
         self._ifC0Zero = if_c0_zero
         if if_c0_zero:
-            self._coeffs, cov = curve_fit(self.power_func_c0_zero, x, y)
+            self._coeffs, cov = curve_fit(self.power_func_c0_zero, x, y, p0=None)
         else:
-            self._coeffs, cov = curve_fit(self.power_func, x, y)
-
+            self._coeffs, cov = curve_fit(self.power_func, x, y, p0=None)
 
     def get_coeffs(self):
         return self._coeffs
-
 
     def get_predicted_y(self, x):
         if self._ifC0Zero:
             return self.power_func_c0_zero(x, *self._coeffs)
         else:
             return self.power_func(x, *self._coeffs)
+
 
 
     @staticmethod
