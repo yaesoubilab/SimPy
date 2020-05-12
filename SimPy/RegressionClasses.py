@@ -14,7 +14,7 @@ class _OneVarRegression:
         self._coeffs = None
 
     def get_coeffs(self):
-        pass
+        return self._coeffs
 
     def get_predicted_y(self, x):
         pass
@@ -79,12 +79,11 @@ class ExpRegression (_OneVarRegression):
         _OneVarRegression.__init__(self, x, y)
         self._ifC0Zero = if_c0_zero
         if if_c0_zero:
-            self._coeffs, cov = curve_fit(self.exp_func_c0_zero, x, y, p0=p0)
+            self._coeffs, cov = curve_fit(self.exp_func_c0_zero, x, y,
+                                          p0=p0) #jac=self.Jac_c0_zero)
         else:
-            self._coeffs, cov = curve_fit(self.exp_func, x, y, p0=p0)
-
-    def get_coeffs(self):
-        return self._coeffs
+            self._coeffs, cov = curve_fit(self.exp_func, x, y,
+                                          p0=p0) # jac=self.Jac)
 
     def get_predicted_y(self, x):
         if self._ifC0Zero:
@@ -92,12 +91,37 @@ class ExpRegression (_OneVarRegression):
         else:
             return self.exp_func(x, *self._coeffs)
 
+    def get_derivative(self, x):
+        if self._ifC0Zero:
+            return self.der_exp_func_c0_zero(x, *self._coeffs)
+        else:
+            return self.der_exp_func(x, *self._coeffs)
+
     @staticmethod
     def exp_func(x, c0, c1, c2):
         return c0 + c1 * np.exp(c2 * x)
+
     @staticmethod
     def exp_func_c0_zero(x, c1, c2):
         return c1 * np.exp(c2 * x)
+
+    @staticmethod
+    def der_exp_func(x, c0, c1, c2):
+        return c1 * c2 * np.exp(c2 * x)
+
+    @staticmethod
+    def der_exp_func_c0_zero(x, c1, c2):
+        return c1 * c2 * np.exp(c2 * x)
+
+    @staticmethod
+    def Jac(x, c0, c1, c2):
+        v = np.exp(c1*x)
+        return np.array([np.ones(len(x)), v, c2*x*v]).transpose()
+
+    @staticmethod
+    def Jac_c0_zero(x, c1, c2):
+        v = np.exp(c1*x)
+        return np.array([v, c2*x*v]).transpose()
 
 
 class PowerRegression (_OneVarRegression):
