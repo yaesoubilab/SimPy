@@ -429,7 +429,7 @@ class CEA(_EconEval):
                        alpha=0.05,
                        cost_digits=0, effect_digits=2, icer_digits=1,
                        cost_multiplier=1, effect_multiplier=1,
-                       file_name='myCSV.csv', directory=''):
+                       file_name='CETable.csv', directory=''):
         """
         :param interval_type: (string) 'n' for no interval,
                                        'c' for confidence interval,
