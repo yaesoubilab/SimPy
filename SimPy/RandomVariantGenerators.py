@@ -11,9 +11,6 @@ class RNG(RandomState):
     def sample(self):
         return self.random_sample()
 
-    def get_mean_st_dev(self):
-        pass
-
 
 class RVG:
     def __init__(self):
@@ -27,6 +24,9 @@ class RVG:
 
         # abstract method to be overridden in derived classes to process an event
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
+
+    def get_mean_st_dev(self):
+        pass
 
 
 class Constant (RVG):
@@ -49,7 +49,8 @@ class Exponential(RVG):
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        return scipy.expon.rvs(loc=self.loc, scale=self.scale, random_state=rng)
+        return rng.exponential(scale=self.scale) + self.loc
+        # return scipy.expon.rvs(loc=self.loc, scale=self.scale, random_state=rng)
 
 
 class Bernoulli(RVG):
