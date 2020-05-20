@@ -291,7 +291,7 @@ class _EconEval:
                    delta_y=None, if_y_axis_prob=True,
                    if_format_y_numbers=True, y_axis_decimal=1):
 
-        # format x-axis
+        # get x ticks
         if delta_x is None:
             vals_x = ax.get_xticks()
         else:
@@ -301,12 +301,7 @@ class _EconEval:
                 vals_x.append(x)
                 x += delta_x
 
-        # format y-axis
-        if if_y_axis_prob and y_range is None:
-            ax.set_ylim((-0.01, 1.01))
-        if y_range is not None:
-            ax.set_ylim(y_range)
-
+        # get y ticks
         if delta_y is None:
             vals_y = ax.get_yticks()
         else:
@@ -316,13 +311,21 @@ class _EconEval:
                 vals_y.append(y)
                 y += delta_y
 
+        # format x-axis
         ax.set_xticks(vals_x)
         ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
         d = 2 * (max_x - min_x) / 200
         ax.set_xlim([min_x - d, max_x + d])
 
-        ax.set_yticks(vals_y)
+        # format y-axis
+        if y_range is None and if_y_axis_prob:
+            ax.set_ylim((-0.01, 1.01))
+        if y_range:
+            ax.set_ylim(y_range)
+
+        if y_range is None:
+            ax.set_yticks(vals_y)
         if if_y_axis_prob:
             ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
         elif if_format_y_numbers:
@@ -855,8 +858,6 @@ class CEA(_EconEval):
         # since the relative performance of strategies 
         # (relative costs and relative effects) have changed.
         self._ifFrontierIsCalculated = False
-
-
 
     def __find_frontier(self):
 
