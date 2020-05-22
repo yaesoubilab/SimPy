@@ -50,7 +50,6 @@ class Exponential(RVG):
 
     def sample(self, rng, arg=None):
         return rng.exponential(scale=self.scale) + self.loc
-        # return scipy.expon.rvs(loc=self.loc, scale=self.scale, random_state=rng)
 
 
 class Bernoulli(RVG):
