@@ -12,11 +12,11 @@ def print_test_results(dist_name, samples, expectation, variance):
         var=variance, sv=np.var(samples), prec=3))
 
 
-def print_test_results_multivariate(dist_name, samples, expectation, variance):
+def print_test_results_multivariate(dist_name, samples, expectation, variance, axis):
     print('Testing ' + dist_name + ':')
-    print("  E[x] = %(ex)s | Sample mean = %(sm)s" % {'ex':expectation, 'sm': np.average(samples,axis=1)})
+    print("  E[x] = %(ex)s | Sample mean = %(sm)s" % {'ex':expectation, 'sm': np.average(samples, axis=axis)})
     print("  Var[x] = %(var)s | Sample variance = %(sv)s" % \
-          {'var': variance, 'sv': np.var(samples, axis=1)})
+          {'var': variance, 'sv': np.var(samples, axis=axis)})
 
 
 def get_samples(dist, rnd):
@@ -138,8 +138,9 @@ def test_dirichlet(rnd, a):
         var[i] = (a[i]*(a0-a[i]))/(((a0)**2)*(a0+1.0))
 
     print_test_results_multivariate('Dirichlet', samples,
-                       expectation=mean,
-                       variance=var)
+                                    expectation=mean,
+                                    variance=var,
+                                    axis=1)
 
 
 def test_empirical(rnd, prob):
@@ -250,16 +251,19 @@ def test_lognormal(rnd, s, loc=0, scale=1):
 
 def test_multinomial(rnd, n, pvals):
     # multinomial random variate generator
-    multinomial_dist = RVGs.Binomial(n, pvals)
+    multinomial_dist = RVGs.Multinomial(n, pvals)
 
     # obtain samples
     samples = get_samples(multinomial_dist, rnd)
 
+    pvals = np.array(pvals)
+
     # report mean and variance
-    print_test_results('Multinomial', samples,
-                       expectation=n*pvals,
-                       variance=n*pvals*(1-pvals)
-                       )
+    print_test_results_multivariate('Multinomial', samples,
+                                    expectation=n*pvals,
+                                    variance=n*pvals*(1-pvals),
+                                    axis=0
+                                    )
 
 
 def test_negative_binomial(rnd, n, p, loc=0):

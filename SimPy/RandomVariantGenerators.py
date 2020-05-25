@@ -38,20 +38,6 @@ class Constant (RVG):
         return self.value
 
 
-class Exponential(RVG):
-    def __init__(self, scale, loc=0):
-        """
-        E[X] = scale + loc
-        Var[X] = scale**2
-        """
-        RVG.__init__(self)
-        self.scale = scale
-        self.loc = loc
-
-    def sample(self, rng, arg=None):
-        return rng.exponential(scale=self.scale) + self.loc
-
-
 class Bernoulli(RVG):
     def __init__(self, p):
         """
@@ -83,7 +69,7 @@ class Beta(RVG):
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        return scipy.beta.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
+        return rng.beta(self.a, self.b) * self.scale + self.loc
 
 
 class BetaBinomial(RVG):
@@ -122,7 +108,7 @@ class Binomial(RVG):
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        return scipy.binom.rvs(self.N, self.p, self.loc, random_state=rng)
+        return rng.binomial(self.N, self.p) + self.loc
 
 
 class Dirichlet(RVG):
@@ -167,6 +153,20 @@ class Empirical(RVG):
         return rng.choice(range(self.nOutcomes), size=1, p=self.prob)[0]
 
 
+class Exponential(RVG):
+    def __init__(self, scale, loc=0):
+        """
+        E[X] = scale + loc
+        Var[X] = scale**2
+        """
+        RVG.__init__(self)
+        self.scale = scale
+        self.loc = loc
+
+    def sample(self, rng, arg=None):
+        return rng.exponential(scale=self.scale) + self.loc
+
+
 class Gamma(RVG):
     def __init__(self, a, loc=0, scale=1):
         """
@@ -179,7 +179,7 @@ class Gamma(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
-        return scipy.gamma.rvs(self.a, self.loc, self.scale, random_state=rng)
+        return rng.gamma(self.a, self.scale) + self.loc
 
     def get_mean_st_dev(self):
         return self.a*self.scale + self.loc, math.sqrt(self.a*self.scale**2)
@@ -217,7 +217,7 @@ class Geometric(RVG):
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        return scipy.geom.rvs(self.p, self.loc, random_state=rng)
+        return rng.geometric(self.p) + self.loc
 
 
 class JohnsonSb(RVG):
@@ -266,6 +266,7 @@ class LogNormal(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
+        # return rng.lognormal(self.s, self.scale) + self.loc
         return scipy.lognorm.rvs(self.s, self.loc, self.scale, random_state=rng)
 
 
@@ -304,7 +305,7 @@ class NegativeBinomial(RVG):
         :return: a realization from the NegativeBinomial distribution
         (the number of failure before a specified number of successes, n, occurs.)
         """
-        return scipy.nbinom.rvs(self.n, self.p, self.loc, random_state=rng)
+        return rng.negative_binomial(self.n, self.p) + self.loc
 
 
 class NonHomogeneousExponential(RVG):
@@ -358,7 +359,7 @@ class Normal(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
-        return scipy.norm.rvs(self.loc, self.scale, random_state=rng)
+        return rng.normal(self.loc, self.scale)
 
 
 class Poisson(RVG):
@@ -372,7 +373,7 @@ class Poisson(RVG):
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        return scipy.poisson.rvs(self.mu, self.loc, random_state=rng)
+        return rng.poisson(self.mu) + self.loc
 
 
 class Triangular(RVG):
@@ -434,4 +435,4 @@ class Weibull(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
-        return scipy.weibull_min.rvs(self.a, self.loc, self.scale, random_state=rng)
+        return rng.weibull(self.a) * self.scale + self.loc
