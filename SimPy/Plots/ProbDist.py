@@ -14,7 +14,11 @@ MAX_PROB_DISCRETE = 0.999999
 
 
 def find_bins(data, bin_width):
-    # find bins
+    """
+    :param data: (list) of observations
+    :param bin_width: desired bin width
+    :return: 'auto' if bin_width is not provided; otherwise, it calculates the binds
+    """
     if bin_width is None:
         bins = 'auto'
     else:
@@ -23,11 +27,17 @@ def find_bins(data, bin_width):
 
 
 def add_hist(ax, data, bin_width):
+    """ add the histogram of the provided data to the axis"""
     ax.hist(data, density=True, bins=find_bins(data, bin_width),
             edgecolor='black', alpha=0.5, label='Data')
 
 
 def add_dist(ax, dist, label):
+    """ add the distribution of the provided probability distribution to the axis
+    :param ax: figure axis
+    :param dist: probability distribution
+    :param label: label of the fitted probability distribution to used in the legend
+    """
     x_values = np.linspace(dist.ppf(MIN_PROP),
                            dist.ppf(MAX_PROB), 200)
     ax.plot(x_values, dist.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label=label)
@@ -93,26 +103,25 @@ def plot_beta_binomial_fit(data, fit_results, title=None, x_label=None,
     fig, ax = plt.subplots(1, 1, figsize=fig_size)
 
     # plot the estimated distribution
-    # calculate PMF for each data point using newly estimated parameters
-    x_values = np.arange(0, fit_results['n'], step=1)
-    pmf = np.zeros(len(x_values))
-    for i in x_values:
-        pmf[int(i)] = np.exp(RVGs.BetaBinomial.get_ln_pmf(a=fit_results['a'],
-                                                          b=fit_results['b'],
-                                                          n=fit_results['n'],
-                                                          k=i))
+    # calculate pmf for each data point using newly estimated parameters
+    loc = fit_results['loc']
+    x_values = np.arange(loc, fit_results['n'] + loc + 1, step=1)
+
+    dist = stat.betabinom(n=fit_results['n'], a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'])
+    pmf = dist.pmf(x_values)
+    # pmf = np.zeros(len(x_values))
+    # for i, x in enumerate(x_values):
+    #     pmf[i] = np.exp(RVGs.BetaBinomial.get_ln_pmf(a=fit_results['a'],
+    #                                                  b=fit_results['b'],
+    #                                                  n=fit_results['n'],
+    #                                                  k=x - loc))
 
     pmf = np.append([0], pmf[:-1])
 
-    # plot PMF
+    # plot pmf
     ax.step(x_values, pmf, color=COLOR_DISCRETE_FIT, lw=2, label='Beta-Binomial')
 
-    if data is not None:
-        add_hist(ax, data, bin_width=bin_width)
+    finish_figure(data=data, ax=ax, bin_width=bin_width,
+                  title=title, x_label=x_label, filename=filename)
 
-    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
-    ax.set_xlabel(x_label)
-    ax.set_ylabel("Frequency")
-    ax.legend()
-    plt.show()
 

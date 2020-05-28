@@ -79,7 +79,7 @@ class Beta(RVG):
         return rng.beta(self.a, self.b) * self.scale + self.loc
 
     @staticmethod
-    def get_fit_mm(mean, st_dev, minimum=0, maximum=1):
+    def fit_mm(mean, st_dev, minimum=0, maximum=1):
         """
         :param mean: sample mean
         :param st_dev: sample standard deviation
@@ -97,7 +97,7 @@ class Beta(RVG):
         return {"a": a, "b": a_plus_b - a, "loc": minimum, "scale": maximum - minimum}
 
     @staticmethod
-    def get_fit_ml(data, minimum=None, maximum=None):
+    def fit_ml(data, minimum=None, maximum=None):
         """
         :param data: (numpy.array) observations
         :param minimum: minimum of data (calculated from data if not provided)
@@ -144,7 +144,7 @@ class BetaBinomial(RVG):
         return sample_n + self.loc
 
     @staticmethod
-    def get_fit_mm(mean, st_dev, n, fixed_location=0):
+    def fit_mm(mean, st_dev, n, fixed_location=0):
         """
         # ref: https://en.wikipedia.org/wiki/Beta-binomial_distribution
         :param mean: sample mean of an observation set

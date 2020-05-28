@@ -8,10 +8,10 @@ def test_fitting_beta():
     dist = RVGs.Beta(a=2, b=3, loc=1, scale=2)
     data = np.array(get_samples(dist, np.random))
     # method of moment
-    dict_mm_results = RVGs.Beta.get_fit_mm(
+    dict_mm_results = RVGs.Beta.fit_mm(
         mean=np.mean(data), st_dev=np.std(data), minimum=1, maximum=3)
     # maximum likelihood
-    dict_ml_results = RVGs.Beta.get_fit_ml(data=data, minimum=1, maximum=3)
+    dict_ml_results = RVGs.Beta.fit_ml(data=data, minimum=1, maximum=3)
 
     print("Fitting Beta with a=2, b=3, loc=1, scale=2:")
     print("  MM:", dict_mm_results)
@@ -27,7 +27,7 @@ def test_fitting_beta_binomial():
     dist = RVGs.BetaBinomial(n=20, a=2, b=3, loc=1)
     data = np.array(get_samples(dist, np.random))
     # method of moment
-    dict_mm_results = RVGs.BetaBinomial.get_fit_mm(
+    dict_mm_results = RVGs.BetaBinomial.fit_mm(
         mean=np.mean(data), st_dev=np.std(data), n=20, fixed_location=1)
     # maximum likelihood
     dict_ml_results = RVGs.BetaBinomial.get_fit_ml(data=data, fixed_location=1)
