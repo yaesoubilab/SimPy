@@ -39,3 +39,4 @@ def test_fitting_beta_binomial():
     # plot the fitted distributions
     Plot.plot_beta_binomial_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
     Plot.plot_beta_binomial_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
+

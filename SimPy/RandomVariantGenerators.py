@@ -4,6 +4,9 @@ import scipy.stats as stat
 from numpy.random import RandomState
 import math
 from scipy.optimize import fmin_slsqp
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def AIC(k, log_likelihood):
@@ -231,6 +234,20 @@ class Binomial(RVG):
     def sample(self, rng, arg=None):
         return rng.binomial(self.N, self.p) + self.loc
 
+    @staticmethod
+    def fit_mm(mean, st_dev, fixed_location=0):
+        """
+        :param mean: sample mean
+        :param st_dev: sample standard deviation
+        :param fixed_location: fixed location, 0 by default
+        :return: dictionary with keys "p", "n" and "loc"
+        """
+        mean = mean - fixed_location
+        p = 1.0 - (st_dev ** 2) / mean
+        n = mean / p
+
+        return {"p": p, "n": n, "loc": fixed_location}
+
 
 class Dirichlet(RVG):
     def __init__(self, a):
@@ -273,6 +290,20 @@ class Empirical(RVG):
         # ref:https://stackoverflow.com/questions/4265988/generate-random-numbers-with-a-given-numerical-distribution
         return rng.choice(range(self.nOutcomes), size=1, p=self.prob)[0]
 
+    @staticmethod
+    def fit_mm(data, bin_size=1):
+        """
+        :param data: (numpy.array) observations
+        :param bin_size: float, the width of histogram's bins
+        :returns: dictionary keys of "bins" and "freq"
+        """
+        result = plt.hist(data, bins=np.arange(np.min(data), np.max(data) + bin_size, bin_size))
+
+        bins = result[1]  # bins are in the form of [a,b)
+        freq = result[0] * 1.0 / len(data)
+
+        return {"bins": bins, "freq": freq}
+
 
 class Exponential(RVG):
     def __init__(self, scale, loc=0):
@@ -286,6 +317,18 @@ class Exponential(RVG):
 
     def sample(self, rng, arg=None):
         return rng.exponential(scale=self.scale) + self.loc
+
+    @staticmethod
+    def fit_mm(mean, fixed_location=0):
+        """
+        :param mean: sample mean
+        :param fixed_location: minimum of the exponential distribution, set to 0 by default
+        :return: dictionary with keys "loc" and "scale"
+        """
+        mean = mean - fixed_location
+        scale = mean
+
+        return {"loc": fixed_location, "scale": scale}
 
 
 class Gamma(RVG):
@@ -304,6 +347,22 @@ class Gamma(RVG):
 
     def get_mean_st_dev(self):
         return self.a*self.scale + self.loc, math.sqrt(self.a*self.scale**2)
+
+    @staticmethod
+    def fit_mm(mean, st_dev, fixed_location=0):
+        """
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :param fixed_location: location, 0 by default
+        :return: dictionary with keys "a", "loc" and "scale"
+        """
+        mean = mean - fixed_location
+
+        shape = (mean / st_dev) ** 2
+        scale = (st_dev ** 2) / mean
+
+        # report results in the form of a dictionary
+        return {"a": shape, "loc": fixed_location, "scale": scale}
 
 
 class GammaPoisson(RVG):
@@ -326,6 +385,27 @@ class GammaPoisson(RVG):
         sample_poisson = Poisson(mu=sample_rate)
         return sample_poisson.sample(rng) * self.scale + self.loc
 
+    @staticmethod
+    def fit_mm(mean, st_dev, fixed_location=0, fixed_scale=1):
+        """
+        :param mean: sample mean
+        :param st_dev: sample standard deviation
+        :param n: the number of trials in the Binomial distribution
+        :param fixed_location: location, 0 by default
+        :param fixed_scale: scale, 1 by default
+        :return: dictionary with keys "a", "gamma_scale", "loc" and "scale"
+        """
+        # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
+        # scale = 1/beta
+
+        mean = 1.0*(mean - fixed_location)/fixed_scale
+        variance = (st_dev/fixed_scale)**2.0
+
+        gamma_scale = mean**2.0/(variance - mean)
+        a = (variance-mean)*1.0/mean
+
+        return {"a": a, "gamma_scale": gamma_scale, "loc": fixed_location, "scale": fixed_scale}
+
 
 class Geometric(RVG):
     def __init__(self, p, loc=0):
@@ -339,6 +419,18 @@ class Geometric(RVG):
 
     def sample(self, rng, arg=None):
         return rng.geometric(self.p) + self.loc
+
+    @staticmethod
+    def fit_mm(mean, fixed_location=0):
+        """
+        :param mean: sample mean
+        :param fixed_location: location, 0 by default
+        :return: dictionary with keys "p", "loc"
+        """
+        mean = mean - fixed_location
+        p = 1.0/mean
+
+        return {"p": p, "loc": fixed_location}
 
 
 class JohnsonSb(RVG):
@@ -390,6 +482,26 @@ class LogNormal(RVG):
         # return rng.lognormal(self.s, self.scale) + self.loc
         return stat.lognorm.rvs(self.s, self.loc, self.scale, random_state=rng)
 
+    @staticmethod
+    def fit_mm(mean, st_dev, fixed_location=0):
+        """
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :param fixed_location: location, 0 by default
+        :return: dictionary with keys "n", "p" and "loc"
+        """
+
+        mean = mean-fixed_location
+
+        mu = np.log(
+            mean**2 / np.sqrt(st_dev**2 + mean**2)
+        )
+        sigma = np.sqrt(
+            np.log(1 + st_dev**2 / mean**2)
+        )
+
+        return {"s": sigma, "loc": fixed_location, "scale": np.exp(mu)}
+
 
 class Multinomial(RVG):
     def __init__(self, N, pvals):
@@ -427,6 +539,24 @@ class NegativeBinomial(RVG):
         (the number of failure before a specified number of successes, n, occurs.)
         """
         return rng.negative_binomial(self.n, self.p) + self.loc
+
+    @staticmethod
+    def fit_mm(mean, st_dev, fixed_location=0):
+        """
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "n", "p" and "loc"
+        """
+        # in Scipy, n is the number of successes, p is the probability of a single success.
+        # in Wiki, r is the number of failure, p is success probability
+        # to match the moments, define r = n is the number of successes, 1-p is the failure probability
+        mean = mean - fixed_location
+
+        p = mean/st_dev**2.0
+        n = mean*p/(1-p)
+
+        return {"n": n, "p": p, "loc": fixed_location}
 
 
 class NonHomogeneousExponential(RVG):
@@ -482,6 +612,16 @@ class Normal(RVG):
     def sample(self, rng, arg=None):
         return rng.normal(self.loc, self.scale)
 
+    @staticmethod
+    def fit_mm(mean, st_dev):
+        """
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :return: dictionary with keys "loc" and "scale"
+        """
+
+        return {"loc": mean, "scale": st_dev}
+
 
 class Poisson(RVG):
     def __init__(self, mu, loc=0):
@@ -495,6 +635,18 @@ class Poisson(RVG):
 
     def sample(self, rng, arg=None):
         return rng.poisson(self.mu) + self.loc
+
+    @staticmethod
+    def fit_mm(mean, fixed_location=0):
+        """
+        :param mean: sample mean of an observation set
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "mu" and "loc"
+        """
+
+        mu = mean - fixed_location
+
+        return {"mu": mu, "loc": fixed_location}
 
 
 class Triangular(RVG):
@@ -527,6 +679,22 @@ class Uniform(RVG):
     def sample(self, rng, arg=None):
         return stat.uniform.rvs(self.loc, self.scale, random_state=rng)
 
+    @staticmethod
+    def fit_mm(mean, st_dev):
+        """
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :return: dictionary with keys "loc" and "scale"
+        """
+
+        b = 0.5*(2*mean + np.sqrt(12)*st_dev)
+        a = 2.0*mean - b
+
+        loc = a
+        scale = b-a
+
+        return {"loc": loc, "scale": scale}
+
 
 class UniformDiscrete(RVG):
     def __init__(self, l, u):
@@ -543,6 +711,19 @@ class UniformDiscrete(RVG):
     def sample(self, rng, arg=None):
         return rng.randint(low=self.l, high=self.u + 1)
 
+    @staticmethod
+    def fit_mm(mean, st_dev):
+        """
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :return: dictionary with keys "l" and "r"
+        """
+        variance = st_dev**2
+        b = (np.sqrt(12.0*variance + 1) + 2.0*mean-1)*0.5
+        a = (-np.sqrt(12.0*variance + 1) + 2.0*mean+1)*0.5
+
+        return {"l": a, "r": b}
+
 
 class Weibull(RVG):
     def __init__(self, a, loc=0, scale=1):
@@ -557,3 +738,18 @@ class Weibull(RVG):
 
     def sample(self, rng, arg=None):
         return rng.weibull(self.a) * self.scale + self.loc
+
+    @staticmethod
+    def fit_mm(mean, st_dev, fixed_location=0):
+        """
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "c", "loc" and "scale"
+        """
+        mean = mean - fixed_location
+
+        c = (st_dev*1.0/mean)**(-1.086)
+        scale = mean/sp.special.gamma(1 + 1.0/c)
+
+        return {"c": c, "loc": fixed_location, "scale": scale}
