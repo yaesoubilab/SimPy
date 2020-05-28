@@ -13,11 +13,7 @@ dictResults = RVGs.Exponential.fit_mm(np.mean(dat_exp), fixed_location=1)       
 print("Fitting Exponential:", dictResults)
 
 
-# 4 Binomial
-dist = RVGs.Binomial(100, 0.3, 1)
-dat_bin = np.array(get_samples(dist, np.random))
-dictResults = RVGs.Binomial.fit_mm(np.mean(dat_bin), np.std(dat_bin), fixed_location=1) # fit
-print("Fitting Binomial:", dictResults)
+
 
 # 5 Empirical (for int data)
 dat_em = np.random.poisson(30, 1000)
