@@ -55,16 +55,6 @@ dat_geom = np.array(get_samples(dist, np.random))    # generate data
 dictResults=Est.get_geometric_params(np.mean(dat_geom), fixed_location=1)        # fit
 print("Fitting Geometric:", dictResults)
 
-# # 9 fitting a JohnsonSb distribution
-# dat_JohnsonSb = scs.johnsonsb.rvs(a=10, b=3, loc=0, scale=1, size=1000)    # generate data
-# dictResults=Est.fit_johnsonSb(dat_JohnsonSb, 'Data')    # fit
-# print("Fitting johnsonSb:", dictResults)
-
-# # 10 fitting a JohnsonSu distribution
-# dat_JohnsonSu = scs.johnsonsu.rvs(a=10, b=3, loc=0, scale=1, size=1000)    # generate data
-# dictResults=Est.fit_johnsonSu(dat_JohnsonSu, 'Data')    # fit
-# print("Fitting johnsonSu:", dictResults)
-
 # # 11 LogNormal
 dist = RVGs.LogNormal(s=1, loc=1, scale=2)
 dat_lognorm = np.array(get_samples(dist, np.random))    # mean, sigma

@@ -1,7 +1,12 @@
 import numpy as np
-import scipy.stats as scipy
+import scipy.stats as stat
 from numpy.random import RandomState
 import math
+
+
+def AIC(k, log_likelihood):
+    """ :returns Akaike information criterion"""
+    return 2 * k - 2 * log_likelihood
 
 
 class RNG(RandomState):
@@ -70,6 +75,58 @@ class Beta(RVG):
 
     def sample(self, rng, arg=None):
         return rng.beta(self.a, self.b) * self.scale + self.loc
+
+    @staticmethod
+    def get_fit_mm(mean, st_dev, minimum=0, maximum=1):
+        """
+        :param mean: sample mean
+        :param st_dev: sample standard deviation
+        :param minimum: fixed minimum
+        :param maximum: fixed maximum
+        :return: dictionary with keys "a", "b", "loc" and "scale"
+        """
+        # shift the distribution by loc and scale
+        mean = (mean - minimum) * 1.0 / (maximum - minimum)
+        st_dev = st_dev * 1.0 / (maximum - minimum)
+
+        a_plus_b = mean * (1 - mean) / st_dev ** 2 - 1
+        a = mean * a_plus_b
+
+        return {"a": a, "b": a_plus_b - a, "loc": minimum, "scale": maximum - minimum}
+
+    @staticmethod
+    def get_fit_ml(data, minimum=None, maximum=None):
+        """
+        :param data: (numpy.array) observations
+        :param minimum: minimum of data (calculated from data if not provided)
+        :param maximum: maximum of data (calculated from data if not provided)
+        :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+        """
+
+        # transform data into [0,1]
+        if minimum is None:
+            L = np.min(data)
+        else:
+            L = minimum
+
+        if maximum is None:
+            U = np.max(data)
+        else:
+            U = maximum
+
+        data = (data - L) / (U - L)
+
+        # estimate the parameters
+        a, b, loc, scale = stat.beta.fit(data, floc=0)
+
+        # calculate AIC
+        aic = AIC(
+            k=3,
+            log_likelihood=np.sum(stat.beta.logpdf(data, a, b, loc, scale))
+        )
+
+        # report results in the form of a dictionary
+        return {"a": a, "b": b, "loc": L, "scale": U - L, "AIC": aic}
 
 
 class BetaBinomial(RVG):
@@ -234,7 +291,7 @@ class JohnsonSb(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
-        return scipy.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
+        return stat.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
 
 class JohnsonSu(RVG):
@@ -251,7 +308,7 @@ class JohnsonSu(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
-        return scipy.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
+        return stat.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
 
 class LogNormal(RVG):
@@ -267,7 +324,7 @@ class LogNormal(RVG):
 
     def sample(self, rng, arg=None):
         # return rng.lognormal(self.s, self.scale) + self.loc
-        return scipy.lognorm.rvs(self.s, self.loc, self.scale, random_state=rng)
+        return stat.lognorm.rvs(self.s, self.loc, self.scale, random_state=rng)
 
 
 class Multinomial(RVG):
@@ -389,7 +446,7 @@ class Triangular(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
-        return scipy.triang.rvs(self.c, self.loc, self.scale, random_state=rng)
+        return stat.triang.rvs(self.c, self.loc, self.scale, random_state=rng)
 
 
 class Uniform(RVG):
@@ -404,7 +461,7 @@ class Uniform(RVG):
         self.scale = scale
 
     def sample(self, rng, arg=None):
-        return scipy.uniform.rvs(self.loc, self.scale, random_state=rng)
+        return stat.uniform.rvs(self.loc, self.scale, random_state=rng)
 
 
 class UniformDiscrete(RVG):
