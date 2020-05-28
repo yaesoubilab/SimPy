@@ -77,60 +77,6 @@ def fit_exp(data, x_label, fixed_location=0, figure_size=5, bin_width=None):
     return {"loc": loc, "scale": scale, "AIC": aic}
 
 
-# Beta
-def fit_beta(data, x_label, minimum=None, maximum=None, figure_size=5, bin_width=None):
-    """
-    :param data: (numpy.array) observations
-    :param x_label: label to show on the x-axis of the histogram
-    :param minimum: minimum of data (calculated from data if not provided)
-    :param maximum: maximum of data (calculated from data if not provided)
-    :param figure_size: int, specify the figure size
-    :param bin_width: bin width
-    :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
-    """
-
-    # transform data into [0,1]
-    if minimum==None:
-        L = np.min(data)
-    else:
-        L = minimum
-
-    if maximum==None:
-        U = np.max(data)
-    else:
-        U = maximum
-
-    data = (data-L)/(U-L)
-
-    # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=(figure_size+1, figure_size))
-    ax.hist(data, normed=1, bins=find_bins(data, bin_width), edgecolor='black', alpha=0.5, label='Frequency')
-
-    # estimate the parameters
-    a, b, loc, scale = scs.beta.fit(data, floc=0)
-
-    # plot the estimated distribution
-    x_values = np.linspace(scs.beta.ppf(MIN_PROP, a, b, loc, scale),
-                           scs.beta.ppf(MAX_PROB, a, b, loc, scale), 200)
-    rv = scs.beta(a, b, loc, scale)
-    ax.plot(x_values, rv.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label='Beta')
-
-    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
-    ax.set_xlabel(x_label)
-    ax.set_ylabel("Frequency")
-    ax.legend()
-    plt.show()
-
-    # calculate AIC
-    aic = AIC(
-        k=3,
-        log_likelihood=np.sum(scs.beta.logpdf(data, a, b, loc, scale))
-    )
-
-    # report results in the form of a dictionary
-    return {"a": a, "b": b, "loc": L, "scale": U-L, "AIC": aic}
-
-
 # BetaBinomial
 def fit_beta_binomial(data, x_label, fixed_location=0, fixed_scale=1, figure_size=5, bin_width=None):
     """

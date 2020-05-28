@@ -20,25 +20,6 @@ def get_expon_params(mean, fixed_location=0):
     return {"loc": fixed_location, "scale": scale}
 
 
-# Beta
-def get_beta_params(mean, st_dev, minimum=0, maximum=1):
-    """
-    :param mean: sample mean
-    :param st_dev: sample standard deviation
-    :param minimum: fixed minimum
-    :param maximum: fixed maximum
-    :return: dictionary with keys "a", "b", "loc" and "scale"
-    """
-    # shift the distribution by loc and scale
-    mean = (mean - minimum)*1.0/(maximum - minimum)
-    st_dev = st_dev*1.0/(maximum - minimum)
-
-    a_plus_b = mean*(1-mean)/st_dev**2 - 1
-    a = mean*a_plus_b
-
-    return {"a": a, "b": a_plus_b - a, "loc": minimum, "scale": maximum - minimum}
-
-
 # BetaBinomial
 # 3 parameters in total, won't be able to estimate if we only know mean and st_dev
 def get_beta_binomial_params(mean, st_dev, n, fixed_location=0, fixed_scale=1):
