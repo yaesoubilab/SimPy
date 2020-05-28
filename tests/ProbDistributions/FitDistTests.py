@@ -18,8 +18,8 @@ def test_fitting_beta():
     print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
-    Plot.plot_beta_fit(data=data, fit_results=dict_mm_results, title='Method of Moment', x_label='Data')
-    Plot.plot_beta_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood', x_label='Data')
+    Plot.plot_beta_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_beta_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_beta_binomial():
@@ -37,5 +37,5 @@ def test_fitting_beta_binomial():
     print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
-    Plot.plot_beta_binomial_fit(data=data, fit_results=dict_mm_results, title='Method of Moment', x_label='Data')
-    Plot.plot_beta_binomial_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood', x_label='Data')
+    Plot.plot_beta_binomial_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_beta_binomial_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
