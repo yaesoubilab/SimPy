@@ -32,15 +32,16 @@ def add_hist(ax, data, bin_width):
             edgecolor='black', alpha=0.5, label='Data')
 
 
-def add_dist(ax, dist, label):
-    """ add the distribution of the provided probability distribution to the axis
+def add_continuous_dist(ax, dist, label):
+    """ add the distribution of the provided continuous probability distribution to the axis
     :param ax: figure axis
     :param dist: probability distribution
     :param label: label of the fitted probability distribution to used in the legend
     """
     x_values = np.linspace(dist.ppf(MIN_PROP),
                            dist.ppf(MAX_PROB), 200)
-    ax.plot(x_values, dist.pdf(x_values), color=COLOR_CONTINUOUS_FIT, lw=2, label=label)
+    ax.plot(x_values, dist.pdf(x_values),
+            color=COLOR_CONTINUOUS_FIT, lw=2, label=label)
 
 
 def format_fig(ax, title, x_label):
@@ -81,7 +82,7 @@ def plot_beta_fit(data, fit_results, title=None, x_label=None,
     dist = stat.beta(fit_results['a'], fit_results['b'], fit_results['loc'], fit_results['scale'])
 
     # plot the distribution
-    add_dist(ax, dist, label='Beta')
+    add_continuous_dist(ax, dist, label='Beta')
 
     finish_figure(data=data, ax=ax, bin_width=bin_width,
                   title=title, x_label=x_label, filename=filename)
@@ -102,20 +103,15 @@ def plot_beta_binomial_fit(data, fit_results, title=None, x_label=None,
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=fig_size)
 
+    # build the beta binomial distribution
+    dist = stat.betabinom(n=fit_results['n'], a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'])
+
     # plot the estimated distribution
     # calculate pmf for each data point using newly estimated parameters
     loc = fit_results['loc']
     x_values = np.arange(loc, fit_results['n'] + loc + 1, step=1)
 
-    dist = stat.betabinom(n=fit_results['n'], a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'])
     pmf = dist.pmf(x_values)
-    # pmf = np.zeros(len(x_values))
-    # for i, x in enumerate(x_values):
-    #     pmf[i] = np.exp(RVGs.BetaBinomial.get_ln_pmf(a=fit_results['a'],
-    #                                                  b=fit_results['b'],
-    #                                                  n=fit_results['n'],
-    #                                                  k=x - loc))
-
     pmf = np.append([0], pmf[:-1])
 
     # plot pmf

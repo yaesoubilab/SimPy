@@ -194,26 +194,27 @@ class BetaBinomial(RVG):
 
         data = 1.0 * (data - fixed_location)
 
-        def neg_ln_l(theta):
-            return -BetaBinomial.get_ln_l(theta, data)
+        def neg_ln_l(a_b_n):
+            return -BetaBinomial.get_ln_l(a_b_n, data)
 
         # estimate the parameters by minimize negative log-likelihood
         # initialize parameters
-        theta0 = [1, 1, np.max(data)]
+        a_b_n_0 = [1, 1, np.max(data)]
         # call Scipy optimizer to minimize the target function
-        # with bounds for a [0,10], b [0,10] and n [0,100+max(data)]
-        paras, value, iter, imode, smode = fmin_slsqp(neg_ln_l, theta0,
-                                                      bounds=[(0.0, 10.0), (0.0, 10.0), (0, np.max(data) + 100)],
-                                                      disp=False, full_output=True)
+        # with bounds for a [0, 10], b [0, 10] and n [0,100+max(data)]
+        fitted_a_b_n, value, iter, imode, smode \
+            = fmin_slsqp(neg_ln_l, a_b_n_0,
+                         bounds=[(0.0, 10.0), (0.0, 10.0), (0, np.max(data) + 100)],
+                         disp=False, full_output=True)
 
         # calculate AIC
         aic = AIC(
             k=3,
-            log_likelihood=BetaBinomial.get_ln_l([paras[0], paras[1], paras[2]], data)
+            log_likelihood=BetaBinomial.get_ln_l([fitted_a_b_n[0], fitted_a_b_n[1], fitted_a_b_n[2]], data)
         )
 
         # report results in the form of a dictionary
-        return {"a": paras[0], "b": paras[1], "n": paras[2], "loc": fixed_location, "AIC": aic}
+        return {"a": fitted_a_b_n[0], "b": fitted_a_b_n[1], "n": fitted_a_b_n[2], "loc": fixed_location, "AIC": aic}
 
 
 class Binomial(RVG):
