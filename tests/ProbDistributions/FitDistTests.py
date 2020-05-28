@@ -59,3 +59,11 @@ def test_fitting_empirical():
     print("Fitting empirical with p=[0.1, 0.2, 0.7]")
     print("  MM:", dict_mm_results)
 
+
+def test_fitting_poisson():
+    dist = RVGs.Poisson(mu=100, loc=10)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Poisson.fit_mm(mean=np.average(data), fixed_location=10)
+
+    print("Fitting Poisson with mean=100 and loc = 10")
+    print("  MM:", dict_mm_results)

@@ -7,4 +7,5 @@ np.random.seed(1)
 # test_fitting_beta_binomial()
 # test_fitting_binomial()
 test_fitting_empirical()
+test_fitting_poisson()
 

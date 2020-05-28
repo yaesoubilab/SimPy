@@ -15,11 +15,6 @@ print("Fitting Exponential:", dictResults)
 
 
 
-# 5 Empirical (for int data)
-dat_em = np.random.poisson(30, 1000)
-dictResults = RVGs.Empirical.fit_mm(dat_em, bin_size=2.5) # fit
-print("Fitting Empirical:", dictResults)
-
 # 6 fitting a Gamma distribution
 dist = RVGs.Gamma(10, 1, 2)
 dat_gamma = np.array(get_samples(dist, np.random))    # generate data
