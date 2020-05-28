@@ -101,12 +101,12 @@ def test_fitting_geometric():
 
 
 def test_fitting_lognormal():
-    dist = RVGs.LogNormal(s=3, scale=2, loc=1)
+    dist = RVGs.LogNormal(mu=0.2, sigma=0.1, loc=1)
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.LogNormal.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_location=1)
 
-    print("Fitting LogNormal with s=3, scale=2, loc=1")
+    print("Fitting LogNormal with mu=0.2, sigma=0.1, loc=1")
     print("  MM:", dict_mm_results)
 
 

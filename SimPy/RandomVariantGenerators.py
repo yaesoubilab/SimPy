@@ -474,19 +474,18 @@ class JohnsonSu(RVG):
 
 
 class LogNormal(RVG):
-    def __init__(self, s, scale=1, loc=0):
+    def __init__(self, mu, sigma, loc=0):
         """
-        E[X] = exp(scale + 1/2 * s**2)
-        Var[X] = (exp(s**2)-1)*exp(2*loc+s**2)
+        E[X] = exp(mu + 1/2 * sigma**2) + loc
+        Var[X] = (exp(sigma**2)-1)*exp(2*mu + s**2)
         """
         RVG.__init__(self)
-        self.s = s
-        self.scale = scale
+        self.mu = mu
+        self.sigma = sigma
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        # return rng.lognormal(self.s, self.scale) + self.loc
-        return stat.lognorm.rvs(self.s, self.loc, self.scale, random_state=rng)
+        return rng.lognormal(mean=self.mu, sigma=self.sigma) + self.loc
 
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
@@ -506,7 +505,7 @@ class LogNormal(RVG):
             np.log(1 + st_dev**2 / mean**2)
         )
 
-        return {"s": sigma, "scale": np.exp(mu), "loc": fixed_location}
+        return {"mu": mu, "scale": sigma, "loc": fixed_location}
 
 
 class Multinomial(RVG):
@@ -589,6 +588,7 @@ class NonHomogeneousExponential(RVG):
         if_occurred = False
         if arg is None:
             i = 0
+            arg = 0
         else:
             i = min(math.floor(arg/self.deltaT), len(self.rates)-1)
         while not if_occurred:
