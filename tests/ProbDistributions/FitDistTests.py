@@ -60,6 +60,36 @@ def test_fitting_empirical():
     print("  MM:", dict_mm_results)
 
 
+def test_fitting_exponential():
+    dist = RVGs.Exponential(scale=0.5, loc=2)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Exponential.fit_mm(
+        mean=np.average(data), fixed_location=2)
+
+    print("Fitting Exponential with scale=0.5, loc=2")
+    print("  MM:", dict_mm_results)
+
+
+def test_fitting_gamma():
+    dist = RVGs.Gamma(a=10, scale=1, loc=2)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Gamma.fit_mm(
+        mean=np.average(data), st_dev=np.std(data), fixed_location=2)
+
+    print("Fitting Gamma with a=10, scale=1, loc=2")
+    print("  MM:", dict_mm_results)
+
+
+def test_fitting_gamma_poisson():
+    dist = RVGs.GammaPoisson(a=2, gamma_scale=4, scale=2, loc=1)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.GammaPoisson.fit_mm(
+        mean=np.average(data), st_dev=np.std(data), fixed_scale=2, fixed_location=1)
+
+    print("Fitting Gamma Poisson with a=2, gamma_scale=4, scale=2, loc=1")
+    print("  MM:", dict_mm_results)
+
+
 def test_fitting_poisson():
     dist = RVGs.Poisson(mu=100, loc=10)
     data = np.array(get_samples(dist, np.random))

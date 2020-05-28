@@ -334,19 +334,19 @@ class Exponential(RVG):
         mean = mean - fixed_location
         scale = mean
 
-        return {"loc": fixed_location, "scale": scale}
+        return {"scale": scale, "loc": fixed_location}
 
 
 class Gamma(RVG):
-    def __init__(self, a, loc=0, scale=1):
+    def __init__(self, a, scale=1, loc=0):
         """
         E[X] = a*scale + loc
         Var[X] = a*scale**2
         """
         RVG.__init__(self)
         self.a = a
-        self.loc = loc
         self.scale = scale
+        self.loc = loc
 
     def sample(self, rng, arg=None):
         return rng.gamma(self.a, self.scale) + self.loc
@@ -368,14 +368,14 @@ class Gamma(RVG):
         scale = (st_dev ** 2) / mean
 
         # report results in the form of a dictionary
-        return {"a": shape, "loc": fixed_location, "scale": scale}
+        return {"a": shape, "scale": scale, "loc": fixed_location}
 
 
 class GammaPoisson(RVG):
     # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
     # in this article shape is beta, scale is alpha, change to Wiki version below
     # with shape-alpha, scale-theta
-    def __init__(self, a, gamma_scale, loc=0, scale=1):
+    def __init__(self, a, gamma_scale, scale=1, loc=0):
         """
         E[X] = (a*gamma_scale)*scale + loc
         Var[X] = [a*gamma_scale + a*(gamma_scale**2)] * scale **2
@@ -383,8 +383,8 @@ class GammaPoisson(RVG):
         RVG.__init__(self)
         self.a = a
         self.gamma_scale = gamma_scale
-        self.loc = loc
         self.scale = scale
+        self.loc = loc
 
     def sample(self, rng, arg=None):
         sample_rate = Gamma(a=self.a, scale=self.gamma_scale).sample(rng)
@@ -410,7 +410,7 @@ class GammaPoisson(RVG):
         gamma_scale = mean**2.0/(variance - mean)
         a = (variance-mean)*1.0/mean
 
-        return {"a": a, "gamma_scale": gamma_scale, "loc": fixed_location, "scale": fixed_scale}
+        return {"a": a, "gamma_scale": gamma_scale, "scale": fixed_scale, "loc": fixed_location}
 
 
 class Geometric(RVG):

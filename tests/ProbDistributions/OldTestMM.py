@@ -6,27 +6,6 @@ from tests.ProbDistributions.RVGtests import get_samples
 # simulate some data
 np.random.seed(1)
 
-# 1 fitting a exponential distribution
-dist = RVGs.Exponential(5, 1)
-dat_exp = np.array(get_samples(dist, np.random))
-dictResults = RVGs.Exponential.fit_mm(np.mean(dat_exp), fixed_location=1)        # fit
-print("Fitting Exponential:", dictResults)
-
-
-
-
-# 6 fitting a Gamma distribution
-dist = RVGs.Gamma(10, 1, 2)
-dat_gamma = np.array(get_samples(dist, np.random))    # generate data
-dictResults = RVGs.Gamma.fit_mm(np.mean(dat_gamma), np.std(dat_gamma), fixed_location=1)        # fit
-print("Fitting Gamma:", dictResults)
-
-# 7 GammaPoisson
-gamma_poisson_dist = RVGs.GammaPoisson(a=2, gamma_scale=4, loc=1, scale=2)
-dat_gamma_poisson = np.array(get_samples(gamma_poisson_dist, np.random))
-dictResults = RVGs.GammaPoisson.fit_mm(np.mean(dat_gamma_poisson),np.std(dat_gamma_poisson),
-                                        fixed_location=1, fixed_scale=2) # fit
-print("Fitting GammaPoisson:", dictResults)
 
 # 8 Geometric
 dist = RVGs.Geometric(0.3, 1)
@@ -49,16 +28,6 @@ print("Fitting NegativeBinomial:", dictResults)
 # 13 Normal
 dictResults = RVGs.Normal.fit_mm(5, 2)    # fit
 print("Fitting Normal:", dictResults)
-
-# 18 fitting a Poisson distribution
-dist = RVGs.Poisson(30, 1)
-dat_poisson = np.array(get_samples(dist, np.random))    # generate data
-dictResults = RVGs.Poisson.fit_mm(np.mean(dat_poisson), fixed_location=1)    # fit
-print("Fitting Poisson:", dictResults)
-# # 14 Triangular
-# dat_tri = scs.triang.rvs(c=0.5, loc=0, scale=1, size=1000)
-# dictResults=Est.fit_triang(dat_tri, 'Data')    # fit
-# print("Fitting Triangular:", dictResults)
 
 # 15 Uniform
 dist = RVGs.Uniform(0, 1)
