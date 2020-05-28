@@ -41,9 +41,21 @@ def test_fitting_beta_binomial():
 
 
 def test_fitting_binomial():
-    dist = RVGs.Binomial(100, 0.3, 1)
+    dist = RVGs.Binomial(n=100, p=0.3, loc=1)
     data = np.array(get_samples(dist, np.random))
-    dict_mm_results = RVGs.Binomial.fit_mm(np.mean(data), np.std(data), fixed_location=1)
+    dict_mm_results = RVGs.Binomial.fit_mm(
+        mean=np.mean(data), st_dev=np.std(data), fixed_location=1)
 
     print("Fitting Binomial with n=100, p=0.3, loc=1:")
     print("  MM:", dict_mm_results)
+
+
+def test_fitting_empirical():
+    dist = RVGs.Empirical(probabilities=[0.1, 0.2, 0.7])
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Empirical.fit_mm(
+        data=data, bin_size=1)
+
+    print("Fitting empirical with p=[0.1, 0.2, 0.7]")
+    print("  MM:", dict_mm_results)
+

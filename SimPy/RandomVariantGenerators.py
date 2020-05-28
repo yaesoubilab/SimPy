@@ -221,18 +221,18 @@ class BetaBinomial(RVG):
 
 
 class Binomial(RVG):
-    def __init__(self, N, p, loc=0):
+    def __init__(self, n, p, loc=0):
         """
-        E[X] = Np + loc
-        Var[X] = Np(1-p)
+        E[X] = np + loc
+        Var[X] = np(1-p)
         """
         RVG.__init__(self)
-        self.N = N
+        self.n = n
         self.p = p
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        return rng.binomial(self.N, self.p) + self.loc
+        return rng.binomial(self.n, self.p) + self.loc
 
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
@@ -246,13 +246,13 @@ class Binomial(RVG):
         p = 1.0 - (st_dev ** 2) / mean
         n = mean / p
 
-        return {"p": p, "n": n, "loc": fixed_location}
+        return {"n": n, "p": p, "loc": fixed_location}
 
 
 class Dirichlet(RVG):
     def __init__(self, a):
         """
-        E[Xi] = ai/a0
+        E[Xi] = ai/a0 where a0 = sum of ai's.
         Var[Xi] = (ai(a0-ai))/((a0)**2(a0+1)) where a0 = sum of ai's.
         :param a: array or list
         """
@@ -297,7 +297,13 @@ class Empirical(RVG):
         :param bin_size: float, the width of histogram's bins
         :returns: dictionary keys of "bins" and "freq"
         """
-        result = plt.hist(data, bins=np.arange(np.min(data), np.max(data) + bin_size, bin_size))
+
+        l = np.min(data)
+        u = np.max(data) + bin_size
+        n_bins = math.floor((u - l)/bin_size) + 1
+        bins = np.linspace(l, u, n_bins)
+
+        result = plt.hist(data, bins=bins)
 
         bins = result[1]  # bins are in the form of [a,b)
         freq = result[0] * 1.0 / len(data)
