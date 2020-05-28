@@ -474,15 +474,15 @@ class JohnsonSu(RVG):
 
 
 class LogNormal(RVG):
-    def __init__(self, s, loc=0, scale=1):
+    def __init__(self, s, scale=1, loc=0):
         """
         E[X] = exp(scale + 1/2 * s**2)
         Var[X] = (exp(s**2)-1)*exp(2*loc+s**2)
         """
         RVG.__init__(self)
         self.s = s
-        self.loc = loc
         self.scale = scale
+        self.loc = loc
 
     def sample(self, rng, arg=None):
         # return rng.lognormal(self.s, self.scale) + self.loc
@@ -506,7 +506,7 @@ class LogNormal(RVG):
             np.log(1 + st_dev**2 / mean**2)
         )
 
-        return {"s": sigma, "loc": fixed_location, "scale": np.exp(mu)}
+        return {"s": sigma, "scale": np.exp(mu), "loc": fixed_location}
 
 
 class Multinomial(RVG):
@@ -672,15 +672,15 @@ class Triangular(RVG):
 
 
 class Uniform(RVG):
-    def __init__(self, loc=0, scale=1):
+    def __init__(self, scale=1, loc=0):
         """
         setting l = loc, u = loc + scale
         E[X] = (l+u)/2
         Var[X] = (u-l)**2/12
         """
         RVG.__init__(self)
-        self.loc = loc
         self.scale = scale
+        self.loc = loc
 
     def sample(self, rng, arg=None):
         return stat.uniform.rvs(self.loc, self.scale, random_state=rng)
@@ -699,7 +699,7 @@ class Uniform(RVG):
         loc = a
         scale = b-a
 
-        return {"loc": loc, "scale": scale}
+        return {"scale": scale, "loc": loc}
 
 
 class UniformDiscrete(RVG):
@@ -732,15 +732,15 @@ class UniformDiscrete(RVG):
 
 
 class Weibull(RVG):
-    def __init__(self, a, loc=0, scale=1):
+    def __init__(self, a, scale=1, loc=0):
         """
         E[X] = math.gamma(1 + 1/a) * scale + loc
         Var[X] = [math.gamma(1 + 2/a) - (math.gamma(1 + 1/a)**2)] * scale**2
         """
         RVG.__init__(self)
         self.a = a
-        self.loc = loc
         self.scale = scale
+        self.loc = loc
 
     def sample(self, rng, arg=None):
         return rng.weibull(self.a) * self.scale + self.loc
@@ -758,4 +758,4 @@ class Weibull(RVG):
         c = (st_dev*1.0/mean)**(-1.086)
         scale = mean/sp.special.gamma(1 + 1.0/c)
 
-        return {"c": c, "loc": fixed_location, "scale": scale}
+        return {"c": c, "scale": scale, "loc": fixed_location}

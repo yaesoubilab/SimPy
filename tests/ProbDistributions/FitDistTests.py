@@ -90,10 +90,68 @@ def test_fitting_gamma_poisson():
     print("  MM:", dict_mm_results)
 
 
+def test_fitting_geometric():
+    dist = RVGs.Geometric(p=0.3, loc=1)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Geometric.fit_mm(
+        mean=np.average(data), fixed_location=1)
+
+    print("Fitting Geometric with p=0.3, loc=1")
+    print("  MM:", dict_mm_results)
+
+
+def test_fitting_lognormal():
+    dist = RVGs.LogNormal(s=3, scale=2, loc=1)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.LogNormal.fit_mm(
+        mean=np.average(data), st_dev=np.std(data), fixed_location=1)
+
+    print("Fitting LogNormal with s=3, scale=2, loc=1")
+    print("  MM:", dict_mm_results)
+
+
+def test_fitting_negbinomial():
+    dist = RVGs.NegativeBinomial(n=10, p=0.2, loc=1)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.NegativeBinomial.fit_mm(
+        mean=np.average(data), st_dev=np.std(data), fixed_location=1)
+
+    print("Fitting NegBinomial with n=10, p=0.2, loc=1")
+    print("  MM:", dict_mm_results)
+
+
 def test_fitting_poisson():
     dist = RVGs.Poisson(mu=100, loc=10)
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.Poisson.fit_mm(mean=np.average(data), fixed_location=10)
 
     print("Fitting Poisson with mean=100 and loc = 10")
+    print("  MM:", dict_mm_results)
+
+
+def test_fitting_uniform():
+    dist = RVGs.Uniform(scale=10, loc=1)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Uniform.fit_mm(mean=np.average(data), st_dev=np.std(data))
+
+    print("Fitting uniform with scale=10, loc=1")
+    print("  MM:", dict_mm_results)
+
+
+def test_fitting_uniform_discrete():
+    dist = RVGs.UniformDiscrete(l=10, u=18)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.UniformDiscrete.fit_mm(mean=np.average(data), st_dev=np.std(data))
+
+    print("Fitting uniform discrete with l=10, u=18")
+    print("  MM:", dict_mm_results)
+
+
+def test_fitting_weibull():
+    dist = RVGs.Weibull(a=5, scale=2, loc=1)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Weibull.fit_mm(
+        mean=np.average(data), st_dev=np.std(data), fixed_location=1)
+
+    print("Fitting Weibull with a=5, scale=2, loc=1")
     print("  MM:", dict_mm_results)
