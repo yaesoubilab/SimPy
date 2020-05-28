@@ -1,7 +1,9 @@
 import numpy as np
+import scipy as sp
 import scipy.stats as stat
 from numpy.random import RandomState
 import math
+from scipy.optimize import fmin_slsqp
 
 
 def AIC(k, log_likelihood):
@@ -104,43 +106,32 @@ class Beta(RVG):
         """
 
         # transform data into [0,1]
-        if minimum is None:
-            L = np.min(data)
-        else:
-            L = minimum
-
-        if maximum is None:
-            U = np.max(data)
-        else:
-            U = maximum
-
+        L = np.min(data) if minimum is None else minimum
+        U = np.max(data) if maximum is None else maximum
         data = (data - L) / (U - L)
 
         # estimate the parameters
         a, b, loc, scale = stat.beta.fit(data, floc=0)
 
         # calculate AIC
-        aic = AIC(
-            k=3,
-            log_likelihood=np.sum(stat.beta.logpdf(data, a, b, loc, scale))
-        )
+        aic = AIC(k=3,
+                  log_likelihood=np.sum(stat.beta.logpdf(data, a, b, loc, scale)))
 
         # report results in the form of a dictionary
         return {"a": a, "b": b, "loc": L, "scale": U - L, "AIC": aic}
 
 
 class BetaBinomial(RVG):
-    def __init__(self, n, a, b, loc=0, scale=1):
+    def __init__(self, n, a, b, loc=0):
         """
-        E[X] = (na/(a+b))*scale + loc
-        Var[X] = [(nab(a+b+n))/((a+b)**2(a+b+1))] * scale**2
+        E[X] = na/(a+b) + loc
+        Var[X] = (nab(a+b+n))/((a+b)**2(a+b+1))
         """
         RVG.__init__(self)
         self.n = n
         self.a = a
         self.b = b
         self.loc = loc
-        self.scale = scale
 
     def sample(self, rng, arg=None):
         """
@@ -148,9 +139,81 @@ class BetaBinomial(RVG):
         :return: a realization from the Beta Binomial distribution
         """
         sample_p = rng.beta(self.a, self.b)
-        sample = rng.binomial(self.n, sample_p)
+        sample_n = rng.binomial(self.n, sample_p)
 
-        return sample * self.scale + self.loc
+        return sample_n + self.loc
+
+    @staticmethod
+    def get_fit_mm(mean, st_dev, n, fixed_location=0):
+        """
+        # ref: https://en.wikipedia.org/wiki/Beta-binomial_distribution
+        :param mean: sample mean of an observation set
+        :param st_dev: sample standard deviation of an observation set
+        :param n: the number of trials in the Binomial distribution
+        :param fixed_location: location, 0 by default
+        :return: dictionary with keys "a", "b", "n", "loc", and "scale"
+        """
+        mean = 1.0 * (mean - fixed_location)
+        variance = st_dev ** 2.0
+        m2 = variance + mean ** 2  # second moment
+
+        a1 = n * mean - m2
+        a2 = n * (m2 / mean - mean - 1) + mean
+        a = a1 / a2
+        b1 = (n - mean) * (n - m2 / mean)
+        b2 = a2
+        b = b1 / b2
+
+        return {"a": a, "b": b, "n": n, "loc": fixed_location}
+
+    @staticmethod
+    def get_ln_pmf(a, b, n, k):
+        part_1 = sp.special.comb(n, k)
+        part_2 = sp.special.betaln(k + a, n - k + b)
+        part_3 = sp.special.betaln(a, b)
+        result = (np.log(part_1) + part_2) - part_3
+        return result
+
+    # define log_likelihood function: sum of log(pmf) for each data point
+    @staticmethod
+    def get_ln_l(a_b_n, data):
+        a, b, n = a_b_n[0], a_b_n[1], a_b_n[2]
+        n = int(np.round(n, 0))
+        result = 0
+        for i in range(len(data)):
+            result += BetaBinomial.get_ln_pmf(a, b, n, data[i])
+        return result
+
+    @staticmethod
+    def get_fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: fixed location
+        :returns: dictionary with keys "a", "b", "n" and "AIC"
+        """
+
+        data = 1.0 * (data - fixed_location)
+
+        def neg_ln_l(theta):
+            return -BetaBinomial.get_ln_l(theta, data)
+
+        # estimate the parameters by minimize negative log-likelihood
+        # initialize parameters
+        theta0 = [1, 1, np.max(data)]
+        # call Scipy optimizer to minimize the target function
+        # with bounds for a [0,10], b [0,10] and n [0,100+max(data)]
+        paras, value, iter, imode, smode = fmin_slsqp(neg_ln_l, theta0,
+                                                      bounds=[(0.0, 10.0), (0.0, 10.0), (0, np.max(data) + 100)],
+                                                      disp=False, full_output=True)
+
+        # calculate AIC
+        aic = AIC(
+            k=3,
+            log_likelihood=BetaBinomial.get_ln_l([paras[0], paras[1], paras[2]], data)
+        )
+
+        # report results in the form of a dictionary
+        return {"a": paras[0], "b": paras[1], "n": paras[2], "loc": fixed_location, "AIC": aic}
 
 
 class Binomial(RVG):

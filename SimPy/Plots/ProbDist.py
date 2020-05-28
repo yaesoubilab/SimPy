@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stat
 import SimPy.Plots.FigSupport as Fig
+import SimPy.RandomVariantGenerators as RVGs
 
 
 COLOR_CONTINUOUS_FIT = 'r'
@@ -40,6 +41,7 @@ def format_fig(ax, title, x_label):
 
 
 def finish_figure(data, ax, bin_width, title, x_label, filename):
+
     if data is not None:
         add_hist(ax, data, bin_width)
 
@@ -73,4 +75,44 @@ def plot_beta_fit(data, fit_results, title=None, x_label=None,
 
     finish_figure(data=data, ax=ax, bin_width=bin_width,
                   title=title, x_label=x_label, filename=filename)
+
+
+def plot_beta_binomial_fit(data, fit_results, title=None, x_label=None,
+                           fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "a", "b", "n", and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1, figsize=fig_size)
+
+    # plot the estimated distribution
+    # calculate PMF for each data point using newly estimated parameters
+    x_values = np.arange(0, fit_results['n'], step=1)
+    pmf = np.zeros(len(x_values))
+    for i in x_values:
+        pmf[int(i)] = np.exp(RVGs.BetaBinomial.get_ln_pmf(a=fit_results['a'],
+                                                          b=fit_results['b'],
+                                                          n=fit_results['n'],
+                                                          k=i))
+
+    pmf = np.append([0], pmf[:-1])
+
+    # plot PMF
+    ax.step(x_values, pmf, color=COLOR_DISCRETE_FIT, lw=2, label='Beta-Binomial')
+
+    if data is not None:
+        add_hist(ax, data, bin_width=bin_width)
+
+    ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.legend()
+    plt.show()
 

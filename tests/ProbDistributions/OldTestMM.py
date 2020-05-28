@@ -13,11 +13,6 @@ dat_exp = np.array(get_samples(dist, np.random))
 dictResults=Est.get_expon_params(np.mean(dat_exp), fixed_location=1)        # fit
 print("Fitting Exponential:", dictResults)
 
-# 3 fitting a beta-binomial distribution
-betabinomial_dist = RVGs.BetaBinomial(100, 2, 3, loc=1, scale=2) # n, a, b
-dat_betabin = np.array(get_samples(betabinomial_dist, np.random))
-dictResults=Est.get_beta_binomial_params(np.mean(dat_betabin),np.std(dat_betabin), n=100, fixed_location=1, fixed_scale=2) # fit
-print("Fitting BetaBinomial:", dictResults)
 
 # 4 Binomial
 dist = RVGs.Binomial(100, 0.3, 1)

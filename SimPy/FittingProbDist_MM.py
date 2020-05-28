@@ -22,28 +22,7 @@ def get_expon_params(mean, fixed_location=0):
 
 # BetaBinomial
 # 3 parameters in total, won't be able to estimate if we only know mean and st_dev
-def get_beta_binomial_params(mean, st_dev, n, fixed_location=0, fixed_scale=1):
-    """
-    # ref: https://en.wikipedia.org/wiki/Beta-binomial_distribution
-    :param mean: sample mean of an observation set
-    :param st_dev: sample standard deviation of an observation set
-    :param n: the number of trials in the Binomial distribution
-    :param fixed_location: location, 0 by default
-    :param fixed_scale: scale, 1 by default
-    :return: dictionary with keys "a", "b", "n", "loc", and "scale"
-    """
-    mean = 1.0*(mean - fixed_location)/fixed_scale
-    variance = (st_dev/fixed_scale)**2.0
-    m2 = variance + mean**2  # second moment
 
-    a1 = n*mean - m2
-    a2 = n*(m2/mean - mean - 1) + mean
-    a = a1/a2
-    b1 = (n-mean)*(n-m2/mean)
-    b2 = a2
-    b = b1/b2
-
-    return {"a": a, "b": b, "n": n, "loc": fixed_location, "scale": fixed_scale}
 
 
 # Binomial
