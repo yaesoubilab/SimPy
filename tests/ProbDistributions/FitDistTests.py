@@ -111,6 +111,9 @@ def test_fitting_geometric():
     print("Fitting Geometric with p=0.3, loc=1")
     print("  MM:", dict_mm_results)
 
+    # plot the fitted distributions
+    Plot.plot_geometric_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+
 
 def test_fitting_lognormal():
     dist = RVGs.LogNormal(mu=0.2, sigma=0.1, loc=1)
@@ -120,6 +123,9 @@ def test_fitting_lognormal():
 
     print("Fitting LogNormal with mu=0.2, sigma=0.1, loc=1")
     print("  MM:", dict_mm_results)
+
+    # plot the fitted distributions
+    Plot.plot_lognormal_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
 
 
 def test_fitting_negbinomial():

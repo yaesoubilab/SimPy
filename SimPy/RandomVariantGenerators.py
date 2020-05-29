@@ -515,6 +515,12 @@ class LogNormal(RVG):
     def sample(self, rng, arg=None):
         return rng.lognormal(mean=self.mu, sigma=self.sigma) + self.loc
 
+    def pdf(self, x):
+        return np.exp(-(np.log(x) - self.mu)**2 / (2 * self.sigma**2)) / (x * self.sigma * np.sqrt(2 * np.pi))
+
+    def ppf(self, q):
+        return stat.lognorm.ppf(q, s=self.sigma, loc=self.loc, scale=np.exp(self.mu))
+
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
         """
@@ -533,7 +539,7 @@ class LogNormal(RVG):
             np.log(1 + st_dev**2 / mean**2)
         )
 
-        return {"mu": mu, "scale": sigma, "loc": fixed_location}
+        return {"mu": mu, "sigma": sigma, "loc": fixed_location}
 
 
 class Multinomial(RVG):

@@ -69,7 +69,9 @@ def format_fig(ax, title, x_label, x_range, y_range):
     ax.set_ylim(y_range)
     ax.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0%}'))
     ax.set_xlabel(x_label)
-    ax.set_ylabel("Frequency")
+    ax.set_yticks([])
+    ax.set_yticklabels([])
+    # ax.set_ylabel("Frequency")
 
 
 def finish_figure(ax, data, bin_width, title, x_label, x_range, y_range, filename):
@@ -244,3 +246,48 @@ def plot_gamma_poisson_fit(data, fit_results, title=None, x_label=None, x_range=
         label='Gamma-Poisson',
         bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
         fig_size=fig_size, filename=filename)
+
+
+def plot_geometric_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                       fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "p" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_discrete(
+        data=data,
+        dist=stat.geom(p=fit_results['p'], loc=fit_results['loc']),
+        label='Geometric',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
+
+
+def plot_lognormal_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                       fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "mu", "sigma" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.lognorm(s=fit_results['sigma'], loc=fit_results['loc'], scale=np.exp(fit_results['mu'])),
+        label='LogNormal',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename
+    )
