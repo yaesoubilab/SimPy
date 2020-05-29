@@ -5,23 +5,19 @@ import numpy as numpy
 from collections import OrderedDict
 
 
-def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete_existing_files=False):
+def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
     """ write a list to a csv file
     :param rows: list of lists to be imported to the csv file
     :param file_name: the file name to be given to the csv file
     :param delimiter: to separate by comma, use ',' and by tab, use '\t'
     :param directory: directory (relative to the current root) where the files should be located
             for example use 'Example' to create and save the csv file under the folder Example
-    :param delete_existing_files: set to True to delete the existing files in the directory
     """
 
     if directory != '':
         # create the directory if does not exist
         if not os.path.exists(directory):
             os.makedirs(directory)
-
-    if delete_existing_files:
-        delete_files(extension='.txt', path=os.getcwd() + '/' + directory)
 
     # create a new file
     file_name = os.path.join(directory, file_name)
@@ -108,7 +104,7 @@ def delete_files(extension='.txt', path='..'):
     """ delete every files with the specified extension inside the directory
     :param extension: (string) extension of the files to be removed
     :param path: (string) path (relative to the current root) where the files are located
-    (the folder should already exist)
+    (the folder should already exist) use os.getcwd() to get the working directory
     """
 
     for f in os.listdir(path):
