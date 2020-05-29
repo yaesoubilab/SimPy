@@ -375,21 +375,20 @@ class GammaPoisson(RVG):
     # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
     # in this article shape is beta, scale is alpha, change to Wiki version below
     # with shape-alpha, scale-theta
-    def __init__(self, a, gamma_scale, scale=1, loc=0):
+    def __init__(self, a, gamma_scale, loc=0):
         """
-        E[X] = (a*gamma_scale)*scale + loc
-        Var[X] = [a*gamma_scale + a*(gamma_scale**2)] * scale **2
+        E[X] = (a*gamma_scale) + loc
+        Var[X] = a*gamma_scale + a*(gamma_scale**2)
         """
         RVG.__init__(self)
         self.a = a
         self.gamma_scale = gamma_scale
-        self.scale = scale
         self.loc = loc
 
     def sample(self, rng, arg=None):
         sample_rate = Gamma(a=self.a, scale=self.gamma_scale).sample(rng)
         sample_poisson = Poisson(mu=sample_rate)
-        return sample_poisson.sample(rng) * self.scale + self.loc
+        return sample_poisson.sample(rng) + self.loc
 
     def pmf(self, k):
         # https: // en.wikipedia.org / wiki / Negative_binomial_distribution  # Gamma%E2%80%93Poisson_mixture
@@ -397,9 +396,9 @@ class GammaPoisson(RVG):
         if type(k) == int:
             k = k - self.loc
             p = self.gamma_scale / (self.gamma_scale + 1)
+            part1 = 1.0 * sp.special.gamma(self.a + k) / (sp.special.gamma(self.a) * sp.special.factorial(k))
+            part2 = (p ** k) * ((1 - p) ** self.a)
 
-            part1 = 1.0 * sp.special.gamma(self.gamma_scale + k) / (sp.special.gamma(self.gamma_scale) * sp.special.factorial(k))
-            part2 = (p ** k) * ((1 - p) ** self.gamma_scale)
             return part1 * part2
         else:
             result = []
@@ -421,25 +420,25 @@ class GammaPoisson(RVG):
         return k - 1
 
     @staticmethod
-    def fit_mm(mean, st_dev, fixed_location=0, fixed_scale=1):
+    def fit_mm(mean, st_dev, fixed_location=0):
         """
         :param mean: sample mean
         :param st_dev: sample standard deviation
-        :param n: the number of trials in the Binomial distribution
         :param fixed_location: location, 0 by default
-        :param fixed_scale: scale, 1 by default
         :return: dictionary with keys "a", "gamma_scale", "loc" and "scale"
         """
         # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
         # scale = 1/beta
 
-        mean = 1.0*(mean - fixed_location)/fixed_scale
-        variance = (st_dev/fixed_scale)**2.0
+        mean = mean - fixed_location
+        variance = st_dev**2.0
 
-        gamma_scale = mean**2.0/(variance - mean)
-        a = (variance-mean)*1.0/mean
+        # gamma_scale = mean**2.0/(variance - mean)
+        # a = (variance-mean)*1.0/mean
+        gamma_scale = (variance-mean)/mean
+        a = mean/gamma_scale
 
-        return {"a": a, "gamma_scale": gamma_scale, "scale": fixed_scale, "loc": fixed_location}
+        return {"a": a, "gamma_scale": gamma_scale, "loc": fixed_location}
 
 
 class Geometric(RVG):

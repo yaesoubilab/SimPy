@@ -177,17 +177,17 @@ def test_gamma(rnd, a, loc=0, scale=1):
                        variance=a*scale**2)
 
 
-def test_gamma_poisson(rnd, a, gamma_scale, loc=0, scale=1):
+def test_gamma_poisson(rnd, a, gamma_scale, loc=0):
     # gamma-poisson random variate generator
-    gamma_poisson_dist = RVGs.GammaPoisson(a=a, gamma_scale=gamma_scale, scale=scale, loc=loc)
+    gamma_poisson_dist = RVGs.GammaPoisson(a=a, gamma_scale=gamma_scale, loc=loc)
 
     # obtain samples
     samples = get_samples(gamma_poisson_dist, rnd)
 
     # report mean and variance
     print_test_results('GammaPoisson', samples,
-                       expectation=(a*gamma_scale)*scale + loc,
-                       variance=(a*gamma_scale + a*(gamma_scale**2))*scale**2)
+                       expectation=(a*gamma_scale) + loc,
+                       variance=a*gamma_scale + a*(gamma_scale**2))
 
 
 def test_geometric(rnd, p, loc=0):

@@ -227,7 +227,7 @@ def plot_gamma_poisson_fit(data, fit_results, title=None, x_label=None, x_range=
                            fig_size=(6, 5), bin_width=1, filename=None):
     """
     :param data: (numpy.array) observations
-    :param fit_results: dictionary with keys "a", "gamma_scale", "scale", "loc"
+    :param fit_results: dictionary with keys "a", "gamma_scale", "loc"
     :param title: title of the figure
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
@@ -240,7 +240,7 @@ def plot_gamma_poisson_fit(data, fit_results, title=None, x_label=None, x_range=
     plot_fit_discrete(
         data=data,
         dist=RVGs.GammaPoisson(a=fit_results['a'], gamma_scale=fit_results['gamma_scale'],
-                               scale=fit_results['scale'], loc=fit_results['loc']),
+                               loc=fit_results['loc']),
         label='Gamma-Poisson',
         bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
         fig_size=fig_size, filename=filename)
