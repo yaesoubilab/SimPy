@@ -179,7 +179,7 @@ def test_gamma(rnd, a, loc=0, scale=1):
 
 def test_gamma_poisson(rnd, a, gamma_scale, loc=0, scale=1):
     # gamma-poisson random variate generator
-    gamma_poisson_dist = RVGs.GammaPoisson(a, gamma_scale, loc, scale)
+    gamma_poisson_dist = RVGs.GammaPoisson(a=a, gamma_scale=gamma_scale, scale=scale, loc=loc)
 
     # obtain samples
     samples = get_samples(gamma_poisson_dist, rnd)

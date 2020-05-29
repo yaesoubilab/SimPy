@@ -49,6 +49,9 @@ def test_fitting_binomial():
     print("Fitting Binomial with n=100, p=0.3, loc=1:")
     print("  MM:", dict_mm_results)
 
+    # plot the fitted distributions
+    Plot.plot_binomial_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+
 
 def test_fitting_empirical():
     dist = RVGs.Empirical(probabilities=[0.1, 0.2, 0.7])
@@ -69,6 +72,9 @@ def test_fitting_exponential():
     print("Fitting Exponential with scale=0.5, loc=2")
     print("  MM:", dict_mm_results)
 
+    # plot the fitted distributions
+    Plot.plot_exponential_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+
 
 def test_fitting_gamma():
     dist = RVGs.Gamma(a=10, scale=1, loc=2)
@@ -79,15 +85,21 @@ def test_fitting_gamma():
     print("Fitting Gamma with a=10, scale=1, loc=2")
     print("  MM:", dict_mm_results)
 
+    # plot the fitted distributions
+    Plot.plot_gamma_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+
 
 def test_fitting_gamma_poisson():
-    dist = RVGs.GammaPoisson(a=2, gamma_scale=4, scale=2, loc=1)
+    dist = RVGs.GammaPoisson(a=2, gamma_scale=4, scale=2, loc=0)
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.GammaPoisson.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_scale=2, fixed_location=1)
 
     print("Fitting Gamma Poisson with a=2, gamma_scale=4, scale=2, loc=1")
     print("  MM:", dict_mm_results)
+
+    # plot the fitted distributions
+    Plot.plot_gamma_poisson_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
 
 
 def test_fitting_geometric():

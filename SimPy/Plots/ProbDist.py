@@ -84,6 +84,34 @@ def finish_figure(ax, data, bin_width, title, x_label, x_range, y_range, filenam
     Fig.output_figure(plt=plt, filename=filename, dpi=300)
 
 
+def plot_fit_continuous(data, dist, label, title=None, x_label=None, x_range=None, y_range=None,
+                        fig_size=(6, 5), bin_width=None, filename=None):
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1, figsize=fig_size)
+
+    # plot the distribution
+    add_continuous_dist(ax, dist, label=label)
+
+    finish_figure(ax=ax, data=data, bin_width=bin_width,
+                  title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+                  filename=filename)
+
+
+def plot_fit_discrete(data, dist, label, title=None, x_label=None, x_range=None, y_range=None,
+                      fig_size=(6, 5), bin_width=None, filename=None):
+
+    # plot histogram
+    fig, ax = plt.subplots(1, 1, figsize=fig_size)
+
+    # plot the distribution
+    add_discrete_dist(ax, dist, label=label)
+
+    finish_figure(ax=ax, data=data, bin_width=bin_width,
+                  title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+                  filename=filename)
+
+
 def plot_beta_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
                   fig_size=(6, 5), bin_width=None, filename=None):
     """
@@ -98,18 +126,12 @@ def plot_beta_fit(data, fit_results, title=None, x_label=None, x_range=None, y_r
     :param filename: filename to save the figure as
     """
 
-    # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=fig_size)
-
-    # build the beta distribution
-    dist = stat.beta(fit_results['a'], fit_results['b'], fit_results['loc'], fit_results['scale'])
-
-    # plot the distribution
-    add_continuous_dist(ax, dist, label='Beta')
-
-    finish_figure(ax=ax, data=data, bin_width=bin_width,
-                  title=title, x_label=x_label, x_range=x_range, y_range=y_range,
-                  filename=filename)
+    plot_fit_continuous(
+        data=data,
+        dist=stat.beta(fit_results['a'], fit_results['b'], fit_results['loc'], fit_results['scale']),
+        label='Beta',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
 
 
 def plot_beta_binomial_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
@@ -126,16 +148,99 @@ def plot_beta_binomial_fit(data, fit_results, title=None, x_label=None, x_range=
     :param filename: filename to save the figure as
     """
 
-    # plot histogram
-    fig, ax = plt.subplots(1, 1, figsize=fig_size)
+    plot_fit_discrete(
+        data=data,
+        dist=stat.betabinom(n=fit_results['n'], a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc']),
+        label='Beta-Binomial',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
 
-    # build the beta binomial distribution
-    dist = stat.betabinom(n=fit_results['n'], a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'])
 
-    # plot the estimated distribution
-    add_discrete_dist(ax, dist, label='Beta-Binomial')
+def plot_binomial_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                      fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "n", "p", and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
 
-    finish_figure(ax=ax, data=data, bin_width=bin_width,
-                  title=title, x_label=x_label, x_range=x_range, y_range=y_range,
-                  filename=filename)
+    plot_fit_discrete(
+        data=data,
+        dist=stat.binom(n=fit_results['n'], p=fit_results['p'], loc=fit_results['loc']),
+        label='Binomial',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
 
+
+def plot_exponential_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                         fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "scale" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.expon(fit_results['loc'], fit_results['scale']),
+        label='Exponential',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
+
+
+def plot_gamma_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                   fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "a", "scale" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.gamma(fit_results['a'], fit_results['loc'], fit_results['scale']),
+        label='Gamma',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename
+    )
+
+
+def plot_gamma_poisson_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                           fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "a", "gamma_scale", "scale", "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_discrete(
+        data=data,
+        dist=RVGs.GammaPoisson(a=fit_results['a'], gamma_scale=fit_results['gamma_scale'],
+                               scale=fit_results['scale'], loc=fit_results['loc']),
+        label='Gamma-Poisson',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)

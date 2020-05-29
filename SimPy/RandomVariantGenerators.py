@@ -391,6 +391,35 @@ class GammaPoisson(RVG):
         sample_poisson = Poisson(mu=sample_rate)
         return sample_poisson.sample(rng) * self.scale + self.loc
 
+    def pmf(self, k):
+        # https: // en.wikipedia.org / wiki / Negative_binomial_distribution  # Gamma%E2%80%93Poisson_mixture
+
+        if type(k) == int:
+            k = k - self.loc
+            p = self.gamma_scale / (self.gamma_scale + 1)
+
+            part1 = 1.0 * sp.special.gamma(self.gamma_scale + k) / (sp.special.gamma(self.gamma_scale) * sp.special.factorial(k))
+            part2 = (p ** k) * ((1 - p) ** self.gamma_scale)
+            return part1 * part2
+        else:
+            result = []
+            for this_k in k:
+                result.append(self.pmf(this_k))
+            return result
+
+    def ppf(self, q):
+        """ :returns: percentage point function (inverse of cdf)"""
+
+        cum = 0
+        k = self.loc
+
+        while True:
+            cum += self.pmf(k)
+            k += 1
+            if cum > q:
+                break
+        return k - 1
+
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0, fixed_scale=1):
         """
