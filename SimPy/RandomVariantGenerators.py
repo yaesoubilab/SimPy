@@ -740,7 +740,7 @@ class UniformDiscrete(RVG):
     def __init__(self, l, u):
         """
         E[X] = (l+u)/2
-        Var[X] = ((r-u+1)**2 - 1)/12
+        Var[X] = ((u-l+1)**2 - 1)/12
         :param l: (int) inclusive lower bound
         :param u: (int) inclusive upper bound
         """
@@ -756,13 +756,13 @@ class UniformDiscrete(RVG):
         """
         :param mean: sample mean of an observation set
         :param st_dev: sample standard deviation of an observation set
-        :return: dictionary with keys "l" and "r"
+        :return: dictionary with keys "l" and "u"
         """
         variance = st_dev**2
         b = (np.sqrt(12.0*variance + 1) + 2.0*mean-1)*0.5
         a = (-np.sqrt(12.0*variance + 1) + 2.0*mean+1)*0.5
 
-        return {"l": a, "r": b}
+        return {"l": a, "u": b}
 
 
 class Weibull(RVG):

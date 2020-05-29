@@ -291,3 +291,115 @@ def plot_lognormal_fit(data, fit_results, title=None, x_label=None, x_range=None
         bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
         fig_size=fig_size, filename=filename
     )
+
+
+def plot_negbinomial_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                         fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "n", "p" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_discrete(
+        data=data,
+        dist=stat.nbinom(n=fit_results['n'], p=fit_results['p'], loc=fit_results['loc']),
+        label='Negative Binomial',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
+
+
+def plot_poisson_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                     fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "mu" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_discrete(
+        data=data,
+        dist=stat.poisson(mu=fit_results['mu'], loc=fit_results['loc']),
+        label='Poisson',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
+
+
+def plot_uniform_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                     fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "scale" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.uniform(scale=fit_results['scale'], loc=fit_results['loc']),
+        label='Uniform',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename
+    )
+
+
+def plot_uniform_discrete_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                              fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "mu" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_discrete(
+        data=data,
+        dist=stat.randint(low=fit_results['l'], high=fit_results['u']),
+        label='Uniform-Discrete',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
+
+
+def plot_weibull_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                     fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "c", "scale" and "loc"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.weibull_min(c=fit_results['c'], scale=fit_results['scale'], loc=fit_results['loc']),
+        label='Weibull',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename
+    )

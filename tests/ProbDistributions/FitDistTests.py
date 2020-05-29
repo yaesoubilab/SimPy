@@ -137,6 +137,9 @@ def test_fitting_negbinomial():
     print("Fitting NegBinomial with n=10, p=0.2, loc=1")
     print("  MM:", dict_mm_results)
 
+    # plot the fitted distributions
+    Plot.plot_negbinomial_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+
 
 def test_fitting_poisson():
     dist = RVGs.Poisson(mu=100, loc=10)
@@ -145,6 +148,9 @@ def test_fitting_poisson():
 
     print("Fitting Poisson with mean=100 and loc = 10")
     print("  MM:", dict_mm_results)
+
+    # plot the fitted distributions
+    Plot.plot_poisson_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
 
 
 def test_fitting_uniform():
@@ -155,6 +161,9 @@ def test_fitting_uniform():
     print("Fitting uniform with scale=10, loc=1")
     print("  MM:", dict_mm_results)
 
+    # plot the fitted distributions
+    Plot.plot_uniform_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+
 
 def test_fitting_uniform_discrete():
     dist = RVGs.UniformDiscrete(l=10, u=18)
@@ -163,6 +172,9 @@ def test_fitting_uniform_discrete():
 
     print("Fitting uniform discrete with l=10, u=18")
     print("  MM:", dict_mm_results)
+
+    # plot the fitted distributions
+    Plot.plot_uniform_discrete_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
 
 
 def test_fitting_weibull():
@@ -173,3 +185,6 @@ def test_fitting_weibull():
 
     print("Fitting Weibull with a=5, scale=2, loc=1")
     print("  MM:", dict_mm_results)
+
+    # plot the fitted distributions
+    Plot.plot_weibull_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')

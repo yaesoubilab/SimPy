@@ -361,17 +361,17 @@ def test_uniform(rnd, loc=0, scale=1):
                        )
 
 
-def test_uniform_discrete(rnd, l, r):
+def test_uniform_discrete(rnd, l, u):
     # uniform discrete random variate generator
-    uniformdiscrete_dist = RVGs.UniformDiscrete(l, r)
+    uniformdiscrete_dist = RVGs.UniformDiscrete(l, u)
 
     # obtain samples
     samples = get_samples(uniformdiscrete_dist, rnd)
 
     # report mean and variance
     print_test_results('Uniform Discrete', samples,
-                       expectation=(l + r) / 2.0,
-                       variance=((r-l+1)**2 - 1)/12.0
+                       expectation=(l + u) / 2.0,
+                       variance=((u - l + 1) ** 2 - 1) / 12.0
                        )
 
 
