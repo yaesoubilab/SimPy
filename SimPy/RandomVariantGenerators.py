@@ -248,6 +248,34 @@ class Binomial(RVG):
 
         return {"n": n, "p": p, "loc": fixed_location}
 
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: fixed location
+        :returns: dictionary with keys "p", "n", "loc" and "AIC"
+        """
+
+        # the MLE of p is x/n
+        # if we have N data point with Xi~Bin(n,p), then sum(Xi)~Bin(n*N,p), p_hat = sum(xi)/(n*N)
+        # # https://onlinecourses.science.psu.edu/stat504/node/28
+
+        data = data - fixed_location
+
+        mean = np.mean(data)
+        st_dev = np.std(data)
+        p = 1.0 - (st_dev ** 2) / mean
+        n = mean / p
+
+        # calculate AIC
+        aic = AIC(
+            k=1,
+            log_likelihood=np.sum(stat.binom.logpmf(data, n, p))
+        )
+
+        # report results in the form of a dictionary
+        return {"n": n, "p": p, "loc": fixed_location, "AIC": aic}
+
 
 class Dirichlet(RVG):
     def __init__(self, a):

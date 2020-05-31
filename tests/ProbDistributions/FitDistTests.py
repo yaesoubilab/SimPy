@@ -43,14 +43,20 @@ def test_fitting_beta_binomial():
 def test_fitting_binomial():
     dist = RVGs.Binomial(n=100, p=0.3, loc=1)
     data = np.array(get_samples(dist, np.random))
+    # method of moment
     dict_mm_results = RVGs.Binomial.fit_mm(
         mean=np.mean(data), st_dev=np.std(data), fixed_location=1)
+    # maximum likelihood
+    dict_ml_results = RVGs.Binomial.fit_ml(
+        data=data, fixed_location=1)
 
     print("Fitting Binomial with n=100, p=0.3, loc=1:")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_binomial_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_binomial_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_empirical():
