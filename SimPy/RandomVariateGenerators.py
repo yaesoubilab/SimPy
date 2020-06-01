@@ -184,7 +184,7 @@ class BetaBinomial(RVG):
         n = int(np.round(n, 0))
         result = 0
         for i in range(len(data)):
-            result += BetaBinomial.get_ln_pmf(a, b, n, data[i])
+            result += BetaBinomial.get_ln_pmf(a=a, b=b, n=n, k=data[i])
         return result
 
     @staticmethod
@@ -207,7 +207,7 @@ class BetaBinomial(RVG):
         # with bounds for a [0, 10], b [0, 10] and n [0,100+max(data)]
         fitted_a_b_n, value, iter, imode, smode \
             = fmin_slsqp(neg_ln_l, a_b_n_0,
-                         bounds=[(0.0, 10.0), (0.0, 10.0), (0, np.max(data) + 100)],
+                         bounds=[(0.0, 10000.0), (0.0, 10000.0), (0, np.max(data) + 100)],
                          disp=False, full_output=True)
 
         # calculate AIC
@@ -438,9 +438,7 @@ class Gamma(RVG):
 
 
 class GammaPoisson(RVG):
-    # ref: http://www.math.wm.edu/~leemis/chart/UDR/PDFs/Gammapoisson.pdf
-    # in this article shape is beta, scale is alpha, change to Wiki version below
-    # with shape-alpha, scale-theta
+    #
     def __init__(self, a, gamma_scale, loc=0):
         """
         E[X] = (a*gamma_scale) + loc
@@ -458,6 +456,7 @@ class GammaPoisson(RVG):
 
     def pmf(self, k):
         # https: // en.wikipedia.org / wiki / Negative_binomial_distribution  # Gamma%E2%80%93Poisson_mixture
+        # with r= a and p = scale/(scale + 1)
 
         if type(k) == int:
             k = k - self.loc
@@ -486,6 +485,29 @@ class GammaPoisson(RVG):
         return k - 1
 
     @staticmethod
+    def get_ln_pmf(a, gamma_scale, loc, k):
+        # https: // en.wikipedia.org / wiki / Negative_binomial_distribution  # Gamma%E2%80%93Poisson_mixture
+        # with r= a and p = scale/(scale + 1)
+
+        k = k - loc
+        p = gamma_scale / (gamma_scale + 1)
+        part1 = np.log(sp.special.gamma(a + k)) \
+                - np.log(sp.special.gamma(a)) \
+                - np.log(sp.special.factorial(k))
+        part2 = k * np.log(p) + a * np.log(1 - p)
+
+        return part1 + part2
+
+    # define log_likelihood function: sum of log(pmf) for each data point
+    @staticmethod
+    def get_ln_l(a, scale, loc, data):
+        result = 0
+        for k in data:
+            v = GammaPoisson.get_ln_pmf(a=a, gamma_scale=scale, loc=loc, k=k)
+            result += v
+        return result
+
+    @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
         """
         :param mean: sample mean
@@ -499,8 +521,6 @@ class GammaPoisson(RVG):
         mean = mean - fixed_location
         variance = st_dev**2.0
 
-        # gamma_scale = mean**2.0/(variance - mean)
-        # a = (variance-mean)*1.0/mean
         gamma_scale = (variance-mean)/mean
         a = mean/gamma_scale
 
@@ -516,7 +536,26 @@ class GammaPoisson(RVG):
 
         data = data - fixed_location
 
-        # TODO: complete
+        # define negative log-likelihood, the target function to minimize
+        def neg_ln_l(a_scale):
+            return -GammaPoisson.get_ln_l(a=a_scale[0], scale=a_scale[1], loc=0, data=data)
+
+        # estimate the parameters by minimize negative log-likelihood
+        # initialize parameters
+        a_scale = [1, 1]
+        # call Scipy optimizer to minimize the target function
+        # with bounds for p [0,1] and r [0,10]
+        fitted_a_scale, value, iter, imode, smode = fmin_slsqp(neg_ln_l, a_scale,
+                                                               #bounds=[(0.0, 10.0), (0, 1)],
+                                                               disp=False, full_output=True)
+
+        # calculate AIC (note that the data has already been shifted by loc)
+        aic = AIC(
+            k=2,
+            log_likelihood=GammaPoisson.get_ln_l(
+                a=fitted_a_scale[0], scale=fitted_a_scale[1], loc=0, data=data)
+        )
+        return {"a": fitted_a_scale[0], "gamma_scale": fitted_a_scale[1], "loc": fixed_location, "AIC": aic}
 
 
 class Geometric(RVG):

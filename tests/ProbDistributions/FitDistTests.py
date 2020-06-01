@@ -111,12 +111,16 @@ def test_fitting_gamma_poisson():
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.GammaPoisson.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_location=2)
+    dict_ml_results = RVGs.GammaPoisson.fit_ml(
+        data=data, fixed_location=2)
 
     print("Fitting Gamma Poisson with a=2, gamma_scale=4, loc=2")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_gamma_poisson_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_gamma_poisson_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_geometric():
