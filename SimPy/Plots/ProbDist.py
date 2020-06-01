@@ -270,6 +270,50 @@ def plot_geometric_fit(data, fit_results, title=None, x_label=None, x_range=None
         fig_size=fig_size, filename=filename)
 
 
+def plot_johnson_sb_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                        fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.johnsonsb(a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'], scale=fit_results['scale']),
+        label='Johnson Sb',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
+
+
+def plot_johnson_su_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                        fig_size=(6, 5), bin_width=1, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.johnsonsu(a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'], scale=fit_results['scale']),
+        label='Johnson Su',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename)
+
+
 def plot_lognormal_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
                        fig_size=(6, 5), bin_width=None, filename=None):
     """

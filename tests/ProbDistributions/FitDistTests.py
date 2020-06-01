@@ -62,6 +62,7 @@ def test_fitting_binomial():
 def test_fitting_empirical():
     dist = RVGs.Empirical(probabilities=[0.1, 0.2, 0.7])
     data = np.array(get_samples(dist, np.random))
+    # method of moments
     dict_mm_results = RVGs.Empirical.fit_mm(
         data=data, bin_size=1)
 
@@ -72,14 +73,20 @@ def test_fitting_empirical():
 def test_fitting_exponential():
     dist = RVGs.Exponential(scale=0.5, loc=2)
     data = np.array(get_samples(dist, np.random))
+    # method of moment
     dict_mm_results = RVGs.Exponential.fit_mm(
         mean=np.average(data), fixed_location=2)
+    # maximum likelihood
+    dict_ml_results = RVGs.Exponential.fit_ml(
+        data=data, fixed_location=2)
 
     print("Fitting Exponential with scale=0.5, loc=2")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_exponential_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_exponential_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_gamma():
@@ -87,12 +94,16 @@ def test_fitting_gamma():
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.Gamma.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_location=2)
+    dict_ml_results = RVGs.Gamma.fit_ml(
+        data=data, fixed_location=2)
 
     print("Fitting Gamma with a=10, scale=1, loc=2")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_gamma_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_gamma_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_gamma_poisson():
@@ -113,12 +124,42 @@ def test_fitting_geometric():
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.Geometric.fit_mm(
         mean=np.average(data), fixed_location=1)
+    dict_ml_results = RVGs.Geometric.fit_ml(
+        data=data, fixed_location=1)
 
     print("Fitting Geometric with p=0.3, loc=1")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_geometric_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_geometric_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
+
+
+def test_fitting_johnson_sb():
+    dist = RVGs.JohnsonSb(a=10, b=5, loc=10, scale=100)
+    data = np.array(get_samples(dist, np.random))
+    dict_ml_results = RVGs.JohnsonSb.fit_ml(
+        data=data, fixed_location=10)
+
+    print("Fitting Johnson Sb with a=10, b=5, loc=10, scale=100")
+    print("  ML:", dict_ml_results)
+
+    # plot the fitted distributions
+    Plot.plot_johnson_sb_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
+
+
+def test_fitting_johnson_su():
+    dist = RVGs.JohnsonSu(a=2, b=3, loc=1, scale=4)
+    data = np.array(get_samples(dist, np.random))
+    dict_ml_results = RVGs.JohnsonSu.fit_ml(
+        data=data, fixed_location=1)
+
+    print("Fitting Johnson Su with a=2, b=3, loc=1, scale=4")
+    print("  ML:", dict_ml_results)
+
+    # plot the fitted distributions
+    Plot.plot_johnson_su_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_lognormal():
@@ -126,12 +167,16 @@ def test_fitting_lognormal():
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.LogNormal.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_location=1)
+    dict_ml_results = RVGs.LogNormal.fit_ml(
+        data=data, fixed_location=1)
 
     print("Fitting LogNormal with mu=0.2, sigma=0.1, loc=1")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_lognormal_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_lognormal_fit(data=data, fit_results=dict_mm_results, title='Maximum Likelihood')
 
 
 def test_fitting_negbinomial():

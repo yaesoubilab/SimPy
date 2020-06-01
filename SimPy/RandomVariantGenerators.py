@@ -364,6 +364,24 @@ class Exponential(RVG):
 
         return {"scale": scale, "loc": fixed_location}
 
+    @ staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: fixed location
+        :returns: dictionary with keys "loc", "scale", and "AIC"
+        """
+        # estimate the parameters of exponential
+        loc, scale = stat.expon.fit(data, floc=fixed_location)
+
+        # calculate AIC
+        aic = AIC(
+            k=1,
+            log_likelihood=np.sum(stat.expon.logpdf(data, loc, scale)))
+
+        # report results in the form of a dictionary
+        return {"scale": scale, "loc": loc, "AIC": aic}
+
 
 class Gamma(RVG):
     def __init__(self, a, scale=1, loc=0):
@@ -397,6 +415,26 @@ class Gamma(RVG):
 
         # report results in the form of a dictionary
         return {"a": shape, "scale": scale, "loc": fixed_location}
+
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: fixed location
+        :returns: dictionary with keys "a", "scale", "loc", and "AIC"
+        """
+
+        # estimate the parameters of gamma
+        # alpha = a, beta = 1/scale
+        a, loc, scale = stat.gamma.fit(data, floc=fixed_location)
+
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.gamma.logpdf(data, a, loc, scale)))
+
+        # report results in the form of a dictionary
+        return {"a": a, "scale": scale, "loc": loc, "AIC": aic}
 
 
 class GammaPoisson(RVG):
@@ -468,6 +506,18 @@ class GammaPoisson(RVG):
 
         return {"a": a, "gamma_scale": gamma_scale, "loc": fixed_location}
 
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location
+        :return: dictionary with keys "a", "gamma_scale", "loc", and "AIC"
+        """
+
+        data = data - fixed_location
+
+        # TODO: complete
+
 
 class Geometric(RVG):
     def __init__(self, p, loc=0):
@@ -494,6 +544,26 @@ class Geometric(RVG):
 
         return {"p": p, "loc": fixed_location}
 
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :return: dictionary with keys "p", "loc"
+        """
+
+        # https://www.projectrhea.org/rhea/index.php/MLE_Examples:_Exponential_and_Geometric_Distributions_Old_Kiwi
+        data = data - fixed_location
+        p = len(data) * 1.0 / np.sum(data)
+
+        # calculate AIC
+        aic = AIC(
+            k=1,
+            log_likelihood=np.sum(stat.geom.logpmf(data, p)))
+
+        # report results in the form of a dictionary
+        return {"p": p, "loc": fixed_location, "AIC": aic}
+
 
 class JohnsonSb(RVG):
     def __init__(self, a, b, loc, scale):
@@ -511,6 +581,25 @@ class JohnsonSb(RVG):
     def sample(self, rng, arg=None):
         return stat.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+        """
+
+        # estimate the parameters
+        a, b, loc, scale = stat.johnsonsb.fit(data, floc=fixed_location)
+
+        # calculate AIC
+        aic = AIC(
+            k=3,
+            log_likelihood=np.sum(stat.johnsonsb.logpdf(data, a, b, loc, scale)))
+
+        # report results in the form of a dictionary
+        return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
+
 
 class JohnsonSu(RVG):
     def __init__(self, a, b, loc, scale):
@@ -527,6 +616,25 @@ class JohnsonSu(RVG):
 
     def sample(self, rng, arg=None):
         return stat.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
+
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "a", "b", "loc", "scale", and "AIC"
+        """
+
+        # estimate the parameters
+        a, b, loc, scale = stat.johnsonsu.fit(data, floc=fixed_location)
+
+        # calculate AIC
+        aic = AIC(
+            k=3,
+            log_likelihood=np.sum(stat.johnsonsu.logpdf(data, a, b, loc, scale)))
+
+        # report results in the form of a dictionary
+        return {"a": a, "b": b, "loc": loc, "scale": scale, "AIC": aic}
 
 
 class LogNormal(RVG):
@@ -555,7 +663,7 @@ class LogNormal(RVG):
         :param mean: sample mean of an observation set
         :param st_dev: sample standard deviation of an observation set
         :param fixed_location: location, 0 by default
-        :return: dictionary with keys "n", "p" and "loc"
+        :return: dictionary with keys "mu", "sigma" and "loc"
         """
 
         mean = mean-fixed_location
@@ -568,6 +676,27 @@ class LogNormal(RVG):
         )
 
         return {"mu": mu, "sigma": sigma, "loc": fixed_location}
+
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "mu", "sigma" and "loc"
+        """
+
+        # estimate the parameters
+        s, loc, scale = stat.lognorm.fit(data, floc=fixed_location)
+        sigma = s
+        mu = np.log(scale)
+
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.lognorm.logpdf(data, s, loc, scale)))
+
+        # report results in the form of a dictionary
+        return {"mu": mu, "sigma": sigma, "loc": loc}
 
 
 class Multinomial(RVG):
