@@ -179,6 +179,23 @@ def test_fitting_lognormal():
     Plot.plot_lognormal_fit(data=data, fit_results=dict_mm_results, title='Maximum Likelihood')
 
 
+def test_fitting_normal():
+    dist = RVGs.Normal(loc=10, scale=2)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Normal.fit_mm(
+        mean=np.average(data), st_dev=np.std(data))
+    dict_ml_results = RVGs.Normal.fit_ml(
+        data=data)
+
+    print("Fitting Normal with loc=10, scale=2")
+    print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
+
+    # plot the fitted distributions
+    Plot.plot_normal_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_normal_fit(data=data, fit_results=dict_mm_results, title='Maximum Likelihood')
+
+
 def test_fitting_negbinomial():
     dist = RVGs.NegativeBinomial(n=10, p=0.2, loc=1)
     data = np.array(get_samples(dist, np.random))
@@ -196,12 +213,15 @@ def test_fitting_poisson():
     dist = RVGs.Poisson(mu=100, loc=10)
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.Poisson.fit_mm(mean=np.average(data), fixed_location=10)
+    dict_ml_results = RVGs.Poisson.fit_ml(data=data, fixed_location=10)
 
     print("Fitting Poisson with mean=100 and loc = 10")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_poisson_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_poisson_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_uniform():
@@ -214,6 +234,18 @@ def test_fitting_uniform():
 
     # plot the fitted distributions
     Plot.plot_uniform_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+
+
+def test_fitting_triangular():
+    dist = RVGs.Triangular(c=0.2, loc=6, scale=7)
+    data = np.array(get_samples(dist, np.random))
+    dict_ml_results = RVGs.Triangular.fit_ml(data=data, fixed_location=6)
+
+    print("Fitting triangular with c=0.2, loc=6, scale=7")
+    print("  MM:", dict_ml_results)
+
+    # plot the fitted distributions
+    Plot.plot_triangular_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_uniform_discrete():

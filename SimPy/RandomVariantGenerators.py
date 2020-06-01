@@ -754,6 +754,15 @@ class NegativeBinomial(RVG):
 
         return {"n": n, "p": p, "loc": fixed_location}
 
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "n", "p" and "loc"
+        """
+        #TODO: complete
+
 
 class NonHomogeneousExponential(RVG):
     def __init__(self, rates, delta_t=1):
@@ -819,6 +828,22 @@ class Normal(RVG):
 
         return {"loc": mean, "scale": st_dev}
 
+    @staticmethod
+    def fit_ml(data):
+        """
+        :param data: (numpy.array) observations
+        :return: dictionary with keys "loc", "scale", and "AIC"
+        """
+
+        mean = np.average(data)
+        st_dev = np.std(data)
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.norm.logpdf(data, mean, st_dev)))
+
+        return {"loc": mean, "scale": st_dev, "AIC": aic}
+
 
 class Poisson(RVG):
     def __init__(self, mu, loc=0):
@@ -845,6 +870,27 @@ class Poisson(RVG):
 
         return {"mu": mu, "loc": fixed_location}
 
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "mu" and "loc"
+        """
+
+        # fit poisson distribution: the MLE of lambda is the sample mean
+        # https://en.wikipedia.org/wiki/Poisson_distribution#Maximum_likelihood
+        data = data - fixed_location
+        mu = data.mean()
+
+        # calculate AIC
+        aic = AIC(
+            k=1,
+            log_likelihood=np.sum(stat.poisson.logpmf(data, mu)))
+
+        # report results in the form of a dictionary
+        return {"mu": mu, "loc": fixed_location, "AIC": aic}
+
 
 class Triangular(RVG):
     def __init__(self, c, loc=0, scale=1):
@@ -860,6 +906,25 @@ class Triangular(RVG):
 
     def sample(self, rng, arg=None):
         return stat.triang.rvs(self.c, self.loc, self.scale, random_state=rng)
+
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :return: dictionary with keys "c", "loc", "scale", and "AIC"
+        """
+
+        c, loc, scale = stat.triang.fit(data, floc=fixed_location)
+
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.triang.logpdf(data, c, loc, scale))
+        )
+
+        # report results in the form of a dictionary
+        return {"c": c, "loc": loc, "scale": scale, "AIC": aic}
 
 
 class Uniform(RVG):

@@ -337,6 +337,28 @@ def plot_lognormal_fit(data, fit_results, title=None, x_label=None, x_range=None
     )
 
 
+def plot_normal_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                    fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "loc" and "scale"
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.norm(scale=fit_results['scale'], loc=fit_results['loc']),
+        label='Normal',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename
+    )
+
 def plot_negbinomial_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
                          fig_size=(6, 5), bin_width=1, filename=None):
     """
@@ -403,6 +425,28 @@ def plot_uniform_fit(data, fit_results, title=None, x_label=None, x_range=None, 
         fig_size=fig_size, filename=filename
     )
 
+
+def plot_triangular_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                        fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "c", "loc", "scale",
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.triang(c=fit_results['c'], scale=fit_results['scale'], loc=fit_results['loc']),
+        label='Triangular',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename
+    )
 
 def plot_uniform_discrete_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
                               fig_size=(6, 5), bin_width=1, filename=None):
