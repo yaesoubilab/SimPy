@@ -1,5 +1,5 @@
 import math
-import SimPy.RandomVariantGenerators as RVGs
+import SimPy.RandomVariateGenerators as RVGs
 from SimPy.DiscreteEventSim import *
 from SimPy.Support.EpiModelSupport import *
 import SimPy.SamplePathClasses as Path

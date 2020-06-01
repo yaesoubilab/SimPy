@@ -1,6 +1,6 @@
 from scipy.optimize import minimize
 import SimPy.StatisticalClasses as Stat
-import SimPy.RandomVariantGenerators as RVG
+import SimPy.RandomVariateGenerators as RVG
 import numpy as np
 import math
 import SimPy.Support.SupportClasses as S

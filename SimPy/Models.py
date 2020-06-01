@@ -1,5 +1,5 @@
 from SimPy.DataFrames import DataFrameOfObjects
-import SimPy.RandomVariantGenerators as RVGs
+import SimPy.RandomVariateGenerators as RVGs
 
 
 class MortalityModel:

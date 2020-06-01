@@ -1,5 +1,5 @@
 from tests.ProbDistributions import RVGtests as Tests
-import SimPy.RandomVariantGenerators as rndSupport
+import SimPy.RandomVariateGenerators as rndSupport
 
 # use numpy random number generator
 rng = rndSupport.RNG(1)

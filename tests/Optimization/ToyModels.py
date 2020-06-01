@@ -1,4 +1,4 @@
-import SimPy.RandomVariantGenerators as RVGs
+import SimPy.RandomVariateGenerators as RVGs
 from SimPy.Optimization import SimModel
 
 

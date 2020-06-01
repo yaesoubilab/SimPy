@@ -17,9 +17,9 @@ np.random.seed(1)
 # test_fitting_negbinomial()
 # test_fitting_normal()
 # test_fitting_poisson()
-test_fitting_triangular()
+# test_fitting_triangular()
 # test_fitting_uniform()
-# test_fitting_uniform_discrete()
+test_fitting_uniform_discrete()
 # test_fitting_weibull()
 
 

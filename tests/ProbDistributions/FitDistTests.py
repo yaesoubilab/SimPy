@@ -1,5 +1,5 @@
 import numpy as np
-import SimPy.RandomVariantGenerators as RVGs
+import SimPy.RandomVariateGenerators as RVGs
 from tests.ProbDistributions.RVGtests import get_samples
 import SimPy.Plots.ProbDist as Plot
 
@@ -224,18 +224,6 @@ def test_fitting_poisson():
     Plot.plot_poisson_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
-def test_fitting_uniform():
-    dist = RVGs.Uniform(scale=10, loc=1)
-    data = np.array(get_samples(dist, np.random))
-    dict_mm_results = RVGs.Uniform.fit_mm(mean=np.average(data), st_dev=np.std(data))
-
-    print("Fitting uniform with scale=10, loc=1")
-    print("  MM:", dict_mm_results)
-
-    # plot the fitted distributions
-    Plot.plot_uniform_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
-
-
 def test_fitting_triangular():
     dist = RVGs.Triangular(c=0.2, loc=6, scale=7)
     data = np.array(get_samples(dist, np.random))
@@ -248,16 +236,34 @@ def test_fitting_triangular():
     Plot.plot_triangular_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
+def test_fitting_uniform():
+    dist = RVGs.Uniform(scale=10, loc=2)
+    data = np.array(get_samples(dist, np.random))
+    dict_mm_results = RVGs.Uniform.fit_mm(mean=np.average(data), st_dev=np.std(data))
+    dict_ml_results = RVGs.Uniform.fit_ml(data=data)
+
+    print("Fitting triangular with scale=10, loc=2")
+    print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
+
+    # plot the fitted distributions
+    Plot.plot_uniform_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_uniform_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
+
+
 def test_fitting_uniform_discrete():
     dist = RVGs.UniformDiscrete(l=10, u=18)
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.UniformDiscrete.fit_mm(mean=np.average(data), st_dev=np.std(data))
+    dict_ml_results = RVGs.UniformDiscrete.fit_ml(data=data)
 
     print("Fitting uniform discrete with l=10, u=18")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_uniform_discrete_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_uniform_discrete_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_weibull():
@@ -265,9 +271,14 @@ def test_fitting_weibull():
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.Weibull.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_location=1)
+    dict_ml_results = RVGs.Weibull.fit_ml(
+        data=data, fixed_location=1)
 
     print("Fitting Weibull with a=5, scale=2, loc=1")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_weibull_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_weibull_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
+

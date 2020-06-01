@@ -1,5 +1,5 @@
 import SimPy.DataFrames as df
-import SimPy.RandomVariantGenerators as RVGs
+import SimPy.RandomVariateGenerators as RVGs
 
 # one dimension dataframe for a continuous variable
 df1 = df.OneDimDataFrame(y_objects=[10, 9, 20, 40], x_min=0, x_max=3, x_delta=1)

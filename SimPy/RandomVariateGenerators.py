@@ -955,7 +955,26 @@ class Uniform(RVG):
         loc = a
         scale = b-a
 
-        return {"scale": scale, "loc": loc}
+        return {"loc": loc, "scale": scale,}
+
+    @staticmethod
+    def fit_ml(data):
+        """
+        :param data: (numpy.array) observations
+        :return: dictionary with keys "loc", "scale", and "AIC"
+        """
+
+        # estimate the parameters
+        loc, scale = stat.uniform.fit(data)
+
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.uniform.logpdf(data, loc, scale))
+        )
+
+        # report results in the form of a dictionary
+        return {"loc": loc, "scale": scale, "AIC": aic}
 
 
 class UniformDiscrete(RVG):
@@ -986,6 +1005,27 @@ class UniformDiscrete(RVG):
 
         return {"l": a, "u": b}
 
+    @staticmethod
+    def fit_ml(data):
+        """
+        :param data: (numpy.array) observations
+        :return: dictionary with keys "l" and "u"
+        """
+        # estimate the parameters
+        # as likelihood = 1/(high-low)^n, so the smaller the range, the higher the likelihood
+        # the MLE is
+        low = np.min(data)
+        high = np.max(data)
+
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.randint.logpmf(data, low, high))
+        )
+
+        # report results in the form of a dictionary
+        return {"l": low, "u": high, "AIC": aic}
+
 
 class Weibull(RVG):
     def __init__(self, a, scale=1, loc=0):
@@ -1015,3 +1055,23 @@ class Weibull(RVG):
         scale = mean/sp.special.gamma(1 + 1.0/c)
 
         return {"c": c, "scale": scale, "loc": fixed_location}
+
+    @staticmethod
+    def fit_ml(data, fixed_location=0):
+        """
+        :param data: (numpy.array) observations
+        :param fixed_location: location, 0 by default
+        :returns: dictionary with keys "c", "loc" and "scale"
+        """
+
+        # estimate the parameters of weibull
+        c, loc, scale = stat.weibull_min.fit(data, floc=fixed_location)
+
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.weibull_min.logpdf(data, c, loc, scale))
+        )
+
+        # report results in the form of a dictionary
+        return {"c": c, "loc": loc, "scale": scale, "AIC": aic}

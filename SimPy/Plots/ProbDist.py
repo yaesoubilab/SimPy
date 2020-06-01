@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stat
 import SimPy.Plots.FigSupport as Fig
-import SimPy.RandomVariantGenerators as RVGs
+import SimPy.RandomVariateGenerators as RVGs
 
 
 COLOR_CONTINUOUS_FIT = 'r'
@@ -403,29 +403,6 @@ def plot_poisson_fit(data, fit_results, title=None, x_label=None, x_range=None, 
         fig_size=fig_size, filename=filename)
 
 
-def plot_uniform_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
-                     fig_size=(6, 5), bin_width=None, filename=None):
-    """
-    :param data: (numpy.array) observations
-    :param fit_results: dictionary with keys "scale" and "loc"
-    :param title: title of the figure
-    :param x_label: label to show on the x-axis of the histogram
-    :param x_range: (tuple) x range
-    :param y_range: (tuple) y range
-    :param fig_size: int, specify the figure size
-    :param bin_width: bin width
-    :param filename: filename to save the figure as
-    """
-
-    plot_fit_continuous(
-        data=data,
-        dist=stat.uniform(scale=fit_results['scale'], loc=fit_results['loc']),
-        label='Uniform',
-        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
-        fig_size=fig_size, filename=filename
-    )
-
-
 def plot_triangular_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
                         fig_size=(6, 5), bin_width=None, filename=None):
     """
@@ -447,6 +424,30 @@ def plot_triangular_fit(data, fit_results, title=None, x_label=None, x_range=Non
         bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
         fig_size=fig_size, filename=filename
     )
+
+
+def plot_uniform_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
+                     fig_size=(6, 5), bin_width=None, filename=None):
+    """
+    :param data: (numpy.array) observations
+    :param fit_results: dictionary with keys "loc", "scale",
+    :param title: title of the figure
+    :param x_label: label to show on the x-axis of the histogram
+    :param x_range: (tuple) x range
+    :param y_range: (tuple) y range
+    :param fig_size: int, specify the figure size
+    :param bin_width: bin width
+    :param filename: filename to save the figure as
+    """
+
+    plot_fit_continuous(
+        data=data,
+        dist=stat.uniform(scale=fit_results['scale'], loc=fit_results['loc']),
+        label='Uniform',
+        bin_width=bin_width, title=title, x_label=x_label, x_range=x_range, y_range=y_range,
+        fig_size=fig_size, filename=filename
+    )
+
 
 def plot_uniform_discrete_fit(data, fit_results, title=None, x_label=None, x_range=None, y_range=None,
                               fig_size=(6, 5), bin_width=1, filename=None):

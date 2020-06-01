@@ -1,6 +1,6 @@
 import numpy as np
 
-import SimPy.RandomVariantGenerators as RVG
+import SimPy.RandomVariateGenerators as RVG
 
 
 class MarkovJumpProcess:
