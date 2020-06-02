@@ -170,7 +170,7 @@ class BetaBinomial(RVG):
         return {"a": a, "b": b, "n": n, "loc": fixed_location}
 
     @staticmethod
-    def get_ln_pmf(a, b, n, k):
+    def ln_pmf(a, b, n, k):
         part_1 = sp.special.comb(n, k)
         part_2 = sp.special.betaln(k + a, n - k + b)
         part_3 = sp.special.betaln(a, b)
@@ -179,16 +179,15 @@ class BetaBinomial(RVG):
 
     # define log_likelihood function: sum of log(pmf) for each data point
     @staticmethod
-    def get_ln_l(a_b_n, data):
-        a, b, n = a_b_n[0], a_b_n[1], a_b_n[2]
+    def ln_likelihood(a, b, n, data):
         n = int(np.round(n, 0))
         result = 0
         for i in range(len(data)):
-            result += BetaBinomial.get_ln_pmf(a=a, b=b, n=n, k=data[i])
+            result += BetaBinomial.ln_pmf(a=a, b=b, n=n, k=data[i])
         return result
 
     @staticmethod
-    def get_fit_ml(data, fixed_location=0):
+    def fit_ml(data, fixed_location=0):
         """
         :param data: (numpy.array) observations
         :param fixed_location: fixed location
@@ -198,7 +197,7 @@ class BetaBinomial(RVG):
         data = 1.0 * (data - fixed_location)
 
         def neg_ln_l(a_b_n):
-            return -BetaBinomial.get_ln_l(a_b_n, data)
+            return -BetaBinomial.ln_likelihood(a=a_b_n[0], b=a_b_n[1], n=a_b_n[2], data=data)
 
         # estimate the parameters by minimize negative log-likelihood
         # initialize parameters
@@ -213,7 +212,8 @@ class BetaBinomial(RVG):
         # calculate AIC
         aic = AIC(
             k=3,
-            log_likelihood=BetaBinomial.get_ln_l([fitted_a_b_n[0], fitted_a_b_n[1], fitted_a_b_n[2]], data)
+            log_likelihood=BetaBinomial.ln_likelihood(
+                a=fitted_a_b_n[0], b=fitted_a_b_n[1], n=fitted_a_b_n[2], data=data)
         )
 
         # report results in the form of a dictionary
@@ -485,7 +485,7 @@ class GammaPoisson(RVG):
         return k - 1
 
     @staticmethod
-    def get_ln_pmf(a, gamma_scale, loc, k):
+    def ln_pmf(a, gamma_scale, loc, k):
         # https: // en.wikipedia.org / wiki / Negative_binomial_distribution  # Gamma%E2%80%93Poisson_mixture
         # with r= a and p = scale/(scale + 1)
 
@@ -500,10 +500,10 @@ class GammaPoisson(RVG):
 
     # define log_likelihood function: sum of log(pmf) for each data point
     @staticmethod
-    def get_ln_l(a, scale, loc, data):
+    def ln_likelihood(a, scale, loc, data):
         result = 0
         for k in data:
-            v = GammaPoisson.get_ln_pmf(a=a, gamma_scale=scale, loc=loc, k=k)
+            v = GammaPoisson.ln_pmf(a=a, gamma_scale=scale, loc=loc, k=k)
             result += v
         return result
 
@@ -538,7 +538,7 @@ class GammaPoisson(RVG):
 
         # define negative log-likelihood, the target function to minimize
         def neg_ln_l(a_scale):
-            return -GammaPoisson.get_ln_l(a=a_scale[0], scale=a_scale[1], loc=0, data=data)
+            return -GammaPoisson.ln_likelihood(a=a_scale[0], scale=a_scale[1], loc=0, data=data)
 
         # estimate the parameters by minimize negative log-likelihood
         # initialize parameters
@@ -552,7 +552,7 @@ class GammaPoisson(RVG):
         # calculate AIC (note that the data has already been shifted by loc)
         aic = AIC(
             k=2,
-            log_likelihood=GammaPoisson.get_ln_l(
+            log_likelihood=GammaPoisson.ln_likelihood(
                 a=fitted_a_scale[0], scale=fitted_a_scale[1], loc=0, data=data)
         )
         return {"a": fitted_a_scale[0], "gamma_scale": fitted_a_scale[1], "loc": fixed_location, "AIC": aic}
@@ -776,6 +776,13 @@ class NegativeBinomial(RVG):
         return rng.negative_binomial(self.n, self.p) + self.loc
 
     @staticmethod
+    def ln_likelihood(n, p, data):
+        result = 0
+        for d in data:
+            result += stat.nbinom.logpmf(d, n, p)
+        return result
+
+    @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
         """
         :param mean: sample mean of an observation set
@@ -800,7 +807,32 @@ class NegativeBinomial(RVG):
         :param fixed_location: location, 0 by default
         :returns: dictionary with keys "n", "p" and "loc"
         """
-        #TODO: complete
+
+        ## not working
+        return
+
+        data = data - fixed_location
+
+        def neg_ln_l(n_p):
+            return -NegativeBinomial.ln_likelihood(n=n_p[0], p=n_p[1], data=data)
+
+        n_p_loc = NegativeBinomial.fit_mm(mean=np.mean(data), st_dev=np.std(data), fixed_location=0)
+        n_p = [n_p_loc['n'], n_p_loc['p']]
+        M = 2*np.max(data)
+
+        # call Scipy optimizer to minimize the target function
+        # with bounds for p [0,1] and n [0,M]
+        fitted_n_p, value, iter, imode, smode = fmin_slsqp(neg_ln_l, n_p,
+                                                           #bounds=[(0.0, M), (0, 1)],
+                                                           disp=False, full_output=True)
+
+        # calculate AIC
+        aic = AIC(
+            k=2,
+            log_likelihood=np.sum(stat.nbinom.logpmf(data, fitted_n_p[0], fitted_n_p[1], 0)))
+
+        # report results in the form of a dictionary
+        return {"n": fitted_n_p[0], "p": fitted_n_p[1], "loc": fixed_location, "AIC": aic}
 
 
 class NonHomogeneousExponential(RVG):

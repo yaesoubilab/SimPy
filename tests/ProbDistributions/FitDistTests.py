@@ -29,7 +29,7 @@ def test_fitting_beta_binomial():
     dict_mm_results = RVGs.BetaBinomial.fit_mm(
         mean=np.mean(data), st_dev=np.std(data), n=20, fixed_location=1)
     # maximum likelihood
-    dict_ml_results = RVGs.BetaBinomial.get_fit_ml(data=data, fixed_location=1)
+    dict_ml_results = RVGs.BetaBinomial.fit_ml(data=data, fixed_location=1)
 
     print("Fitting Beta-Binomial with n=100, a=2, b=3, loc=1, scale=2:")
     print("  MM:", dict_mm_results)
@@ -205,12 +205,16 @@ def test_fitting_negbinomial():
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.NegativeBinomial.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_location=1)
+    dict_ml_results = RVGs.NegativeBinomial.fit_ml(
+        data=data, fixed_location=1)
 
     print("Fitting NegBinomial with n=10, p=0.2, loc=1")
     print("  MM:", dict_mm_results)
+    print("  ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_negbinomial_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
+    Plot.plot_negbinomial_fit(data=data, fit_results=dict_ml_results, title='Maximum Likelihood')
 
 
 def test_fitting_poisson():
