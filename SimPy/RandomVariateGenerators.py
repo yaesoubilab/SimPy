@@ -36,7 +36,12 @@ class RVG:
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
     def get_mean_st_dev(self):
+        """ :returns: (tuple) of mean and standard deviation """
         pass
+
+    def get_percentile_interval(self, alpha=0.05):
+        """ :returns: [l, u], where l and u are the lower and upper critical values
+                of the distribution"""
 
 
 class Constant (RVG):
@@ -399,6 +404,11 @@ class Gamma(RVG):
 
     def get_mean_st_dev(self):
         return self.a*self.scale + self.loc, math.sqrt(self.a*self.scale**2)
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return [stat.gamma.ppf(q=alpha/2, a=self.a, loc=self.loc, scale=self.scale),
+                stat.gamma.ppf(q=1-alpha/2, a=self.a, loc=self.loc, scale=self.scale)]
 
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):

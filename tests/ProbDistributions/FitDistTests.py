@@ -90,16 +90,21 @@ def test_fitting_exponential():
 
 
 def test_fitting_gamma():
+
+    print('\nTesting Gamma with a=10, scale=1, loc=2:')
     dist = RVGs.Gamma(a=10, scale=1, loc=2)
+    print('  mean, st dev: ', dist.get_mean_st_dev())
+    print('  percentile interval: ', dist.get_percentile_interval(alpha=0.05))
+
     data = np.array(get_samples(dist, np.random))
     dict_mm_results = RVGs.Gamma.fit_mm(
         mean=np.average(data), st_dev=np.std(data), fixed_location=2)
     dict_ml_results = RVGs.Gamma.fit_ml(
         data=data, fixed_location=2)
 
-    print("Fitting Gamma with a=10, scale=1, loc=2")
-    print("  MM:", dict_mm_results)
-    print("  ML:", dict_ml_results)
+    print("  Fit")
+    print("    MM:", dict_mm_results)
+    print("    ML:", dict_ml_results)
 
     # plot the fitted distributions
     Plot.plot_gamma_fit(data=data, fit_results=dict_mm_results, title='Method of Moment')
