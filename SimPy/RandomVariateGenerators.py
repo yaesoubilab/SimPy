@@ -43,6 +43,17 @@ class RVG:
         """ :returns: [l, u], where l and u are the lower and upper critical values
                 of the distribution"""
 
+    @staticmethod
+    def _get_percentile_interval(alpha, dist, params):
+        """
+        :param alpha: confidence level
+        :param dist: a distribution with .ppf method
+        :param params: parameters of the distribution
+        :return:
+        """
+        return [dist.ppf(alpha / 2, *params),
+                dist.ppf(1 - alpha / 2, *params)]
+
 
 class Constant (RVG):
     def __init__(self, value):
@@ -85,6 +96,12 @@ class Beta(RVG):
 
     def sample(self, rng, arg=None):
         return rng.beta(self.a, self.b) * self.scale + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.beta,
+            params=[self.a, self.b, self.loc, self.scale])
 
     @staticmethod
     def fit_mm(mean, st_dev, minimum=0, maximum=1):
@@ -150,6 +167,12 @@ class BetaBinomial(RVG):
         sample_n = rng.binomial(self.n, sample_p)
 
         return sample_n + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.betabinom,
+            params=[self.n, self.a, self.b, self.loc])
 
     @staticmethod
     def fit_mm(mean, st_dev, n, fixed_location=0):
@@ -238,6 +261,12 @@ class Binomial(RVG):
 
     def sample(self, rng, arg=None):
         return rng.binomial(self.n, self.p) + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.binom,
+            params=[self.n, self.p, self.loc])
 
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
@@ -357,6 +386,12 @@ class Exponential(RVG):
     def sample(self, rng, arg=None):
         return rng.exponential(scale=self.scale) + self.loc
 
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.expon,
+            params=[self.loc, self.scale])
+
     @staticmethod
     def fit_mm(mean, fixed_location=0):
         """
@@ -407,8 +442,8 @@ class Gamma(RVG):
 
     def get_percentile_interval(self, alpha=0.05):
 
-        return [stat.gamma.ppf(q=alpha/2, a=self.a, loc=self.loc, scale=self.scale),
-                stat.gamma.ppf(q=1-alpha/2, a=self.a, loc=self.loc, scale=self.scale)]
+        return self._get_percentile_interval(alpha=alpha, dist=stat.gamma,
+                                             params=[self.a, self.loc, self.scale])
 
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
@@ -463,6 +498,10 @@ class GammaPoisson(RVG):
         sample_rate = Gamma(a=self.a, scale=self.gamma_scale).sample(rng)
         sample_poisson = Poisson(mu=sample_rate)
         return sample_poisson.sample(rng) + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return [self.ppf(q=alpha/2), self.ppf(q=1-alpha/2)]
 
     def pmf(self, k):
         # https: // en.wikipedia.org / wiki / Negative_binomial_distribution  # Gamma%E2%80%93Poisson_mixture
@@ -581,6 +620,12 @@ class Geometric(RVG):
     def sample(self, rng, arg=None):
         return rng.geometric(self.p) + self.loc
 
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.geom,
+            params=[self.p, self.loc])
+
     @staticmethod
     def fit_mm(mean, fixed_location=0):
         """
@@ -630,6 +675,12 @@ class JohnsonSb(RVG):
     def sample(self, rng, arg=None):
         return stat.johnsonsb.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.johnsonsb,
+            params=[self.a, self.b, self.loc, self.scale])
+
     @staticmethod
     def fit_ml(data, fixed_location=0):
         """
@@ -666,6 +717,12 @@ class JohnsonSu(RVG):
     def sample(self, rng, arg=None):
         return stat.johnsonsu.rvs(self.a, self.b, self.loc, self.scale, random_state=rng)
 
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.johnsonsu,
+            params=[self.a, self.b, self.loc, self.scale])
+
     @staticmethod
     def fit_ml(data, fixed_location=0):
         """
@@ -699,6 +756,12 @@ class LogNormal(RVG):
 
     def sample(self, rng, arg=None):
         return rng.lognormal(mean=self.mu, sigma=self.sigma) + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.lognorm,
+            params=[self.sigma, self.loc, np.exp(self.mu)])
 
     def pdf(self, x):
         return np.exp(-(np.log(x) - self.mu)**2 / (2 * self.sigma**2)) / (x * self.sigma * np.sqrt(2 * np.pi))
@@ -784,6 +847,12 @@ class NegativeBinomial(RVG):
         (the number of failure before a specified number of successes, n, occurs.)
         """
         return rng.negative_binomial(self.n, self.p) + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.nbinom,
+            params=[self.n, self.p, self.loc])
 
     @staticmethod
     def ln_likelihood(n, p, data):
@@ -899,6 +968,12 @@ class Normal(RVG):
     def sample(self, rng, arg=None):
         return rng.normal(self.loc, self.scale)
 
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.norm,
+            params=[self.loc, self.scale])
+
     @staticmethod
     def fit_mm(mean, st_dev):
         """
@@ -938,6 +1013,12 @@ class Poisson(RVG):
 
     def sample(self, rng, arg=None):
         return rng.poisson(self.mu) + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.poisson,
+            params=[self.mu, self.loc])
 
     @staticmethod
     def fit_mm(mean, fixed_location=0):
@@ -988,6 +1069,12 @@ class Triangular(RVG):
     def sample(self, rng, arg=None):
         return stat.triang.rvs(self.c, self.loc, self.scale, random_state=rng)
 
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.triang,
+            params=[self.c, self.loc, self.scale])
+
     @staticmethod
     def fit_ml(data, fixed_location=0):
         """
@@ -1021,6 +1108,12 @@ class Uniform(RVG):
 
     def sample(self, rng, arg=None):
         return stat.uniform.rvs(self.loc, self.scale, random_state=rng)
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.uniform,
+            params=[self.loc, self.scale])
 
     @staticmethod
     def fit_mm(mean, st_dev):
@@ -1073,6 +1166,12 @@ class UniformDiscrete(RVG):
     def sample(self, rng, arg=None):
         return rng.randint(low=self.l, high=self.u + 1)
 
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.randint,
+            params=[self.l, self.u])
+
     @staticmethod
     def fit_mm(mean, st_dev):
         """
@@ -1121,6 +1220,12 @@ class Weibull(RVG):
 
     def sample(self, rng, arg=None):
         return rng.weibull(self.a) * self.scale + self.loc
+
+    def get_percentile_interval(self, alpha=0.05):
+
+        return self._get_percentile_interval(
+            alpha=alpha, dist=stat.weibull_min,
+            params=[self.a, self.loc, self.scale])
 
     @staticmethod
     def fit_mm(mean, st_dev, fixed_location=0):
