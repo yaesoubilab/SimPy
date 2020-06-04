@@ -1,4 +1,4 @@
-import math
+import numpy as np
 import SimPy.RandomVariateGenerators as RVGs
 from SimPy.DiscreteEventSim import *
 from SimPy.Support.EpiModelSupport import *
@@ -48,7 +48,7 @@ class Compartment(_Compartment):
         sum_rates = sum(rates_out)
 
         if sum_rates > 0:
-            probs_out.append(math.exp(-sum_rates*delta_t))
+            probs_out.append(np.exp(-sum_rates*delta_t))
 
             for e in self.events:
                 probs_out.append((1-probs_out[0]) * e.rate/sum_rates)
