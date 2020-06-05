@@ -13,7 +13,7 @@ import matplotlib.patches as patches
 
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
-LEGEND_FONT_SIZE = 7.5
+LEGEND_FONT_SIZE = 7
 
 
 def pv_single_payment(payment, discount_rate, discount_period, discount_continuously=False):
@@ -1075,7 +1075,7 @@ class CBA(_EconEval):
                                  health_measure=self._healthMeasure)
 
             # make a NMB curve
-            self.inmbCurves.append(INMBCurve(label=s.name,
+            self.inmbCurves.append(INMBCurve(label=s.label,
                                              color=s.color,
                                              wtp_values=self.wtp_values,
                                              inmb_stat=inmb,
