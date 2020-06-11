@@ -286,18 +286,26 @@ class _EconEval:
 
     @staticmethod
     def _format_ax(ax,
-                   y_range,
-                   min_x, max_x, delta_x=None,
-                   delta_y=None, if_y_axis_prob=True,
+                   x_range=None, delta_x=None,
+                   y_range=None, delta_y=None, if_y_axis_prob=True,
                    if_format_y_numbers=True, y_axis_decimal=1):
+
+        # the range of x and y-axis are set so that we can get the
+        # tick values and label
+        if y_range is None and if_y_axis_prob:
+            ax.set_ylim((-0.01, 1.01))
+        if y_range:
+            ax.set_ylim(y_range)
+        if x_range:
+            ax.set_xlim(x_range)
 
         # get x ticks
         if delta_x is None:
             vals_x = ax.get_xticks()
         else:
             vals_x = []
-            x = min_x
-            while x <= max_x:
+            x = x_range[0]
+            while x <= x_range[1]:
                 vals_x.append(x)
                 x += delta_x
 
@@ -315,21 +323,21 @@ class _EconEval:
         ax.set_xticks(vals_x)
         ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
 
-        d = 2 * (max_x - min_x) / 200
-        ax.set_xlim([min_x - d, max_x + d])
+        d = 2 * (x_range[1] - x_range[0]) / 200
+        ax.set_xlim([x_range[0] - d, x_range[1] + d])
 
         # format y-axis
-        if y_range is None and if_y_axis_prob:
-            ax.set_ylim((-0.01, 1.01))
-        if y_range:
-            ax.set_ylim(y_range)
-
         if y_range is None:
             ax.set_yticks(vals_y)
         if if_y_axis_prob:
             ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
         elif if_format_y_numbers:
             ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=y_axis_decimal) for x in vals_y])
+
+        if y_range is None and if_y_axis_prob:
+            ax.set_ylim((-0.01, 1.01))
+        if y_range:
+            ax.set_ylim(y_range)
 
         if not if_y_axis_prob:
             ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
@@ -371,7 +379,7 @@ class _EconEval:
 
         # do the other formatting
         self._format_ax(ax=ax, y_range=y_range,
-                        min_x=x_values[0], max_x=x_values[-1], delta_x=delta_x,
+                        x_range=[x_values[0], x_values[-1]], delta_x=delta_x,
                         if_y_axis_prob=if_y_axis_prob,
                         if_format_y_numbers=if_format_y_numbers,
                         y_axis_decimal=y_axis_decimal)
@@ -1444,8 +1452,7 @@ class CBA(_EconEval):
             ax.plot(curve.optXs, curve.optYs, c=curve.color, linewidth=4)
 
         self._format_ax(ax=ax, y_range=y_range,
-                        min_x=self.wtp_values[0],
-                        max_x=self.wtp_values[-1],
+                        x_range=[self.wtp_values[0], self.wtp_values[-1]],
                         delta_x=wtp_delta,
                         if_y_axis_prob=True)
 
