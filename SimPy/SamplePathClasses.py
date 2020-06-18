@@ -40,14 +40,16 @@ class _SamplePath:
 
 class PrevalenceSamplePath(_SamplePath):
 
-    def __init__(self, name, initial_size=0, sim_rep=0, collect_stat=True, warm_up_period=0):
+    def __init__(self, name, initial_size=0, sim_rep=0, collect_stat=True, ave_method='step', warm_up_period=0):
         """
         :param name: name of this sample path
         :param initial_size: value of the sample path at simulation time 0
         :param sim_rep: (int) simulation replication of this sample path
-
         :param collect_stat: set to True to collect statistics
                         on average, max, min, stDev, etc for this sample path
+        :param ave_method: to calculate the area under the curve,
+            'step' assumes that changes occurred at the time where observations are recorded,
+            'linear' assumes uses trapezoid approach to calculate the area under the curve
         :param warm_up_period: warm up period (observations before this time will not be used to calculate statistics)
         """
         _SamplePath.__init__(self, name=name, sim_rep=sim_rep,
@@ -57,7 +59,7 @@ class PrevalenceSamplePath(_SamplePath):
         self._values = [initial_size]
         # statistics on this prevalence sample path
         if collect_stat:
-            self.stat = Stat.ContinuousTimeStat(name=name, initial_time=warm_up_period)
+            self.stat = Stat.ContinuousTimeStat(name=name, initial_time=warm_up_period, ave_method=ave_method)
 
     def record_increment(self, time, increment):
         """

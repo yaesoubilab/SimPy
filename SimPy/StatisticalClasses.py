@@ -290,12 +290,20 @@ class DiscreteTimeStat(_Statistics):
 
 class ContinuousTimeStat(_Statistics):
     """ to calculate statistics on the area-under-the-curve for observations accumulating over time """
-    def __init__(self, name,  initial_time):
+    def __init__(self, name,  initial_time, ave_method='step'):
         """
         :param initial_time: it is assumed that the value of this sample path is zero at the initial time
+        :param ave_method: to calculate the area under the curve,
+            'step' assumes that changes occurred at the time where observations are recorded,
+            'linear' assumes uses trapezoid approach to calculate the area under the curve
+                    (v2 + v2 ) * deltaT / 2
         """
         _Statistics.__init__(self, name)
         self._initialTime = initial_time
+
+        if ave_method not in ('step', 'linear'):
+            raise ValueError('ave_method should be either step or linear.')
+        self._aveMethod = ave_method
         self._area = 0
         self._areaSquared = 0
         self._lastObsTime = initial_time
@@ -322,8 +330,13 @@ class ContinuousTimeStat(_Statistics):
             self._min = self._lastObsValue
 
         self._n += 1
-        self._area += self._lastObsValue * (time - self._lastObsTime)
-        self._areaSquared += (self._lastObsValue ** 2) * (time - self._lastObsTime)
+        if self._aveMethod == 'step':
+            self._area += self._lastObsValue * (time - self._lastObsTime)
+            self._areaSquared += (self._lastObsValue ** 2) * (time - self._lastObsTime)
+        else:
+            self._area += (self._lastObsValue + increment/2) * (time - self._lastObsTime)
+            self._areaSquared += ((self._lastObsValue + increment/2) ** 2) * (time - self._lastObsTime)
+
         self._lastObsTime = time
         self._lastObsValue += increment
 
