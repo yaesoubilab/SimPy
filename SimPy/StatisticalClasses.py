@@ -8,6 +8,18 @@ import SimPy.FormatFunctions as F
 NUM_BOOTSTRAP_SAMPLES = 1000
 
 
+def get_sterr_from_half_length(confidence_interval, n, alpha=0.05):
+    """
+    :param confidence_interval: a t-based confidence interval
+    :param n: number of observations
+    :param alpha: significance level
+    :return: the standard err (st_dev / sqrt(n))
+    """
+    half_length = (confidence_interval[1] - confidence_interval[0]) / 2
+    t = stat.t.ppf(1 - alpha / 2, n - 1)
+    return half_length / t
+
+
 class _Statistics(object):
     def __init__(self, name):
         """ abstract method to be overridden in derived classes"""
