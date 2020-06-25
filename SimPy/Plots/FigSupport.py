@@ -15,7 +15,9 @@ def output_figure(plt, filename=None, dpi=300):
         try:
             plt.savefig(proper_file_name(filename), dpi=dpi)
         except:
-            raise ValueError("Error in saving figure '{}'. Check the filename and the path.".format(filename))
+            raise ValueError("Error in saving figure '{}'. "
+                             "Ensure that the filename is valid and "
+                             "that the folder to save the figure in exists.".format(filename))
 
 
 def calculate_ticks(l, u, delta):

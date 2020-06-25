@@ -126,7 +126,7 @@ def plot_sets_of_sample_paths(sets_of_sample_paths,
     """
 
     if len(sets_of_sample_paths) == 1:
-        raise ValueError('Only one set of sample paths is provided. Use graph_sample_paths instead.')
+        raise ValueError('Only one set of sample paths is provided. Use plot_sample_paths instead.')
 
     fig, ax = plt.subplots(figsize=figure_size)
     ax.set_title(title)  # title

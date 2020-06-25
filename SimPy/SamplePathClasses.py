@@ -1,5 +1,4 @@
 import SimPy.StatisticalClasses as Stat
-import SimPy.DataFrames as DF
 
 
 class _SamplePath:
