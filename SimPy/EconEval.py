@@ -39,7 +39,7 @@ def pv_single_payment(payment, discount_rate, discount_period, discount_continuo
     if discount_continuously:
         return payment * np.exp(-discount_rate * discount_period)
     else:
-        return payment * pow(1 + discount_rate, -discount_period)
+        return payment * np.power(1 + discount_rate, -discount_period)
 
 
 def pv_continuous_payment(payment, discount_rate, discount_period):
@@ -78,7 +78,7 @@ def equivalent_annual_value(present_value, discount_rate, discount_period):
         raise ValueError("discount_period cannot be less than 0.")
 
     # calculate the equivalent annual value
-    return discount_rate*present_value/(1-pow(1+discount_rate, -discount_period))
+    return discount_rate*present_value/(1-np.power(1+discount_rate, -discount_period))
 
 
 class Strategy:
