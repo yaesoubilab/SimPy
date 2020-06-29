@@ -19,13 +19,22 @@ class Constant(_Parameter):
         pass
 
 
+class Inverse(_Parameter):
+    def __init__(self, par, id=0):
+
+        _Parameter.__init__(self, id=id)
+        self.par = par
+
+    def sample(self, rng=None, time=None):
+        self.value = 1/self.par.value
+
+
 class Division(_Parameter):
-    def __init__(self, numerator, denominator, id=0):
+    def __init__(self, par_numerator, par_denominator, id=0):
         _Parameter.__init__(self, id=id)
 
-        self.numerator = numerator
-        self.denominator = denominator
-        self.value = numerator.value/denominator.value
+        self.numerator = par_numerator
+        self.denominator = par_denominator
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
