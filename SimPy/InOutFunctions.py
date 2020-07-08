@@ -14,13 +14,16 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
             for example use 'Example' to create and save the csv file under the folder Example
     """
 
-    if directory != '':
-        # create the directory if does not exist
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
     # create a new file
     file_name = os.path.join(directory, file_name)
+
+    # get directory
+    directory_path = os.path.dirname(file_name)
+
+    # if directory != '':
+    # create the directory if does not exist
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
 
     with open(file_name, "w", newline='') as file:
         csv_file = csv.writer(file, delimiter=delimiter)
