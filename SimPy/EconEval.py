@@ -595,13 +595,14 @@ class CEA(_EconEval):
                        )
 
         # add the frontier line
-        ax.plot(frontier_d_effect, frontier_d_costs,
-                c='k',  # color
-                alpha=0.6,  # transparency
-                linewidth=2,  # line width
-                zorder=3,
-                label='Frontier', # label to show in the legend
-                )
+        if len(self.get_strategies_not_on_frontier()) > 1:
+            ax.plot(frontier_d_effect, frontier_d_costs,
+                    c='k',  # color
+                    alpha=0.6,  # transparency
+                    linewidth=2,  # line width
+                    zorder=3,
+                    label='Frontier', # label to show in the legend
+                    )
 
         if show_legend:
             ax.legend(fontsize='7.5')
@@ -682,6 +683,8 @@ class CEA(_EconEval):
                                 center_s=center_s, cloud_s=cloud_s, transparency=transparency,
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier,
                                 cost_digits=cost_digits, effect_digits=effect_digits)
+
+        fig.tight_layout()
 
         if file_name is None or file_name == '':
             fig.show()
