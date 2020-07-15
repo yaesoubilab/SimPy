@@ -22,8 +22,9 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
 
     # if directory != '':
     # create the directory if does not exist
-    if not os.path.exists(directory_path):
-        os.makedirs(directory_path)
+    if directory_path != '':
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
 
     with open(file_name, "w", newline='') as file:
         csv_file = csv.writer(file, delimiter=delimiter)
