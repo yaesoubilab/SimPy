@@ -163,9 +163,11 @@ def add_sample_path_to_ax(sample_path, ax, color_code=None, legend=None, transpa
 
     # plot the sample path
     if connect == 'step':
-        ax.step(x=x_values, y=y_values, where='post', color=color_code, label=legend, alpha=transparency)
+        ax.step(x=x_values, y=y_values, where='post', color=color_code,
+                linewidth=0.75, label=legend, alpha=transparency)
     else:
-        ax.plot(x_values, y_values, color=color_code, label=legend, alpha=transparency)
+        ax.plot(x_values, y_values, color=color_code,
+                linewidth=0.75, label=legend, alpha=transparency)
 
     # add legend if provided
     if legend is not None:
