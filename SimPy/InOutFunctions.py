@@ -20,7 +20,6 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
     # get directory
     directory_path = os.path.dirname(file_name)
 
-    # if directory != '':
     # create the directory if does not exist
     if directory_path != '':
         if not os.path.exists(directory_path):
@@ -33,6 +32,20 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
             csv_file.writerow(row)
 
         file.close()
+
+
+def write_columns_to_csv(cols, file_name='csvfile.csv', delimiter=',', directory=''):
+    """ write a list of columns to a csv file
+        :param cols: list of columns to be imported to the csv file
+        :param file_name: the file name to be given to the csv file
+        :param delimiter: to separate by comma, use ',' and by tab, use '\t'
+        :param directory: directory (relative to the current root) where the files should be located
+                for example use 'Example' to create and save the csv file under the folder Example
+        """
+    write_csv(
+        rows=_cols_to_rows(cols=cols),
+        file_name=file_name, delimiter=delimiter, directory=directory
+    )
 
 
 def read_csv_rows(file_name, if_ignore_first_row, delimiter=',', if_convert_float=False):
@@ -146,6 +159,28 @@ def _rows_to_cols(rows, n_cols):
             cols[j].append(row[j])
 
     return cols
+
+
+def _cols_to_rows(cols):
+
+    # find the size of the largest column
+    size_of_largest_column = 0
+    for col in cols:
+        size = len(col)
+        if size > size_of_largest_column:
+            size_of_largest_column = size
+
+    # initialize rows
+    rows = []
+    for i in range(0, size_of_largest_column):
+        rows.append([])
+
+    # populate rows
+    for col in cols:
+        for i, val in enumerate(col):
+            rows[i].append(val)
+
+    return rows
 
 
 def _convert_to_float(list_of_objs):
