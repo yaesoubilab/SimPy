@@ -164,6 +164,25 @@ class _Statistics(object):
                                           deci=deci,
                                           format=form)
 
+    def get_formatted_interval(self, interval_type='c',
+                                   alpha=0.05, deci=0, form=None, multiplier=1):
+        """
+        :param interval_type: (string) 'c' for t-based confidence interval,
+                                       'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
+        :param alpha: significance level
+        :param deci: digits to round the numbers to
+        :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
+        :param multiplier: to multiply the estimate and the interval by the provided value
+        :return: (string) interval formatted as specified
+        """
+
+        interval = self.get_interval(interval_type=interval_type, alpha=alpha, multiplier=multiplier)
+
+        return F.format_interval(interval=interval,
+                                 deci=deci,
+                                 format=form)
+
 
 class SummaryStat(_Statistics):
     def __init__(self, name, data):
