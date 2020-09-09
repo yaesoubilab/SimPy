@@ -5,13 +5,14 @@ import numpy as numpy
 from collections import OrderedDict
 
 
-def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
+def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete_existing_files=False):
     """ write a list to a csv file
     :param rows: list of lists to be imported to the csv file
     :param file_name: the file name to be given to the csv file
     :param delimiter: to separate by comma, use ',' and by tab, use '\t'
     :param directory: directory (relative to the current root) where the files should be located
             for example use 'Example' to create and save the csv file under the folder Example
+    :param delete_existing_files: set to True to delete the existing trace files in the specified directory
     """
 
     # create a new file
@@ -19,6 +20,10 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
 
     # get directory
     directory_path = os.path.dirname(file_name)
+
+    # delete existing files
+    if delete_existing_files:
+        delete_files(extension='.csv', path=os.getcwd() + '/' + directory)
 
     # create the directory if does not exist
     if directory_path != '':
@@ -34,17 +39,18 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory=''):
         file.close()
 
 
-def write_columns_to_csv(cols, file_name='csvfile.csv', delimiter=',', directory=''):
+def write_columns_to_csv(cols, file_name='csvfile.csv', delimiter=',', directory='', delete_existing_files=False):
     """ write a list of columns to a csv file
         :param cols: list of columns to be imported to the csv file
         :param file_name: the file name to be given to the csv file
         :param delimiter: to separate by comma, use ',' and by tab, use '\t'
         :param directory: directory (relative to the current root) where the files should be located
                 for example use 'Example' to create and save the csv file under the folder Example
+        :param delete_existing_files: set to True to delete the existing trace files in the specified directory
         """
     write_csv(
         rows=_cols_to_rows(cols=cols),
-        file_name=file_name, delimiter=delimiter, directory=directory
+        file_name=file_name, delimiter=delimiter, directory=directory, delete_existing_files=delete_existing_files
     )
 
 
