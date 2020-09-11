@@ -781,7 +781,7 @@ class RelativeDifferencePaired(_RelativeDifference):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
-        :param order: set to 0 to calculate (X-Y_ref)/Y and to 1 to calculate (Y_ref-X)/Y_ref
+        :param order: set to 0 to calculate (X-Y_ref)/Y_ref and to 1 to calculate (Y_ref-X)/Y_ref
         """
         _RelativeDifference.__init__(self, name, x, y_ref, order)
 

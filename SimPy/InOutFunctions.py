@@ -130,9 +130,12 @@ def delete_files(extension='.txt', path='..'):
     (the folder should already exist) use os.getcwd() to get the working directory
     """
 
-    for f in os.listdir(path):
-        if f.endswith(extension):
-            os.remove(os.path.join(path, f))
+    try:
+        for f in os.listdir(path):
+            if f.endswith(extension):
+                os.remove(os.path.join(path, f))
+    except FileNotFoundError:
+        pass
 
 
 def _csv_file_to_rows(csv_file, if_del_first_row):

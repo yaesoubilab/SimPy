@@ -24,6 +24,7 @@ class Inverse(_Parameter):
 
         _Parameter.__init__(self, id=id)
         self.par = par
+        self.value = 1 / self.par.value
 
     def sample(self, rng=None, time=None):
         self.value = 1/self.par.value
@@ -35,6 +36,7 @@ class Division(_Parameter):
 
         self.numerator = par_numerator
         self.denominator = par_denominator
+        self.value = self.numerator.value / self.denominator.value
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
