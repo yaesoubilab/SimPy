@@ -1,5 +1,6 @@
 from SimPy.Support.MiscFunctions import *
 import SimPy.FormatFunctions as F
+import os
 
 
 def output_figure(plt, filename=None, dpi=300):
@@ -12,12 +13,20 @@ def output_figure(plt, filename=None, dpi=300):
     if filename is None:
         plt.show()
     else:
+        # get directory
+        directory_path = os.path.dirname(filename)
+
+        # create the directory if does not exist
+        if directory_path != '':
+            if not os.path.exists(directory_path):
+                os.makedirs(directory_path)
+
         try:
             plt.savefig(proper_file_name(filename), dpi=dpi)
-        except:
+        except ValueError:
             raise ValueError("Error in saving figure '{}'. "
                              "Ensure that the filename is valid and "
-                             "that the folder to save the figure in exists.".format(filename))
+                             "that the folder where the figure should be saved exists.".format(filename))
 
 
 def calculate_ticks(l, u, delta):
