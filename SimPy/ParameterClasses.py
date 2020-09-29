@@ -40,3 +40,19 @@ class Division(_Parameter):
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
+
+
+class Product(_Parameter):
+    def __init__(self, parameters, id=0):
+        _Parameter.__init__(self, id=id)
+
+        self.parameters = parameters
+
+        self.value = 1
+        for p in self.parameters:
+            self.value *= p.value
+
+    def sample(self, rng=None, time=None):
+        self.value = 1
+        for p in self.parameters:
+            self.value *= p.sample(rng, time)
