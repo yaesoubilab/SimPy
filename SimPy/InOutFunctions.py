@@ -54,6 +54,21 @@ def write_columns_to_csv(cols, file_name='csvfile.csv', delimiter=',', directory
     )
 
 
+def write_dictionary_to_csv(dictionary, file_name='csvfile.csv', directory=''):
+    """
+    :param dictionary: a dictionary of lists with keys to be csv headers
+    :param file_name: filename to save the dictionary as
+    """
+
+    cols = []
+    for key, values in dictionary.items():
+        col = [key]
+        col.extend(values)
+        cols.append(col)
+
+    write_columns_to_csv(cols=cols, file_name=file_name, directory=directory)
+
+
 def read_csv_rows(file_name, if_ignore_first_row, delimiter=',', if_convert_float=False):
     """ reads the rows of a csv file
     :param file_name: the csv file name
