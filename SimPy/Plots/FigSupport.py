@@ -13,6 +13,8 @@ def output_figure(plt, filename=None, dpi=300):
     if filename is None:
         plt.show()
     else:
+        if filename[0] == '/':
+            filename = filename[1:]
         # get directory
         directory_path = os.path.dirname(filename)
 
