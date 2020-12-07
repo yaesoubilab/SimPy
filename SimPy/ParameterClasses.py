@@ -1,3 +1,5 @@
+from math import log
+
 
 class _Parameter:
     
@@ -35,10 +37,41 @@ class Inverse(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
-        self.value = 1 / self.par.value
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1/self.par.value
+        return self.value
+
+
+class Logit(_Parameter):
+    def __init__(self, par, id=None, name=None):
+
+        _Parameter.__init__(self, id=id, name=name)
+        self.par = par
+        self.sample()
+
+    def sample(self, rng=None, time=None):
+        self.value = self.par.value/(1-self.par.value)
+        return self.value
+
+
+class RateToOccur(_Parameter):
+    """ determines rate of an event such that it occurs with certain probability during a certain period """
+    def __init__(self, par_probability, delta_t, id=None, name=None):
+        """
+        :param par_probability: parameter for the probability that the event occurs during deltaT
+        :param delta_t: time period over which the event should occur with the specified probability
+        """
+
+        _Parameter.__init__(self, id=id, name=name)
+        self.parProb = par_probability
+        self.deltaTInv = 1/delta_t
+        self.sample()
+
+    def sample(self, rng=None, time=None):
+        self.value = -log(1-self.parProb.value) * self.deltaTInv
+        return self.value
 
 
 class Division(_Parameter):
@@ -51,6 +84,7 @@ class Division(_Parameter):
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
+        return self.value
 
 
 class Product(_Parameter):
@@ -64,3 +98,5 @@ class Product(_Parameter):
         self.value = 1
         for p in self.parameters:
             self.value *= p.value
+
+        return self.value
