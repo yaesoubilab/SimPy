@@ -44,6 +44,17 @@ class Inverse(_Parameter):
         return self.value
 
 
+class OneMinus(_Parameter):
+    def __init__(self, par, id=None, name=None):
+
+        _Parameter.__init__(self, id=id, name=name)
+        self.par = par
+        self.sample()
+
+    def sample(self, rng=None, time=None):
+        self.value = 1-self.par.value
+        return self.value
+
 class Logit(_Parameter):
     def __init__(self, par, id=None, name=None):
 
