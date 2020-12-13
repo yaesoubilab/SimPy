@@ -194,6 +194,11 @@ def _cols_to_rows(cols):
         if size > size_of_largest_column:
             size_of_largest_column = size
 
+    # add None values to the columns smaller than the largest column
+    for col in cols:
+        if size_of_largest_column > len(col):
+            col.extend([None]*(size_of_largest_column-len(col)))
+
     # initialize rows
     rows = []
     for i in range(0, size_of_largest_column):
