@@ -28,6 +28,7 @@ class Uniform(_Parameter):
     def __init__(self, minimum=0, maximum=1, id=None, name=None):
         _Parameter.__init__(self, id=id, name=name)
         self.par = U(scale=maximum-minimum, loc=minimum)
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.sample(rng=rng)
@@ -40,6 +41,7 @@ class Beta(_Parameter):
         _Parameter.__init__(self, id=id, name=name)
         fit_results = B.fit_mm(mean=mean, st_dev=st_dev, minimum=minimum, maximum=maximum)
         self.par = B(a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'], scale=fit_results['scale'])
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.sample(rng=rng)
@@ -51,7 +53,7 @@ class Inverse(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
-        # self.sample()
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1/self.par.value
@@ -63,7 +65,7 @@ class OneMinus(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
-        # self.sample()
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1-self.par.value
@@ -75,7 +77,7 @@ class Logit(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
-        # self.sample()
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.value/(1-self.par.value)
@@ -93,7 +95,7 @@ class RateToOccur(_Parameter):
         _Parameter.__init__(self, id=id, name=name)
         self.parProb = par_probability
         self.deltaTInv = 1/delta_t
-        # self.sample()
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = -log(1-self.parProb.value) * self.deltaTInv
@@ -106,7 +108,7 @@ class Division(_Parameter):
         _Parameter.__init__(self, id=id, name=name)
         self.numerator = par_numerator
         self.denominator = par_denominator
-        # self.sample()
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
@@ -118,7 +120,7 @@ class Product(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.parameters = parameters
-        # self.sample()
+        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1
