@@ -1,4 +1,6 @@
 from math import log
+from SimPy.RandomVariateGenerators import Beta as B
+from SimPy.RandomVariateGenerators import Uniform as U
 
 
 class _Parameter:
@@ -19,17 +21,29 @@ class Constant(_Parameter):
         self.value = value
 
     def sample(self, rng=None, time=None):
-        pass
+        return self.value
 
 
-class BetaWithConfidenceInterval(_Parameter):
-    def __init__(self, mean, confidence_interval, confidence_level=0.05, id=None, name=None):
-
+class Uniform(_Parameter):
+    def __init__(self, minimum=0, maximum=1, id=None, name=None):
         _Parameter.__init__(self, id=id, name=name)
-        self.parameters = 0
+        self.par = U(scale=maximum-minimum, loc=minimum)
 
     def sample(self, rng=None, time=None):
-        pass
+        self.value = self.par.sample(rng=rng)
+        return self.value
+
+
+class Beta(_Parameter):
+    def __init__(self, mean, st_dev, minimum=0, maximum=1, id=None, name=None):
+
+        _Parameter.__init__(self, id=id, name=name)
+        fit_results = B.fit_mm(mean=mean, st_dev=st_dev, minimum=minimum, maximum=maximum)
+        self.par = B(a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'], scale=fit_results['scale'])
+
+    def sample(self, rng=None, time=None):
+        self.value = self.par.sample(rng=rng)
+        return self.value
 
 
 class Inverse(_Parameter):
@@ -37,7 +51,7 @@ class Inverse(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
-        self.sample()
+        # self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1/self.par.value
@@ -49,18 +63,19 @@ class OneMinus(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
-        self.sample()
+        # self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1-self.par.value
         return self.value
+
 
 class Logit(_Parameter):
     def __init__(self, par, id=None, name=None):
 
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
-        self.sample()
+        # self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.value/(1-self.par.value)
@@ -78,7 +93,7 @@ class RateToOccur(_Parameter):
         _Parameter.__init__(self, id=id, name=name)
         self.parProb = par_probability
         self.deltaTInv = 1/delta_t
-        self.sample()
+        # self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = -log(1-self.parProb.value) * self.deltaTInv
@@ -91,7 +106,7 @@ class Division(_Parameter):
         _Parameter.__init__(self, id=id, name=name)
         self.numerator = par_numerator
         self.denominator = par_denominator
-        self.sample()
+        # self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
@@ -103,7 +118,7 @@ class Product(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name)
         self.parameters = parameters
-        self.sample()
+        # self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1
