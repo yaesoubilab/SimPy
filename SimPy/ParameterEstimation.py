@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
 from scipy.stats import pearsonr
+from numpy.random import choice
 
 
 # list of columns in the parameter csv file that are not considered a parameter
@@ -28,6 +29,42 @@ class ColumnsPriorDistCSV(Enum):
     DECI = 7
 
 
+class ParameterSampler:
+    # to sample parameter values according to their likelihood weights
+    def __init__(self, csv_file_name):
+
+        self.rowsOfParameters = IO.read_csv_rows(file_name=csv_file_name,
+                                                 if_ignore_first_row=False,
+                                                 if_convert_float=True)
+
+    def select_param_values(self, n, weight_col, filename, sample_by_weight=True, seed=0):
+
+        # header
+        rows = [self.rowsOfParameters[0]]
+
+        if not sample_by_weight:
+            for i, row in enumerate(self.rowsOfParameters):
+                if i > 0:
+                    if row[weight_col] > 0 and i <= n:
+                        rows.append(row)
+        else:
+            # weight
+            weights = []
+            for row in self.rowsOfParameters:
+                weights.append(row[weight_col])
+            del(weights[0])
+
+            # sample rows
+            rng = np.random.RandomState(seed=seed)
+            sampled_indices = rng.choice(a=range(len(weights)), size=n, p=weights)
+
+            # build sampled rows
+            for i in sampled_indices:
+                rows.append(self.rowsOfParameters[i+1])
+
+        IO.write_csv(rows=rows, file_name=filename)
+
+
 class ParamInfo:
     # class to store information about a parameter (id, name, estimate and confidence/uncertainty interval)
     def __init__(self, idx, name, label=None, values=None, range=None):
@@ -40,7 +77,7 @@ class ParamInfo:
         self.interval = None
 
 
-class Parameters:
+class ParameterAnalyzer:
     # class to create a dictionary of parameters
     def __init__(self, csv_file_name):
         """

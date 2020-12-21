@@ -91,7 +91,7 @@ def read_csv_rows(file_name, if_ignore_first_row, delimiter=',', if_convert_floa
         return rows
 
 
-def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_convert_float=False):
+def read_csv_cols(file_name, if_ignore_first_row, n_cols=None, delimiter=',', if_convert_float=False):
     """ reads the columns of a csv file
     :param file_name: the csv file name
     :param n_cols: number of columns in the csv file
@@ -103,9 +103,13 @@ def read_csv_cols(file_name, n_cols, if_ignore_first_row, delimiter=',', if_conv
     with open(file_name, "r", encoding='utf-8', errors='ignore') as file:
         csv_file = csv.reader(file, delimiter=delimiter)
 
-        cols = _rows_to_cols(rows=_csv_file_to_rows(csv_file=csv_file,
-                                                    if_del_first_row=if_ignore_first_row),
-                             n_cols=n_cols)
+        rows = _csv_file_to_rows(csv_file=csv_file,
+                                 if_del_first_row=if_ignore_first_row)
+
+        if n_cols is None:
+            n_cols = len(rows[0])
+
+        cols = _rows_to_cols(rows=rows, n_cols=n_cols)
 
         # convert column values to float if needed
         if if_convert_float:
