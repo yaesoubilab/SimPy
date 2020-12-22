@@ -13,7 +13,7 @@ from numpy.random import choice
 
 
 # list of columns in the parameter csv file that are not considered a parameter
-COLUMNS_TO_SKIP = ['ID', 'Seed', 'Simulation Replication', 'Random Seed']
+COLUMNS_TO_SKIP = ['ID', 'Seed', 'Likelihood Weights', 'Simulation Replication', 'Random Seed']
 HISTOGRAM_FIG_SIZE = (4.2, 3.2)
 
 
@@ -245,12 +245,14 @@ class ParameterAnalyzer:
                 else:
                     multiplier = 1
 
-                x_range = [x*multiplier for x in x_range]
+                if x_range is not None:
+                    x_range = [x*multiplier for x in x_range]
                 par_values = [v*multiplier for v in par_values]
 
                 # append the info for this parameter
                 info_of_params_to_include.append(
-                    ParamInfo(idx=par_id, name=par_name, label=label.replace('!', '\n'),values=par_values, range=x_range)
+                    ParamInfo(idx=par_id, name=par_name, label=label.replace('!', '\n'),
+                              values=par_values, range=x_range)
                 )
 
             # move to the next parameter
@@ -309,22 +311,52 @@ class ParameterAnalyzer:
 
     def export_means_and_intervals(self,
                                    poster_file='ParameterEstimates.csv',
-                                   significance_level=0.05, deci=3,
-                                   ids=None, names=None, csv_file_name_prior=None):
+                                   significance_level=0.05, sig_digits=3,
+                                   ids=None, names=None, prior_info_csv_file=None):
         """ calculate the mean and credible intervals of parameters specified by ids
         :param poster_file: csv file where the posterior ranges should be stored
         :param significance_level:
-        :param deci:
+        :param sig_digits: number of significant digits
         :param ids:
-        :param csv_file_name_prior: (string) filename where parameter prior ranges are located
+        :param names: 
+        :param prior_info_csv_file: (string) filename where parameter prior ranges are located
         :return:
         """
 
+        results = self.get_means_and_intervals(significance_level=significance_level,
+                                               sig_digits=sig_digits,
+                                               ids=ids, names=names,
+                                               prior_info_csv_file=prior_info_csv_file)
+
+        # write parameter estimates and credible intervals
+        IO.write_csv(rows=results, file_name=poster_file)
+
+    def print_means_and_intervals(self,
+                                  significance_level=0.05, sig_digits=3,
+                                  ids=None, names=None, prior_info_csv_file=None):
+        """ calculate the mean and credible intervals of parameters specified by ids
+        :param significance_level:
+        :param sig_digits: number of significant digits
+        :param ids:
+        :param names:
+        :param prior_info_csv_file: (string) filename where parameter prior ranges are located
+        :return:
+        """
+
+        results = self.get_means_and_intervals(significance_level=significance_level,
+                                               sig_digits=sig_digits,
+                                               ids=ids, names=names,
+                                               prior_info_csv_file=prior_info_csv_file)
+        for r in results:
+            print(r)
+
+    def get_means_and_intervals(self, significance_level=0.05, sig_digits=3,
+                                ids=None, names=None, prior_info_csv_file=None):
         # read prior distributions
         priors = None
-        if csv_file_name_prior is not None:
+        if prior_info_csv_file is not None:
             priors = IO.read_csv_rows(
-                file_name=csv_file_name_prior,
+                file_name=prior_info_csv_file,
                 if_ignore_first_row=True,
                 delimiter=',',
                 if_convert_float=True
@@ -346,12 +378,13 @@ class ParameterAnalyzer:
             if if_record:
 
                 if priors is None:
-                    decimal = deci
+                    decimal = None
                     form = ''
                     multip = 1
                 else:
                     decimal = priors[par_id][ColumnsPriorDistCSV.DECI.value]
                     decimal = 0 if decimal is None else decimal
+                    sig_digits = None
                     form = priors[par_id][ColumnsPriorDistCSV.FORMAT.value]
                     multip = priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value]
 
@@ -359,11 +392,13 @@ class ParameterAnalyzer:
                     data = par_values
                 else:
                     multip = float(multip)
-                    data = [multip*x for x in par_values]
+                    data = [multip * x for x in par_values]
 
                 sum_stat = Stat.SummaryStat(name=par_name, data=data)
-                mean_text = Format.format_number(number=sum_stat.get_mean(), deci=decimal, format=form)
-                PI_text = Format.format_interval(interval=sum_stat.get_PI(significance_level), deci=decimal, format=form)
+                mean_text = Format.format_number(number=sum_stat.get_mean(),
+                                                 deci=decimal, sig_digits=sig_digits, format=form)
+                PI_text = Format.format_interval(interval=sum_stat.get_PI(significance_level),
+                                                 deci=decimal, sig_digits=sig_digits, format=form)
 
                 results.append(
                     [par_id, par_name, mean_text, PI_text]
@@ -372,8 +407,7 @@ class ParameterAnalyzer:
             # next parameter
             par_id += 1
 
-        # write parameter estimates and credible intervals
-        IO.write_csv(rows=results, file_name=poster_file)
+        return results
 
     def __calculate_ratio_obss(self, numerator_par_name, denominator_par_names):
 
