@@ -13,7 +13,7 @@ from numpy.random import choice
 
 
 # list of columns in the parameter csv file that are not considered a parameter
-COLUMNS_TO_SKIP = ['ID', 'Seed']
+COLUMNS_TO_SKIP = ['ID', 'Seed', 'Simulation Replication', 'Random Seed']
 HISTOGRAM_FIG_SIZE = (4.2, 3.2)
 
 
@@ -87,7 +87,8 @@ class ParameterAnalyzer:
         """
 
         # create a dictionary of parameter samples
-        self.dictOfParams = IO.read_csv_cols_to_dictionary(csv_file_name, ',', True)
+        self.dictOfParams = IO.read_csv_cols_to_dictionary(file_name=csv_file_name,
+                                                           if_convert_float=True)
 
     def get_mean_interval(self, parameter_name, deci=0, form=None):
 
@@ -138,14 +139,7 @@ class ParameterAnalyzer:
                 continue
 
             # check if the histogram should be created for this parameter
-            if_show = False
-            if ids is None and names is None:
-                if_show = True
-            else:
-                if ids is not None and par_id in ids:
-                    if_show = True
-                if names is not None and par_name in names:
-                    if_show = True
+            if_show = self._if_include(par_id=par_id, par_name=par_name, ids=ids, names=names)
 
             # create the histogram
             if if_show:
@@ -188,10 +182,11 @@ class ParameterAnalyzer:
             # move to the next parameter
             par_id += 1
 
-    def plot_pairwise(self, ids=None, csv_file_name_prior=None, fig_filename='pairwise_correlation.png',
+    def plot_pairwise(self, ids=None, names=None, csv_file_name_prior=None, fig_filename='pairwise_correlation.png',
                       figure_size=(10, 10)):
         """ creates pairwise corrolation between parameters specified by ids
-        :param ids: (list) list of parameter ids
+        :param ids: (list) ids of parameters to display
+        :param names: (list) names of parameter to display
         :param csv_file_name_prior: (string) filename where parameter prior ranges are located
         :param fig_filename: (string) filename to save the figure as
         :param figure_size: (tuple) figure size
@@ -211,18 +206,14 @@ class ParameterAnalyzer:
         info_of_params_to_include = []
 
         par_id = 0
-        for key, par_values in self.dictOfParams.items():
+        for par_name, par_values in self.dictOfParams.items():
 
             # skip these columns
-            if key in ['Simulation Replication', 'Random Seed']:
+            if par_name in COLUMNS_TO_SKIP:
                 continue
 
             # check if the histogram should be created for this parameter
-            if_show = False
-            if ids is None:
-                if_show = True
-            elif par_id in ids:
-                if_show = True
+            if_show = self._if_include(par_id=par_id, par_name=par_name, ids=ids, names=names)
 
             # create the histogram
             if if_show:
@@ -237,22 +228,29 @@ class ParameterAnalyzer:
                     x_range = None
 
                 # find title
-                if priors[par_id][ColumnsPriorDistCSV.TITLE.value] in ('', None):
-                    label = priors[par_id][ColumnsPriorDistCSV.NAME.value]
+                if priors is not None:
+                    if  priors[par_id][ColumnsPriorDistCSV.TITLE.value] in ('', None):
+                        label = priors[par_id][ColumnsPriorDistCSV.NAME.value]
+                    else:
+                        label = priors[par_id][ColumnsPriorDistCSV.TITLE.value]
                 else:
-                    label = priors[par_id][ColumnsPriorDistCSV.TITLE.value]
+                    label = par_name
 
                 # find multiplier
-                if priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
-                    multiplier = 1
+                if priors is not None:
+                    if priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
+                        multiplier = 1
+                    else:
+                        multiplier = float(priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value])
                 else:
-                    multiplier = float(priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value])
+                    multiplier = 1
+
                 x_range = [x*multiplier for x in x_range]
                 par_values = [v*multiplier for v in par_values]
 
                 # append the info for this parameter
                 info_of_params_to_include.append(
-                    ParamInfo(idx=par_id, name=key, label=label.replace('!', '\n'),values=par_values, range=x_range)
+                    ParamInfo(idx=par_id, name=par_name, label=label.replace('!', '\n'),values=par_values, range=x_range)
                 )
 
             # move to the next parameter
@@ -309,10 +307,10 @@ class ParameterAnalyzer:
         f.tight_layout()
         f.savefig(fig_filename, bbox_inches='tight', dpi=300)
 
-    def calculate_means_and_intervals(self,
-                                      poster_file='ParameterEstimates.csv',
-                                      significance_level=0.05, deci=3,
-                                      ids=None, csv_file_name_prior=None):
+    def export_means_and_intervals(self,
+                                   poster_file='ParameterEstimates.csv',
+                                   significance_level=0.05, deci=3,
+                                   ids=None, names=None, csv_file_name_prior=None):
         """ calculate the mean and credible intervals of parameters specified by ids
         :param poster_file: csv file where the posterior ranges should be stored
         :param significance_level:
@@ -335,18 +333,14 @@ class ParameterAnalyzer:
         results = []  # list of parameter estimates and credible intervals
 
         par_id = 0
-        for key, value in self.dictOfParams.items():
+        for par_name, par_values in self.dictOfParams.items():
 
             # skip these columns
-            if key in ['Simulation Replication', 'Random Seed']:
+            if par_name in COLUMNS_TO_SKIP:
                 continue
 
             # if estimates and credible intervals should be calculated for this parameter
-            if_record = False
-            if ids is None:
-                if_record = True
-            elif par_id in ids:
-                if_record = True
+            if_record = self._if_include(par_id=par_id, par_name=par_name, ids=ids, names=names)
 
             # record the calculated estimate and credible interval
             if if_record:
@@ -362,17 +356,17 @@ class ParameterAnalyzer:
                     multip = priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value]
 
                 if multip is None:
-                    data = value
+                    data = par_values
                 else:
                     multip = float(multip)
-                    data = [multip*x for x in value]
+                    data = [multip*x for x in par_values]
 
-                sum_stat = Stat.SummaryStat(name=key, data=data)
+                sum_stat = Stat.SummaryStat(name=par_name, data=data)
                 mean_text = Format.format_number(number=sum_stat.get_mean(), deci=decimal, format=form)
                 PI_text = Format.format_interval(interval=sum_stat.get_PI(significance_level), deci=decimal, format=form)
 
                 results.append(
-                    [par_id, key, mean_text, PI_text]
+                    [par_id, par_name, mean_text, PI_text]
                 )
 
             # next parameter
@@ -394,6 +388,19 @@ class ParameterAnalyzer:
 
         # calculate realizations for ratio
         return self.dictOfParams[numerator_par_name]/sum_denom
+
+    @staticmethod
+    def _if_include(par_id, par_name, ids=None, names=None):
+        # check if this parameter should be included
+        if_include = False
+        if ids is None and names is None:
+            if_include = True
+        else:
+            if ids is not None and par_id in ids:
+                if_include = True
+            if names is not None and par_name in names:
+                if_include = True
+        return if_include
 
     def get_ratio_mean_interval(self, numerator_par_name, denominator_par_names, deci=0, form=None):
 
