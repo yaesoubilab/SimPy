@@ -72,6 +72,18 @@ class OneMinus(_Parameter):
         return self.value
 
 
+class TenToPower(_Parameter):
+    def __init__(self, par, id=None, name=None):
+
+        _Parameter.__init__(self, id=id, name=name)
+        self.par = par
+        self.sample()
+
+    def sample(self, rng=None, time=None):
+        self.value = pow(10, self.par.value)
+        return self.value
+
+
 class Logit(_Parameter):
     def __init__(self, par, id=None, name=None):
 
@@ -112,6 +124,25 @@ class Division(_Parameter):
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
+        return self.value
+
+
+class LinearCombination(_Parameter):
+    def __init__(self, parameters, coefficients=None, id=None, name=None):
+
+        _Parameter.__init__(self, id=id, name=name)
+        self.parameters = parameters
+        if coefficients is not None:
+            self.coefficients = coefficients
+        else:
+            self.coefficients = [1] * len(parameters)
+        self.sample()
+
+    def sample(self, rng=None, time=None):
+        self.value = 0
+        for i, p in enumerate(self.parameters):
+            self.value += p.value * self.coefficients[i]
+
         return self.value
 
 
