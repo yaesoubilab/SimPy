@@ -1,6 +1,4 @@
 from SimPy.SensitivityAnalysis import SensitivityAnalysis
-from SimPy.StatisticalClasses import partial_corr
-import statsmodels.api as sm
 
 
 dic_parameter_values = {
@@ -17,3 +15,4 @@ sa = SensitivityAnalysis(dic_parameter_values=dic_parameter_values,
 sa.print_corr(corr='r')
 sa.print_corr(corr='rho')
 sa.print_corr(corr='p')
+sa.print_corr(corr='pr')

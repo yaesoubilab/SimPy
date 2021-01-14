@@ -1,4 +1,4 @@
-from scipy.stats import spearmanr, pearsonr
+from scipy.stats import spearmanr, pearsonr, rankdata
 import statsmodels.api as sm
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
@@ -63,9 +63,32 @@ class SensitivityAnalysis:
 
         return result
 
+    def get_partial_rank_corr(self):
+        """ :returns (list) of [parameter name, partial rank correlation coefficients, p-value] """
+
+        result = {}  # each row [parameter name, correlation, p-value]
+        for paramName, paramValues in self.dicParameterValues.items():
+
+            z = []
+            for otherParamName, otherParamValues in self.dicParameterValues.items():
+                if paramName != otherParamName:
+                    z.append(rankdata(otherParamValues))
+
+            # calculate partial correlation coefficient
+            coef, p = partial_corr(x=rankdata(paramValues),
+                                   y=rankdata(self.outputValues),
+                                   z=z)
+            # store [parameter name, Spearman coefficient, and p-value
+            result[paramName] = [coef, p]
+
+        return result
+
     def print_corr(self, corr='r'):
         """
-        :param corr: 'r' for Pearson's, 'rho' for Spearman's, and 'p' for partial correlation
+        :param corr: 'r' for Pearson's,
+                     'rho' for Spearman's,
+                     'p' for partial correlation, and
+                     'pr' for partial rank correlation
         :return:
         """
         if corr == 'r':
@@ -77,6 +100,9 @@ class SensitivityAnalysis:
         elif corr == 'p':
             print("Partial correlation coefficients and p-values")
             results = self.get_partial_corr()
+        elif corr == 'pr':
+            print("Partial rank correlation coefficients and p-values")
+            results = self.get_partial_rank_corr()
         else:
             raise ValueError('Invalid correlation type is provided.')
 
