@@ -1,5 +1,4 @@
 from scipy.stats import spearmanr, pearsonr, rankdata
-import statsmodels.api as sm
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
 from SimPy.Statistics import partial_corr
