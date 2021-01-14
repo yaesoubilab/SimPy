@@ -10,5 +10,8 @@ dic_par_values = {'Par1': param1, 'Par2': param2}
 
 sa = SensitivityAnalysis(dic_parameter_values=dic_par_values, output_values=output)
 
+sa.print_corr(corr='r')
+sa.print_corr(corr='rho')
+sa.print_corr(corr='p')
 sa.print_corr(corr='pr')
 sa.export_to_csv(corr='pr', decimal=4)
