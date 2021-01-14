@@ -14,14 +14,6 @@ outputs = [7, 1, 2, 15, 5]
 sa = SensitivityAnalysis(dic_parameter_values=dic_parameter_values,
                          output_values=outputs)
 
+sa.print_corr(corr='r')
+sa.print_corr(corr='rho')
 sa.print_corr(corr='p')
-sa.print_corr(corr='s')
-
-print(partial_corr(x=dic_parameter_values['par1'],
-                   y=outputs,
-                   z=[dic_parameter_values['par2'],
-                      dic_parameter_values['par3']]
-                   )
-      )
-
-
