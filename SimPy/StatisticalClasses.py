@@ -3,6 +3,8 @@ import warnings
 import math
 import numpy as np
 import scipy.stats as stat
+import statsmodels.api as sm
+from scipy.stats import pearsonr
 import SimPy.FormatFunctions as F
 
 NUM_BOOTSTRAP_SAMPLES = 1000
@@ -18,6 +20,34 @@ def get_sterr_from_half_length(confidence_interval, n, alpha=0.05):
     half_length = (confidence_interval[1] - confidence_interval[0]) / 2
     t = stat.t.ppf(1 - alpha / 2, n - 1)
     return half_length / t
+
+
+def partial_corr(x, y, z):
+    """
+    :param x: (list) of values for the input variable
+    :param y: (list) of values for the output variable
+    :param Z: (list of list) list of values for the controlling variables
+                [[z11, z12, ..., z1n],  # values of first controlling variable
+                 [z21, z22, ..., z2n],  # values of second controlling variable
+                 ...
+                ]
+    :return: partial correlation between x and y given the set of controlling variables z
+    """
+
+    np_z = np.array(z).T
+    
+    Z = sm.add_constant(np_z)
+    # fit f(z) to x
+    fitted_xz = sm.OLS(x, Z).fit()
+    # fit f(z) to y
+    fitted_yz = sm.OLS(y, Z).fit()
+    # residuals f(z) - x
+    x_residuals = fitted_xz.predict() - x
+    # residuals f(z) - y
+    y_residuals = fitted_yz.predict() - y
+    # correlation between residuals
+    coef, p = pearsonr(x_residuals, y_residuals)
+    return coef, p
 
 
 class _Statistics(object):

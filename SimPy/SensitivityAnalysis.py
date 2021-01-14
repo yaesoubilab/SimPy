@@ -1,18 +1,18 @@
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, pearsonr
 import statsmodels.api as sm
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
-from collections import OrderedDict
 
 
-class PartialRankCorrelation:
+class SensitivityAnalysis:
     def __init__(self, dic_parameter_values, output_values):
         """
         :param dic_parameter_values: (dictionary) of parameter values with parameter names as the key
         :param output_values: (list) of output values (e.g. cost or QALY observations)
         """
 
-        self.results = []  # each row [parameter name, correlation, p-value]
+        self.dicParameterValues = dic_parameter_values
+        self.outputValues = output_values
 
         for paramName, paramValues in dic_parameter_values.items():
 
@@ -20,13 +20,59 @@ class PartialRankCorrelation:
                 raise ValueError('Number of parameter values should be equal to the number of output values. '
                                  'Error in parameter "{}".'.format(paramName))
 
+    def _get_corr(self, f):
+        """
+        f: correlation function
+        :returns (list) of [parameter name, correlation coefficients, p-value] """
+
+        result = {}  # each row [parameter name, correlation, p-value]
+        for paramName, paramValues in self.dicParameterValues.items():
             # calculate Spearman rank-order correlation coefficient
-            coef, p = spearmanr(paramValues, output_values)
-
+            coef, p = f(paramValues, self.outputValues)
             # store [parameter name, Spearman coefficient, and p-value
-            self.results.append([paramName, coef, p])
+            result[paramName] = [coef, p]
 
-    def export_to_csv(self, file_name='PartialRank.csv', decimal=3, delimiter=','):
+        return result
+
+    def get_pearson_corr(self):
+        """ :returns (list) of [parameter name, Pearson's correlation coefficients, p-value] """
+
+        return self._get_corr(f=pearsonr)
+
+    def get_spearman_corr(self):
+        """ :returns (list) of [parameter name, Spearman's rank correlation coefficients, p-value] """
+
+        return self._get_corr(f=spearmanr)
+
+    def get_partial_corr(self):
+        """ :returns (list) of [parameter name, partial correlation coefficients, p-value] """
+
+        result = {}  # each row [parameter name, correlation, p-value]
+        for paramName, paramValues in self.dicParameterValues.items():
+
+            # calculate Spearman rank-order correlation coefficient
+            coef, p = spearmanr(paramValues, self.outputValues)
+            # store [parameter name, Spearman coefficient, and p-value
+            result[paramName] = [coef, p]
+
+        return result
+
+    def print_corr(self, corr='p'):
+        """
+        :param corr: 'p' for Pearson's, 's' for Spearman's, and 'r' for partial correlation
+        :return:
+        """
+        if corr == 'p':
+            print("Pearson's correlation coefficients and p-values")
+            results = self.get_pearson_corr()
+        elif corr == 's':
+            print("Spearman's rank correlation coefficients and p-values")
+            results = self.get_spearman_corr()
+
+        for par, values in results.items():
+            print(par, values)
+
+    def export_to_csv(self, file_name='Correlations.csv', decimal=3, delimiter=','):
         """
         formats the coefficients and p-value to the specified decimal point and export to a csv file
         :param file_name: file name
@@ -154,3 +200,6 @@ class ParameterSA:
 
         IO.write_csv(file_name=file_name_linear_fit, rows=formatted_results_linear_fit, delimiter=delimiter)
         IO.write_csv(file_name=file_name_prcc, rows=formatted_results_prcc, delimiter=delimiter)
+
+
+
