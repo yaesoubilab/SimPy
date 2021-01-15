@@ -13,7 +13,7 @@ from numpy.random import choice
 
 
 # list of columns in the parameter csv file that are not considered a parameter
-COLUMNS_TO_SKIP = ['ID', 'Seed', 'Likelihood Weights', 'Simulation Replication', 'Random Seed']
+COLUMNS_TO_SKIP = ['ID', 'Seed', 'Probability', 'Message', 'Simulation Replication', 'Random Seed']
 HISTOGRAM_FIG_SIZE = (4.2, 3.2)
 
 
@@ -30,7 +30,7 @@ class ColumnsPriorDistCSV(Enum):
 
 
 class ParameterSampler:
-    # to sample parameter values according to their likelihood weights
+    # to sample parameter values according to their probabilities
     def __init__(self, csv_file_name):
 
         self.rowsOfParameters = IO.read_csv_rows(file_name=csv_file_name,

@@ -44,7 +44,7 @@ def get_moving_average(data, window=2):
 
 def effective_sample_size(likelihood_weights):
     """
-    :param likelihood_weights: (list) likelihood weights
+    :param likelihood_weights: (list) probabilities
     :returns: the effective sample size
     """
 

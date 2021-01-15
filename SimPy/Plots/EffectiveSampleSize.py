@@ -15,7 +15,7 @@ def plot_eff_sample_size(likelihood_weights, if_randomize=True,
     if not type(likelihood_weights) == np.ndarray:
         likelihood_weights = np.array(likelihood_weights)
 
-    # randomize the likelihood weights if needed
+    # randomize the probabilities if needed
     if if_randomize:
         random.seed(1)
         random.shuffle(likelihood_weights)
