@@ -48,7 +48,7 @@ class SensitivityAnalysis:
     def get_partial_corr(self):
         """ :returns (list) of [parameter name, partial correlation coefficients, p-value] """
 
-        result = {}  # each row [parameter name, correlation, p-value]
+        result = OrderedDict()  # each row [parameter name, correlation, p-value]
         for paramName, paramValues in self.dicParameterValues.items():
 
             z = []
