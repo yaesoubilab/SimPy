@@ -21,20 +21,6 @@ class SensitivityAnalysis:
                 raise ValueError('Number of parameter values should be equal to the number of output values. '
                                  'Error in parameter "{}".'.format(paramName))
 
-    def _get_corr(self, f):
-        """
-        f: correlation function
-        :returns (list) of [parameter name, correlation coefficients, p-value] """
-
-        result = OrderedDict()  # each row [parameter name, correlation, p-value]
-        for paramName, paramValues in self.dicParameterValues.items():
-            # calculate Spearman rank-order correlation coefficient
-            coef, p = f(paramValues, self.outputValues)
-            # store [parameter name, Spearman coefficient, and p-value
-            result[paramName] = [coef, p]
-
-        return result
-
     def get_pearson_corr(self):
         """ :returns (list) of [parameter name, Pearson's correlation coefficients, p-value] """
 
@@ -48,20 +34,7 @@ class SensitivityAnalysis:
     def get_partial_corr(self):
         """ :returns (list) of [parameter name, partial correlation coefficients, p-value] """
 
-        result = OrderedDict()  # each row [parameter name, correlation, p-value]
-        for paramName, paramValues in self.dicParameterValues.items():
-
-            z = []
-            for otherParamName, otherParamValues in self.dicParameterValues.items():
-                if paramName != otherParamName:
-                    z.append(otherParamValues)
-
-            # calculate partial correlation coefficient
-            coef, p = partial_corr(x=paramValues, y=self.outputValues, z=z)
-            # store [parameter name, Spearman coefficient, and p-value
-            result[paramName] = [coef, p]
-
-        return result
+        return self._get_partial_corr(dic_param_values=self.dicParameterValues, output_values=self.outputValues)
 
     def get_partial_rank_corr(self):
         """ :returns (list) of [parameter name, partial rank correlation coefficients, p-value] """
@@ -73,22 +46,7 @@ class SensitivityAnalysis:
         for paramName, paramValues in self.dicParameterValues.items():
             dic_ranked_param_values[paramName] = rankdata(paramValues)
 
-        result = OrderedDict()  # each row [parameter name, correlation, p-value]
-        for paramName, paramValues in dic_ranked_param_values.items():
-
-            z = []
-            for otherParamName, otherParamValues in dic_ranked_param_values.items():
-                if paramName != otherParamName:
-                    z.append(otherParamValues)
-
-            # calculate partial correlation coefficient
-            coef, p = partial_corr(x=paramValues,
-                                   y=ranked_outputs,
-                                   z=z)
-            # store [parameter name, Spearman coefficient, and p-value
-            result[paramName] = [coef, p]
-
-        return result
+        return self._get_partial_corr(dic_param_values=dic_ranked_param_values, output_values=ranked_outputs)
 
     def print_corr(self, corr='r'):
         """
@@ -123,15 +81,15 @@ class SensitivityAnalysis:
         # make the header
         tile_row = ['Parameter']
         for corr in corrs:
-            tile_row.append(self._full_name(corr))
+            tile_row.append(self._full_name(corr=corr))
             tile_row.append('P-value')
 
         # add the header
-        formated_results = [tile_row]
+        formatted_results = [tile_row]
 
         # add the names of parameters (first column)
         for name in self.dicParameterValues:
-            formated_results.append([name])
+            formatted_results.append([name])
 
         # calculate all forms of correlation requested
         for corr in corrs:
@@ -141,10 +99,10 @@ class SensitivityAnalysis:
             for par, values in results.items():
                 coef = F.format_number(number=values[0], deci=decimal)
                 p = F.format_number(number=values[1], deci=decimal)
-                formated_results[i].extend([coef, p])
+                formatted_results[i].extend([coef, p])
                 i += 1
 
-        IO.write_csv(file_name=file_name, rows=formated_results, delimiter=delimiter)
+        IO.write_csv(file_name=file_name, rows=formatted_results, delimiter=delimiter)
 
     def _get_results_text(self, corr):
 
@@ -165,7 +123,8 @@ class SensitivityAnalysis:
 
         return results, text
 
-    def _full_name(self, corr):
+    @staticmethod
+    def _full_name(corr):
 
         if corr == 'r':
             return "Pearson's correlation"
@@ -175,3 +134,37 @@ class SensitivityAnalysis:
             return 'Partial correlation'
         elif corr == 'pr':
             return 'Partial rank correlation'
+        else:
+            raise ValueError('Invalid correlation type is provided.')
+
+    def _get_corr(self, f):
+        """
+        f: correlation function
+        :returns (list) of [parameter name, correlation coefficients, p-value] """
+
+        result = OrderedDict()  # each row [parameter name, correlation, p-value]
+        for paramName, paramValues in self.dicParameterValues.items():
+            # calculate Spearman rank-order correlation coefficient
+            coef, p = f(paramValues, self.outputValues)
+            # store [parameter name, Spearman coefficient, and p-value
+            result[paramName] = [coef, p]
+
+        return result
+
+    @staticmethod
+    def _get_partial_corr(dic_param_values, output_values):
+
+        result = OrderedDict()  # each row [parameter name, correlation, p-value]
+        for paramName, paramValues in dic_param_values.items():
+
+            z = []
+            for otherParamName, otherParamValues in dic_param_values.items():
+                if paramName != otherParamName:
+                    z.append(otherParamValues)
+
+            # calculate partial correlation coefficient
+            coef, p = partial_corr(x=paramValues, y=output_values, z=z)
+            # store [parameter name, Spearman coefficient, and p-value
+            result[paramName] = [coef, p]
+
+        return result
