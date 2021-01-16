@@ -2,6 +2,7 @@ from scipy.stats import spearmanr, pearsonr, rankdata
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
 from SimPy.Statistics import partial_corr
+from collections import OrderedDict
 
 
 class SensitivityAnalysis:
@@ -68,11 +69,11 @@ class SensitivityAnalysis:
         # find ranked output values
         ranked_outputs = rankdata(self.outputValues)
         # find ranked parameter values
-        dic_ranked_param_values = {}
+        dic_ranked_param_values = OrderedDict()
         for paramName, paramValues in self.dicParameterValues.items():
             dic_ranked_param_values[paramName] = rankdata(paramValues)
 
-        result = {}  # each row [parameter name, correlation, p-value]
+        result = OrderedDict()  # each row [parameter name, correlation, p-value]
         for paramName, paramValues in dic_ranked_param_values.items():
 
             z = []
