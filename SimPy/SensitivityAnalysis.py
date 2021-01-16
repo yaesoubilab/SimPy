@@ -65,17 +65,24 @@ class SensitivityAnalysis:
     def get_partial_rank_corr(self):
         """ :returns (list) of [parameter name, partial rank correlation coefficients, p-value] """
 
-        result = {}  # each row [parameter name, correlation, p-value]
+        # find ranked output values
+        ranked_outputs = rankdata(self.outputValues)
+        # find ranked parameter values
+        dic_ranked_param_values = {}
         for paramName, paramValues in self.dicParameterValues.items():
+            dic_ranked_param_values[paramName] = rankdata(paramValues)
+
+        result = {}  # each row [parameter name, correlation, p-value]
+        for paramName, paramValues in dic_ranked_param_values.items():
 
             z = []
-            for otherParamName, otherParamValues in self.dicParameterValues.items():
+            for otherParamName, otherParamValues in dic_ranked_param_values.items():
                 if paramName != otherParamName:
-                    z.append(rankdata(otherParamValues))
+                    z.append(otherParamValues)
 
             # calculate partial correlation coefficient
-            coef, p = partial_corr(x=rankdata(paramValues),
-                                   y=rankdata(self.outputValues),
+            coef, p = partial_corr(x=paramValues,
+                                   y=ranked_outputs,
                                    z=z)
             # store [parameter name, Spearman coefficient, and p-value
             result[paramName] = [coef, p]
