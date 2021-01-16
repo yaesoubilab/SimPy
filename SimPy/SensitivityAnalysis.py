@@ -12,7 +12,7 @@ class SensitivityAnalysis:
         :param output_values: (list) of output values (e.g. cost or QALY observations)
         """
 
-        self.dicParameterValues = dic_parameter_values
+        self.dicParameterValues = OrderedDict(dic_parameter_values)
         self.outputValues = output_values
 
         for paramName, paramValues in dic_parameter_values.items():
@@ -26,7 +26,7 @@ class SensitivityAnalysis:
         f: correlation function
         :returns (list) of [parameter name, correlation coefficients, p-value] """
 
-        result = {}  # each row [parameter name, correlation, p-value]
+        result = OrderedDict()  # each row [parameter name, correlation, p-value]
         for paramName, paramValues in self.dicParameterValues.items():
             # calculate Spearman rank-order correlation coefficient
             coef, p = f(paramValues, self.outputValues)
@@ -104,10 +104,11 @@ class SensitivityAnalysis:
         for par, values in results.items():
             print(par, values)
 
-    def export_to_csv(self, corr='r', file_name='Correlations.csv', decimal=3, delimiter=','):
+    def export_to_csv(self, corrs='r', file_name='Correlations.csv', decimal=3, delimiter=','):
         """
         formats the correlation coefficients and p-value to the specified decimal point and exports to a csv file
-        :param corr: 'r' for Pearson's,
+        :param corrs: (string) or (list of strings) from
+                     'r' for Pearson's,
                      'rho' for Spearman's,
                      'p' for partial correlation, and
                      'pr' for partial rank correlation
@@ -115,14 +116,33 @@ class SensitivityAnalysis:
         :param decimal: decimal points to round the estimates to
         :param delimiter: to separate by comma, use ',' and by tab, use '\t'
         """
-        formated_results = [['Parameter', 'Coefficient', 'P-Value']]
 
-        results, text = self._get_results_text(corr=corr)
+        if not isinstance(corrs, list):
+            corrs = [corrs]
 
-        for par, values in results.items():
-            coef = F.format_number(number=values[0], deci=decimal)
-            p = F.format_number(number=values[1], deci=decimal)
-            formated_results.append([par, coef, p])
+        # make the header
+        tile_row = ['Parameter']
+        for corr in corrs:
+            tile_row.append(self._full_name(corr))
+            tile_row.append('P-value')
+
+        # add the header
+        formated_results = [tile_row]
+
+        # add the names of parameters (first column)
+        for name in self.dicParameterValues:
+            formated_results.append([name])
+
+        # calculate all forms of correlation requested
+        for corr in corrs:
+            results, text = self._get_results_text(corr=corr)
+
+            i = 1
+            for par, values in results.items():
+                coef = F.format_number(number=values[0], deci=decimal)
+                p = F.format_number(number=values[1], deci=decimal)
+                formated_results[i].extend([coef, p])
+                i += 1
 
         IO.write_csv(file_name=file_name, rows=formated_results, delimiter=delimiter)
 
@@ -145,3 +165,13 @@ class SensitivityAnalysis:
 
         return results, text
 
+    def _full_name(self, corr):
+
+        if corr == 'r':
+            return "Pearson's correlation"
+        elif corr == 'rho':
+            return "Spearman's correlation"
+        elif corr == 'p':
+            return 'Partial correlation'
+        elif corr == 'pr':
+            return 'Partial rank correlation'
