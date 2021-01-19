@@ -67,7 +67,7 @@ class SensitivityAnalysis:
         formats the correlation coefficients and p-value to the specified decimal point and exports to a csv file
         :param corrs: (string) or (list of strings) from
                      'r' for Pearson's,
-                     'rho' for Spearman's,
+                     'rho' for Spearman's rank correlation,
                      'p' for partial correlation, and
                      'pr' for partial rank correlation
         :param file_name: file name
