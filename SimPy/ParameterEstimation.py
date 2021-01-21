@@ -1,6 +1,6 @@
 import SimPy.InOutFunctions as IO
 import SimPy.Plots.Histogram as Fig
-import SimPy.StatisticalClasses as Stat
+import SimPy.Statistics as Stat
 import SimPy.FormatFunctions as Format
 import SimPy.Support.MiscFunctions as F
 import copy
@@ -29,45 +29,16 @@ class ColumnsPriorDistCSV(Enum):
     DECI = 7
 
 
-class ParameterSampler:
-    # to sample parameter values according to their probabilities
-    def __init__(self, csv_file_name):
-
-        self.rowsOfParameters = IO.read_csv_rows(file_name=csv_file_name,
-                                                 if_ignore_first_row=False,
-                                                 if_convert_float=True)
-
-    def select_param_values(self, n, weight_col, filename, sample_by_weight=True, seed=0):
-
-        # header
-        rows = [self.rowsOfParameters[0]]
-
-        if not sample_by_weight:
-            for i, row in enumerate(self.rowsOfParameters):
-                if i > 0:
-                    if row[weight_col] > 0 and i <= n:
-                        rows.append(row)
-        else:
-            # weight
-            weights = []
-            for row in self.rowsOfParameters:
-                weights.append(row[weight_col])
-            del(weights[0])
-
-            # sample rows
-            rng = np.random.RandomState(seed=seed)
-            sampled_indices = rng.choice(a=range(len(weights)), size=n, p=weights)
-
-            # build sampled rows
-            for i in sampled_indices:
-                rows.append(self.rowsOfParameters[i+1])
-
-        IO.write_csv(rows=rows, file_name=filename)
-
-
 class ParamInfo:
     # class to store information about a parameter (id, name, estimate and confidence/uncertainty interval)
-    def __init__(self, idx, name, label=None, values=None, range=None):
+    def __init__(self, idx, name, values=None, label=None, range=None):
+        """
+        :param idx: (int) id of this parameter
+        :param name: (string) name of this parameter (mainly to use as a key in dictionaries)
+        :param values: (list) of parameter values
+        :param label: (string) label of this parameter to display on figures
+        :param range: (tuple) range of this parameter to display on figures
+        """
         self.idx = idx
         self.name = name
         self.label = label
@@ -79,15 +50,73 @@ class ParamInfo:
 
 class ParameterAnalyzer:
     # class to create a dictionary of parameters
-    def __init__(self, csv_file_name):
+    def __init__(self, csvfile_sampled_params=None):
         """
-        :param csv_file_name: csv file where the parameter samples are located
-        assumes that the first row of this csv file contains the parameter names
-        to be used as the keys of the dictionary of parameters it creates
+        :param csvfile_sampled_params: (string) csv file where the parameter samples are located
+            assumes that the first row of this csv file contains the parameter names
+            to be used as the keys of the dictionary of parameters it creates
         """
 
-        # create a dictionary of parameter samples
-        self.dictOfParams = IO.read_csv_cols_to_dictionary(file_name=csv_file_name,
+        # dictionary of parameter samples with parameter names as keys
+        self.dictOfParams = {}
+
+        if csvfile_sampled_params is not None:
+            self.dictOfParams = IO.read_csv_cols_to_dictionary(file_name=csvfile_sampled_params,
+                                                               if_convert_float=True)
+
+    def sample_parameters(self, csvfile_param_values_and_weights,
+                          n, weight_col, csvfile_sampled_params,
+                          sample_by_weight=True, seed=0):
+        """
+        param: csvfile_param_values_and_weights: (string) csv file where the values of parameters
+            along with their weights are provided.
+            It assumes that
+                1) the first row contains the name of all parameters
+                2) rows contains the weight and the parameter values
+                3) rows are in decreasing order of parameter weights
+        param: n: (int) number of parameter values to samples
+        param: weight_col: (int) index of the columns where the weights of parameter values are located.
+        param: csvfile_sampled_params: (string) csvfile where the resampled parameter values will be stored.
+            The first row will be the names of parameters.
+        param: sample_by_weight: (bool) set to true to sample parameters by weight.
+            If set to False, the first n parameters will be selected.
+        param: seed: (int) seed of the random number generator to resample parameters
+        """
+
+        # read parameter weights and values
+        rows_of_weights_and_parameter_values = IO.read_csv_rows(
+            file_name=csvfile_param_values_and_weights,
+            if_ignore_first_row=False,
+            if_convert_float=True)
+
+        # store header
+        rows_of_selected_param_values = [rows_of_weights_and_parameter_values[0]]
+
+        if not sample_by_weight:
+            # choose the first n parameter values
+            for i, row in enumerate(rows_of_selected_param_values):
+                if i > n: # first rwo is the header
+                    break
+                elif i > 0 and row[weight_col] > 0:
+                    rows_of_selected_param_values.append(row)
+        else:
+            # weight
+            weights = []
+            for row in rows_of_weights_and_parameter_values:
+                weights.append(row[weight_col])
+            del(weights[0]) # header
+
+            # sample rows
+            rng = np.random.RandomState(seed=seed)
+            sampled_indices = rng.choice(a=range(len(weights)), size=n, p=weights)
+
+            # build sampled rows
+            for i in sampled_indices:
+                rows_of_selected_param_values.append(rows_of_weights_and_parameter_values[i+1])
+
+        IO.write_csv(rows=rows_of_selected_param_values, file_name=csvfile_sampled_params)
+
+        self.dictOfParams = IO.read_csv_cols_to_dictionary(file_name=csvfile_sampled_params,
                                                            if_convert_float=True)
 
     def get_mean_interval(self, parameter_name, deci=0, form=None):
@@ -184,7 +213,7 @@ class ParameterAnalyzer:
 
     def plot_pairwise(self, ids=None, names=None, csv_file_name_prior=None, fig_filename='pairwise_correlation.png',
                       figure_size=(10, 10)):
-        """ creates pairwise corrolation between parameters specified by ids
+        """ creates pairwise correlation between parameters specified by ids
         :param ids: (list) ids of parameters to display
         :param names: (list) names of parameter to display
         :param csv_file_name_prior: (string) filename where parameter prior ranges are located
@@ -461,5 +490,4 @@ class ParameterAnalyzer:
             x_label=x_label,
             x_range=x_range,
             figure_size=HISTOGRAM_FIG_SIZE,
-            output_type='png',
             file_name=file_name)
