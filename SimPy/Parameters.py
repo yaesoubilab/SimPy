@@ -161,3 +161,34 @@ class Product(_Parameter):
             self.value *= p.value
 
         return self.value
+
+
+class MatrixOfConstantParams(_Parameter):
+    def __init__(self, matrix_of_values, id=None, name=None):
+        """
+        :param matrix_of_values: (list of list) of numbers
+        :param id:
+        :param name:
+        """
+
+        _Parameter.__init__(self, id=id, name=name)
+
+        self.matrixOfParams = []
+        for row in matrix_of_values:
+            params = []
+            for v in row:
+                params.append(Constant(value=v))
+            self.matrixOfParams.append(params)
+
+        self.sample()
+
+    def sample(self, rng=None, time=None):
+
+        self.value = []
+        for params in self.matrixOfParams:
+            values = []
+            for par in params:
+                values.append(par.sample(rng=rng, time=time))
+            self.value.append(values)
+
+        return self.value
