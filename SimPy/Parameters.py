@@ -73,6 +73,7 @@ class OneMinus(_Parameter):
 
 
 class TenToPower(_Parameter):
+    # 10^p
     def __init__(self, par, id=None, name=None):
 
         _Parameter.__init__(self, id=id, name=name)
@@ -85,6 +86,7 @@ class TenToPower(_Parameter):
 
 
 class Logit(_Parameter):
+    # p/(1-p)
     def __init__(self, par, id=None, name=None):
 
         _Parameter.__init__(self, id=id, name=name)
