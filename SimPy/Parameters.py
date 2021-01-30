@@ -1,6 +1,7 @@
 from math import log
 from SimPy.RandomVariateGenerators import Beta as B
 from SimPy.RandomVariateGenerators import Uniform as U
+import numpy as np
 
 
 class _Parameter:
@@ -188,7 +189,8 @@ class MatrixOfConstantParams(_Parameter):
         for params in self.matrixOfParams:
             values = []
             for par in params:
-                values.append(par.sample(rng=rng, time=time))
+                values.append(par.value)
             self.value.append(values)
 
+        self.value = np.array(self.value)
         return self.value
