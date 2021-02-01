@@ -2,9 +2,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stat
+
 import SimPy.Plots.FigSupport as Fig
 import SimPy.RandomVariateGenerators as RVGs
-
 
 COLOR_CONTINUOUS_FIT = 'r'
 COLOR_DISCRETE_FIT = 'r'
