@@ -1,8 +1,6 @@
 import csv
 import os
-import math
 import numpy as numpy
-from collections import OrderedDict
 
 
 def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete_existing_files=False):
@@ -121,7 +119,7 @@ def read_csv_cols(file_name, if_ignore_first_row, n_cols=None, delimiter=',', if
 
 def read_csv_cols_to_dictionary(file_name, delimiter=',', if_convert_float=False):
 
-    dict_of_columns = OrderedDict()  # dictionary of columns
+    dict_of_columns = dict()  # dictionary of columns
     csv_file = open(file_name, "r", encoding='utf-8', errors='ignore')
     col_headers = next(csv.reader(csv_file, delimiter=delimiter))
     n_cols = len(col_headers)

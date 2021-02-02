@@ -2,7 +2,6 @@ from scipy.stats import spearmanr, pearsonr, rankdata
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
 from SimPy.Statistics import partial_corr
-from collections import OrderedDict
 
 
 class SensitivityAnalysis:
@@ -12,7 +11,7 @@ class SensitivityAnalysis:
         :param output_values: (list) of output values (e.g. cost or QALY observations)
         """
 
-        self.dicParameterValues = OrderedDict(dic_parameter_values)
+        self.dicParameterValues = dic_parameter_values
         self.outputValues = output_values
 
         for paramName, paramValues in dic_parameter_values.items():
@@ -42,7 +41,7 @@ class SensitivityAnalysis:
         # find ranked output values
         ranked_outputs = rankdata(self.outputValues)
         # find ranked parameter values
-        dic_ranked_param_values = OrderedDict()
+        dic_ranked_param_values = dict()
         for paramName, paramValues in self.dicParameterValues.items():
             dic_ranked_param_values[paramName] = rankdata(paramValues)
 
@@ -142,7 +141,7 @@ class SensitivityAnalysis:
         f: correlation function
         :returns (list) of [parameter name, correlation coefficients, p-value] """
 
-        result = OrderedDict()  # each row [parameter name, correlation, p-value]
+        result = dict()  # each row [parameter name, correlation, p-value]
         for paramName, paramValues in self.dicParameterValues.items():
             # calculate Spearman rank-order correlation coefficient
             coef, p = f(paramValues, self.outputValues)
@@ -154,7 +153,7 @@ class SensitivityAnalysis:
     @staticmethod
     def _get_partial_corr(dic_param_values, output_values):
 
-        result = OrderedDict()  # each row [parameter name, correlation, p-value]
+        result = dict()  # each row [parameter name, correlation, p-value]
         for paramName, paramValues in dic_param_values.items():
 
             z = []
