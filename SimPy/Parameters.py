@@ -2,7 +2,7 @@ from math import log
 from SimPy.RandomVariateGenerators import Beta as B
 from SimPy.RandomVariateGenerators import Uniform as U
 import numpy as np
-from math import exp
+from numpy import exp
 
 
 class _Parameter:
