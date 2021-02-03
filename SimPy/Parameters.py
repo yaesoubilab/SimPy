@@ -2,21 +2,36 @@ from math import log
 from SimPy.RandomVariateGenerators import Beta as B
 from SimPy.RandomVariateGenerators import Uniform as U
 import numpy as np
+from math import exp
 
 
 class _Parameter:
-    
+    # master class for parameters
     def __init__(self, id=None, name=None):
+        """
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         self.id = id
         self.name = name
         self.value = None
 
     def sample(self, rng=None, time=None):
+        """
+        :param rng: optional random number generator
+        :param time: optimal time
+        :return: a sample from this paramter
+        """
         pass
 
 
 class Constant(_Parameter):
     def __init__(self, value, id=None, name=None):
+        """
+        :param value: (float) constant value of this parameter
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
 
         _Parameter.__init__(self, id=id, name=name)
         self.value = value
@@ -27,6 +42,12 @@ class Constant(_Parameter):
 
 class Uniform(_Parameter):
     def __init__(self, minimum=0, maximum=1, id=None, name=None):
+        """
+        :param minimum: (float) minimum value of a parameter with uniform distribution
+        :param maximum: (float) maximum value of a parameter with uniform distribution
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.par = U(scale=maximum-minimum, loc=minimum)
         self.sample()
@@ -38,7 +59,14 @@ class Uniform(_Parameter):
 
 class Beta(_Parameter):
     def __init__(self, mean, st_dev, minimum=0, maximum=1, id=None, name=None):
-
+        """
+        :param mean: (float) mean value of a parameter with beta distribution
+        :param st_dev: (float) st_dev value of a parameter with beta distribution
+        :param minimum: (float) minimum value of a parameter with beta distribution
+        :param maximum: (float) maximum value of a parameter with beta distribution
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         fit_results = B.fit_mm(mean=mean, st_dev=st_dev, minimum=minimum, maximum=maximum)
         self.par = B(a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'], scale=fit_results['scale'])
@@ -50,8 +78,14 @@ class Beta(_Parameter):
 
 
 class Inverse(_Parameter):
-    def __init__(self, par, id=None, name=None):
+    # value = 1 / value of another parameter
 
+    def __init__(self, par, id=None, name=None):
+        """
+        :param par: (Parameter) another parameter to use to calculate the inverse
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
         self.sample()
@@ -62,8 +96,14 @@ class Inverse(_Parameter):
 
 
 class OneMinus(_Parameter):
-    def __init__(self, par, id=None, name=None):
+    # value = 1 - value of another parameter
 
+    def __init__(self, par, id=None, name=None):
+        """
+        :param par: (Parameter) another parameter to use to calculate 1 - p
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
         self.sample()
@@ -74,9 +114,14 @@ class OneMinus(_Parameter):
 
 
 class TenToPower(_Parameter):
-    # 10^p
-    def __init__(self, par, id=None, name=None):
+    # 10^(value of another parameter)
 
+    def __init__(self, par, id=None, name=None):
+        """
+        :param par: (Parameter) another parameter to use to calculate 10^p
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
         self.sample()
@@ -88,8 +133,13 @@ class TenToPower(_Parameter):
 
 class Logit(_Parameter):
     # p/(1-p)
-    def __init__(self, par, id=None, name=None):
 
+    def __init__(self, par, id=None, name=None):
+        """
+        :param par: (Parameter) another parameter to use to calculate p(1 - p)
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.par = par
         self.sample()
@@ -118,8 +168,14 @@ class RateToOccur(_Parameter):
 
 
 class Division(_Parameter):
+    # p1 / p2
     def __init__(self, par_numerator, par_denominator, id=None, name=None):
-
+        """
+        :param par_numerator: (Parameter) numerator parameter
+        :param par_denominator: (Parameter) denominator parameter
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.numerator = par_numerator
         self.denominator = par_denominator
@@ -131,8 +187,15 @@ class Division(_Parameter):
 
 
 class LinearCombination(_Parameter):
-    def __init__(self, parameters, coefficients=None, id=None, name=None):
+    # linear combination of multiple parameters
 
+    def __init__(self, parameters, coefficients=None, id=None, name=None):
+        """
+        :param parameters: (list of Parameters)
+        :param coefficients: (list of floats) list of coefficients
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.parameters = parameters
         if coefficients is not None:
@@ -150,8 +213,14 @@ class LinearCombination(_Parameter):
 
 
 class Product(_Parameter):
-    def __init__(self, parameters, id=None, name=None):
+    # product of multiple parameters
 
+    def __init__(self, parameters, id=None, name=None):
+        """
+        :param parameters: (list of Parameters)
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
         _Parameter.__init__(self, id=id, name=name)
         self.parameters = parameters
         self.sample()
@@ -160,6 +229,36 @@ class Product(_Parameter):
         self.value = 1
         for p in self.parameters:
             self.value *= p.value
+
+        return self.value
+
+
+class TimeDependentSigmoid(_Parameter):
+    # f(t) = min + (max-min) * 1 / (1 + exp(-b * (t - t0))
+    # with b >= 0
+    # returns min for t = -inf and max for t = inf
+
+    def __init__(self, par_b, par_t0=None, par_min=None, par_max=None, id=None, name=None):
+        """
+        :param par_b: (Parameter) of b
+        :param par_t0: (Parameter) of t0
+        :param par_min: (Parameter) of min (if not provided, Constant(0) is used)
+        :param par_max: (Parameter) of max (if not provided, Constant(1) is used)
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name)
+
+        self.parB = par_b
+        self.parT0 = par_t0 if par_t0 is not None else Constant(value=0)
+        self.parMin = par_min if par_min is not None else Constant(value=0)
+        self.parMax = par_max if par_max is not None else Constant(value=1)
+
+    def sample(self, rng=None, time=None):
+
+        dt = time - self.parT0.value
+        logistic = 1 / (1 + exp(-self.parB.value * dt))
+        self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * logistic
 
         return self.value
 
