@@ -49,38 +49,43 @@ class ParamInfo:
 
 
 class ParameterAnalyzer:
-    # class to create a dictionary of parameters
-    def __init__(self, csvfile_sampled_params=None):
+    # class to analyze parameters (estimation and visualization)
+
+    def __init__(self, csvfile_param_values=None, columns_to_be_deleted=()):
         """
-        :param csvfile_sampled_params: (string) csv file where the parameter samples are located
-            assumes that the first row of this csv file contains the parameter names
-            to be used as the keys of the dictionary of parameters it creates
+        :param csvfile_param_values: (string) csv file where the parameter values are located
+            assumes that the first row of this csv file contains the parameter names and each
+            column contains the parameter values
+        :param columns_to_be_deleted: (list of string) list of column names to be deleted from analysis
         """
 
         # dictionary of parameter samples with parameter names as keys
-        self.dictOfParams = {}
+        self.dictOfParamValues = {}
 
-        if csvfile_sampled_params is not None:
-            self.dictOfParams = IO.read_csv_cols_to_dictionary(file_name=csvfile_sampled_params,
-                                                               if_convert_float=True)
+        if csvfile_param_values is not None:
+            self.dictOfParamValues = IO.read_csv_cols_to_dictionary(file_name=csvfile_param_values,
+                                                                    if_convert_float=True)
+            for name in columns_to_be_deleted:
+                del(self.dictOfParamValues[name])
 
-    def sample_parameters(self, csvfile_param_values_and_weights,
-                          n, weight_col, csvfile_sampled_params,
-                          sample_by_weight=True, seed=0):
+    def resample_param_values(self, csvfile_param_values_and_weights,
+                              n, weight_col, csvfile_resampled_params,
+                              sample_by_weight=True, columns_to_be_deleted=(), seed=0):
         """
-        param: csvfile_param_values_and_weights: (string) csv file where the values of parameters
+        :param csvfile_param_values_and_weights: (string) csv file where the values of parameters
             along with their weights are provided.
             It assumes that
                 1) the first row contains the name of all parameters
                 2) rows contains the weight and the parameter values
                 3) rows are in decreasing order of parameter weights
-        param: n: (int) number of parameter values to samples
-        param: weight_col: (int) index of the columns where the weights of parameter values are located.
-        param: csvfile_sampled_params: (string) csvfile where the resampled parameter values will be stored.
+        :param n: (int) number of parameter values to resamples
+        :param weight_col: (int) index of the columns where the weights of parameter values are located.
+        :param csvfile_resampled_params: (string) csvfile where the resampled parameter values will be stored.
             The first row will be the names of parameters.
-        param: sample_by_weight: (bool) set to true to sample parameters by weight.
+        :param sample_by_weight: (bool) set to true to sample parameters by weight.
             If set to False, the first n parameters will be selected.
-        param: seed: (int) seed of the random number generator to resample parameters
+        :param columns_to_be_deleted: (list of string) list of column names to be deleted from analysis
+        :param seed: (int) seed of the random number generator to resample parameters
         """
 
         # read parameter weights and values
@@ -114,15 +119,17 @@ class ParameterAnalyzer:
             for i in sampled_indices:
                 rows_of_selected_param_values.append(rows_of_weights_and_parameter_values[i+1])
 
-        IO.write_csv(rows=rows_of_selected_param_values, file_name=csvfile_sampled_params)
+        IO.write_csv(rows=rows_of_selected_param_values, file_name=csvfile_resampled_params)
 
-        self.dictOfParams = IO.read_csv_cols_to_dictionary(file_name=csvfile_sampled_params,
-                                                           if_convert_float=True)
+        self.dictOfParamValues = IO.read_csv_cols_to_dictionary(file_name=csvfile_resampled_params,
+                                                                if_convert_float=True)
+        for name in columns_to_be_deleted:
+            del (self.dictOfParamValues[name])
 
     def get_mean_interval(self, parameter_name, deci=0, form=None):
 
         # print the ratio estimate and credible interval
-        sum_stat = Stat.SummaryStat('', self.dictOfParams[parameter_name])
+        sum_stat = Stat.SummaryStat('', self.dictOfParamValues[parameter_name])
 
         if form is None:
             return sum_stat.get_mean(), sum_stat.get_PI(alpha=0.05)
@@ -134,7 +141,7 @@ class ParameterAnalyzer:
         """ creates a histogram of one parameter """
 
         Fig.plot_histogram(
-            data=self.dictOfParams[parameter_name],
+            data=self.dictOfParamValues[parameter_name],
             title=title, x_label=x_label, y_label=y_label,
             x_range=x_range, figure_size=HISTOGRAM_FIG_SIZE, file_name=folder+'/'+title
         )
@@ -161,7 +168,7 @@ class ParameterAnalyzer:
 
         # for all parameters, read sampled parameter values and create the histogram
         par_id = 0
-        for par_name, par_values in self.dictOfParams.items():
+        for par_name, par_values in self.dictOfParamValues.items():
 
             # skip the columns that are not considered parameter
             if par_name in COLUMNS_TO_SKIP:
@@ -235,7 +242,7 @@ class ParameterAnalyzer:
         info_of_params_to_include = []
 
         par_id = 0
-        for par_name, par_values in self.dictOfParams.items():
+        for par_name, par_values in self.dictOfParamValues.items():
 
             # skip these columns
             if par_name in COLUMNS_TO_SKIP:
@@ -394,7 +401,7 @@ class ParameterAnalyzer:
         results = []  # list of parameter estimates and credible intervals
 
         par_id = 0
-        for par_name, par_values in self.dictOfParams.items():
+        for par_name, par_values in self.dictOfParamValues.items():
 
             # skip these columns
             if par_name in COLUMNS_TO_SKIP:
@@ -445,12 +452,12 @@ class ParameterAnalyzer:
             denominator_par_names = [denominator_par_names]
 
         # calculate sum of parameters in the denominator
-        sum_denom = copy.deepcopy(self.dictOfParams[denominator_par_names[0]])
+        sum_denom = copy.deepcopy(self.dictOfParamValues[denominator_par_names[0]])
         for i in range(1, len(denominator_par_names)):
-            sum_denom += self.dictOfParams[denominator_par_names[i]]
+            sum_denom += self.dictOfParamValues[denominator_par_names[i]]
 
         # calculate realizations for ratio
-        return self.dictOfParams[numerator_par_name]/sum_denom
+        return self.dictOfParamValues[numerator_par_name] / sum_denom
 
     @staticmethod
     def _if_include(par_id, par_name, ids=None, names=None):

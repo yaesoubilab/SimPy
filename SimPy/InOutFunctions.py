@@ -85,6 +85,7 @@ def read_csv_rows(file_name, if_ignore_first_row, delimiter=',', if_convert_floa
         if if_convert_float:
             for i in range(0, len(rows)):
                 rows[i] = _convert_to_float(rows[i])
+        file.close()
 
         return rows
 
@@ -114,6 +115,8 @@ def read_csv_cols(file_name, if_ignore_first_row, n_cols=None, delimiter=',', if
             for j in range(0, n_cols):
                 cols[j] = _convert_to_float(cols[j])
 
+        file.close()
+
         return cols
 
 
@@ -129,6 +132,8 @@ def read_csv_cols_to_dictionary(file_name, delimiter=',', if_convert_float=False
         if_ignore_first_row=True,
         delimiter=delimiter,
         if_convert_float=if_convert_float)
+
+    csv_file.close()
 
     # add columns to the dictionary
     for j, col in enumerate(cols):
@@ -217,7 +222,7 @@ def _cols_to_rows(cols):
 def _convert_to_float(list_of_objs):
 
     try:
-        results = numpy.array(list_of_objs).astype(numpy.float)
+        results = numpy.array(list_of_objs).astype(float)
     except:
         results = []
         for i in range(len(list_of_objs)):
