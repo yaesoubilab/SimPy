@@ -31,7 +31,7 @@ print('Derivative at x=1:', single_var_poly_reg.get_derivative(x=1))
 print('x for which f(x) = 0:', single_var_poly_reg.get_zero())
 
 # make prediction over the range [x_min, x_max]
-x_pred = np.linspace(x.min(), x.max(), 50)
+x_pred = np.linspace(x.min(), x.maxPercChange(), 50)
 y_pred = single_var_poly_reg.get_predicted_y(x_pred)
 
 # plot the predicted values

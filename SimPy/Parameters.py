@@ -234,10 +234,14 @@ class Product(_Parameter):
 
 
 class Surge(_Parameter):
-    # f(t) = A * (1 - cos(1/(2\pi) * (t1-t)/(t1-t0)) / 2
-    def __init__(self, par_max, par_t0=0, par_t1=1, id=None, name=None):
+    # f(t) = base.value * ( 1 + percentChange(t))
+    # percentChange(t) = A * (1 - cos(1/(2\pi) * (t1-t)/(t1-t0)) / 2
+    # A is maximum % change
+    def __init__(self, par_base=1, par_max_percent_change=1, par_t0=0, par_t1=1, id=None, name=None):
         """
-        :param par_max: (Parameter or float) maximum value attainable (A in the formula above)
+        :param par_base: (Parameter or float) value to use as base
+        :param par_max_percent_change: (Parameter or float) maximum % change in base value
+            (should be + for increase and - for decrease)
         :param par_t0: (Parameter or float) f(t) = 0 for t < t0
         :param par_t1: (Parameter or float) f(t) = 0 for t > t1
         :param id: (int) id of a parameter
@@ -245,14 +249,17 @@ class Surge(_Parameter):
         """
         _Parameter.__init__(self=self, id=id, name=name)
 
-        if not isinstance(par_max, _Parameter):
-            par_max = Constant(value=par_max)
+        if not isinstance(par_base, _Parameter):
+            par_base = Constant(value=par_base)
+        if not isinstance(par_max_percent_change, _Parameter):
+            par_max_percent_change = Constant(value=par_max_percent_change)
         if not isinstance(par_t0, _Parameter):
             par_t0 = Constant(value=par_t0)
         if not isinstance(par_t1, _Parameter):
             par_t1 = Constant(value=par_t1)
 
-        self.max = par_max
+        self.base = par_base
+        self.maxPercChange = par_max_percent_change
         self.t0 = par_t0
         self.t1 = par_t1
         self.twoPi = 2*pi
@@ -260,29 +267,12 @@ class Surge(_Parameter):
     def sample(self, rng=None, time=None):
 
         if time < self.t0.value or time > self.t1.value:
-            self.value = 0
+            self.value = self.base.value
         else:
             x = self.twoPi * (time-self.t0.value)/(self.t1.value - self.t0.value)
-            self.value = self.max.value * (1 - cos(x)) / 2
+            percent_change = self.maxPercChange.value * (1 - cos(x)) / 2
+            self.value = self.base.value * (1 + percent_change)
         return self.value
-
-
-class Drop(_Parameter):
-    # f(t) = - A * (1 - cos(1/(2\pi) * (t1-t)/(t1-t0)) / 2
-    def __init__(self, par_min, par_t0=0, par_t1=1, id=None, name=None):
-        """
-        :param par_min: (Parameter or float) minimum value attainable (A in the formula above)
-        :param par_t0: (Parameter or float) f(t) = 0 for t < t0
-        :param par_t1: (Parameter or float) f(t) = 0 for t > t1
-        :param id: (int) id of a parameter
-        :param name: (string) name of a parameter
-                """
-        _Parameter.__init__(self=self, id=id, name=name)
-        self.surge = Surge(par_max=par_min, par_t0=par_t0, par_t1=par_t1)
-
-    def sample(self, rng=None, time=None):
-
-        return self.surge.sample(rng=rng, time=time)
 
 
 class TimeDependentSigmoid(_Parameter):
