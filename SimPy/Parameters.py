@@ -7,14 +7,16 @@ from numpy import exp, pi, cos
 
 class _Parameter:
     # master class for parameters
-    def __init__(self, id=None, name=None):
+    def __init__(self, id=None, name=None, if_time_dep=False):
         """
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
+        :param if_time_dep: (bool) if the value of this parameter changes by time
         """
         self.id = id
         self.name = name
         self.value = None
+        self.ifTimeDep = if_time_dep
 
     def sample(self, rng=None, time=None):
         """
@@ -86,9 +88,11 @@ class Inverse(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1/self.par.value
@@ -104,9 +108,11 @@ class OneMinus(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1-self.par.value
@@ -122,9 +128,11 @@ class TenToPower(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = pow(10, self.par.value)
@@ -140,9 +148,11 @@ class Logit(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.value/(1-self.par.value)
@@ -157,10 +167,12 @@ class RateToOccur(_Parameter):
         :param delta_t: time period over which the event should occur with the specified probability
         """
 
-        _Parameter.__init__(self, id=id, name=name)
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=par_probability.ifTimeDep)
         self.parProb = par_probability
         self.deltaTInv = 1/delta_t
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = -log(1-self.parProb.value) * self.deltaTInv
@@ -176,10 +188,12 @@ class Division(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=(par_numerator.ifTimeDep or par_denominator.ifTimeDep))
         self.numerator = par_numerator
         self.denominator = par_denominator
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
@@ -196,13 +210,23 @@ class LinearCombination(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+
+        # if this is a time-dependent parameter
+        if_time_dep = False
+        for p in parameters:
+            if p.ifTimeDep:
+                if_time_dep = True
+                break
+
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
         self.parameters = parameters
         if coefficients is not None:
             self.coefficients = coefficients
         else:
             self.coefficients = [1] * len(parameters)
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 0
@@ -221,9 +245,19 @@ class Product(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+
+        # if this is a time-dependent parameter
+        if_time_dep = False
+        for p in parameters:
+            if p.ifTimeDep:
+                if_time_dep = True
+                break
+
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
         self.parameters = parameters
-        self.sample()
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1
@@ -247,7 +281,6 @@ class Surge(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self=self, id=id, name=name)
 
         if not isinstance(par_base, _Parameter):
             par_base = Constant(value=par_base)
@@ -257,6 +290,12 @@ class Surge(_Parameter):
             par_t0 = Constant(value=par_t0)
         if not isinstance(par_t1, _Parameter):
             par_t1 = Constant(value=par_t1)
+
+        _Parameter.__init__(self=self, id=id, name=name,
+                            if_time_dep=(par_base.ifTimeDep
+                                         or par_max_percent_change.ifTimeDep
+                                         or par_t0.ifTimeDep
+                                         or par_t1.ifTimeDep))
 
         self.base = par_base
         self.maxPercChange = par_max_percent_change
@@ -289,7 +328,7 @@ class TimeDependentSigmoid(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name)
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=True)
 
         self.parB = par_b
         self.parT0 = par_t0 if par_t0 is not None else Constant(value=0)
@@ -308,21 +347,35 @@ class TimeDependentSigmoid(_Parameter):
 class MatrixOfConstantParams(_Parameter):
     def __init__(self, matrix_of_values, id=None, name=None):
         """
-        :param matrix_of_values: (list of list) of numbers
+        :param matrix_of_values: (list of list) of numbers or Parameters
         :param id:
         :param name:
         """
-
-        _Parameter.__init__(self, id=id, name=name)
 
         self.matrixOfParams = []
         for row in matrix_of_values:
             params = []
             for v in row:
-                params.append(Constant(value=v))
+                if isinstance(v, _Parameter):
+                    params.append(v)
+                else:
+                    params.append(Constant(value=v))
             self.matrixOfParams.append(params)
 
-        self.sample()
+        # find if time-dependant
+        if_time_dep = False
+        for row in self.matrixOfParams:
+            for v in row:
+                if v.ifTimeDep:
+                    if_time_dep = True
+                    break
+            if if_time_dep:
+                break
+
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
+
+        if not self.ifTimeDep:
+            self.sample()
 
     def sample(self, rng=None, time=None):
 
