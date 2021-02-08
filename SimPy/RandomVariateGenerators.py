@@ -1107,7 +1107,7 @@ class Uniform(RVG):
         self.loc = loc
 
     def sample(self, rng, arg=None):
-        return stat.uniform.rvs(self.loc, self.scale, random_state=rng)
+        return rng.uniform(low=self.loc, high=self.loc+self.scale)
 
     def get_percentile_interval(self, alpha=0.05):
 

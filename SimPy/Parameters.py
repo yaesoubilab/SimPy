@@ -52,7 +52,6 @@ class Uniform(_Parameter):
         """
         _Parameter.__init__(self, id=id, name=name)
         self.par = U(scale=maximum-minimum, loc=minimum)
-        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.sample(rng=rng)
@@ -72,7 +71,6 @@ class Beta(_Parameter):
         _Parameter.__init__(self, id=id, name=name)
         fit_results = B.fit_mm(mean=mean, st_dev=st_dev, minimum=minimum, maximum=maximum)
         self.par = B(a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'], scale=fit_results['scale'])
-        self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.sample(rng=rng)
@@ -91,9 +89,6 @@ class Inverse(_Parameter):
         _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
 
-        if not self.ifTimeDep:
-            self.sample()
-
     def sample(self, rng=None, time=None):
         self.value = 1/self.par.value
         return self.value
@@ -110,9 +105,6 @@ class OneMinus(_Parameter):
         """
         _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
-
-        if not self.ifTimeDep:
-            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1-self.par.value
@@ -131,9 +123,6 @@ class TenToPower(_Parameter):
         _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
 
-        if not self.ifTimeDep:
-            self.sample()
-
     def sample(self, rng=None, time=None):
         self.value = pow(10, self.par.value)
         return self.value
@@ -150,9 +139,6 @@ class Logit(_Parameter):
         """
         _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
         self.par = par
-
-        if not self.ifTimeDep:
-            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.par.value/(1-self.par.value)
@@ -171,9 +157,6 @@ class RateToOccur(_Parameter):
         self.parProb = par_probability
         self.deltaTInv = 1/delta_t
 
-        if not self.ifTimeDep:
-            self.sample()
-
     def sample(self, rng=None, time=None):
         self.value = -log(1-self.parProb.value) * self.deltaTInv
         return self.value
@@ -191,9 +174,6 @@ class Division(_Parameter):
         _Parameter.__init__(self, id=id, name=name, if_time_dep=(par_numerator.ifTimeDep or par_denominator.ifTimeDep))
         self.numerator = par_numerator
         self.denominator = par_denominator
-
-        if not self.ifTimeDep:
-            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = self.numerator.value/self.denominator.value
@@ -225,9 +205,6 @@ class LinearCombination(_Parameter):
         else:
             self.coefficients = [1] * len(parameters)
 
-        if not self.ifTimeDep:
-            self.sample()
-
     def sample(self, rng=None, time=None):
         self.value = 0
         for i, p in enumerate(self.parameters):
@@ -255,9 +232,6 @@ class Product(_Parameter):
 
         _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
         self.parameters = parameters
-
-        if not self.ifTimeDep:
-            self.sample()
 
     def sample(self, rng=None, time=None):
         self.value = 1
