@@ -292,10 +292,7 @@ class Surge(_Parameter):
             par_t1 = Constant(value=par_t1)
 
         _Parameter.__init__(self=self, id=id, name=name,
-                            if_time_dep=(par_base.ifTimeDep
-                                         or par_max_percent_change.ifTimeDep
-                                         or par_t0.ifTimeDep
-                                         or par_t1.ifTimeDep))
+                            if_time_dep=True)
 
         self.base = par_base
         self.maxPercChange = par_max_percent_change
