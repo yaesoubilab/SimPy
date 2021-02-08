@@ -2,7 +2,7 @@ from math import log
 from SimPy.RandomVariateGenerators import Beta as B
 from SimPy.RandomVariateGenerators import Uniform as U
 import numpy as np
-from numpy import exp
+from numpy import exp, pi, cos
 
 
 class _Parameter:
@@ -230,6 +230,40 @@ class Product(_Parameter):
         for p in self.parameters:
             self.value *= p.value
 
+        return self.value
+
+
+class Surge(_Parameter):
+    # f(t) = A * (1 - cos(1/(2\pi) * (t1-t)/(t1-t0)) / 2
+    def __init__(self, par_max, par_t0=0, par_t1=1, id=None, name=None):
+        """
+        :param par_max: (Parameter or float) maximum value attainable (A in the formula above)
+        :param par_t0: (Parameter or float) f(t) = 0 for t < t0
+        :param par_t1: (Parameter or float) f(t) = 0 for t > t1
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self=self, id=id, name=name)
+
+        if not isinstance(par_max, _Parameter):
+            par_max = Constant(value=par_max)
+        if not isinstance(par_t0, _Parameter):
+            par_t0 = Constant(value=par_t0)
+        if not isinstance(par_t1, _Parameter):
+            par_t1 = Constant(value=par_t1)
+
+        self.max = par_max
+        self.t0 = par_t0
+        self.t1 = par_t1
+        self.twoPi = 2*pi
+
+    def sample(self, rng=None, time=None):
+
+        if time < self.t0.value or time > self.t1.value:
+            self.value = 0
+        else:
+            x = self.twoPi * (time-self.t0.value)/(self.t1.value - self.t0.value)
+            self.value = self.max.value * (1 - cos(x)) / 2
         return self.value
 
 
