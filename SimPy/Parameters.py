@@ -267,6 +267,24 @@ class Surge(_Parameter):
         return self.value
 
 
+class Drop(_Parameter):
+    # f(t) = - A * (1 - cos(1/(2\pi) * (t1-t)/(t1-t0)) / 2
+    def __init__(self, par_min, par_t0=0, par_t1=1, id=None, name=None):
+        """
+        :param par_min: (Parameter or float) minimum value attainable (A in the formula above)
+        :param par_t0: (Parameter or float) f(t) = 0 for t < t0
+        :param par_t1: (Parameter or float) f(t) = 0 for t > t1
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+                """
+        _Parameter.__init__(self=self, id=id, name=name)
+        self.surge = Surge(par_max=par_min, par_t0=par_t0, par_t1=par_t1)
+
+    def sample(self, rng=None, time=None):
+
+        return self.surge.sample(rng=rng, time=time)
+
+
 class TimeDependentSigmoid(_Parameter):
     # f(t) = min + (max-min) * 1 / (1 + exp(-b * (t - t0))
     # with b >= 0
