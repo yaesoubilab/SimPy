@@ -77,6 +77,23 @@ class Beta(_Parameter):
         return self.value
 
 
+class Equal(_Parameter):
+    # value = value of another parameter
+
+    def __init__(self, par, id=None, name=None):
+        """
+        :param par: (Parameter) another parameter to set this parameter equal to
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
+        self.par = par
+
+    def sample(self, rng=None, time=None):
+        self.value = self.par.value
+        return self.value
+
+
 class Inverse(_Parameter):
     # value = 1 / value of another parameter
 
