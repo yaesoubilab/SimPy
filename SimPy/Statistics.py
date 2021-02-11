@@ -26,7 +26,7 @@ def partial_corr(x, y, z):
     """
     :param x: (list) of values for the input variable
     :param y: (list) of values for the output variable
-    :param Z: (list of list) list of values for the controlling variables
+    :param z: (list of list) list of values for the controlling variables
                 [[z11, z12, ..., z1n],  # values of first controlling variable
                  [z21, z22, ..., z2n],  # values of second controlling variable
                  ...
@@ -294,7 +294,7 @@ class SummaryStat(_Statistics):
 
 class DiscreteTimeStat(_Statistics):
     """ to calculate statistics on observations accumulating over time """
-    def __init__(self, name):
+    def __init__(self, name=None):
         _Statistics.__init__(self, name)
         self._total = 0
         self._sumSquared = 0
@@ -867,7 +867,7 @@ class RelativeDifferenceIndp(_RelativeDifference):
     def __init__(self, name, x, y_ref, order=0):
         """
         :param x: list or numpy.array of first set of observations
-        :param y: list or numpy.array of second set of observations
+        :param y_ref: list or numpy.array of second set of observations
         :param order: set to 0 to calculate (X-Y_ref)/Y_ref and to 1 to calculate (Y_ref-X)/Y_ref
         """
         _RelativeDifference.__init__(self, name, x, y_ref, order)
