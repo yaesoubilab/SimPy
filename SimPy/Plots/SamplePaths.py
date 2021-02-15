@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from SimPy.SamplePathClasses import *
+from SimPy.SamplePath import *
 import SimPy.Plots.FigSupport as Fig
 
 

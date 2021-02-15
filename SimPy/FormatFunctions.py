@@ -84,16 +84,18 @@ def format_interval(interval, deci=None, sig_digits=None, format=None):
                 .format(low=interval[0]*100, up=interval[1]*100, prec=sig_digits)
 
 
-def format_estimate_interval(estimate, interval, deci, format=None):
+def format_estimate_interval(estimate, interval, deci, sig_digits, format=None):
     """
     :param estimate: the estimate
     :param interval: list of form [low up]
     :param deci: number of decimal places
+    :param sig_digits: number of significant digits
     :param format: additional formatting instruction. 
         Use ',' to format as number, '%' to format as percentage, and '$' to format as currency
     :return: text in the form 'estimate (l, u)' with the specified decimal places
     """
-    return format_number(estimate, deci, format) + ' ' + format_interval(interval, deci, format)
+    return format_number(number=estimate, deci=deci, sig_digits=sig_digits, format=format) \
+           + ' ' + format_interval(interval=interval, deci=deci, sig_digits=sig_digits, format=format)
 
 
 def _get_deci_dig_digit(deci, sig_digits):

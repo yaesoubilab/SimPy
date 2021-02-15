@@ -174,13 +174,14 @@ class _Statistics(object):
             return None
 
     def get_formatted_mean_and_interval(self, interval_type='c',
-                                        alpha=0.05, deci=0, form=None, multiplier=1):
+                                        alpha=0.05, deci=None, sig_digits=None, form=None, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
                                        'p' for percentile interval
         :param alpha: significance level
         :param deci: digits to round the numbers to
+        :param sig_digits: number of significant digits
         :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
         :param multiplier: to multiply the estimate and the interval by the provided value
         :return: (string) estimate and interval formatted as specified
@@ -192,16 +193,18 @@ class _Statistics(object):
         return F.format_estimate_interval(estimate=estimate,
                                           interval=interval,
                                           deci=deci,
+                                          sig_digits=sig_digits,
                                           format=form)
 
     def get_formatted_interval(self, interval_type='c',
-                                   alpha=0.05, deci=0, form=None, multiplier=1):
+                               alpha=0.05, deci=None, sig_digits=None, form=None, multiplier=1):
         """
         :param interval_type: (string) 'c' for t-based confidence interval,
                                        'cb' for bootstrap confidence interval, and
                                        'p' for percentile interval
         :param alpha: significance level
         :param deci: digits to round the numbers to
+        :param sig_digits: number of significant digits
         :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
         :param multiplier: to multiply the estimate and the interval by the provided value
         :return: (string) interval formatted as specified
@@ -211,6 +214,7 @@ class _Statistics(object):
 
         return F.format_interval(interval=interval,
                                  deci=deci,
+                                 sig_digits=sig_digits,
                                  format=form)
 
 
