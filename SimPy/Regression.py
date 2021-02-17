@@ -153,20 +153,24 @@ class PowerRegression (_OneVarRegression):
         return c1 * np.power(x, c2)
 
 
-# for additional information:
-# http://markthegraph.blogspot.com/2015/05/using-python-statsmodels-for-ols-linear.html
+class SingleVarPolyRegWithIntervals:
 
+    # for additional information:
+    # http://markthegraph.blogspot.com/2015/05/using-python-statsmodels-for-ols-linear.html
 
-class PolyRegFunction:
-    # regression of form: f(x) = c0 + c1*x + c2*x^2 + c3*x^3 + ...
+    def __init__(self, x, y, degree=1):
 
-    def __init__(self, degree=1):
-        """
-        :param degree: degree of the polynomial function
-        """
-        if degree < 1:
-            raise ValueError('Degree of the polynomial regression function should be greater than 0.')
         self.degree = degree
+        self.x = x
+        self.X = self.get_X(x)
+        self.y = y
+        self.fitted = sm.OLS(self.y, self.X).fit()
+
+    def get_predicted_y(self, x_pred):
+        """ :returns predicted y values at the provided x values """
+
+        X_pred = self.get_X(x_pred)
+        return self.fitted.predict(X_pred)
 
     def get_X(self, x):
         """
@@ -191,23 +195,6 @@ class PolyRegFunction:
             X = np.column_stack(col_x)
             return sm.add_constant(X)
 
-
-class SingleVarRegression:
-
-    def __init__(self, x, y, degree=1):
-
-        self.f = PolyRegFunction(degree)
-        self.x = x
-        self.X = self.f.get_X(x)
-        self.y = y
-        self.fitted = sm.OLS(self.y, self.X).fit()
-
-    def get_predicted_y(self, x_pred):
-        """ :returns predicted y values at the provided x values """
-
-        X_pred = self.f.get_X(x_pred)
-        return self.fitted.predict(X_pred)
-
     def get_predicted_y_CI(self, x_pred, alpha=0.05):
         """ :returns confidence interval of the predicted y at the provided x values """
 
@@ -230,7 +217,7 @@ class SingleVarRegression:
 
     def get_predicted_y_PI(self, x_pred, alpha=0.05):
         """ :returns prediction interval of the y at the provided x values """
-        X_pred = self.f.get_X(x_pred)
+        X_pred = self.get_X(x_pred)
         sdev, lower, upper = wls_prediction_std(self.fitted, exog=X_pred, alpha=alpha)
         return lower, upper
 
