@@ -43,7 +43,7 @@ class _OneVarRegression:
         ax.plot(xs, ys, color='red')
 
 
-class PolyRegression(_OneVarRegression):
+class SingleVarPolyRegression(_OneVarRegression):
     # regression of form: f(x) = c0 + c1*x + c2*x^2 + c3*x^3 + ... + cn*x^n
     def __init__(self, x, y, degree=1):
 
@@ -131,9 +131,9 @@ class PowerRegression (_OneVarRegression):
         _OneVarRegression.__init__(self, x, y, )
         self._ifC0Zero = if_c0_zero
         if if_c0_zero:
-            self._coeffs, cov = curve_fit(self.power_func_c0_zero, x, y, p0=None)
+            self._coeffs, cov = curve_fit(self.power_func_c0_zero, x, y, p0=p0)
         else:
-            self._coeffs, cov = curve_fit(self.power_func, x, y, p0=None)
+            self._coeffs, cov = curve_fit(self.power_func, x, y, p0=p0)
 
     def get_coeffs(self):
         return self._coeffs
@@ -144,12 +144,9 @@ class PowerRegression (_OneVarRegression):
         else:
             return self.power_func(x, *self._coeffs)
 
-
-
     @staticmethod
     def power_func(x, c0, c1, c2):
         return c0 + c1 * np.power(x, c2)
-
 
     @staticmethod
     def power_func_c0_zero(x, c1, c2):
