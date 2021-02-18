@@ -251,4 +251,27 @@ class SingleVarPolyRegWithIntervals:
             return np.roots(coeffs)
 
 
+class LinearRegression:
+    
+    def __init__(self, l2_penalty=0):
 
+        self.l2Penalty = l2_penalty
+        self.coeffs = None
+
+    def fit(self, X, y):
+
+        # XT.X
+        XTX = np.matmul(np.transpose(X), X)
+        # XT.y
+        XTy = np.matmul(np.transpose(X), y)
+
+        if self.l2Penalty > 0:
+            self._add_l2(XTX)
+
+        # solve to estiamte the coefficients
+        self.coeffs = np.linalg.solve(XTX, XTy)
+
+    def _add_l2(self, XTX):
+
+        I = np.identity(XTX.shape[0])
+        XTX += I * self.l2Penalty
