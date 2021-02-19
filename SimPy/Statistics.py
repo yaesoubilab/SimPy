@@ -51,7 +51,7 @@ def partial_corr(x, y, z):
 
 
 class _Statistics(object):
-    def __init__(self, name):
+    def __init__(self, name=None):
         """ abstract method to be overridden in derived classes"""
         self.name = name        # name of this statistics
         self._n = 0              # number of data points
@@ -219,14 +219,14 @@ class _Statistics(object):
 
 
 class SummaryStat(_Statistics):
-    def __init__(self, name, data):
+    def __init__(self, data, name=None):
         """:param data: a list or numpy.array of data points"""
 
         _Statistics.__init__(self, name)
         # convert data to numpy array if needed
-        if type(data) == list:
+        if type(data) is list:
             self._data = np.array(data)
-        elif type(data) == np.ndarray:
+        elif type(data) is np.ndarray:
             self._data = data
         else:
             raise ValueError("The argument data can be either a list of numbers or a numpy.array.")
