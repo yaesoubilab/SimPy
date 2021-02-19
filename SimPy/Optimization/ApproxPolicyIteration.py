@@ -15,17 +15,28 @@ class SimModel:
     def simulate(self, itr):
         pass
 
+    def get_seq_of_features(self):
+        pass
 
-class FeatureAction:
+    def get_seq_of_costs(self):
+        pass
 
-    def __init__(self, feature_values, next_actions):
+    def get_seq_of_action_combos(self):
+        pass
+
+
+class ADPState:
+
+    def __init__(self, feature_values, action_combo, cost):
         """
         :param feature_values: (list) of feature values
-        :param next_actions: (list) of on/off status of actions for the next period
+        :param action_combo: (list) of on/off status of actions for the next period
+        :param cost: (float) cost of this period
         """
 
         self.featureValues = feature_values
-        self.nextActions = next_actions
+        self.actionCombo = action_combo
+        self.cost = cost
         self.costToGo = 0
 
 
@@ -87,7 +98,7 @@ class ApproximatePolicyIteration:
 
         self.simModel = sim_model
         self.learningRule = learning_rule
-        self.discount_factor = discount_factor
+        self.discountFactor = discount_factor
 
         self.appoxDecisionMaker = ApproxDecisionMaker(num_of_actions=num_of_actions,
                                                       q_function_degree=q_function_degree,
@@ -96,12 +107,9 @@ class ApproximatePolicyIteration:
 
         # assign an approximate decision maker to the model
         self.simModel.set_approx_decision_maker(
-            approx_decision_maker= self.appoxDecisionMaker)
+            approx_decision_maker=self.appoxDecisionMaker)
 
     def optimize(self, n_iterations):
-
-        # initialize the algorithm
-        self._initialize()
 
         for itr in range(0, n_iterations):
 
@@ -112,13 +120,32 @@ class ApproximatePolicyIteration:
             self.simModel.simulate(itr=itr)
 
             # get sequence of actions and features
+            self._back_propagate(itr=itr,
+                                 seq_of_features=self.simModel.get_seq_of_features(),
+                                 seq_of_action_combos=self.simModel.get_seq_of_action_combos(),
+                                 seq_of_costs=self.simModel.get_seq_of_costs())
 
-            # update that q-function
+    def _back_propagate(self, itr, seq_of_features, seq_of_action_combos, seq_of_costs):
 
+        # make adp states
+        self.adpStates = []
+        for i in range(len(seq_of_features)):
+            self.adpStates.append(ADPState(feature_values=seq_of_features[i],
+                                           action_combo=seq_of_action_combos[i],
+                                           cost=seq_of_costs[i]))
 
-    def _initialize(self):
+        # cost of last adp state
+        self.adpStates[-1].costToGo = self.adpStates[-1].cost
 
-        pass
+        # calculate discounted cost-to-go of adp states
+        for i in range(len(self.adpStates)-1, 0, -1):
+            self.adpStates[i].costToGo = self.adpStates[i].cost \
+                                         + self.discountFactor * self.adpStates[i+1].costToGo
 
-
-
+        # update q-functions
+        for i in range(len(self.adpStates), 0, -1):
+            q_index = index_of_an_action_combo(self.adpStates[i].actionCombo)
+            self.appoxDecisionMaker.qFunctions[q_index].update(
+                x=self.adpStates[i].featureValues,
+                f=self.adpStates[i].costToGo,
+                forgetting_factor=self.learningRule.get_forgetting_factor(itr=itr))

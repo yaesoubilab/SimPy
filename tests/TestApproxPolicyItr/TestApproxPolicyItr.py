@@ -11,6 +11,7 @@ class Model:
         self.actionCost = action_cost
 
         self.decisionRule = decision_rule
+        self.seqFeatures = []
         self.seqCosts = []
         self.seqActions = []
 
@@ -22,6 +23,9 @@ class Model:
         state = rng.random_sample()
 
         for t in range(3):
+
+            # store the features
+            self.seqFeatures.append([state])
 
             # make a decision
             action = self.decisionRule.get_decision(state=state)
