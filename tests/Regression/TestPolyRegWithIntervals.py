@@ -15,7 +15,7 @@ fig.tight_layout(pad=2)
 ax.grid(True)
 
 # create the regression model
-single_var_poly_reg = Reg.SingleVarPolyRegWithIntervals(x, y, degree=3)
+single_var_poly_reg = Reg.SingleVarPolyRegWithInference(x, y, degree=3)
 
 # print the coefficients of the fitted model
 print('Estimated coefficients:', single_var_poly_reg.get_coeffs())

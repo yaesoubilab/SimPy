@@ -5,8 +5,10 @@ from scipy import stats
 from statsmodels.sandbox.regression.predstd import wls_prediction_std
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
 
 
+# ------- Single variable regression models ----------
 class _OneVarRegression:
     def __init__(self, x, y):
         self._x = x
@@ -153,7 +155,8 @@ class PowerRegression (_OneVarRegression):
         return c1 * np.power(x, c2)
 
 
-class SingleVarPolyRegWithIntervals:
+# ------- Single variable polynomial model with inference ----------
+class SingleVarPolyRegWithInference:
 
     # for additional information:
     # http://markthegraph.blogspot.com/2015/05/using-python-statsmodels-for-ols-linear.html
@@ -251,12 +254,13 @@ class SingleVarPolyRegWithIntervals:
             return np.roots(coeffs)
 
 
+# ------- Multi-variable linear regression ----------
 class LinearRegression:
     
     def __init__(self, l2_penalty=0):
 
         self.l2Penalty = l2_penalty
-        self.coeffs = None
+        self._coeffs = None
 
     def fit(self, X, y, forgetting_factor=1):
 
@@ -279,14 +283,18 @@ class LinearRegression:
             self._add_l2(XTX)
 
         # solve to estiamte the coefficients
-        self.coeffs = np.linalg.solve(XTX, XTy)
+        self._coeffs = np.linalg.solve(XTX, XTy)
+
+    def get_coeffs(self):
+        return self._coeffs
+
+    def set_coeffs(self, values):
+        self._coeffs = values
 
     def get_y(self, x):
-
-        return x @ self.coeffs
+        return x @ self._coeffs
 
     def _add_l2(self, XTX):
-
         I = np.identity(XTX.shape[0])
         XTX += I * self.l2Penalty
 
@@ -298,61 +306,99 @@ class RecursiveLinearReg(LinearRegression):
         LinearRegression.__init__(self, l2_penalty=l2_penalty)
 
         self.itr = 0
-        self.X = None
-        self.y = None
-        self.B = None
-        self.H = None
-        self.w = None
+        self._X = None
+        self._y = None
+        self._B = None
+        self._H = None
+        self._w = None
 
     def update(self, x, y, forgetting_factor=1):
 
         self.itr += 1
 
         if self.itr < len(x):
-            if self.X is None:
-                self.X = np.array(x)
+            if self._X is None:
+                self._X = np.array(x)
             else:
-                self.X = np.vstack((self.X, x))
-            if self.y is None:
-                self.y = np.array(y)
+                self._X = np.vstack((self._X, x))
+            if self._y is None:
+                self._y = np.array(y)
             else:
-                self.y = np.vstack((self.y, y))
-            if self.w is None:
-                self.w = np.array(1.0)
+                self._y = np.vstack((self._y, y))
+            if self._w is None:
+                self._w = np.array(1.0)
             else:
-                self.w *= forgetting_factor
-                self.w = np.append(self.w, 1.0)
+                self._w *= forgetting_factor
+                self._w = np.append(self._w, 1.0)
 
         elif self.itr == len(x):
-            self.X = np.vstack((self.X, x))
-            self.y = np.vstack((self.y, y))
-            self.w *= forgetting_factor
-            self.w = np.append(self.w, 1.0)
-            W = np.diag(self.w)
+            self._X = np.vstack((self._X, x))
+            self._y = np.vstack((self._y, y))
+            self._w *= forgetting_factor
+            self._w = np.append(self._w, 1.0)
+            W = np.diag(self._w)
 
             # XTX
-            XTX = np.transpose(self.X) @ W @ self.X
+            XTX = np.transpose(self._X) @ W @ self._X
 
             # add L2 regularization
             if self.l2Penalty > 0:
                 self._add_l2(XTX)
 
             # B = (XT.X)-1
-            self.B = np.linalg.inv(XTX)
+            self._B = np.linalg.inv(XTX)
             # theta = B.XT.y
-            self.coeffs = np.transpose(self.B @ np.transpose(self.X) @ W @ self.y)[0]
+            self._coeffs = np.transpose(self._B @ np.transpose(self._X) @ W @ self._y)[0]
         else:
             # turn x into a column vector
             x = np.transpose(np.asmatrix(x))
             # gamma = lambda + xT.B.x
-            gamma = float(forgetting_factor + np.transpose(x) @ self.B @ x)
+            gamma = float(forgetting_factor + np.transpose(x) @ self._B @ x)
             # epsilon = y - thetaT*x
-            epsilon = float(y - self.coeffs @ x)
+            epsilon = float(y - self._coeffs @ x)
             # theta = theta + B.x.epsilon/gamma
-            self.coeffs += np.transpose(self.B @ x * epsilon/gamma).A1
+            self._coeffs += np.transpose(self._B @ x * epsilon / gamma).A1
             # B = (B-B.x.xT.B/gamma)/lambda
-            d = self.B @ x @ np.transpose(x) @ self.B
-            self.B -= d / gamma
+            d = self._B @ x @ np.transpose(x) @ self._B
+            self._B -= d / gamma
 
-            self.B /= forgetting_factor
+            self._B /= forgetting_factor
 
+
+# ------- Q-functions ----------
+class _QFunction:
+
+    def __init__(self, name=None):
+
+        self.name = name
+
+    def update(self, x, f, forgetting_factor=1):
+        pass
+
+    def f(self, x):
+        pass
+
+
+class PolynomialQFunction(_QFunction):
+
+    def __init__(self, name=None, degree=2, l2_penalty=0):
+
+        _QFunction.__init__(self, name=name)
+
+        self.poly = PolynomialFeatures(degree=degree)
+        self.reg = RecursiveLinearReg(l2_penalty=l2_penalty)
+
+    def update(self, x, f, forgetting_factor=1):
+
+        self.reg.update(x=self.poly.fit_transform(X=[x])[0],
+                        y=f, forgetting_factor=forgetting_factor)
+
+    def f(self, x):
+
+        return self.reg.get_y(x=self.poly.fit_transform(X=[x])[0])
+
+    def get_coeffs(self):
+        return self.reg.get_coeffs()
+
+    def set_coeffs(self, values):
+        self.reg.set_coeffs(values=values)
