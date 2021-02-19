@@ -36,24 +36,24 @@ class Model:
             self.seqCosts.append(cost)
 
             # next state
-            if action == 0:
+            if action[0] == 0:
                 result = Beta.fit_mm(mean=state, st_dev=0.01)
                 if result['a'] <= 0 or result['b'] <= 0:
                     state = state
                 else:
                     state = rng.beta(a=result['a'], b=result['b'])
-            elif action == 1:
+            elif action[0] == 1:
                 if state < 0.5:
                     state += (0.5 - state) * rng.random_sample()
                 else:
                     state -= (state - 0.5) * rng.random_sample()
             else:
-                pass
+                raise ValueError
 
     def _cost(self, state, action, rng):
 
         state_cost = 100*pow(state - 0.5, 2) + rng.normal(0, self.costSigma)
-        action_cost = self.actionCost if action == 1 else 0
+        action_cost = self.actionCost if action[0] == 1 else 0
 
         return state_cost + action_cost
 
@@ -99,7 +99,7 @@ class AlwaysOn(_DecisionRule):
         _DecisionRule.__init__(self)
 
     def get_decision(self, state):
-        return 1
+        return [1]
 
 
 class AlwaysOff(_DecisionRule):
@@ -107,7 +107,7 @@ class AlwaysOff(_DecisionRule):
         _DecisionRule.__init__(self)
 
     def get_decision(self, state):
-        return 0
+        return [0]
 
 
 class Myopic(_DecisionRule):
@@ -115,7 +115,7 @@ class Myopic(_DecisionRule):
         _DecisionRule.__init__(self)
 
     def get_decision(self, state):
-        return 0 if 0.25 <= state <= 0.75 else 1
+        return [0] if 0.25 <= state <= 0.75 else [1]
 
 
 class Dynamic(_DecisionRule):
