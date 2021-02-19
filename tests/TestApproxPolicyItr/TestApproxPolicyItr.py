@@ -10,7 +10,7 @@ class Model:
         self.costSigma = cost_sigma
         self.actionCost = action_cost
 
-        self.decisionMaker = DecisionMaker(decision_rule)
+        self.decisionRule = decision_rule
         self.seqCosts = []
         self.seqActions = []
 
@@ -24,7 +24,7 @@ class Model:
         for t in range(3):
 
             # make a decision
-            action = self.decisionMaker.make_a_decision(state=state)
+            action = self.decisionRule.get_decision(state=state)
             self.seqActions.append(action)
 
             # store the reward
@@ -75,17 +75,6 @@ class MultiModel:
             self.cumCosts.append(sum(model.seqCosts))
 
         self.statCost = S.SummaryStat(data=self.cumCosts)
-
-
-class DecisionMaker:
-
-    def __init__(self, decision_rule):
-
-        self.decisionRule = decision_rule
-
-    def make_a_decision(self, state):
-
-        return self.decisionRule.get_decision(state)
 
 
 class _DecisionRule:
