@@ -1,11 +1,13 @@
 import numpy as np
 from SimPy.Regression import LinearRegression, RecursiveLinearReg
 
-np.random.seed(seed=1)
-
 coeffs = [1, 2, 3]  # y = 1 + 2x1 + 3x2
 N = 1000
-sigma = 10
+sigma = 1
+l2_reg = 0.01
+forgetting_factor = 0.95
+
+np.random.seed(seed=1)
 
 # generate X
 X = []
@@ -25,9 +27,16 @@ print('Coeffs: ', lr.coeffs, 'vs.', coeffs)
 print('y([1, -1, 2]) = ', lr.get_y(x=[1, -1, 2]))
 
 # fit a linear regression with L2 regularization
-lr = LinearRegression(l2_penalty=0.01)
+lr = LinearRegression(l2_penalty=l2_reg)
 lr.fit(X=X, y=y)
 print('\nRegression (with l2-regularization):')
+print('Coeffs: ', lr.coeffs, 'vs.', coeffs)
+print('y([1, -1, 2]) = ', lr.get_y(x=[1, -1, 2]))
+
+# fit a linear regression with forgetting factor
+lr = LinearRegression()
+lr.fit(X=X, y=y, forgetting_factor=forgetting_factor)
+print('\nRegression (with forgetting factor):')
 print('Coeffs: ', lr.coeffs, 'vs.', coeffs)
 print('y([1, -1, 2]) = ', lr.get_y(x=[1, -1, 2]))
 
@@ -36,5 +45,19 @@ lr = RecursiveLinearReg()
 for i in range(N):
     lr.update(x=X[i], y=y[i])
 print('\nRecursive regression: ')
+print('Coeffs: ', lr.coeffs, 'vs.', coeffs)
+print('y([1, -1, 2]', lr.get_y(x=[1, -1, 2]))
+
+lr = RecursiveLinearReg(l2_penalty=l2_reg)
+for i in range(N):
+    lr.update(x=X[i], y=y[i])
+print('\nRecursive regression (with l2-regularization): ')
+print('Coeffs: ', lr.coeffs, 'vs.', coeffs)
+print('y([1, -1, 2]', lr.get_y(x=[1, -1, 2]))
+
+lr = RecursiveLinearReg()
+for i in range(N):
+    lr.update(x=X[i], y=y[i], forgetting_factor=forgetting_factor)
+print('\nRecursive regression (with forgetting factor): ')
 print('Coeffs: ', lr.coeffs, 'vs.', coeffs)
 print('y([1, -1, 2]', lr.get_y(x=[1, -1, 2]))

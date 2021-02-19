@@ -258,12 +258,22 @@ class LinearRegression:
         self.l2Penalty = l2_penalty
         self.coeffs = None
 
-    def fit(self, X, y):
+    def fit(self, X, y, forgetting_factor=1):
 
-        # XT.X
-        XTX = np.transpose(X) @ X
-        # XT.y
-        XTy = np.transpose(X) @ y
+        # W
+        N = len(y)
+        if forgetting_factor<1:
+            w = []
+            for i in range(N):
+                w.append(pow(forgetting_factor, N - i - 1))
+            W = np.diag(w)
+        else:
+            W = np.diag([1]*N)
+
+        # XT.W.X
+        XTX = np.transpose(X) @ W @ X
+        # XT.W.y
+        XTy = np.transpose(X)@ W @ y
 
         if self.l2Penalty > 0:
             self._add_l2(XTX)
@@ -292,6 +302,7 @@ class RecursiveLinearReg(LinearRegression):
         self.y = None
         self.B = None
         self.H = None
+        self.w = None
 
     def update(self, x, y, forgetting_factor=1):
 
@@ -306,13 +317,21 @@ class RecursiveLinearReg(LinearRegression):
                 self.y = np.array(y)
             else:
                 self.y = np.vstack((self.y, y))
+            if self.w is None:
+                self.w = np.array(1.0)
+            else:
+                self.w *= forgetting_factor
+                self.w = np.append(self.w, 1.0)
 
         elif self.itr == len(x):
             self.X = np.vstack((self.X, x))
             self.y = np.vstack((self.y, y))
+            self.w *= forgetting_factor
+            self.w = np.append(self.w, 1.0)
+            W = np.diag(self.w)
 
             # XTX
-            XTX = np.dot(np.transpose(self.X), self.X)
+            XTX = np.transpose(self.X) @ W @ self.X
 
             # add L2 regularization
             if self.l2Penalty > 0:
@@ -321,7 +340,7 @@ class RecursiveLinearReg(LinearRegression):
             # B = (XT.X)-1
             self.B = np.linalg.inv(XTX)
             # theta = B.XT.y
-            self.coeffs = np.transpose(self.B @ np.transpose(self.X) @ self.y)[0]
+            self.coeffs = np.transpose(self.B @ np.transpose(self.X) @ W @ self.y)[0]
         else:
             # turn x into a column vector
             x = np.transpose(np.asmatrix(x))
