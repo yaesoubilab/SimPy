@@ -5,7 +5,7 @@ from SimPy.RandomVariateGenerators import Beta
 
 class Model:
 
-    def __init__(self, decision_rule, cost_sigma=0.5, action_cost=1):
+    def __init__(self, decision_rule=None, cost_sigma=0.5, action_cost=1):
 
         self.costSigma = cost_sigma
         self.actionCost = action_cost
@@ -57,10 +57,15 @@ class Model:
 
         return state_cost + action_cost
 
+    def set_approx_decision_maker(self, approx_decision_maker):
+
+        self.decisionRule = Dynamic(approx_decision_maker=approx_decision_maker,
+                                    always_greedy=False)
+
 
 class MultiModel:
 
-    def __init__(self, decision_rule, cost_sigma=0.5, action_cost=1):
+    def __init__(self, decision_rule=None, cost_sigma=0.5, action_cost=1):
 
         self.decisionRule = decision_rule
         self.costSigma = cost_sigma
@@ -115,10 +120,15 @@ class Myopic(_DecisionRule):
 
 class Dynamic(_DecisionRule):
 
-    def __init__(self):
+    def __init__(self, approx_decision_maker, always_greedy):
         _DecisionRule.__init__(self)
 
-        self.qFunctions = []
+        self.approxDecisionMaker = approx_decision_maker
+        self.alwaysGreedy = always_greedy
 
     def get_decision(self, state):
-        return 1
+
+        if self.alwaysGreedy:
+            return self.approxDecisionMaker.make_a_greedy_decision(feature_values=[state])
+        else:
+            return self.approxDecisionMaker.make_an_epsilon_greedy_decision(feature_values=[state])

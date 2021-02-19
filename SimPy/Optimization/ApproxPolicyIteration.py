@@ -54,7 +54,7 @@ class ApproxDecisionMaker:
         # create the q-functions
         for i in range(self.nOfActionCombos):
             self.qFunctions.append(
-                PolynomialQFunction(name='Q-function for '+action_combo_of_a_index(i),
+                PolynomialQFunction(name='Q-function for '+str(action_combo_of_a_index(i)),
                                     degree=q_function_degree,
                                     l2_penalty=l2_penalty)
             )

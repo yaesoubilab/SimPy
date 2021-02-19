@@ -1,4 +1,4 @@
-from TestApproxPolicyItr import *
+from Model import *
 
 N = 1000
 ACTION_COST = 3
