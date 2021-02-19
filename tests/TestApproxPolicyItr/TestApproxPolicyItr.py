@@ -1,5 +1,6 @@
 import numpy as np
 import SimPy.Statistics as S
+from SimPy.RandomVariateGenerators import Beta
 
 
 class Model:
@@ -32,7 +33,11 @@ class Model:
 
             # next state
             if action == 0:
-                state = state
+                result = Beta.fit_mm(mean=state, st_dev=0.1)
+                if result['a'] <= 0 or result['b'] <= 0:
+                    state = state
+                else:
+                    state = rng.beta(a=result['a'], b=result['b'])
             elif action == 1:
                 if state < 0.5:
                     state += (0.5 - state) * rng.random_sample()
@@ -103,6 +108,14 @@ class AlwaysOff(_DecisionRule):
 
     def get_decision(self, state):
         return 0
+
+
+class Myopic(_DecisionRule):
+    def __init__(self):
+        _DecisionRule.__init__(self)
+
+    def get_decision(self, state):
+        return 0 if 0.25 <= state <= 0.75 else 1
 
 
 class Dynamic(_DecisionRule):

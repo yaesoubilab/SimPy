@@ -7,3 +7,7 @@ print('\nAlways off: ', multiModel.statRewards.get_formatted_mean_and_interval(i
 multiModel = MultiModel(decision_rule=AlwaysOn(), reward_sigma=0.5, action_cost=1)
 multiModel.simulate(n=100)
 print('\nAlways on: ', multiModel.statRewards.get_formatted_mean_and_interval(interval_type='c', sig_digits=4))
+
+multiModel = MultiModel(decision_rule=Myopic(), reward_sigma=0.5, action_cost=1)
+multiModel.simulate(n=100)
+print('\nMyopic: ', multiModel.statRewards.get_formatted_mean_and_interval(interval_type='c', sig_digits=4))
