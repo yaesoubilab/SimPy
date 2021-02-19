@@ -261,9 +261,9 @@ class LinearRegression:
     def fit(self, X, y):
 
         # XT.X
-        XTX = np.matmul(np.transpose(X), X)
+        XTX = np.transpose(X) @ X
         # XT.y
-        XTy = np.matmul(np.transpose(X), y)
+        XTy = np.transpose(X) @ y
 
         if self.l2Penalty > 0:
             self._add_l2(XTX)
@@ -271,7 +271,69 @@ class LinearRegression:
         # solve to estiamte the coefficients
         self.coeffs = np.linalg.solve(XTX, XTy)
 
+    def get_y(self, x):
+
+        return x @ self.coeffs
+
     def _add_l2(self, XTX):
 
         I = np.identity(XTX.shape[0])
         XTX += I * self.l2Penalty
+
+
+class RecursiveLinearReg(LinearRegression):
+
+    def __init__(self, l2_penalty=0):
+
+        LinearRegression.__init__(self, l2_penalty=l2_penalty)
+
+        self.itr = 0
+        self.X = None
+        self.y = None
+        self.B = None
+        self.H = None
+
+    def update(self, x, y, forgetting_factor=1):
+
+        self.itr += 1
+
+        if self.itr < len(x):
+            if self.X is None:
+                self.X = np.array(x)
+            else:
+                self.X = np.vstack((self.X, x))
+            if self.y is None:
+                self.y = np.array(y)
+            else:
+                self.y = np.vstack((self.y, y))
+
+        elif self.itr == len(x):
+            self.X = np.vstack((self.X, x))
+            self.y = np.vstack((self.y, y))
+
+            # XTX
+            XTX = np.dot(np.transpose(self.X), self.X)
+
+            # add L2 regularization
+            if self.l2Penalty > 0:
+                self._add_l2(XTX)
+
+            # B = (XT.X)-1
+            self.B = np.linalg.inv(XTX)
+            # theta = B.XT.y
+            self.coeffs = np.transpose(self.B @ np.transpose(self.X) @ self.y)[0]
+        else:
+            # turn x into a column vector
+            x = np.transpose(np.asmatrix(x))
+            # gamma = lambda + xT.B.x
+            gamma = float(forgetting_factor + np.transpose(x) @ self.B @ x)
+            # epsilon = y - thetaT*x
+            epsilon = float(y - self.coeffs @ x)
+            # theta = theta + B.x.epsilon/gamma
+            self.coeffs += np.transpose(self.B @ x * epsilon/gamma).A1
+            # B = (B-B.x.xT.B/gamma)/lambda
+            d = self.B @ x @ np.transpose(x) @ self.B
+            self.B -= d / gamma
+
+            self.B /= forgetting_factor
+
