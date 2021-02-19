@@ -20,7 +20,7 @@ class SimModel:
 class StepSize_GeneralizedHarmonic:
     # generalized harmonic(GH) stepsize
     # step_n = a0 * b / (b + i), for i >= 0, a0 > 0, and b >= 1
-    # (i is the iteration of the optimization_figs algorithm)
+    # (i is the iteration of the optimization algorithm)
 
     def __init__(self, a0, b=1):
         self._a0 = a0
