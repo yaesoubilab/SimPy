@@ -2,6 +2,8 @@ from math import pow
 from SimPy.Regression import PolynomialQFunction
 from SimPy.Optimization.Support import *
 import numpy as np
+import matplotlib.pyplot as plt
+from SimPy.Support.MiscFunctions import get_moving_average
 
 
 class SimModel:
@@ -25,7 +27,9 @@ class SimModel:
         pass
 
 
-class ADPState:
+class State:
+    # a state of the approximate policy iteration algorithm
+    # contains (feature values, action combination over the next period, cost over the next period)
 
     def __init__(self, feature_values, action_combo, cost):
         """
@@ -43,13 +47,19 @@ class ADPState:
 class ApproxDecisionMaker:
 
     def __init__(self, num_of_actions, exploration_rule, q_function_degree, l2_penalty):
+        """
+        :param num_of_actions: (int) number of actions with on/off switches
+        :param exploration_rule: exploration rule
+        :param q_function_degree: (float) degree of the polynomial function used for q-functions
+        :param l2_penalty: (float) l2 regularization penalty
+        """
 
         self.nOfActions = num_of_actions
         self.explorationRule = exploration_rule
         self.qFunctions = []
         self.nOfActionCombos = int(pow(2, self.nOfActions))
         self.rng = np.random.RandomState(seed=0)
-        self.itr = 0
+        self.itr = 0   # iteration of the algorithm (needed to calculate exploration rate)
 
         # create the q-functions
         for i in range(self.nOfActionCombos):
@@ -60,6 +70,9 @@ class ApproxDecisionMaker:
             )
 
     def make_an_epsilon_greedy_decision(self, feature_values):
+        """ makes an epsilon-greedy decision given the feature values
+        :param feature_values: (list) of feature values
+        """
 
         if self.rng.random_sample() < self.explorationRule.get_epsilon(itr=self.itr):
             # explore
@@ -70,12 +83,19 @@ class ApproxDecisionMaker:
             return self.make_a_greedy_decision(feature_values=feature_values)
 
     def make_a_greedy_decision(self, feature_values):
+        """ makes a greedy decision given the feature values
+        :param feature_values: (list) of feature values
+        """
 
         minimum = float('inf')
         opt_action_combo = None
         for i in range(self.nOfActionCombos):
 
-            q_value = self.qFunctions[i].f(x=feature_values)
+            # if the q-function is not updated with any data yet
+            if self.qFunctions[i].get_coeffs() is None:
+                q_value = 0
+            else:
+                q_value = self.qFunctions[i].f(x=feature_values)
 
             if q_value < minimum:
                 minimum = q_value
@@ -91,35 +111,52 @@ class ApproximatePolicyIteration:
         """
         :param sim_model (SimModel) simulation model
         :param num_of_actions: (int) number of possible actions to turn on or off
-        :param learning_rule:
-        :param exploration_rule:
+        :param learning_rule: learning rule
+        :param exploration_rule: exploration rule
         :param discount_factor: (float) is 1 / (1 + interest rate)
+        :param q_function_degree: (int) degree of the polynomial function used for q-functions
+        :param l2_penalty: (float) l2 regularization penalty
         """
 
         self.simModel = sim_model
         self.learningRule = learning_rule
         self.discountFactor = discount_factor
 
+        self.itr_i = []  # iteration indices
+        self.itr_total_cost = []  # discounted total cost over iterations
+        self.itr_error = []  # errors over iterations
+        self.itr_forgetting_factor = []  # forgetting factor over iterations
+        self.itr_exploration_rate = []  # exploration rate over iterations
+
+        # create the approximate decision maker
         self.appoxDecisionMaker = ApproxDecisionMaker(num_of_actions=num_of_actions,
                                                       q_function_degree=q_function_degree,
                                                       exploration_rule=exploration_rule,
                                                       l2_penalty=l2_penalty)
 
-        # assign an approximate decision maker to the model
+        # assign the approximate decision maker to the model
         self.simModel.set_approx_decision_maker(
             approx_decision_maker=self.appoxDecisionMaker)
 
     def optimize(self, n_iterations):
+        """
+        :param n_iterations: (int) number of iterations
+        """
 
-        for itr in range(0, n_iterations):
+        for itr in range(1, n_iterations + 1):
 
-            # increment the iteration count
-            self.appoxDecisionMaker.itr += 1
+            # store iteration, exploration rate, and forgetting factor
+            self.itr_i.append(itr)
+            self.itr_forgetting_factor.append(self.learningRule.get_forgetting_factor(itr=itr))
+            self.itr_exploration_rate.append(self.appoxDecisionMaker.explorationRule.get_epsilon(itr=itr))
+
+            # update the iteration of the approximate decision maker (to calculate exploration rate)
+            self.appoxDecisionMaker.itr = itr
 
             # simulate
             self.simModel.simulate(itr=itr)
 
-            # get sequence of actions and features
+            # do back-propagation
             self._back_propagate(itr=itr,
                                  seq_of_features=self.simModel.get_seq_of_features(),
                                  seq_of_action_combos=self.simModel.get_seq_of_action_combos(),
@@ -130,22 +167,148 @@ class ApproximatePolicyIteration:
         # make adp states
         self.adpStates = []
         for i in range(len(seq_of_features)):
-            self.adpStates.append(ADPState(feature_values=seq_of_features[i],
-                                           action_combo=seq_of_action_combos[i],
-                                           cost=seq_of_costs[i]))
+            self.adpStates.append(State(feature_values=seq_of_features[i],
+                                        action_combo=seq_of_action_combos[i],
+                                        cost=seq_of_costs[i]))
 
         # cost of last adp state
         self.adpStates[-1].costToGo = self.adpStates[-1].cost
 
         # calculate discounted cost-to-go of adp states
-        for i in range(len(self.adpStates)-1, 0, -1):
+        i = len(self.adpStates)-1-1
+        while i >= 0:
             self.adpStates[i].costToGo = self.adpStates[i].cost \
                                          + self.discountFactor * self.adpStates[i+1].costToGo
+            i -= 1
+        
+        # store the discounted total cost
+        self.itr_total_cost.append(self.adpStates[0].costToGo)
+
+        # store error of the first period
+        q_index = index_of_an_action_combo(self.adpStates[0].actionCombo)
+        if self.appoxDecisionMaker.qFunctions[q_index].get_coeffs() is None:
+            self.itr_error.append(None)
+        else:
+            predicted_cost = self.appoxDecisionMaker.qFunctions[q_index].f(x=self.adpStates[0].featureValues)
+            self.itr_error.append(self.adpStates[0].costToGo - predicted_cost)
 
         # update q-functions
-        for i in range(len(self.adpStates), 0, -1):
+        forgetting_factor = self.learningRule.get_forgetting_factor(itr=itr)
+
+        i = len(self.adpStates) - 1
+        while i >= 0:
             q_index = index_of_an_action_combo(self.adpStates[i].actionCombo)
             self.appoxDecisionMaker.qFunctions[q_index].update(
                 x=self.adpStates[i].featureValues,
                 f=self.adpStates[i].costToGo,
-                forgetting_factor=self.learningRule.get_forgetting_factor(itr=itr))
+                forgetting_factor=forgetting_factor)
+            i -= 1
+
+    def plot_cost_itr(self, moving_ave_window=None,
+                      y_range=None,
+                      y_label='Discounted total cost',
+                      x_label='Iteration', fig_size=(6, 5)):
+        """
+        :return: a plot of cost as the algorithm iterates
+        """
+
+        fig, ax = plt.subplots(figsize=fig_size)
+
+        self.add_cost_itr(ax=ax, moving_ave_window=moving_ave_window,
+                          y_range=y_range, y_label=y_label)
+
+        ax.set_xlabel(x_label)
+
+        plt.show()
+
+    def add_cost_itr(self, ax, moving_ave_window=None,
+                     y_range=None, y_label=None):
+        """
+        :return: a plot of cost as the algorithm iterates
+        """
+
+        # discounted cost
+        ax.plot(self.itr_i, self.itr_total_cost)
+        # moving average of the objective function
+        if moving_ave_window is not None:
+            ax.plot(self.itr_i, get_moving_average(self.itr_total_cost, window=moving_ave_window),
+                    'k-', markersize=1)
+
+        if y_label is None:
+            y_label = 'Discounted total cost'
+
+        ax.set_ylim(y_range)
+        ax.set_ylabel(y_label)
+
+    def add_error_itr(self, ax, moving_ave_window=None,
+                      y_range=None, y_label=None):
+        """
+        :return: a plot of error of first period as the algorithm iterates
+        """
+
+        # discounted cost
+        ax.plot(self.itr_i, self.itr_error)
+        # moving average of the objective function
+        if moving_ave_window is not None:
+            ax.plot(self.itr_i, get_moving_average(self.itr_error, window=moving_ave_window),
+                    'k-', markersize=1)
+
+        ax.axhline(y=0, linestyle='--', color='black', linewidth=1)
+
+        if y_label is None:
+            y_label = 'Error of first period'
+
+        ax.set_ylim(y_range)
+        ax.set_ylabel(y_label)
+
+    def add_forgetting_factor_itr(self, ax, y_range=None, y_label=None):
+
+        ax.plot(self.itr_i, self.itr_forgetting_factor)
+
+        if y_label is None:
+            y_label = 'Forgetting factor'
+        if y_range is None:
+            y_range = (0, 1)
+
+        ax.set_ylim(y_range)
+        ax.set_ylabel(y_label)
+
+    def add_exploration_rate_itr(self, ax, y_range=None, y_label=None):
+
+        ax.plot(self.itr_i, self.itr_exploration_rate)
+
+        if y_label is None:
+            y_label = 'Exploration'
+        if y_range is None:
+            y_range = (0, 1)
+
+        ax.set_ylim(y_range)
+        ax.set_ylabel(y_label)
+
+    def plot_itr(self, moving_ave_window=None, y_ranges=None, y_labels=None, fig_size=(6, 6)):
+
+        if y_ranges is None:
+            y_ranges = [None]*4
+        if y_labels is None:
+            y_labels = [None]*4
+
+        f, axarr = plt.subplots(4, 1, figsize=fig_size, sharex=True)
+
+        # cost
+        self.add_cost_itr(ax=axarr[0], moving_ave_window=moving_ave_window,
+                          y_range=y_ranges[0], y_label=y_labels[0])
+
+        # error
+        self.add_error_itr(ax=axarr[1], moving_ave_window=None,
+                           y_range=y_ranges[1], y_label=y_labels[1])
+
+        # forgetting factor
+        self.add_forgetting_factor_itr(ax=axarr[2], y_range=y_ranges[2], y_label=y_labels[2])
+
+        # exploration rate
+        self.add_exploration_rate_itr(ax=axarr[3], y_range=y_ranges[3], y_label=y_labels[3])
+
+        f.tight_layout()
+        f.align_ylabels()
+
+        plt.show()

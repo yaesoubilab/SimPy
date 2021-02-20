@@ -61,8 +61,8 @@ class StochasticApproximation:
         self.itr_x = []     # x values over iterations
         self.itr_nDf = []    # normalized derivatives of f over iterations
         self.itr_f = []     # f values over iterations
-        self.itr_stepmove=[] #moving steps over iterations
-        self.itr_stepdf=[] #harmonic step size over iterations
+        self.itr_stepmove=[] # moving steps over iterations
+        self.itr_stepdf=[] # harmonic step size over iterations
 
     def minimize(self, max_itr, n_last_itrs_to_ave, x0):
         """

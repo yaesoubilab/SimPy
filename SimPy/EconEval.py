@@ -205,7 +205,7 @@ class _EconEval:
         for i, s in enumerate(strategies):
             s.idx = i
             if if_reset_strategies:
-                s.reset()
+                s._reset()
 
         self._n = len(strategies)  # number of strategies
         self._ifPaired = if_paired  # if cost and effect outcomes are paired across strategies

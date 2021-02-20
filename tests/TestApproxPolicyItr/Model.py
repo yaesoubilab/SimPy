@@ -13,10 +13,11 @@ class Model:
         self.decisionRule = decision_rule
         self.seqFeatures = []
         self.seqCosts = []
-        self.seqActions = []
+        self.seqActionCombos = []
 
     def simulate(self, itr):
 
+        self._reset()
         rng = np.random.RandomState(seed=itr)
 
         # find the initial state
@@ -25,11 +26,11 @@ class Model:
         for t in range(3):
 
             # store the features
-            self.seqFeatures.append([state])
+            self.seqFeatures.append([t, state])
 
             # make a decision
-            action = self.decisionRule.get_decision(state=state)
-            self.seqActions.append(action)
+            action = self.decisionRule.get_decision(feature_values=[t, state])
+            self.seqActionCombos.append(action)
 
             # store the reward
             cost = self._cost(state=state, action=action, rng=rng)
@@ -62,6 +63,20 @@ class Model:
         self.decisionRule = Dynamic(approx_decision_maker=approx_decision_maker,
                                     always_greedy=False)
 
+    def get_seq_of_features(self):
+        return self.seqFeatures
+
+    def get_seq_of_costs(self):
+        return self.seqCosts
+
+    def get_seq_of_action_combos(self):
+        return self.seqActionCombos
+
+    def _reset(self):
+        self.seqFeatures.clear()
+        self.seqCosts.clear()
+        self.seqActionCombos.clear()
+
 
 class MultiModel:
 
@@ -90,7 +105,7 @@ class _DecisionRule:
     def __init__(self):
         pass
 
-    def get_decision(self, state):
+    def get_decision(self, feature_values):
         pass
 
 
@@ -98,7 +113,7 @@ class AlwaysOn(_DecisionRule):
     def __init__(self):
         _DecisionRule.__init__(self)
 
-    def get_decision(self, state):
+    def get_decision(self, feature_values):
         return [1]
 
 
@@ -106,7 +121,7 @@ class AlwaysOff(_DecisionRule):
     def __init__(self):
         _DecisionRule.__init__(self)
 
-    def get_decision(self, state):
+    def get_decision(self, feature_values):
         return [0]
 
 
@@ -114,8 +129,8 @@ class Myopic(_DecisionRule):
     def __init__(self):
         _DecisionRule.__init__(self)
 
-    def get_decision(self, state):
-        return [0] if 0.25 <= state <= 0.75 else [1]
+    def get_decision(self, feature_values):
+        return [0] if 0.25 <= feature_values[1] <= 0.75 else [1]
 
 
 class Dynamic(_DecisionRule):
@@ -126,9 +141,9 @@ class Dynamic(_DecisionRule):
         self.approxDecisionMaker = approx_decision_maker
         self.alwaysGreedy = always_greedy
 
-    def get_decision(self, state):
+    def get_decision(self, feature_values):
 
         if self.alwaysGreedy:
-            return self.approxDecisionMaker.make_a_greedy_decision(feature_values=[state])
+            return self.approxDecisionMaker.make_a_greedy_decision(feature_values=feature_values)
         else:
-            return self.approxDecisionMaker.make_an_epsilon_greedy_decision(feature_values=[state])
+            return self.approxDecisionMaker.make_an_epsilon_greedy_decision(feature_values=feature_values)
