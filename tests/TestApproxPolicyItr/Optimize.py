@@ -5,9 +5,9 @@ from Model import Model
 N = 1000
 ACTION_COST = 3
 COST_SIGMA = 0
-B = 50
+B = 10
 BETA = 0.5
-N_ITRS = 100
+N_ITRS = 1000
 
 sim_model = Model(cost_sigma=COST_SIGMA,
                   action_cost=ACTION_COST)

@@ -53,7 +53,7 @@ class Model:
 
     def _cost(self, state, action, rng):
 
-        state_cost = 100*pow(state - 0.5, 2) + rng.normal(0, self.costSigma)
+        state_cost = 1000*pow(state - 0.5, 2) + rng.normal(0, self.costSigma)
         action_cost = self.actionCost if action[0] == 1 else 0
 
         return state_cost + action_cost

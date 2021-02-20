@@ -1,7 +1,7 @@
 from Model import *
 
 N = 1000
-ACTION_COST = 3
+ACTION_COST = 50
 COST_SIGMA = 0
 
 multiModel = MultiModel(decision_rule=AlwaysOff(),
