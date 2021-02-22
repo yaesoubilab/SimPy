@@ -58,8 +58,12 @@ class State:
 
 
 class _ApproxDecisionMaker:
+    # super class for epsilon-greedy and greedy decisions maker
 
     def __init__(self, num_of_actions):
+        """
+        :param num_of_actions: (int) number of actions with on/off switches
+        """
 
         self.nOfActions = num_of_actions
         self.nOfActionCombos = int(pow(2, self.nOfActions))
@@ -71,6 +75,7 @@ class _ApproxDecisionMaker:
     def _make_a_greedy_decision(self, feature_values):
         """ makes a greedy decision given the feature values
         :param feature_values: (list) of feature values
+        :returns (list of 0s and 1s) the selected combinations of actions
         """
 
         minimum = float('inf')
@@ -91,9 +96,14 @@ class _ApproxDecisionMaker:
 
 
 class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
+    # class to make greedy decisions
 
     def __init__(self, num_of_actions, q_function_degree, q_functions_csv_file):
-
+        """
+        :param num_of_actions: (int) number of actions with on/off switches
+        :param q_function_degree: (float) degree of the polynomial function used for q-functions
+        :param q_functions_csv_file: (string) csv filename to read the coefficient of the q-functions
+        """
         _ApproxDecisionMaker.__init__(self, num_of_actions=num_of_actions)
 
         # read the q-functions
@@ -102,15 +112,19 @@ class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
         for i, row in enumerate(rows):
             q_function = PolynomialQFunction(name='Q-function for ' + str(action_combo_of_an_index(i)),
                                              degree=q_function_degree)
-            q_function.set_coeffs(row)
+            q_function.set_coeffs(row[1])
             self.qFunctions.append(q_function)
 
     def make_a_decision(self, feature_values):
+        """ make a greedy decision
+        :returns (list of 0s and 1s) the greedy selection of actions
+        """
 
         return self._make_a_greedy_decision(feature_values=feature_values)
 
 
 class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
+    # class to make epsilon-greedy decisions
 
     def __init__(self, num_of_actions, exploration_rule, q_function_degree, l2_penalty, q_functions_csv_file):
         """
@@ -150,10 +164,11 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
             return self._make_a_greedy_decision(feature_values=feature_values)
 
     def export_q_functions(self):
+        """ exports the coefficients of q-functions to a csv file. """
 
         rows = []
         for q in self.qFunctions:
-            rows.append(q.get_coeffs())
+            rows.append([q.name, q.get_coeffs()])
 
         write_csv(rows=rows, file_name=self.qFunctionsCSVFile)
 
