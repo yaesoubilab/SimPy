@@ -54,7 +54,7 @@ class _ApproxDecisionMaker:
         self.qFunctions = []
 
     def make_a_decision(self, feature_values):
-        pass
+        raise NotImplementedError
 
     def _make_a_greedy_decision(self, feature_values):
         """ makes a greedy decision given the feature values
@@ -117,7 +117,7 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
                                     l2_penalty=l2_penalty)
             )
 
-    def make_an_epsilon_greedy_decision(self, feature_values):
+    def make_a_decision(self, feature_values):
         """ makes an epsilon-greedy decision given the feature values
         :param feature_values: (list) of feature values
         """

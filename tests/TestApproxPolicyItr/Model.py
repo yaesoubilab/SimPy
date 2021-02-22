@@ -60,8 +60,7 @@ class Model:
 
     def set_approx_decision_maker(self, approx_decision_maker):
 
-        self.decisionRule = Dynamic(approx_decision_maker=approx_decision_maker,
-                                    always_greedy=False)
+        self.decisionRule = Dynamic(approx_decision_maker=approx_decision_maker)
 
     def get_seq_of_features(self):
         return self.seqFeatures
@@ -135,15 +134,12 @@ class Myopic(_DecisionRule):
 
 class Dynamic(_DecisionRule):
 
-    def __init__(self, approx_decision_maker, always_greedy):
+    def __init__(self, approx_decision_maker):
         _DecisionRule.__init__(self)
 
         self.approxDecisionMaker = approx_decision_maker
-        self.alwaysGreedy = always_greedy
 
     def get_decision(self, feature_values):
 
-        if self.alwaysGreedy:
-            return self.approxDecisionMaker._make_a_greedy_decision(feature_values=feature_values)
-        else:
-            return self.approxDecisionMaker.make_an_epsilon_greedy_decision(feature_values=feature_values)
+        return self.approxDecisionMaker.make_a_decision(feature_values=feature_values)
+
