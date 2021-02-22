@@ -9,23 +9,35 @@ from SimPy.InOutFunctions import write_csv, read_csv_rows
 
 class SimModel:
     # abstract class to be overridden by the simulation model to optimize
+    # a simulation model should have the following class attributes
+
     def __init__(self):
         pass
 
     def set_approx_decision_maker(self, approx_decision_maker):
-        pass
+        """ to allow the optimization algorithm to set a decision maker for the model that makes
+            approximately optimal decisions. """
+        raise NotImplementedError
 
     def simulate(self, itr):
-        pass
+        """ to allow th optimization algorithm to get one replication of the simulation model
+        :param itr: (int) the iteration of the optimization algorithm
+        """
+        raise NotImplementedError
 
     def get_seq_of_features(self):
-        pass
+        """ to allow tht optimization algorithm to get the sequence of features observed during the simulation """
+        raise NotImplementedError
 
     def get_seq_of_costs(self):
-        pass
+        """ to allow tht optimization algorithm to get the sequence of cost observed
+            during the decision periods of the simulation """
+        raise NotImplementedError
 
     def get_seq_of_action_combos(self):
-        pass
+        """ to allow tht optimization algorithm to get the sequence of decision (i.e. action combinations)
+            made during the simulation """
+        raise NotImplementedError
 
 
 class State:
