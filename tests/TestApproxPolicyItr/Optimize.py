@@ -10,7 +10,7 @@ COST_SIGMA = 0
 N_ITRS = 1000
 B = 50
 BETA = 0.5
-Q_FUNC_DEGREE = 2
+Q_FUNC_DEGREE = 3
 
 sim_model = Model(cost_sigma=COST_SIGMA,
                   action_cost=ACTION_COST)
