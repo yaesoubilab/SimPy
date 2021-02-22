@@ -4,7 +4,7 @@ from SimPy.Optimization.Support import *
 import numpy as np
 import matplotlib.pyplot as plt
 from SimPy.Support.MiscFunctions import get_moving_average
-from SimPy.InOutFunctions import write_csv
+from SimPy.InOutFunctions import write_csv, read_csv_rows
 
 
 class SimModel:
@@ -80,15 +80,22 @@ class _ApproxDecisionMaker:
 
 class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
 
-    def __init__(self, num_of_actions, q_functions_csv_file):
+    def __init__(self, num_of_actions, q_function_degree, q_functions_csv_file):
 
         _ApproxDecisionMaker.__init__(self, num_of_actions=num_of_actions)
 
         # read the q-functions
+        rows = read_csv_rows(file_name=q_functions_csv_file, if_ignore_first_row=False, if_convert_float=True)
+        # create the q-functions
+        for i, row in enumerate(rows):
+            q_function = PolynomialQFunction(name='Q-function for ' + str(action_combo_of_an_index(i)),
+                                             degree=q_function_degree)
+            q_function.set_coeffs(row)
+            self.qFunctions.append(q_function)
 
     def make_a_decision(self, feature_values):
 
-        self._make_a_greedy_decision(feature_values=feature_values)
+        return self._make_a_greedy_decision(feature_values=feature_values)
 
 
 class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):

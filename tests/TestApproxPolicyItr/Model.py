@@ -105,7 +105,7 @@ class _DecisionRule:
         pass
 
     def get_decision(self, feature_values):
-        pass
+        raise NotImplementedError
 
 
 class AlwaysOn(_DecisionRule):
