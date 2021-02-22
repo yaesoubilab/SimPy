@@ -1,5 +1,5 @@
 import numpy as np
-from SimPy.ADP import PolynomialQFunction
+from SimPy.Regression import PolynomialQFunction
 
 coeffs = np.array([-1, 1, 2, 3, -2, 4]) # coefficients of [1, x1, x2, x1^2, x1.x2, x1^2]
 N = 1000

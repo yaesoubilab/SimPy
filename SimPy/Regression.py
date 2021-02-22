@@ -10,6 +10,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 # ------- Single variable regression models ----------
 class _OneVarRegression:
+
     def __init__(self, x, y):
         self._x = x
         self._y = y
@@ -19,13 +20,13 @@ class _OneVarRegression:
         return self._coeffs
 
     def get_predicted_y(self, x):
-        pass
+        raise NotImplementedError
 
     def get_derivative(self, x):
-        pass
+        raise NotImplementedError
 
     def get_roots(self):
-        pass
+        raise NotImplementedError
 
     def plot_fit(self, x_range=None, fig_size=None):
 
@@ -47,6 +48,7 @@ class _OneVarRegression:
 
 class SingleVarPolyRegression(_OneVarRegression):
     # regression of form: f(x) = c0 + c1*x + c2*x^2 + c3*x^3 + ... + cn*x^n
+
     def __init__(self, x, y, degree=1):
 
         _OneVarRegression.__init__(self, x, y)
@@ -63,6 +65,7 @@ class SingleVarPolyRegression(_OneVarRegression):
         return f
 
     def get_derivative(self, x):
+
         result = 0
         for i in range(len(self._coeffs) - 1):
             result += (i + 1) * self._coeffs[i + 1] * pow(x, i)
@@ -70,6 +73,7 @@ class SingleVarPolyRegression(_OneVarRegression):
         return result
 
     def get_roots(self):
+
         return P.polyroots(self._coeffs)
 
 
@@ -258,6 +262,9 @@ class SingleVarPolyRegWithInference:
 class LinearRegression:
     
     def __init__(self, l2_penalty=0):
+        """
+        :param l2_penalty: (float) l2 regularization penalty
+        """
 
         self.l2Penalty = l2_penalty
         self._coeffs = None
@@ -266,7 +273,7 @@ class LinearRegression:
 
         # W
         N = len(y)
-        if forgetting_factor<1:
+        if forgetting_factor < 1:
             w = []
             for i in range(N):
                 w.append(pow(forgetting_factor, N - i - 1))
@@ -277,7 +284,7 @@ class LinearRegression:
         # XT.W.X
         XTX = np.transpose(X) @ W @ X
         # XT.W.y
-        XTy = np.transpose(X)@ W @ y
+        XTy = np.transpose(X) @ W @ y
 
         if self.l2Penalty > 0:
             self._add_l2(XTX)
@@ -302,6 +309,9 @@ class LinearRegression:
 class RecursiveLinearReg(LinearRegression):
 
     def __init__(self, l2_penalty=0):
+        """
+        :param l2_penalty: (float) l2 regularization penalty
+        """
 
         LinearRegression.__init__(self, l2_penalty=l2_penalty)
 
@@ -369,14 +379,13 @@ class RecursiveLinearReg(LinearRegression):
 class _QFunction:
 
     def __init__(self, name=None):
-
         self.name = name
 
     def update(self, x, f, forgetting_factor=1):
-        pass
+        raise NotImplementedError
 
     def f(self, x):
-        pass
+        raise NotImplementedError
 
 
 class PolynomialQFunction(_QFunction):
@@ -394,7 +403,6 @@ class PolynomialQFunction(_QFunction):
                         y=f, forgetting_factor=forgetting_factor)
 
     def f(self, x):
-
         return self.reg.get_y(x=self.poly.fit_transform(X=[x])[0])
 
     def get_coeffs(self):
