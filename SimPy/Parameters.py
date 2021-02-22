@@ -68,6 +68,10 @@ class Beta(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
+
+        if not (minimum < mean < maximum):
+            raise ValueError('Mean should be between minimum and maximum.')
+
         _Parameter.__init__(self, id=id, name=name)
         fit_results = B.fit_mm(mean=mean, st_dev=st_dev, minimum=minimum, maximum=maximum)
         self.par = B(a=fit_results['a'], b=fit_results['b'], loc=fit_results['loc'], scale=fit_results['scale'])

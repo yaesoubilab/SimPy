@@ -112,11 +112,15 @@ class Beta(RVG):
         :param maximum: fixed maximum
         :return: dictionary with keys "a", "b", "loc" and "scale"
         """
+
+        if not (minimum < mean < maximum):
+            raise ValueError('Mean should be between minimum and maximum.')
+
         # shift the distribution by loc and scale
         mean = (mean - minimum) * 1.0 / (maximum - minimum)
         st_dev = st_dev * 1.0 / (maximum - minimum)
 
-        a_plus_b = mean * (1 - mean) / st_dev ** 2 - 1
+        a_plus_b = mean * (1 - mean) / pow(st_dev, 2) - 1
         a = mean * a_plus_b
 
         return {"a": a, "b": a_plus_b - a, "loc": minimum, "scale": maximum - minimum}
