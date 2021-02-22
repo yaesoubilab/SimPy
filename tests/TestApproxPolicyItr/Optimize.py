@@ -5,9 +5,9 @@ from Model import Model
 N = 1000
 ACTION_COST = 3
 COST_SIGMA = 0
-B = 10
-BETA = 0.5
-N_ITRS = 1000
+B = 50
+BETA = 0.25
+N_ITRS = 100
 
 sim_model = Model(cost_sigma=COST_SIGMA,
                   action_cost=ACTION_COST)
@@ -22,7 +22,7 @@ api = ApproximatePolicyIteration(sim_model=sim_model,
 
 api.optimize(n_iterations=N_ITRS)
 
-api.plot_itr(moving_ave_window=int(N_ITRS/20))
+api.plot_itr(moving_ave_window=int(N_ITRS/20), fig_size=(5, 6))
 
 
 

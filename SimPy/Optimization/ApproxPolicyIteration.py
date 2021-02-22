@@ -4,6 +4,7 @@ from SimPy.Optimization.Support import *
 import numpy as np
 import matplotlib.pyplot as plt
 from SimPy.Support.MiscFunctions import get_moving_average
+from SimPy.InOutFunctions import write_csv
 
 
 class SimModel:
@@ -44,45 +45,18 @@ class State:
         self.costToGo = 0
 
 
-class ApproxDecisionMaker:
+class _ApproxDecisionMaker:
 
-    def __init__(self, num_of_actions, exploration_rule, q_function_degree, l2_penalty):
-        """
-        :param num_of_actions: (int) number of actions with on/off switches
-        :param exploration_rule: exploration rule
-        :param q_function_degree: (float) degree of the polynomial function used for q-functions
-        :param l2_penalty: (float) l2 regularization penalty
-        """
+    def __init__(self, num_of_actions):
 
         self.nOfActions = num_of_actions
-        self.explorationRule = exploration_rule
-        self.qFunctions = []
         self.nOfActionCombos = int(pow(2, self.nOfActions))
-        self.rng = np.random.RandomState(seed=0)
-        self.itr = 0   # iteration of the algorithm (needed to calculate exploration rate)
+        self.qFunctions = []
 
-        # create the q-functions
-        for i in range(self.nOfActionCombos):
-            self.qFunctions.append(
-                PolynomialQFunction(name='Q-function for '+str(action_combo_of_a_index(i)),
-                                    degree=q_function_degree,
-                                    l2_penalty=l2_penalty)
-            )
+    def make_a_decision(self, feature_values):
+        pass
 
-    def make_an_epsilon_greedy_decision(self, feature_values):
-        """ makes an epsilon-greedy decision given the feature values
-        :param feature_values: (list) of feature values
-        """
-
-        if self.rng.random_sample() < self.explorationRule.get_epsilon(itr=self.itr):
-            # explore
-            i = self.rng.randint(low=0, high=self.nOfActionCombos)
-            return action_combo_of_a_index(i)
-        else:
-            # exploit
-            return self.make_a_greedy_decision(feature_values=feature_values)
-
-    def make_a_greedy_decision(self, feature_values):
+    def _make_a_greedy_decision(self, feature_values):
         """ makes a greedy decision given the feature values
         :param feature_values: (list) of feature values
         """
@@ -99,15 +73,76 @@ class ApproxDecisionMaker:
 
             if q_value < minimum:
                 minimum = q_value
-                opt_action_combo = action_combo_of_a_index(i)
+                opt_action_combo = action_combo_of_an_index(i)
 
         return opt_action_combo
+
+
+class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
+
+    def __init__(self, num_of_actions, q_functions_csv_file):
+
+        _ApproxDecisionMaker.__init__(self, num_of_actions=num_of_actions)
+
+        # read the q-functions
+
+    def make_a_decision(self, feature_values):
+
+        self._make_a_greedy_decision(feature_values=feature_values)
+
+
+class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
+
+    def __init__(self, num_of_actions, exploration_rule, q_function_degree, l2_penalty, q_functions_csv_file):
+        """
+        :param num_of_actions: (int) number of actions with on/off switches
+        :param exploration_rule: exploration rule
+        :param q_function_degree: (float) degree of the polynomial function used for q-functions
+        :param l2_penalty: (float) l2 regularization penalty
+        :param q_functions_csv_file: (string) csv filename to store the coefficient of the q-functions
+        """
+
+        _ApproxDecisionMaker.__init__(self, num_of_actions=num_of_actions)
+
+        self.explorationRule = exploration_rule
+        self.rng = np.random.RandomState(seed=0)
+        self.itr = 0   # iteration of the algorithm (needed to calculate exploration rate)
+        self.qFunctionsCSVFile = q_functions_csv_file
+
+        # create the q-functions
+        for i in range(self.nOfActionCombos):
+            self.qFunctions.append(
+                PolynomialQFunction(name='Q-function for '+str(action_combo_of_an_index(i)),
+                                    degree=q_function_degree,
+                                    l2_penalty=l2_penalty)
+            )
+
+    def make_an_epsilon_greedy_decision(self, feature_values):
+        """ makes an epsilon-greedy decision given the feature values
+        :param feature_values: (list) of feature values
+        """
+
+        if self.rng.random_sample() < self.explorationRule.get_epsilon(itr=self.itr):
+            # explore
+            i = self.rng.randint(low=0, high=self.nOfActionCombos)
+            return action_combo_of_an_index(i)
+        else:
+            # exploit
+            return self._make_a_greedy_decision(feature_values=feature_values)
+
+    def export_q_functions(self):
+
+        rows = []
+        for q in self.qFunctions:
+            rows.append(q.get_coeffs())
+
+        write_csv(rows=rows, file_name=self.qFunctionsCSVFile)
 
 
 class ApproximatePolicyIteration:
     
     def __init__(self, sim_model, num_of_actions, learning_rule, exploration_rule, discount_factor,
-                 q_function_degree, l2_penalty):
+                 q_function_degree, l2_penalty, q_functions_csv_file='q-functions.csv'):
         """
         :param sim_model (SimModel) simulation model
         :param num_of_actions: (int) number of possible actions to turn on or off
@@ -116,6 +151,7 @@ class ApproximatePolicyIteration:
         :param discount_factor: (float) is 1 / (1 + interest rate)
         :param q_function_degree: (int) degree of the polynomial function used for q-functions
         :param l2_penalty: (float) l2 regularization penalty
+        :param q_functions_csv_file: (string) csv filename to store the coefficient of the q-functions
         """
 
         self.simModel = sim_model
@@ -129,10 +165,11 @@ class ApproximatePolicyIteration:
         self.itr_exploration_rate = []  # exploration rate over iterations
 
         # create the approximate decision maker
-        self.appoxDecisionMaker = ApproxDecisionMaker(num_of_actions=num_of_actions,
-                                                      q_function_degree=q_function_degree,
-                                                      exploration_rule=exploration_rule,
-                                                      l2_penalty=l2_penalty)
+        self.appoxDecisionMaker = EpsilonGreedyApproxDecisionMaker(num_of_actions=num_of_actions,
+                                                                   q_function_degree=q_function_degree,
+                                                                   exploration_rule=exploration_rule,
+                                                                   l2_penalty=l2_penalty,
+                                                                   q_functions_csv_file=q_functions_csv_file)
 
         # assign the approximate decision maker to the model
         self.simModel.set_approx_decision_maker(
@@ -161,6 +198,9 @@ class ApproximatePolicyIteration:
                                  seq_of_features=self.simModel.get_seq_of_features(),
                                  seq_of_action_combos=self.simModel.get_seq_of_action_combos(),
                                  seq_of_costs=self.simModel.get_seq_of_costs())
+
+        # export q-functions:
+        self.appoxDecisionMaker.export_q_functions()
 
     def _back_propagate(self, itr, seq_of_features, seq_of_action_combos, seq_of_costs):
 
@@ -235,7 +275,7 @@ class ApproximatePolicyIteration:
                     'k-', markersize=1)
 
         if y_label is None:
-            y_label = 'Discounted total cost'
+            y_label = 'Discounted\ntotal cost'
 
         ax.set_ylim(y_range)
         ax.set_ylabel(y_label)
@@ -256,7 +296,7 @@ class ApproximatePolicyIteration:
         ax.axhline(y=0, linestyle='--', color='black', linewidth=1)
 
         if y_label is None:
-            y_label = 'Error of first period'
+            y_label = 'Error of\nfirst period'
 
         ax.set_ylim(y_range)
         ax.set_ylabel(y_label)

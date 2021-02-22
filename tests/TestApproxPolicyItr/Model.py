@@ -144,6 +144,6 @@ class Dynamic(_DecisionRule):
     def get_decision(self, feature_values):
 
         if self.alwaysGreedy:
-            return self.approxDecisionMaker.make_a_greedy_decision(feature_values=feature_values)
+            return self.approxDecisionMaker._make_a_greedy_decision(feature_values=feature_values)
         else:
             return self.approxDecisionMaker.make_an_epsilon_greedy_decision(feature_values=feature_values)

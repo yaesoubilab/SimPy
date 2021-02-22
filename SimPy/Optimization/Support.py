@@ -8,7 +8,7 @@ def index_of_an_action_combo(action_combo):
     return int(s)
 
 
-def action_combo_of_a_index(index):
+def action_combo_of_an_index(index):
 
     string = bin(index).replace("0b", "")
     return list(map(int, string))
