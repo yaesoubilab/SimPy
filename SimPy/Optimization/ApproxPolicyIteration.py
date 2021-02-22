@@ -112,7 +112,8 @@ class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
         for i, row in enumerate(rows):
             q_function = PolynomialQFunction(name='Q-function for ' + str(action_combo_of_an_index(i)),
                                              degree=q_function_degree)
-            q_function.set_coeffs(row[1])
+            # read coefficients
+            q_function.set_coeffs(np.fromstring(row[1][1:-1], sep=' '))
             self.qFunctions.append(q_function)
 
     def make_a_decision(self, feature_values):
@@ -238,43 +239,43 @@ class ApproximatePolicyIteration:
 
     def _back_propagate(self, itr, seq_of_features, seq_of_action_combos, seq_of_costs):
 
-        # make adp states
-        self.adpStates = []
+        # make feature/action states
+        self.states = []
         for i in range(len(seq_of_features)):
-            self.adpStates.append(State(feature_values=seq_of_features[i],
-                                        action_combo=seq_of_action_combos[i],
-                                        cost=seq_of_costs[i]))
+            self.states.append(State(feature_values=seq_of_features[i],
+                                     action_combo=seq_of_action_combos[i],
+                                     cost=seq_of_costs[i]))
 
-        # cost of last adp state
-        self.adpStates[-1].costToGo = self.adpStates[-1].cost
+        # cost of last state in this simulation run
+        self.states[-1].costToGo = self.states[-1].cost
 
-        # calculate discounted cost-to-go of adp states
-        i = len(self.adpStates)-1-1
+        # calculate discounted cost-to-go of states
+        i = len(self.states) - 1 - 1
         while i >= 0:
-            self.adpStates[i].costToGo = self.adpStates[i].cost \
-                                         + self.discountFactor * self.adpStates[i+1].costToGo
+            self.states[i].costToGo = self.states[i].cost \
+                                      + self.discountFactor * self.states[i + 1].costToGo
             i -= 1
         
         # store the discounted total cost
-        self.itr_total_cost.append(self.adpStates[0].costToGo)
+        self.itr_total_cost.append(self.states[0].costToGo)
 
         # store error of the first period
-        q_index = index_of_an_action_combo(self.adpStates[0].actionCombo)
+        q_index = index_of_an_action_combo(self.states[0].actionCombo)
         if self.appoxDecisionMaker.qFunctions[q_index].get_coeffs() is None:
             self.itr_error.append(None)
         else:
-            predicted_cost = self.appoxDecisionMaker.qFunctions[q_index].f(x=self.adpStates[0].featureValues)
-            self.itr_error.append(self.adpStates[0].costToGo - predicted_cost)
+            predicted_cost = self.appoxDecisionMaker.qFunctions[q_index].f(x=self.states[0].featureValues)
+            self.itr_error.append(self.states[0].costToGo - predicted_cost)
 
         # update q-functions
         forgetting_factor = self.learningRule.get_forgetting_factor(itr=itr)
 
-        i = len(self.adpStates) - 1
+        i = len(self.states) - 1
         while i >= 0:
-            q_index = index_of_an_action_combo(self.adpStates[i].actionCombo)
+            q_index = index_of_an_action_combo(self.states[i].actionCombo)
             self.appoxDecisionMaker.qFunctions[q_index].update(
-                x=self.adpStates[i].featureValues,
-                f=self.adpStates[i].costToGo,
+                x=self.states[i].featureValues,
+                f=self.states[i].costToGo,
                 forgetting_factor=forgetting_factor)
             i -= 1
 
