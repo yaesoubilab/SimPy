@@ -46,7 +46,7 @@ class _OneVarRegression:
         ax.plot(xs, ys, color='red')
 
 
-class SingleVarPolyRegression(_OneVarRegression):
+class PolyRegression(_OneVarRegression):
     # regression of form: f(x) = c0 + c1*x + c2*x^2 + c3*x^3 + ... + cn*x^n
 
     def __init__(self, x, y, degree=1):

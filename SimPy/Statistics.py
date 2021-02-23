@@ -355,7 +355,7 @@ class DiscreteTimeStat(_Statistics):
 
 class ContinuousTimeStat(_Statistics):
     """ to calculate statistics on the area-under-the-curve for observations accumulating over time """
-    def __init__(self, name,  initial_time, ave_method='step'):
+    def __init__(self, initial_time, ave_method='step', name=None):
         """
         :param initial_time: it is assumed that the value of this sample path is zero at the initial time
         :param ave_method: to calculate the area under the curve,
@@ -441,7 +441,7 @@ class ContinuousTimeStat(_Statistics):
 
 
 class _ComparativeStat(_Statistics):
-    def __init__(self, name, x, y_ref):
+    def __init__(self, x, y_ref, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations (the reference) 
@@ -473,28 +473,28 @@ class _ComparativeStat(_Statistics):
 
 class _DifferenceStat(_ComparativeStat):
 
-    def __init__(self, name, x, y_ref):
+    def __init__(self, x, y_ref, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         """
-        _ComparativeStat.__init__(self, name, x, y_ref)
+        _ComparativeStat.__init__(self, x, y_ref, name)
 
 
 class DifferenceStatPaired(_DifferenceStat):
 
-    def __init__(self, name, x, y_ref):
+    def __init__(self, x, y_ref, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         """
-        _DifferenceStat.__init__(self, name, x, y_ref)
+        _DifferenceStat.__init__(self,  x, y_ref, name)
         # create a summary statistics for the element-wise difference
 
         if len(self._x) != len(self._y_ref):
             raise ValueError('Two samples should have the same size.')
 
-        self._dStat = SummaryStat(name, self._x - self._y_ref)
+        self._dStat = SummaryStat(self._x - self._y_ref, name)
 
     def get_n(self):
         return self._dStat.get_n()
@@ -526,12 +526,12 @@ class DifferenceStatPaired(_DifferenceStat):
 
 class DifferenceStatIndp(_DifferenceStat):
 
-    def __init__(self, name, x, y_ref):
+    def __init__(self, x, y_ref, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         """
-        _DifferenceStat.__init__(self, name, x, y_ref)
+        _DifferenceStat.__init__(self, x, y_ref, name)
 
         self._XMinusYSimulated = False
 
@@ -544,7 +544,7 @@ class DifferenceStatIndp(_DifferenceStat):
         max_n = max(self._x_n, self._y_n, 1000)
         x_i = np.random.choice(self._x, size=max_n, replace=True)
         y_i = np.random.choice(self._y_ref, size=max_n, replace=True)
-        self._sum_stat_sample_delta = SummaryStat(self.name, x_i - y_i)
+        self._sum_stat_sample_delta = SummaryStat(x_i - y_i, self.name)
 
         self._XMinusYSimulated = False
 
@@ -646,24 +646,24 @@ class DifferenceStatIndp(_DifferenceStat):
 
 class _RatioStat(_ComparativeStat):
 
-    def __init__(self, name, x, y_ref):
+    def __init__(self, x, y_ref, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         """
-        _ComparativeStat.__init__(self, name, x, y_ref)
+        _ComparativeStat.__init__(self, x, y_ref, name)
 
         self._ifComputable = True  # if any element of the denominator is 0, ratio is not computable
 
 
 class RatioStatPaired(_RatioStat):
 
-    def __init__(self, name, x, y_ref):
+    def __init__(self, x, y_ref, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         """
-        _RatioStat.__init__(self, name, x, y_ref)
+        _RatioStat.__init__(self, x, y_ref, name)
 
         if len(self._x) != len(self._y_ref):
             raise ValueError('Two samples should have the same size.')
@@ -685,7 +685,7 @@ class RatioStatPaired(_RatioStat):
                 ratio[i] = 1.0*self._x[i] / self._y_ref[i]
 
         # create summary stat for element-wise ratio
-        self._ratioStat = SummaryStat(name, ratio)
+        self._ratioStat = SummaryStat(ratio, name)
 
     def get_n(self):
         return self._ratioStat.get_n()
@@ -714,13 +714,13 @@ class RatioStatPaired(_RatioStat):
 
 class RatioStatIndp(_RatioStat):
 
-    def __init__(self, name, x, y_ref):
+    def __init__(self, x, y_ref, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations (reference)
         """
 
-        _RatioStat.__init__(self, name, x, y_ref)
+        _RatioStat.__init__(self, x, y_ref, name)
 
         # make sure no 0 in the denominator variable
         if not (self._y_ref != 0).all():
@@ -733,7 +733,7 @@ class RatioStatIndp(_RatioStat):
         x_resample = np.random.choice(self._x, size=max_n, replace=True)
         y_resample = np.random.choice(self._y_ref, size=max_n, replace=True)
 
-        self._sum_stat_sample_ratio = SummaryStat(name, np.divide(x_resample, y_resample))
+        self._sum_stat_sample_ratio = SummaryStat(np.divide(x_resample, y_resample), name)
 
     def get_mean(self):
         return self._sum_stat_sample_ratio.get_mean()
@@ -799,19 +799,19 @@ class RatioStatIndp(_RatioStat):
 class _RelativeDifference(_ComparativeStat):
     """ class to make inference about (X-Y_ref)/Y_ref or (Y_ref-X)/Y_ref"""
 
-    def __init__(self, name, x, y_ref, order=0):
+    def __init__(self, x, y_ref, order=0, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations used as the reference values
         :param order: set to 0 to calculate (X-Y_ref)/Y and to 1 to calculate (Y_ref-X)/Y_ref
         """
-        _ComparativeStat.__init__(self, name, x, y_ref)
+        _ComparativeStat.__init__(self, x, y_ref, name)
         self._order = order
 
 
 class RelativeDifferencePaired(_RelativeDifference):
 
-    def __init__(self, name, x, y_ref, order=0):
+    def __init__(self, x, y_ref, order=0, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
@@ -838,9 +838,9 @@ class RelativeDifferencePaired(_RelativeDifference):
 
         # create summary stat for element-wise ratio
         if self._order == 0:
-            self._relativeDiffStat = SummaryStat(name, ratio - 1)
+            self._relativeDiffStat = SummaryStat(ratio - 1, name)
         else:
-            self._relativeDiffStat = SummaryStat(name, 1 - ratio)
+            self._relativeDiffStat = SummaryStat(1 - ratio, name)
 
     def get_n(self):
         return self._relativeDiffStat.get_n()
@@ -868,13 +868,13 @@ class RelativeDifferencePaired(_RelativeDifference):
 
 
 class RelativeDifferenceIndp(_RelativeDifference):
-    def __init__(self, name, x, y_ref, order=0):
+    def __init__(self, x, y_ref, order=0, name=None):
         """
         :param x: list or numpy.array of first set of observations
         :param y_ref: list or numpy.array of second set of observations
         :param order: set to 0 to calculate (X-Y_ref)/Y_ref and to 1 to calculate (Y_ref-X)/Y_ref
         """
-        _RelativeDifference.__init__(self, name, x, y_ref, order)
+        _RelativeDifference.__init__(self, x, y_ref, order, name)
 
         # make sure no 0 in the denominator variable y
         if not (self._y_ref != 0).all():
@@ -888,9 +888,9 @@ class RelativeDifferenceIndp(_RelativeDifference):
         y_resample = np.random.choice(self._y_ref, size=max_n, replace=True)
 
         if self._order == 0:
-            self._sum_stat_sample_relativeRatio = SummaryStat(name, np.divide(x_resample, y_resample) - 1)
+            self._sum_stat_sample_relativeRatio = SummaryStat(np.divide(x_resample, y_resample) - 1, name)
         else:
-            self._sum_stat_sample_relativeRatio = SummaryStat(name, 1 - np.divide(x_resample, y_resample))
+            self._sum_stat_sample_relativeRatio = SummaryStat(1 - np.divide(x_resample, y_resample), name)
 
     def get_mean(self):
         return self._sum_stat_sample_relativeRatio.get_mean()
