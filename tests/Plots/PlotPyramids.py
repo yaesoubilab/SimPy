@@ -1,7 +1,12 @@
 import SimPy.Plots.PopulationPyramids as P
 
 # testing
-obs_data = [[0, 0, 0.1], [0, 1, 0.2], [5, 0, 0.3], [5, 1, 0.4], [10, 0, 0.6], [10, 1, 0.4]]
+obs_data = [[0, 0, 0.1],    # male, age 0-4
+            [0, 1, 0.2],    # female, age 0-4
+            [5, 0, 0.3],    # male, age 5-9
+            [5, 1, 0.4],    # female, age 5-9
+            [10, 0, 0.6],   # male, age 10-14
+            [10, 1, 0.4]]   # female, age 10-14
 
 sim_data = [
     [[0, 0, 0.5], [0, 1, 0.3], [5, 0, 0.5], [5, 1, 0.6]],

@@ -10,6 +10,7 @@ def plot_pyramids(observed_data, simulated_data=None,
                   colors=('brown', 'grey', 'blue'),
                   legend=('Data', 'Model'),
                   length_of_sim_bars=500,
+                  linewidths_of_sim_bars=1,
                   scale_of_sim_legend=0.5,
                   transparency=0.5,
                   file_name=None):
@@ -31,6 +32,7 @@ def plot_pyramids(observed_data, simulated_data=None,
     :param legend: (tuple) default ('Data', 'Model').
                     legend will not be displayed if set to None
     :param length_of_sim_bars: length of simulation bars
+    :param linewidths_of_sim_bars: line width of the simulation bars
     :param scale_of_sim_legend: (between 0 and 1) to shrink simulation bars
                                 shown on the legends
     :param transparency: transparency of bars
@@ -79,7 +81,7 @@ def plot_pyramids(observed_data, simulated_data=None,
     # figure title
     st = fig.suptitle(title)
     # add y labels and ticks
-    plt.setp(axis, yticks=y_ticks_places, yticklabels=y_labels)
+    plt.setp(axis, yticks=y_ticks_places, yticklabels=y_labels[:len(y_ticks_places)])
 
     # ranges of x- and y-axes
     for i in [0, 1]:
@@ -128,12 +130,12 @@ def plot_pyramids(observed_data, simulated_data=None,
             g = 0
             rep = rep + 1
         axis[0].scatter(sim_data_m, sim_data_ma,
-                        marker='|', linewidths=5.0,
+                        marker='|', linewidths=linewidths_of_sim_bars,
                         s=length_of_sim_bars,
                         color=colors[2], alpha=transparency,
                         label='Model')
         axis[1].scatter(sim_data_w, sim_data_wa,
-                        marker='|', linewidths=5.0,
+                        marker='|', linewidths=linewidths_of_sim_bars,
                         s=length_of_sim_bars,
                         color=colors[2], alpha=transparency,
                         label='Model')
