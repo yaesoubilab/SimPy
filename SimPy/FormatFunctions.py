@@ -39,6 +39,8 @@ def format_number(number, deci=None, sig_digits=None, format=None):
             return '${:,.{prec}g}'.format(number, prec=sig_digits)
         elif format == '%':
             return '{:.{prec}g}%'.format(100*number, prec=sig_digits)
+    else:
+        return str(number)
 
 
 def format_interval(interval, deci=None, sig_digits=None, format=None):
@@ -82,6 +84,8 @@ def format_interval(interval, deci=None, sig_digits=None, format=None):
         elif format == '%':
             return '({low:.{prec}g}%, {up:.{prec}g}%)' \
                 .format(low=interval[0]*100, up=interval[1]*100, prec=sig_digits)
+    else:
+        return str(interval)
 
 
 def format_estimate_interval(estimate, interval, deci, sig_digits, format=None):
@@ -114,6 +118,6 @@ def _get_deci_dig_digit(deci, sig_digits):
         except TypeError:
             raise ValueError('sig_digits should be integer or float.')
     else:
-        raise ValueError('Either deci or sig_digits should be provided.')
+        return None, None
 
     return deci, sig_digits
