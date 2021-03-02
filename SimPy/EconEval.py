@@ -1823,7 +1823,7 @@ class _ICER(_ComparativeEconMeasure):
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
     def get_formatted_ICER_and_interval(self, interval_type='c',
-                                        alpha=0.05, deci=0, form=None,
+                                        alpha=0.05, deci=0, sig_digits=4, form=None,
                                         multiplier=1, num_bootstrap_samples=1000):
         """
         :param interval_type: (string) 'n' for no interval
@@ -1831,6 +1831,7 @@ class _ICER(_ComparativeEconMeasure):
                                        'p' for percentile interval
         :param alpha: significance level
         :param deci: digits to round the numbers to
+        :param sig_digits: number of significant digits
         :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
         :param multiplier: to multiply the estimate and the interval by the provided value
         :param num_bootstrap_samples: number of bootstrap samples to calculate confidence interval
@@ -1851,6 +1852,7 @@ class _ICER(_ComparativeEconMeasure):
         return F.format_estimate_interval(estimate=estimate,
                                           interval=adj_interval,
                                           deci=deci,
+                                          sig_digits=sig_digits,
                                           format=form)
 
 
