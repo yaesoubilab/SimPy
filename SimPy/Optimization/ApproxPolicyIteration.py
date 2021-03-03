@@ -189,6 +189,17 @@ class ApproximatePolicyIteration:
         :param q_functions_csv_file: (string) csv filename to store the coefficient of the q-functions
         """
 
+        assert hasattr(sim_model, 'set_approx_decision_maker'), \
+            'sim_model should implement the attribute set_approx_decision_maker.'
+        assert hasattr(sim_model, 'simulate'), \
+            'sim_model should implement the attribute simulate.'
+        assert hasattr(sim_model, 'get_seq_of_features'), \
+            'sim_model should implement the attribute get_seq_of_features.'
+        assert hasattr(sim_model, 'get_seq_of_costs'), \
+            'sim_model should implement the attribute get_seq_of_costs.'
+        assert hasattr(sim_model, 'get_seq_of_action_combos'), \
+            'sim_model should implement the attribute get_seq_of_action_combos.'
+
         self.simModel = sim_model
         self.learningRule = learning_rule
         self.discountFactor = discount_factor
