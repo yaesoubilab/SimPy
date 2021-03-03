@@ -1,6 +1,7 @@
 from math import log
 from SimPy.RandomVariateGenerators import Beta as B
 from SimPy.RandomVariateGenerators import Uniform as U
+from SimPy.RandomVariateGenerators import UniformDiscrete as UD
 import numpy as np
 from numpy import exp, pi, cos
 
@@ -52,6 +53,22 @@ class Uniform(_Parameter):
         """
         _Parameter.__init__(self, id=id, name=name)
         self.par = U(scale=maximum-minimum, loc=minimum)
+
+    def sample(self, rng=None, time=None):
+        self.value = self.par.sample(rng=rng)
+        return self.value
+
+
+class UniformDiscrete(_Parameter):
+    def __init__(self, minimum=0, maximum=1, id=None, name=None):
+        """
+        :param minimum: (float) inclusive minimum value
+        :param maximum: (float) inclusive maximum value
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name)
+        self.par = UD(l=minimum, u=maximum)
 
     def sample(self, rng=None, time=None):
         self.value = self.par.sample(rng=rng)
