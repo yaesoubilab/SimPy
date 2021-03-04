@@ -25,18 +25,9 @@ class SimModel:
         """
         raise NotImplementedError
 
-    def get_seq_of_features(self):
-        """ to allow tht optimization algorithm to get the sequence of features observed during the simulation """
-        raise NotImplementedError
-
     def get_seq_of_costs(self):
         """ to allow tht optimization algorithm to get the sequence of cost observed
             during the decision periods of the simulation """
-        raise NotImplementedError
-
-    def get_seq_of_action_combos(self):
-        """ to allow tht optimization algorithm to get the sequence of decision (i.e. action combinations)
-            made during the simulation """
         raise NotImplementedError
 
 
