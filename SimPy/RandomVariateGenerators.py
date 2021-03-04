@@ -113,7 +113,7 @@ class Beta(RVG):
         :return: dictionary with keys "a", "b", "loc" and "scale"
         """
 
-        if not (minimum < mean < maximum):
+        if not (minimum <= mean <= maximum):
             raise ValueError('Mean should be between minimum and maximum.')
 
         # shift the distribution by loc and scale

@@ -69,6 +69,15 @@ class _ApproxDecisionMaker:
         self.nOfActionCombos = int(pow(2, self.nOfActions))
         self.qFunctions = []
 
+        self.seq_of_feature_values = [] # sequence of feature values throughout the simulation
+        self.seq_of_action_combos = []  # sequence of action combinations throughout the simulation
+
+    def reset_for_new_iteration(self):
+        """ clear the sequence of feature values and action combinations """
+
+        self.seq_of_feature_values.clear()
+        self.seq_of_action_combos.clear()
+
     def make_a_decision(self, feature_values):
         raise NotImplementedError
 
@@ -121,7 +130,11 @@ class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
         :returns (list of 0s and 1s) the greedy selection of actions
         """
 
-        return self._make_a_greedy_decision(feature_values=feature_values)
+        a = self._make_a_greedy_decision(feature_values=feature_values)
+        self.seq_of_feature_values.append(feature_values)
+        self.seq_of_action_combos.append(a)
+
+        return a
 
 
 class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
@@ -159,10 +172,15 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
         if self.rng.random_sample() < self.explorationRule.get_epsilon(itr=self.itr):
             # explore
             i = self.rng.randint(low=0, high=self.nOfActionCombos)
-            return action_combo_of_an_index(i)
+            a = action_combo_of_an_index(i)
         else:
             # exploit
-            return self._make_a_greedy_decision(feature_values=feature_values)
+            a = self._make_a_greedy_decision(feature_values=feature_values)
+
+        self.seq_of_feature_values.append(feature_values)
+        self.seq_of_action_combos.append(a)
+
+        return a
 
     def export_q_functions(self):
         """ exports the coefficients of q-functions to a csv file. """
@@ -193,12 +211,8 @@ class ApproximatePolicyIteration:
             'sim_model should implement the attribute set_approx_decision_maker.'
         assert hasattr(sim_model, 'simulate'), \
             'sim_model should implement the attribute simulate.'
-        assert hasattr(sim_model, 'get_seq_of_features'), \
-            'sim_model should implement the attribute get_seq_of_features.'
         assert hasattr(sim_model, 'get_seq_of_costs'), \
             'sim_model should implement the attribute get_seq_of_costs.'
-        assert hasattr(sim_model, 'get_seq_of_action_combos'), \
-            'sim_model should implement the attribute get_seq_of_action_combos.'
 
         self.simModel = sim_model
         self.learningRule = learning_rule
@@ -235,14 +249,15 @@ class ApproximatePolicyIteration:
 
             # update the iteration of the approximate decision maker (to calculate exploration rate)
             self.appoxDecisionMaker.itr = itr
+            self.appoxDecisionMaker.reset_for_new_iteration()
 
             # simulate
             self.simModel.simulate(itr=itr)
 
             # do back-propagation
             self._back_propagate(itr=itr,
-                                 seq_of_features=self.simModel.get_seq_of_features(),
-                                 seq_of_action_combos=self.simModel.get_seq_of_action_combos(),
+                                 seq_of_features=self.appoxDecisionMaker.seq_of_feature_values,
+                                 seq_of_action_combos=self.appoxDecisionMaker.seq_of_action_combos,
                                  seq_of_costs=self.simModel.get_seq_of_costs())
 
         # export q-functions:

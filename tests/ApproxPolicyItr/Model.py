@@ -11,9 +11,7 @@ class Model:
         self.actionCost = action_cost
 
         self.decisionRule = decision_rule
-        self.seqFeatures = []
         self.seqCosts = []
-        self.seqActionCombos = []
 
     def simulate(self, itr):
 
@@ -25,12 +23,8 @@ class Model:
 
         for t in range(3):
 
-            # store the features
-            self.seqFeatures.append([t, state])
-
             # make a decision
             action = self.decisionRule.get_decision(feature_values=[t, state])
-            self.seqActionCombos.append(action)
 
             # store the reward
             cost = self._cost(state=state, action=action, rng=rng)
@@ -62,19 +56,11 @@ class Model:
 
         self.decisionRule = Dynamic(approx_decision_maker=approx_decision_maker)
 
-    def get_seq_of_features(self):
-        return self.seqFeatures
-
     def get_seq_of_costs(self):
         return self.seqCosts
 
-    def get_seq_of_action_combos(self):
-        return self.seqActionCombos
-
     def _reset(self):
-        self.seqFeatures.clear()
         self.seqCosts.clear()
-        self.seqActionCombos.clear()
 
 
 class MultiModel:
