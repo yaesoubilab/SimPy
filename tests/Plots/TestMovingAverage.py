@@ -1,7 +1,7 @@
-import SimPy.Plots.FigSupport as Fig
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
+import SimPy.Plots.FigSupport as Fig
 
 data = [1, 2, 3, 4, 5]
 print(Fig.get_moving_average(data=data, window=3))

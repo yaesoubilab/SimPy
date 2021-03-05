@@ -1,4 +1,5 @@
 import numpy as np
+
 from SimPy.Regression import LinearRegression, RecursiveLinearReg
 
 coeffs = [1, 2, 3]  # y = 1 + 2x1 + 3x2

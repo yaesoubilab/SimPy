@@ -1,4 +1,5 @@
 import numpy as np
+
 import SimPy.Statistics as S
 from SimPy.RandomVariateGenerators import Beta
 

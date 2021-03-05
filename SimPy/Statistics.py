@@ -1,10 +1,12 @@
+import math
 import sys
 import warnings
-import math
+
 import numpy as np
 import scipy.stats as stat
 import statsmodels.api as sm
 from scipy.stats import pearsonr
+
 import SimPy.FormatFunctions as F
 
 NUM_BOOTSTRAP_SAMPLES = 1000

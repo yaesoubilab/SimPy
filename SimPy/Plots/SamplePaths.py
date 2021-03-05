@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
-import numpy as np
-from SimPy.SamplePath import *
+
 import SimPy.Plots.FigSupport as Fig
+from SimPy.SamplePath import *
 
 
 def plot_sample_path(sample_path,

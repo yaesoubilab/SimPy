@@ -1,9 +1,8 @@
-from scipy.optimize import minimize
-import SimPy.Statistics as Stat
-import SimPy.RandomVariateGenerators as RVG
 import numpy as np
-import math
-import SimPy.Support.SupportClasses as S
+from scipy.optimize import minimize
+
+import SimPy.RandomVariateGenerators as RVG
+import SimPy.Statistics as Stat
 
 
 def assert_np_list(obs, error_message):

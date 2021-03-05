@@ -1,5 +1,6 @@
-from SimPy import EconEval as EV
 import numpy as np
+
+from SimPy import EconEval as EV
 
 np.random.seed(seed=1)
 

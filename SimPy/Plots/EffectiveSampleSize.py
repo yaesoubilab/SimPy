@@ -1,8 +1,10 @@
-import numpy as np
 import random
+
 import matplotlib.pyplot as plt
-import SimPy.Support.MiscFunctions as S
+import numpy as np
+
 import SimPy.Plots.FigSupport as Fig
+import SimPy.Support.MiscFunctions as S
 
 
 def plot_eff_sample_size(likelihood_weights, if_randomize=True,

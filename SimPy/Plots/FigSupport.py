@@ -1,6 +1,7 @@
-from SimPy.Support.MiscFunctions import *
-import SimPy.FormatFunctions as F
 import os
+
+import SimPy.FormatFunctions as F
+from SimPy.Support.MiscFunctions import *
 
 
 def output_figure(plt, filename=None, dpi=300):

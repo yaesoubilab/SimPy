@@ -1,6 +1,7 @@
-import SimPy.Regression as Reg
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+import SimPy.Regression as Reg
 
 # generate x values (observations)
 x = np.random.randn(20) # x = np.linspace(100000, 150000, 20)

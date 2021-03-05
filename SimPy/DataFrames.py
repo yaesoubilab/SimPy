@@ -1,6 +1,8 @@
-import SimPy.RandomVariateGenerators as RVGs
-import numpy as np
 import math
+
+import numpy as np
+
+import SimPy.RandomVariateGenerators as RVGs
 
 
 class OneDimDataFrame:

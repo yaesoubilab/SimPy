@@ -1,4 +1,3 @@
-import numpy as np
 from tests.ProbDistributions.FitDistTests import *
 
 # simulate some data

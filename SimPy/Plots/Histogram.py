@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
 from SimPy.Plots.FigSupport import output_figure
 
 

@@ -1,6 +1,7 @@
 import numpy
-from SimPy import StatisticalClasses as Stat
+
 from SimPy import FormatFunctions as Support
+from SimPy import StatisticalClasses as Stat
 
 
 def print_results(stat):

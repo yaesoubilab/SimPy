@@ -1,11 +1,13 @@
+import math
+import warnings
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
 import scipy.stats as stat
 from numpy.random import RandomState
-import math
 from scipy.optimize import fmin_slsqp
-import matplotlib.pyplot as plt
-import warnings
+
 warnings.filterwarnings("ignore")
 
 

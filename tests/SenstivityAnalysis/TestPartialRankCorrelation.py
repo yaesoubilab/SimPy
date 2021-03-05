@@ -1,5 +1,6 @@
-from SimPy.SensitivityAnalysis import SensitivityAnalysis
 from numpy.random import rand
+
+from SimPy.SensitivityAnalysis import SensitivityAnalysis
 
 # prepare data
 param1 = rand(100) * 20

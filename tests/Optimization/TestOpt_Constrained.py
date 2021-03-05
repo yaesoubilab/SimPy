@@ -1,6 +1,7 @@
+import numpy as np
+
 import SimPy.Optimization as Opt
 from tests.Optimization import ToyModels
-import numpy as np
 
 # create an object for the stochastic approximation method
 mySimOpt = Opt.StochasticApproximation(

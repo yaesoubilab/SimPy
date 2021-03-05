@@ -1,7 +1,9 @@
+import math
+
+import numpy as np
+
 import SimPy.DataFrames as df
 import SimPy.RandomVariateGenerators as RVGs
-import numpy as np
-import math
 
 rows = [
     [0, 0, 0, 0.12],

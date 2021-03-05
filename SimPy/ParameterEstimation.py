@@ -1,16 +1,17 @@
-import SimPy.InOutFunctions as IO
-import SimPy.Plots.Histogram as Fig
-import SimPy.Statistics as Stat
-import SimPy.FormatFunctions as Format
-import SimPy.Support.MiscFunctions as F
 import copy
 from enum import Enum
+
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial.polynomial import polyfit
-from scipy.stats import pearsonr
 from numpy.random import choice
+from scipy.stats import pearsonr
 
+import SimPy.FormatFunctions as Format
+import SimPy.InOutFunctions as IO
+import SimPy.Plots.Histogram as Fig
+import SimPy.Statistics as Stat
+import SimPy.Support.MiscFunctions as F
 
 # list of columns in the parameter csv file that are not considered a parameter
 COLUMNS_TO_SKIP = ['ID', 'Seed', 'Probability', 'Message', 'Simulation Replication', 'Random Seed']

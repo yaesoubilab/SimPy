@@ -1,16 +1,15 @@
 import string
 import warnings
-import math
-import numpy as np
-import scipy.stats as stat
-import matplotlib.pyplot as plt
+
 import matplotlib.cm as cm
-import SimPy.InOutFunctions as IO
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import scipy.stats as stat
+
 import SimPy.FormatFunctions as F
+import SimPy.InOutFunctions as IO
 from SimPy.Support.EconEvalSupport import *
 from SimPy.Support.SupportClasses import *
-import matplotlib.patches as patches
-
 
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
 LEGEND_FONT_SIZE = 7

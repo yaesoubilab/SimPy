@@ -1,10 +1,12 @@
 from math import pow
-from SimPy.Regression import PolynomialQFunction
-from SimPy.Optimization.Support import *
-import numpy as np
+
 import matplotlib.pyplot as plt
-from SimPy.Support.MiscFunctions import get_moving_average
+import numpy as np
+
 from SimPy.InOutFunctions import write_csv, read_csv_rows
+from SimPy.Optimization.Support import *
+from SimPy.Regression import PolynomialQFunction
+from SimPy.Support.MiscFunctions import get_moving_average
 
 
 class SimModel:

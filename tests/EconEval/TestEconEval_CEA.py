@@ -1,6 +1,6 @@
-from SimPy import EconEval as ce
 import numpy as np
 
+from SimPy import EconEval as ce
 
 np.random.seed(573)
 s_center = np.random.normal(0, 5000, (10, 2))

@@ -1,4 +1,5 @@
 import numpy as np
+
 import SimPy.Regression as Reg
 from SimPy.Regression import ExpRegression as exp
 

@@ -1,4 +1,5 @@
 import numpy as np
+
 import SimPy.Plots.FigSupport as cls
 
 obs = np.random.normal(4, 3, 1000)

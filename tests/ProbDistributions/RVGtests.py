@@ -1,7 +1,9 @@
-import numpy as np
-import SimPy.RandomVariateGenerators as RVGs
 import math
+
+import numpy as np
 import scipy.stats as scipy
+
+import SimPy.RandomVariateGenerators as RVGs
 
 
 def print_test_results(dist_name, samples, expectation, variance):

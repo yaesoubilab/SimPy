@@ -1,9 +1,11 @@
 from math import log
+
+import numpy as np
+from numpy import exp, pi, cos
+
 from SimPy.RandomVariateGenerators import Beta as B
 from SimPy.RandomVariateGenerators import Uniform as U
 from SimPy.RandomVariateGenerators import UniformDiscrete as UD
-import numpy as np
-from numpy import exp, pi, cos
 
 
 class _Parameter:

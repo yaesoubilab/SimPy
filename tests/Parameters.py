@@ -1,5 +1,6 @@
-from SimPy.Parameters import Surge
 import numpy as np
+
+from SimPy.Parameters import Surge
 
 # 200% increase from the base value which has a default value of 1
 surge = Surge(par_max_percent_change=2, par_t0=0, par_t1=2)

@@ -1,5 +1,6 @@
-from SimPy import EconEval as ce
 import numpy as np
+
+from SimPy import EconEval as ce
 
 N = 100
 

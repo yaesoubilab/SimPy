@@ -1,11 +1,11 @@
-from numpy.polynomial import polynomial as P
+import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.api as sm
+from numpy.polynomial import polynomial as P
 from scipy import stats
-from statsmodels.sandbox.regression.predstd import wls_prediction_std
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import PolynomialFeatures
+from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
 
 # ------- Single variable regression models ----------

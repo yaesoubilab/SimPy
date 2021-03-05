@@ -1,8 +1,7 @@
+from Compare import compare
+from Model import Model
 from SimPy.Optimization.ApproxPolicyIteration import ApproximatePolicyIteration
 from SimPy.Optimization.LearningRules import *
-from Model import Model
-from Compare import compare
-
 
 ACTION_COST = 3
 COST_SIGMA = 0

@@ -1,7 +1,6 @@
-import SimPy.Regression as Reg
 import numpy as np
-import matplotlib.pyplot as plt
 
+import SimPy.Regression as Reg
 
 # generate x values (observations)
 x = np.random.randn(200)

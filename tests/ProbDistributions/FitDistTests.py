@@ -1,7 +1,8 @@
 import numpy as np
+
+import SimPy.Plots.ProbDist as Plot
 import SimPy.RandomVariateGenerators as RVGs
 from tests.ProbDistributions.RVGtests import get_samples
-import SimPy.Plots.ProbDist as Plot
 
 
 def test_fitting_beta():

@@ -1,6 +1,5 @@
-from SimPy.Models import MortalityModel
 import SimPy.RandomVariateGenerators as RVGs
-
+from SimPy.Models import MortalityModel
 
 # from life tables
 rows = [
