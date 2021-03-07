@@ -9,7 +9,7 @@ from SimPy.RandomVariateGenerators import UniformDiscrete as UD
 
 
 class _Parameter:
-    # master class for parameters
+    # super class for parameters
     def __init__(self, id=None, name=None, if_time_dep=False):
         """
         :param id: (int) id of a parameter

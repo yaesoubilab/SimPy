@@ -183,7 +183,7 @@ class Strategy:
 
 
 class _EconEval:
-    """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
+    """ super class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
     def __init__(self, strategies, if_paired, health_measure='u', if_reset_strategies=False):
         """
@@ -385,7 +385,7 @@ class _EconEval:
 
 
 class CEA(_EconEval):
-    """ master class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
+    """ super class for cost-effective analysis (CEA) and cost-benefit analysis (CBA) """
 
     def __init__(self, strategies, if_paired, health_measure='u', if_reset_strategies=False):
         """
