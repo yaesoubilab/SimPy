@@ -361,14 +361,16 @@ class RecursiveLinearReg(LinearRegression):
             self._coeffs = np.transpose(self._B @ np.transpose(self._X) @ W @ self._y)[0]
         else:
             # turn x into a column vector
-            x = np.transpose(np.asmatrix(x))
+            # x = np.transpose(np.asmatrix(x))
+            x = np.atleast_2d(np.array(x)).T
             # gamma = lambda + xT.B.x
             gamma = float(forgetting_factor + np.transpose(x) @ self._B @ x)
             # epsilon = y - thetaT*x
             epsilon = float(y - self._coeffs @ x)
             # theta = theta + B.x.epsilon/gamma
-            self._coeffs += np.transpose(self._B @ x * epsilon / gamma).A1
+            self._coeffs += (self._B @ x * epsilon / gamma).flatten()
             # B = (B-B.x.xT.B/gamma)/lambda
+            # d = self._B @ x @ np.transpose(x) @ self._B
             d = self._B @ x @ np.transpose(x) @ self._B
             self._B -= d / gamma
 
