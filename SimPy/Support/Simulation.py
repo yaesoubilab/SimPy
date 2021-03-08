@@ -146,7 +146,7 @@ class SeedGenerator:
                 return rng.choice(a=self.seeds, size=1, p=self.weights)
             else:
                 # if seeds should not be sampled, return the next seed with positive weight
-                if self.i < len(self.seeds):
+                if self.i + 1 < len(self.seedsWithPosWeights):
                     self.i += 1
                 else:
                     self.i = 0
