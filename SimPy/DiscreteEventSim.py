@@ -53,6 +53,7 @@ class SimulationCalendar:
     def clear_calendar(self):
         """ clear the simulation calendar (deletes all scheduled events) """
 
+        self.time = 0
         self._q.clear()
 
 
