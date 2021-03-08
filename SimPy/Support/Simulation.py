@@ -1,6 +1,7 @@
 import os
 
 import SimPy.InOutFunctions as io
+from numpy import iinfo, int32
 
 
 class _Trace:
@@ -110,3 +111,54 @@ class DiscreteEventSimTrace(_Trace):
 
         self._add_message(time=self._simCalendar.time, message=message)
 
+
+class SeedGenerator:
+
+    def __init__(self, seeds=None, weights=None):
+        """
+        :param seeds: (list) of seeds
+        :param weights: (list) of seed weighs
+        """
+
+        if seeds is not None and weights is not None:
+            if len(seeds) != len(weights):
+                raise ValueError('There should be equal number of seeds and weights.')
+
+        self.seeds = seeds
+        self.weights = weights
+        self.max = iinfo(int32).max
+
+        self.i = -1
+        self.posWeights = []
+        self.seedsWithPosWeights = []
+        if self.weights is not None:
+            for s, w in zip(self.seeds, self.weights):
+                if w > 0:
+                    self.seedsWithPosWeights.append(s)
+                    self.posWeights.append(w)
+
+    def next_seed(self, rng=None, sample_by_weight=False):
+
+        if self.seeds is not None:
+            # if seeds are provided
+            if sample_by_weight:
+                # if sample seeds according to weights
+                return rng.choice(a=self.seeds, size=1, p=self.weights)
+            else:
+                # if seeds should not be sampled, return the next seed with positive weight
+                if self.i < len(self.seeds):
+                    self.i += 1
+                else:
+                    self.i = 0
+                return self.seedsWithPosWeights[self.i]
+        else:
+            # if seeds are not provided, return a random integer
+            return rng.randint(0, self.max)
+
+    def next_seeds(self, n, rng=None, sample_by_weight=False):
+
+        seeds = []
+        for i in range(n):
+            seeds.append(self.next_seed(rng=rng, sample_by_weight=sample_by_weight))
+
+        return seeds
