@@ -291,7 +291,6 @@ class ApproximatePolicyIteration:
 
         i = len(self.states) - 1
         while i >= 0:
-            print(itr, i)
             q_index = index_of_an_action_combo(self.states[i].actionCombo)
             self.appoxDecisionMaker.qFunctions[q_index].update(
                 x=self.states[i].featureValues,
