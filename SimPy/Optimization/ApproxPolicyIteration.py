@@ -258,6 +258,16 @@ class ApproximatePolicyIteration:
 
     def _back_propagate(self, itr, seq_of_features, seq_of_action_combos, seq_of_costs):
 
+        if not (len(seq_of_features) == len(seq_of_action_combos) == len(seq_of_costs)):
+            raise ValueError('For iteration {}, the number of past feature values, '
+                             'action combinations, and costs are not equal.')
+        
+        # if no decisions are made, back-propagation cannot be performed
+        if len(seq_of_features) == 0:
+            self.itr_total_cost.append(None)
+            self.itr_error.append(None)
+            return
+
         # make feature/action states
         self.states = []
         for i in range(len(seq_of_features)):
