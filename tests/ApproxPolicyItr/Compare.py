@@ -14,21 +14,21 @@ def compare(q_function_degrees=None):
 
     # always-off strategy
     multi_model = MultiModel(decision_rule=AlwaysOff(),
-                            cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
+                             cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
     multi_model.simulate(n=N)
     print('Always off: ', multi_model.statCost.get_formatted_mean_and_interval(
         interval_type='c', sig_digits=4))
 
     # always-on strategy
     multi_model = MultiModel(decision_rule=AlwaysOn(),
-                            cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
+                             cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
     multi_model.simulate(n=N)
     print('Always on: ', multi_model.statCost.get_formatted_mean_and_interval(
         interval_type='c', sig_digits=4))
 
     # myopic strategy
     multi_model = MultiModel(decision_rule=Myopic(),
-                            cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
+                             cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
     multi_model.simulate(n=N)
     print('Myopic: ', multi_model.statCost.get_formatted_mean_and_interval(
         interval_type='c', sig_digits=4))
@@ -38,7 +38,7 @@ def compare(q_function_degrees=None):
                                                       q_function_degree=q_function_degrees,
                                                       q_functions_csv_file='q-functions.csv')
     multi_model = MultiModel(decision_rule=Dynamic(approx_decision_maker=approx_decision_maker),
-                            cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
+                             cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
     multi_model.simulate(n=N)
     print('Dynamic: ', multi_model.statCost.get_formatted_mean_and_interval(
         interval_type='c', sig_digits=4))

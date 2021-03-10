@@ -115,6 +115,7 @@ class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
             q_function = PolynomialQFunction(name='Q-function for ' + str(action_combo_of_an_index(i)),
                                              degree=q_function_degree)
             # read coefficients
+            # [1:-1] is to remove left and right brackets from the list of coefficents
             q_function.set_coeffs(np.fromstring(row[1][1:-1], sep=' '))
             self.qFunctions.append(q_function)
 
