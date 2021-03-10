@@ -4,7 +4,7 @@ import statsmodels.api as sm
 from numpy.polynomial import polynomial as P
 from scipy import stats
 from scipy.optimize import curve_fit
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.preprocessing import PolynomialFeatures, OneHotEncoder
 from statsmodels.sandbox.regression.predstd import wls_prediction_std
 
 
@@ -381,32 +381,85 @@ class _QFunction:
     def __init__(self, name=None):
         self.name = name
 
-    def update(self, x, f, forgetting_factor=1):
+    def update(self, f, continuous_features=None, categorical_features=None, forgetting_factor=1):
         raise NotImplementedError
 
-    def f(self, x):
+    def f(self, continuous_features=None, categorical_features=None):
         raise NotImplementedError
 
 
 class PolynomialQFunction(_QFunction):
+    """ polynomial Q-function """
 
     def __init__(self, name=None, degree=2, l2_penalty=0):
+        """
+        :param name: (string) name of this q-function
+        :param degree: (int) degree of the polynomial function
+        :param l2_penalty: (float) l2 regularization penalty
+        """
 
         _QFunction.__init__(self, name=name)
 
+        # to find row data to fit the polynomial function
         self.poly = PolynomialFeatures(degree=degree)
+        self.oneHotEncoder = OneHotEncoder()
+
+        # recursive linear regression
         self.reg = RecursiveLinearReg(l2_penalty=l2_penalty)
 
-    def update(self, x, f, forgetting_factor=1):
+    def _get_x(self, continuous_features=None, categorical_features=None):
+        """
+        use the values of the continuous and categorical features to find the row data to use for fitting
+        a linear regression
+        :param continuous_features: (list) of values for continuous features
+        :param categorical_features: (list) of values for categorical features
+        :return: the row data to use for fitting a linear regression
+        """
 
-        self.reg.update(x=self.poly.fit_transform(X=[x])[0],
+        x_continuous = []
+        x_categorical = []
+
+        if continuous_features is not None:
+            continuous_features = np.atleast_1d(continuous_features)
+            x_continuous = self.poly.fit_transform(X=[continuous_features])[0]
+
+        if categorical_features is not None:
+            categorical_features = np.atleast_1d(categorical_features)
+            # TODO: fix this https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
+            x_categorical = self.oneHotEncoder.fit(X=[categorical_features])
+
+        return np.append(x_continuous, x_categorical)
+
+    def update(self, f, continuous_features=None, categorical_features=None, forgetting_factor=1):
+        """
+        updates the fitted Q-function
+        :param f: the observed value of the Q-function at the given feature values
+        :param continuous_features: (list) of values for continuous features
+        :param categorical_features: (list) of values for categorical features
+        :param forgetting_factor: (float) forgetting factor
+        """
+
+        self.reg.update(x=self._get_x(continuous_features=continuous_features,
+                                      categorical_features=categorical_features),
                         y=f, forgetting_factor=forgetting_factor)
 
-    def f(self, x):
-        return self.reg.get_y(x=self.poly.fit_transform(X=[x])[0])
+    def f(self, continuous_features=None, categorical_features=None):
+        """
+        :param continuous_features: (list) of values for continuous features
+        :param categorical_features: (list) of values for categorical features
+        :return: the value of Q-function at the provided features
+        """
+        return self.reg.get_y(x=self._get_x(continuous_features=continuous_features,
+                                            categorical_features=categorical_features))
 
     def get_coeffs(self):
+        """
+        :return: the coefficients of the fitted regression model
+        """
         return self.reg.get_coeffs()
 
     def set_coeffs(self, values):
+        """ set the values of the coefficients of the fitted regression model
+        :param values: (list) coefficient values
+        """
         self.reg.set_coeffs(values=values)
