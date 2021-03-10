@@ -3,7 +3,7 @@ import numpy as np
 
 import SimPy.Plots.FigSupport as Fig
 
-data = [1, 2, 3, 4, 5]
+data = [1, None, 3, 4, 5, 6, 7, None, 9]
 print(Fig.get_moving_average(data=data, window=3))
 
 

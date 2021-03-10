@@ -32,11 +32,26 @@ def get_moving_average(data, window=2):
         averages.append(None)
 
     # calculate the first moving average
-    moving_ave = sum(data[0:window])/window
+    total = 0
+    n = 0
+    for i in range(window):
+        if data[i] is not None:
+            total += data[i]
+            n += 1
+    moving_ave = total/n
     averages.append(moving_ave)
 
     for i in range(window, len(data)):
-        moving_ave = (moving_ave*window - data[i-window] + data[i])/window
+        moving_sum = moving_ave * n
+        if data[i-window] is not None:
+            moving_sum -= data[i-window]
+            n -= 1
+        if data[i] is not None:
+            moving_sum += data[i]
+            n += 1
+
+        moving_ave = moving_sum/n
+        # moving_ave = (moving_ave*window - data[i-window] + data[i])/window
         averages.append(moving_ave)
 
     return averages
