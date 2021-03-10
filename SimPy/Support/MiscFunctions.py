@@ -51,7 +51,6 @@ def get_moving_average(data, window=2):
             n += 1
 
         moving_ave = moving_sum/n
-        # moving_ave = (moving_ave*window - data[i-window] + data[i])/window
         averages.append(moving_ave)
 
     return averages
