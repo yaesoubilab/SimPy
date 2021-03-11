@@ -133,10 +133,12 @@ class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
         :returns (list of 0s and 1s) the greedy selection of actions
         """
 
-        a = self._make_a_greedy_decision(continuous_feature_values=continuous_feature_values,
-                                         indicator_feature_values=indicator_feature_values)
         self.seq_of_continuous_feature_values.append(continuous_feature_values)
         self.seq_of_indicator_feature_values.append(indicator_feature_values)
+
+        a = self._make_a_greedy_decision(continuous_feature_values=continuous_feature_values,
+                                         indicator_feature_values=indicator_feature_values)
+
         self.seq_of_action_combos.append(a)
 
         return a
@@ -175,6 +177,9 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
         :param indicator_feature_values: (list) of values for indicator features (can take only 0 or 1)
         """
 
+        self.seq_of_continuous_feature_values.append(continuous_feature_values)
+        self.seq_of_indicator_feature_values.append(indicator_feature_values)
+
         if self.rng.random_sample() < self.explorationRule.get_epsilon(itr=self.itr):
             # explore
             i = self.rng.randint(low=0, high=self.nOfActionCombos)
@@ -184,8 +189,6 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
             a = self._make_a_greedy_decision(continuous_feature_values=continuous_feature_values,
                                              indicator_feature_values=indicator_feature_values)
 
-        self.seq_of_continuous_feature_values.append(continuous_feature_values)
-        self.seq_of_indicator_feature_values.append(indicator_feature_values)
         self.seq_of_action_combos.append(a)
 
         return a

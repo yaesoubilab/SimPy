@@ -27,5 +27,6 @@ class Line:
         return value
 
 
-test = Line(x1=1, x2=2, y1=0, y2=2)
-print(test.get_intercept_with_x_axis())
+if __name__ == '__main__':
+    test = Line(x1=1, x2=2, y1=0, y2=2)
+    print(test.get_intercept_with_x_axis())
