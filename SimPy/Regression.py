@@ -356,7 +356,11 @@ class RecursiveLinearReg(LinearRegression):
                 self._add_l2(XTX)
 
             # B = (XT.X)-1
-            self._B = np.linalg.inv(XTX)
+            try:
+                self._B = np.linalg.inv(XTX)
+            except np.linalg.LinAlgError:
+                raise ValueError('Inverse cannot be calculated. Add an l2 regularization penalty.')
+
             # theta = B.XT.y
             self._coeffs = np.transpose(self._B @ np.transpose(self._X) @ W @ self._y)[0]
         else:
@@ -420,8 +424,6 @@ class PolynomialQFunction(_QFunction):
             continuous_features = [0]
 
         x_continuous = []
-        x_indicator = []
-
         if continuous_features is not None:
             continuous_features = np.atleast_1d(continuous_features)
             x_continuous = self.poly.fit_transform(X=[continuous_features])[0]
@@ -429,7 +431,10 @@ class PolynomialQFunction(_QFunction):
         if indicator_features is not None:
             x_indicator = np.atleast_1d(indicator_features)
 
-        return np.append(x_continuous, x_indicator)
+            for i in x_indicator:
+                x_continuous = np.append(x_continuous, i * x_continuous)
+
+        return x_continuous
 
     def update(self, f, continuous_features=None, indicator_features=None, forgetting_factor=1):
         """
