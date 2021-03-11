@@ -2,7 +2,7 @@ import numpy as np
 
 from SimPy.Regression import LinearRegression, RecursiveLinearReg
 
-coeffs = [1, 2, 3]  # y = 1 + 2x1 + 3x2
+coeffs = [1, -2, 3]  # y = 1 + 2x1 + 3x2
 N = 1000
 sigma = 1
 l2_reg = 0.01

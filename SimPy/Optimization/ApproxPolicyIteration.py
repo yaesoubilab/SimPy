@@ -326,15 +326,13 @@ class ApproximatePolicyIteration:
         # update q-functions
         forgetting_factor = self.learningRule.get_forgetting_factor(itr=itr)
 
-        i = len(self.states) - 1
-        while i >= 0:
-            q_index = index_of_an_action_combo(self.states[i].actionCombo)
+        for s in self.states:
+            q_index = index_of_an_action_combo(s.actionCombo)
             self.appoxDecisionMaker.qFunctions[q_index].update(
-                values_of_continuous_features=self.states[0].valuesOfContinuousFeatures,
-                values_of_indicator_features=self.states[0].valuesOfIndicatorFeatures,
-                f=self.states[i].costToGo,
+                values_of_continuous_features=s.valuesOfContinuousFeatures,
+                values_of_indicator_features=s.valuesOfIndicatorFeatures,
+                f=s.costToGo,
                 forgetting_factor=forgetting_factor)
-            i -= 1
 
     def plot_cost_itr(self, moving_ave_window=None,
                       y_range=None,

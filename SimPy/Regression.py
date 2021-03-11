@@ -6,6 +6,7 @@ from scipy import stats
 from scipy.optimize import curve_fit
 from sklearn.preprocessing import PolynomialFeatures, OneHotEncoder
 from statsmodels.sandbox.regression.predstd import wls_prediction_std
+np.seterr(all='raise')
 
 
 # ------- Single variable regression models ----------
@@ -368,6 +369,9 @@ class RecursiveLinearReg(LinearRegression):
             x = np.atleast_2d(np.array(x)).T
             # gamma = lambda + xT.B.x
             gamma = float(forgetting_factor + np.transpose(x) @ self._B @ x)
+            if gamma <= forgetting_factor:
+                raise ValueError('Unstable regression, iteration: {}.'.format(self.itr))
+
             # epsilon = y - thetaT*x
             epsilon = float(y - self._coeffs @ x)
             # theta = theta + B.x.epsilon/gamma
@@ -430,7 +434,7 @@ class PolynomialQFunction(_QFunction):
             values_of_continuous_features = np.atleast_1d(values_of_continuous_features)
             x_continuous = self.poly.fit_transform(X=[values_of_continuous_features])[0]
 
-        if values_of_indicator_features is not None:
+        if values_of_indicator_features is not None and len(values_of_indicator_features) > 0:
             x_indicator = np.atleast_1d(values_of_indicator_features)
 
             # update the regressors based on the value of indicator features
