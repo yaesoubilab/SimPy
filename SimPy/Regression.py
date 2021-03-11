@@ -421,6 +421,8 @@ class PolynomialQFunction(_QFunction):
         """
 
         if continuous_features is None or len(continuous_features) == 0:
+            # if the values of continuous features are provided, we assume 1 continuous feature
+            # with value set to 0. This is to make sure we can calculate the intercept.
             continuous_features = [0]
 
         x_continuous = []
@@ -431,6 +433,7 @@ class PolynomialQFunction(_QFunction):
         if indicator_features is not None:
             x_indicator = np.atleast_1d(indicator_features)
 
+            # update the regressors based on the value of indicator features
             for i in x_indicator:
                 x_continuous = np.append(x_continuous, i * x_continuous)
 
