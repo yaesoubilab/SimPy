@@ -37,14 +37,16 @@ class State:
     # a state of the approximate policy iteration algorithm
     # contains (feature values, action combination over the next period, cost over the next period)
 
-    def __init__(self, feature_values, action_combo, cost):
+    def __init__(self, action_combo, cost, values_of_continuous_features, values_of_indicator_features=None):
         """
-        :param feature_values: (list) of feature values
+        :param values_of_continuous_features: (list) of values of continuous features
+        :param values_of_indicator_features: (list) of values of indicator features
         :param action_combo: (list) of on/off status of actions for the next period
         :param cost: (float) cost of this period
         """
 
-        self.featureValues = feature_values
+        self.valuesOfContinuousFeatures = values_of_continuous_features
+        self.valuesOfIndicatorFeatures = values_of_indicator_features
         self.actionCombo = action_combo
         self.cost = cost
         self.costToGo = 0
@@ -62,23 +64,29 @@ class _ApproxDecisionMaker:
         self.nOfActionCombos = int(pow(2, self.nOfActions))
         self.qFunctions = []
 
-        self.seq_of_feature_values = [] # sequence of feature values throughout the simulation
+        self.seq_of_continuous_feature_values = [] # sequence of continuous feature values throughout the simulation
+        self.seq_of_indicator_feature_values = []  # sequence of indicator feature values throughout the simulation
         self.seq_of_action_combos = []  # sequence of action combinations throughout the simulation
 
     def reset_for_new_iteration(self):
         """ clear the sequence of feature values and action combinations """
 
-        self.seq_of_feature_values.clear()
+        self.seq_of_continuous_feature_values.clear()
+        self.seq_of_indicator_feature_values.clear()
         self.seq_of_action_combos.clear()
 
-    def make_a_decision(self, feature_values):
+    def make_a_decision(self, continuous_feature_values=None, indicator_feature_values=None):
         raise NotImplementedError
 
-    def _make_a_greedy_decision(self, feature_values):
+    def _make_a_greedy_decision(self, continuous_feature_values=None, indicator_feature_values=None):
         """ makes a greedy decision given the feature values
-        :param feature_values: (list) of feature values
+        :param continuous_feature_values: (list) of values for continuous features
+        :param indicator_feature_values: (list) of values for indicator features (can take only 0 or 1)
         :returns (list of 0s and 1s) the selected combinations of actions
         """
+
+        if continuous_feature_values is None and indicator_feature_values is None:
+            raise ValueError('Values of either continuous or indicator features should be provided.')
 
         minimum = float('inf')
         opt_action_combo = None
@@ -88,7 +96,8 @@ class _ApproxDecisionMaker:
             if self.qFunctions[i].get_coeffs() is None:
                 q_value = 0
             else:
-                q_value = self.qFunctions[i].f(x=feature_values)
+                q_value = self.qFunctions[i].f(values_of_continuous_features=continuous_feature_values,
+                                               values_of_indicator_features=indicator_feature_values)
 
             if q_value < minimum:
                 minimum = q_value
@@ -115,17 +124,19 @@ class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
             q_function = PolynomialQFunction(name='Q-function for ' + str(action_combo_of_an_index(i)),
                                              degree=q_function_degree)
             # read coefficients
-            # [1:-1] is to remove left and right brackets from the list of coefficents
+            # [1:-1] is to remove left and right brackets from the list of coefficients
             q_function.set_coeffs(np.fromstring(row[1][1:-1], sep=' '))
             self.qFunctions.append(q_function)
 
-    def make_a_decision(self, feature_values):
+    def make_a_decision(self, continuous_feature_values=None, indicator_feature_values=None):
         """ make a greedy decision
         :returns (list of 0s and 1s) the greedy selection of actions
         """
 
-        a = self._make_a_greedy_decision(feature_values=feature_values)
-        self.seq_of_feature_values.append(feature_values)
+        a = self._make_a_greedy_decision(continuous_feature_values=continuous_feature_values,
+                                         indicator_feature_values=indicator_feature_values)
+        self.seq_of_continuous_feature_values.append(continuous_feature_values)
+        self.seq_of_indicator_feature_values.append(indicator_feature_values)
         self.seq_of_action_combos.append(a)
 
         return a
@@ -158,9 +169,10 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
                                     l2_penalty=l2_penalty)
             )
 
-    def make_a_decision(self, feature_values):
+    def make_a_decision(self, continuous_feature_values=None, indicator_feature_values=None):
         """ makes an epsilon-greedy decision given the feature values
-        :param feature_values: (list) of feature values
+        :param continuous_feature_values: (list) of values for continuous features
+        :param indicator_feature_values: (list) of values for indicator features (can take only 0 or 1)
         """
 
         if self.rng.random_sample() < self.explorationRule.get_epsilon(itr=self.itr):
@@ -169,9 +181,11 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
             a = action_combo_of_an_index(i)
         else:
             # exploit
-            a = self._make_a_greedy_decision(feature_values=feature_values)
+            a = self._make_a_greedy_decision(continuous_feature_values=continuous_feature_values,
+                                             indicator_feature_values=indicator_feature_values)
 
-        self.seq_of_feature_values.append(feature_values)
+        self.seq_of_continuous_feature_values.append(continuous_feature_values)
+        self.seq_of_indicator_feature_values.append(indicator_feature_values)
         self.seq_of_action_combos.append(a)
 
         return a
@@ -249,30 +263,40 @@ class ApproximatePolicyIteration:
             self.simModel.simulate(itr=itr)
 
             # do back-propagation
-            self._back_propagate(itr=itr,
-                                 seq_of_features=self.appoxDecisionMaker.seq_of_feature_values,
-                                 seq_of_action_combos=self.appoxDecisionMaker.seq_of_action_combos,
-                                 seq_of_costs=self.simModel.get_seq_of_costs())
+            self._back_propagate(
+                itr=itr,
+                seq_of_continuous_feature_values=self.appoxDecisionMaker.seq_of_continuous_feature_values,
+                seq_of_indicator_feature_values=self.appoxDecisionMaker.seq_of_indicator_feature_values,
+                seq_of_action_combos=self.appoxDecisionMaker.seq_of_action_combos,
+                seq_of_costs=self.simModel.get_seq_of_costs())
 
         # export q-functions:
         self.appoxDecisionMaker.export_q_functions()
 
-    def _back_propagate(self, itr, seq_of_features, seq_of_action_combos, seq_of_costs):
+    def _back_propagate(self, itr,
+                        seq_of_continuous_feature_values,
+                        seq_of_indicator_feature_values,
+                        seq_of_action_combos,
+                        seq_of_costs):
 
-        if not (len(seq_of_features) == len(seq_of_action_combos) == len(seq_of_costs)):
+        if not (len(seq_of_continuous_feature_values)
+                == len(seq_of_indicator_feature_values)
+                == len(seq_of_action_combos)
+                == len(seq_of_costs)):
             raise ValueError('For iteration {}, the number of past feature values, '
                              'action combinations, and costs are not equal.')
         
         # if no decisions are made, back-propagation cannot be performed
-        if len(seq_of_features) == 0:
+        if len(seq_of_continuous_feature_values) == 0:
             self.itr_total_cost.append(None)
             self.itr_error.append(None)
             return
 
         # make feature/action states
         self.states = []
-        for i in range(len(seq_of_features)):
-            self.states.append(State(feature_values=seq_of_features[i],
+        for i in range(len(seq_of_continuous_feature_values)):
+            self.states.append(State(values_of_continuous_features=seq_of_continuous_feature_values[i],
+                                     values_of_indicator_features=seq_of_indicator_feature_values[i],
                                      action_combo=seq_of_action_combos[i],
                                      cost=seq_of_costs[i]))
 
@@ -294,7 +318,9 @@ class ApproximatePolicyIteration:
         if self.appoxDecisionMaker.qFunctions[q_index].get_coeffs() is None:
             self.itr_error.append(None)
         else:
-            predicted_cost = self.appoxDecisionMaker.qFunctions[q_index].f(x=self.states[0].featureValues)
+            predicted_cost = self.appoxDecisionMaker.qFunctions[q_index].f(
+                values_of_continuous_features=self.states[0].valuesOfContinuousFeatures,
+                values_of_indicator_features=self.states[0].valuesOfIndicatorFeatures)
             self.itr_error.append(self.states[0].costToGo - predicted_cost)
 
         # update q-functions
@@ -304,7 +330,8 @@ class ApproximatePolicyIteration:
         while i >= 0:
             q_index = index_of_an_action_combo(self.states[i].actionCombo)
             self.appoxDecisionMaker.qFunctions[q_index].update(
-                x=self.states[i].featureValues,
+                values_of_continuous_features=self.states[0].valuesOfContinuousFeatures,
+                values_of_indicator_features=self.states[0].valuesOfIndicatorFeatures,
                 f=self.states[i].costToGo,
                 forgetting_factor=forgetting_factor)
             i -= 1

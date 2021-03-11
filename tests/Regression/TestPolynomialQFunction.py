@@ -62,24 +62,24 @@ hs = [h(i) for i in I]
 # fit a Q-function with continuous variables only
 q_cont = PolynomialQFunction(degree=degree, l2_penalty=l2_reg)
 for i in range(N):
-    q_cont.update(f=fs[i], continuous_features=X[i])
+    q_cont.update(f=fs[i], values_of_continuous_features=X[i])
 print('\nQ-function with continuous variables: ')
 print('Coeffs: ', q_cont.get_coeffs(), 'vs.', COEFFS_C0)
-print('f([1, -1]) should be 7 = ', q_cont.f(continuous_features=[1, -1]))
+print('f([1, -1]) should be 7 = ', q_cont.f(values_of_continuous_features=[1, -1]))
 
 # fit a Q-function with a categorical variable
 q_cat = PolynomialQFunction(degree=0, l2_penalty=l2_reg)
 for i in range(N):
-    q_cat.update(f=hs[i], indicator_features=I[i])
+    q_cat.update(f=hs[i], values_of_indicator_features=I[i])
 print('\nQ-function with categorical variables: ')
 print('Coeffs: ', q_cat.get_coeffs(), 'vs.', COEFFS_I)
-print('h([1]) should be 1) = ', q_cat.f(categorical_features=1))
+print('h([1]) should be 1) = ', q_cat.f(values_of_indicator_features=1))
 
 # fit a Q-function with continuous and categorical variables
 q_cont_cat = PolynomialQFunction(degree=degree, l2_penalty=l2_reg)
 for i in range(N):
-    q_cont_cat.update(f=gs[i], continuous_features=X[i], indicator_features=I[i])
+    q_cont_cat.update(f=gs[i], values_of_continuous_features=X[i], values_of_indicator_features=I[i])
 print('\nQ-function with continuous and categorical variables: ')
 print('Coeffs: ', q_cont_cat.get_coeffs(), 'vs.', np.append(COEFFS_C0, COEFFS_C1))
-print('f([1, -1, 0] should be 7) = ', q_cont_cat.f(continuous_features=[1, -1], categorical_features=0))
-print('f([1, -1, 1] should be 0) = ', q_cont_cat.f(continuous_features=[1, -1], categorical_features=1))
+print('f([1, -1, 0] should be 7) = ', q_cont_cat.f(values_of_continuous_features=[1, -1], values_of_indicator_features=0))
+print('f([1, -1, 1] should be 0) = ', q_cont_cat.f(values_of_continuous_features=[1, -1], values_of_indicator_features=1))

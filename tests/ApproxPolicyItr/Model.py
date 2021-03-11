@@ -128,5 +128,5 @@ class Dynamic(_DecisionRule):
 
     def get_decision(self, feature_values):
 
-        return self.approxDecisionMaker.make_a_decision(feature_values=feature_values)
+        return self.approxDecisionMaker.make_a_decision(continuous_feature_values=feature_values)
 
