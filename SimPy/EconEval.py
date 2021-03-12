@@ -1880,7 +1880,7 @@ class ICER_Paired(_ICER):
         self._deltaEffects = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
         # check if ICER is computable
-        if min(self._deltaEffects) < 0:
+        if min(self._deltaEffects) <= 0:
             self._isDefined = False
             warnings.warn("\nFor '{0}' one of ICERs is not computable because at least one incremental effect is negative.".format(name))
 
