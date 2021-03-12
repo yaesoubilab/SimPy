@@ -286,8 +286,10 @@ class ApproximatePolicyIteration:
                 == len(seq_of_indicator_feature_values)
                 == len(seq_of_action_combos)
                 == len(seq_of_costs)):
-            raise ValueError('For iteration {}, the number of past feature values, '
-                             'action combinations, and costs are not equal.')
+            raise ValueError('For iteration {0}, the number of past feature values, '
+                             'action combinations, and costs are not equal ({1}, {2}, vs. {3}).'
+                             .format(itr, len(seq_of_indicator_feature_values),
+                                     len(seq_of_action_combos), len(seq_of_costs)))
         
         # if no decisions are made, back-propagation cannot be performed
         if len(seq_of_continuous_feature_values) == 0:
