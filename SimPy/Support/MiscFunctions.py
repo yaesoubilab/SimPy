@@ -42,7 +42,10 @@ def get_moving_average(data, window=2):
     averages.append(moving_ave)
 
     for i in range(window, len(data)):
-        moving_sum = moving_ave * n
+        if moving_ave is None:
+            moving_sum = 0
+        else:
+            moving_sum = moving_ave * n
         if data[i-window] is not None:
             moving_sum -= data[i-window]
             n -= 1
@@ -50,7 +53,10 @@ def get_moving_average(data, window=2):
             moving_sum += data[i]
             n += 1
 
-        moving_ave = moving_sum/n
+        if n > 0:
+            moving_ave = moving_sum/n
+        else:
+            moving_ave = None
         averages.append(moving_ave)
 
     return averages
