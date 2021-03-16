@@ -3,7 +3,7 @@ from math import pow
 import matplotlib.pyplot as plt
 import numpy as np
 
-from SimPy.InOutFunctions import write_csv, read_csv_rows
+from SimPy.InOutFunctions import write_csv, read_csv_rows, write_dictionary_to_csv
 from SimPy.Optimization.Support import *
 from SimPy.Regression import PolynomialQFunction
 from SimPy.Support.MiscFunctions import get_moving_average
@@ -339,6 +339,21 @@ class ApproximatePolicyIteration:
                 f=s.costToGo,
                 forgetting_factor=forgetting_factor)
 
+    def export_results(self, csv_file='approximate-policy-iteration.csv'):
+        """ exports the iteration of the algorithm into a csv file
+        :param csv_file: csv file
+        """
+
+        columns = dict()
+        columns['iteration'] = self.itr_i
+        columns['cost'] = self.itr_total_cost
+        columns['error'] = self.itr_error
+        columns['forgetting factor'] = self.itr_forgetting_factor
+        columns['exploration rate'] = self.itr_exploration_rate
+
+        write_dictionary_to_csv(dictionary=columns, file_name=csv_file)
+
+    # ---------- plots -------------
     def plot_cost_itr(self, moving_ave_window=None,
                       y_range=None,
                       y_label='Discounted total cost',
