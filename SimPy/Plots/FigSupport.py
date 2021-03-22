@@ -4,7 +4,7 @@ import SimPy.FormatFunctions as F
 from SimPy.Support.MiscFunctions import *
 
 
-def output_figure(plt, filename=None, dpi=300):
+def output_figure(plt, filename=None, dpi=300, bbox_inches='tight'):
     """
     :param plt: reference to the plot
     :param filename: filename to save this figure as (e.g. 'figure.png') (if None, the figure will be displayed)
@@ -25,7 +25,7 @@ def output_figure(plt, filename=None, dpi=300):
                 os.makedirs(directory_path)
 
         try:
-            plt.savefig(proper_file_name(filename), dpi=dpi)
+            plt.savefig(proper_file_name(filename), dpi=dpi, bbox_inches=bbox_inches)
         except ValueError:
             raise ValueError("Error in saving figure '{}'. "
                              "Ensure that the filename is valid and "
