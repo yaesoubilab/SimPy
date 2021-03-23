@@ -147,13 +147,12 @@ class GreedyApproxDecisionMaker(_ApproxDecisionMaker):
 class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
     # class to make epsilon-greedy decisions
 
-    def __init__(self, num_of_actions, exploration_rule, q_function_degree, l2_penalty, q_functions_csv_file):
+    def __init__(self, num_of_actions, exploration_rule, q_function_degree, l2_penalty):
         """
         :param num_of_actions: (int) number of actions with on/off switches
         :param exploration_rule: exploration rule
         :param q_function_degree: (float) degree of the polynomial function used for q-functions
         :param l2_penalty: (float) l2 regularization penalty
-        :param q_functions_csv_file: (string) csv filename to store the coefficient of the q-functions
         """
 
         _ApproxDecisionMaker.__init__(self, num_of_actions=num_of_actions)
@@ -161,7 +160,6 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
         self.explorationRule = exploration_rule
         self.rng = np.random.RandomState(seed=0)
         self.itr = 0   # iteration of the algorithm (needed to calculate exploration rate)
-        self.qFunctionsCSVFile = q_functions_csv_file
 
         # create the q-functions
         for i in range(self.nOfActionCombos):
@@ -193,20 +191,22 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
 
         return a
 
-    def export_q_functions(self):
-        """ exports the coefficients of q-functions to a csv file. """
+    def export_q_functions(self, csv_file='q-functions.csv'):
+        """ exports the coefficients of q-functions to a csv file.
+         :param csv_file: (string) csv filename to store the coefficient of the q-functions
+        """
 
         rows = []
         for q in self.qFunctions:
             rows.append([q.name, q.get_coeffs()])
 
-        write_csv(rows=rows, file_name=self.qFunctionsCSVFile)
+        write_csv(rows=rows, file_name=csv_file)
 
 
 class ApproximatePolicyIteration:
     
     def __init__(self, sim_model, num_of_actions, learning_rule, exploration_rule, discount_factor,
-                 q_function_degree, l2_penalty, q_functions_csv_file='q-functions.csv', name=None):
+                 q_function_degree, l2_penalty, name=None):
         """
         :param sim_model (SimModel) simulation model
         :param num_of_actions: (int) number of possible actions to turn on or off
@@ -215,7 +215,6 @@ class ApproximatePolicyIteration:
         :param discount_factor: (float) is 1 / (1 + interest rate)
         :param q_function_degree: (int) degree of the polynomial function used for q-functions
         :param l2_penalty: (float) l2 regularization penalty
-        :param q_functions_csv_file: (string) csv filename to store the coefficient of the q-functions
         :param name: (string) to use in filenames and figure titles
         """
 
@@ -241,16 +240,16 @@ class ApproximatePolicyIteration:
         self.appoxDecisionMaker = EpsilonGreedyApproxDecisionMaker(num_of_actions=num_of_actions,
                                                                    q_function_degree=q_function_degree,
                                                                    exploration_rule=exploration_rule,
-                                                                   l2_penalty=l2_penalty,
-                                                                   q_functions_csv_file=q_functions_csv_file)
+                                                                   l2_penalty=l2_penalty)
 
         # assign the approximate decision maker to the model
         self.simModel.set_approx_decision_maker(
             approx_decision_maker=self.appoxDecisionMaker)
 
-    def optimize(self, n_iterations):
+    def minimize(self, n_iterations, csv_file='q-functions.csv'):
         """
         :param n_iterations: (int) number of iterations
+        :param csv_file: (string) csv filename to store the coefficient of the q-functions
         """
 
         for itr in range(1, n_iterations + 1):
@@ -276,7 +275,7 @@ class ApproximatePolicyIteration:
                 seq_of_costs=self.simModel.get_seq_of_costs())
 
         # export q-functions:
-        self.appoxDecisionMaker.export_q_functions()
+        self.appoxDecisionMaker.export_q_functions(csv_file='q-functions.csv')
 
     def _back_propagate(self, itr,
                         seq_of_continuous_feature_values,
@@ -343,7 +342,7 @@ class ApproximatePolicyIteration:
 
     def export_results(self, csv_file='approximate-policy-iteration.csv'):
         """ exports the iteration of the algorithm into a csv file
-        :param csv_file: csv file
+        :param csv_file: csv file to export the results of iterations to
         """
 
         columns = dict()
@@ -470,18 +469,19 @@ class ApproximatePolicyIteration:
 class MultiApproximatePolicyIteration:
     # class to create multiple approximate policy iterations
 
-    def __init__(self, num_of_actions, discount_factor, sim_models, learning_rules, exploration_rules,
-                 q_function_degrees, l2_penalties, q_functions_folder='q-functions'):
+    def __init__(self, num_of_actions, sim_models, learning_rules, exploration_rules,
+                 q_function_degrees, l2_penalties, discount_factor=1):
         """
         :param num_of_actions:
-        :param discount_factor:
         :param sim_models:
         :param learning_rules:
         :param exploration_rules:
         :param q_function_degrees:
         :param l2_penalties:
-        :param q_functions_folder:
+        :param discount_factor:
         """
+
+        self.optAlgorithm = None
 
         i = 0
         self.optimizers = []
@@ -498,28 +498,43 @@ class MultiApproximatePolicyIteration:
                             exploration_rule=e,
                             discount_factor=discount_factor,
                             q_function_degree=d,
-                            l2_penalty=p,
-                            q_functions_csv_file=q_functions_folder+'/{}.csv'.format(name)))
+                            l2_penalty=p))
                         i += 1
 
-    def optimize_all(self, n_iterations, if_parallel=True, folder_to_save_iterations=None):
+    def minimize_all(self, n_iterations, n_last_itrs_to_find_minimum=None, if_parallel=True,
+                     folder_to_save_iterations=None,
+                     q_functions_folder='q-functions',
+                     optimal_q_functions_csvfile='optimal_q_functions.csv'):
         """
         :param n_iterations:
+        :param n_last_itrs_to_find_minimum: (int)
         :param if_parallel:
-        :param folder_to_save_iterations:
+        :param folder_to_save_iterations: (string) folder to store iterations from all optimization settings
+        :param q_functions_folder: (string) folder to store q-functions from all optimization settings
+        :param optimal_q_functions_csvfile: (string) csv file to store the coefficients of q-functions
+                corresponding to the optimal optimization settings
         """
 
         if if_parallel:
             for o in self.optimizers:
-                o.optimize(n_iterations=n_iterations)
-
+                o.minimize(n_iterations=n_iterations, csv_file=q_functions_folder + '/{}.csv'.format(o.name))
         else:
             pass
 
         # export iterations
-        for o in self.optimizers:
-            if folder_to_save_iterations is not None:
+        if folder_to_save_iterations is not None:
+            for o in self.optimizers:
                 o.export_results(csv_file=folder_to_save_iterations + '/{}.csv'.format(o.name))
+
+        # find the best option
+        minimum = float('inf')
+        for o in self.optimizers:
+            ave_cost = o.itr_total_cost[-n_last_itrs_to_find_minimum]/n_last_itrs_to_find_minimum
+            if ave_cost < minimum:
+                minimum = ave_cost
+                self.optAlgorithm = o
+
+        self.optAlgorithm.appoxDecisionMaker.export_q_functions(csv_file=optimal_q_functions_csvfile)
 
     def plot_iterations(self, moving_ave_window=None, fig_size=(5, 6), folder_to_save_figures='figures'):
         """

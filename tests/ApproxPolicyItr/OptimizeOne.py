@@ -23,7 +23,7 @@ api = ApproximatePolicyIteration(sim_model=sim_model,
                                  q_function_degree=Q_FUNC_DEGREE,
                                  l2_penalty=L2_PENALTY)
 
-api.optimize(n_iterations=N_ITRS)
+api.minimize(n_iterations=N_ITRS)
 
 api.export_results(csv_file='iterations.csv')
 api.plot_iterations(moving_ave_window=int(N_ITRS / 20), fig_size=(5, 6))
