@@ -4,13 +4,16 @@ from SimPy.Optimization.ApproxPolicyIteration import GreedyApproxDecisionMaker
 N = 1000
 ACTION_COST = 50
 COST_SIGMA = 0
-Q_FUNC_DEGREE = 3
+Q_FUNC_DEGREE = 2
+Q_FUNC_CSVFILE = 'q-functions.csv' # or optimal_q_functions.csv
 
 
-def compare(q_function_degrees=None):
+def compare(q_function_degree=None, q_functions_csvfile=None):
 
-    if q_function_degrees is None:
-        q_function_degrees = Q_FUNC_DEGREE
+    if q_function_degree is None:
+        q_function_degree = Q_FUNC_DEGREE
+    if q_functions_csvfile is None:
+        q_functions_csvfile = Q_FUNC_CSVFILE
 
     # always-off strategy
     multi_model = MultiModel(decision_rule=AlwaysOff(),
@@ -35,8 +38,8 @@ def compare(q_function_degrees=None):
 
     # dynamic strategy
     approx_decision_maker = GreedyApproxDecisionMaker(num_of_actions=1,
-                                                      q_function_degree=q_function_degrees,
-                                                      q_functions_csv_file='q-functions.csv')
+                                                      q_function_degree=q_function_degree,
+                                                      q_functions_csv_file=q_functions_csvfile)
     multi_model = MultiModel(decision_rule=Dynamic(approx_decision_maker=approx_decision_maker),
                              cost_sigma=COST_SIGMA, action_cost=ACTION_COST)
     multi_model.simulate(n=N)

@@ -5,6 +5,7 @@ import numpy as np
 
 from SimPy.InOutFunctions import write_csv, read_csv_rows, write_dictionary_to_csv
 from SimPy.Optimization.Support import *
+from SimPy.Plots.FigSupport import output_figure
 from SimPy.Regression import PolynomialQFunction
 from SimPy.Support.MiscFunctions import get_moving_average
 
@@ -205,16 +206,16 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
 
 class ApproximatePolicyIteration:
     
-    def __init__(self, sim_model, num_of_actions, learning_rule, exploration_rule, discount_factor,
-                 q_function_degree, l2_penalty, name=None):
+    def __init__(self, sim_model, num_of_actions, learning_rule, exploration_rule,
+                 q_function_degree, l2_penalty, discount_factor=1, name=None):
         """
         :param sim_model (SimModel) simulation model
         :param num_of_actions: (int) number of possible actions to turn on or off
         :param learning_rule: learning rule
         :param exploration_rule: exploration rule
-        :param discount_factor: (float) is 1 / (1 + interest rate)
         :param q_function_degree: (int) degree of the polynomial function used for q-functions
         :param l2_penalty: (float) l2 regularization penalty
+        :param discount_factor: (float) is 1 / (1 + interest rate)
         :param name: (string) to use in filenames and figure titles
         """
 
@@ -275,7 +276,7 @@ class ApproximatePolicyIteration:
                 seq_of_costs=self.simModel.get_seq_of_costs())
 
         # export q-functions:
-        self.appoxDecisionMaker.export_q_functions(csv_file='q-functions.csv')
+        self.appoxDecisionMaker.export_q_functions(csv_file=csv_file)
 
     def _back_propagate(self, itr,
                         seq_of_continuous_feature_values,
@@ -381,10 +382,7 @@ class ApproximatePolicyIteration:
         f.tight_layout()
         f.align_ylabels()
 
-        if filename is None:
-            plt.show()
-        else:
-            plt.savefig(filename=filename, dpi=300)
+        output_figure(plt=plt, filename=filename)
 
     def plot_cost_itr(self, moving_ave_window=None,
                       y_range=None,
@@ -489,7 +487,7 @@ class MultiApproximatePolicyIteration:
             for e in exploration_rules:
                 for d in q_function_degrees:
                     for p in l2_penalties:
-                        name = 'l-{}_e-{}_d-{}_p-{}'.format(l, e, d, p)
+                        name = '{}_{}_degree{}_penalty{}'.format(l, e, d, p)
                         self.optimizers.append(ApproximatePolicyIteration(
                             name=name,
                             sim_model=sim_models[i],
@@ -515,7 +513,7 @@ class MultiApproximatePolicyIteration:
                 corresponding to the optimal optimization settings
         """
 
-        if if_parallel:
+        if not if_parallel:
             for o in self.optimizers:
                 o.minimize(n_iterations=n_iterations, csv_file=q_functions_folder + '/{}.csv'.format(o.name))
         else:
@@ -529,21 +527,23 @@ class MultiApproximatePolicyIteration:
         # find the best option
         minimum = float('inf')
         for o in self.optimizers:
-            ave_cost = o.itr_total_cost[-n_last_itrs_to_find_minimum]/n_last_itrs_to_find_minimum
+            ave_cost = sum(o.itr_total_cost[-n_last_itrs_to_find_minimum:])/n_last_itrs_to_find_minimum
             if ave_cost < minimum:
                 minimum = ave_cost
                 self.optAlgorithm = o
 
         self.optAlgorithm.appoxDecisionMaker.export_q_functions(csv_file=optimal_q_functions_csvfile)
 
-    def plot_iterations(self, moving_ave_window=None, fig_size=(5, 6), folder_to_save_figures='figures'):
+    def plot_iterations(self, moving_ave_window=None, y_ranges=None, fig_size=(5, 6),
+                        folder_to_save_figures='figures'):
         """
         :param moving_ave_window: (int) number of past iterations to use to calculate moving average
+
         :param fig_size: (tuple)
         :param folder_to_save_figures: (string)
         """
 
         for o in self.optimizers:
-            o.plot_iterations(moving_ave_window=moving_ave_window,
+            o.plot_iterations(moving_ave_window=moving_ave_window, y_ranges=y_ranges,
                               fig_size=fig_size,
-                              filename=folder_to_save_figures+'/{}.csv'.format(o.name))
+                              filename=folder_to_save_figures+'/{}.png'.format(o.name))

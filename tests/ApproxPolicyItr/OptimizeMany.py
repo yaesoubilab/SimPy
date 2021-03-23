@@ -1,7 +1,7 @@
+from Compare import compare
 from Model import Model
 from SimPy.Optimization.ApproxPolicyIteration import MultiApproximatePolicyIteration
 from SimPy.Optimization.LearningAndExplorationRules import *
-
 
 ACTION_COST = 3
 COST_SIGMA = 0
@@ -22,18 +22,17 @@ for i in range(n):
 optimizer = MultiApproximatePolicyIteration(
     sim_models=models,
     num_of_actions=1,
-    discount_factor=1/(1+0.03),
     learning_rules=[Harmonic(b=b) for b in B],
     exploration_rules=[EpsilonGreedy(beta=beta) for beta in BETA],
     q_function_degrees=Q_FUNC_DEGREES,
-    l2_penalties=L2_PENALTIES,
-    q_functions_folder='q-functions')
+    l2_penalties=L2_PENALTIES)
 
-optimizer.minimize_all(n_iterations=N_ITRS, if_parallel=IF_PARALLEL,
-                       folder_to_save_iterations='optimization_results')
+optimizer.minimize_all(n_iterations=N_ITRS, n_last_itrs_to_find_minimum=int(N_ITRS*0.2),
+                       if_parallel=IF_PARALLEL, folder_to_save_iterations='optimization_results')
 
 optimizer.plot_iterations(moving_ave_window=int(N_ITRS / 20), fig_size=(5, 6),
                           folder_to_save_figures='optimization_figures')
 
-# compare(q_function_degrees=Q_FUNC_DEGREES)
+compare(q_function_degree=Q_FUNC_DEGREES,
+        q_functions_csvfile='optimal_q_functions.csv')
 

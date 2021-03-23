@@ -19,7 +19,6 @@ api = ApproximatePolicyIteration(sim_model=sim_model,
                                  num_of_actions=1,
                                  learning_rule=Harmonic(b=B),
                                  exploration_rule=EpsilonGreedy(beta=BETA),
-                                 discount_factor=1/(1+0.03),
                                  q_function_degree=Q_FUNC_DEGREE,
                                  l2_penalty=L2_PENALTY)
 
@@ -28,5 +27,5 @@ api.minimize(n_iterations=N_ITRS)
 api.export_results(csv_file='iterations.csv')
 api.plot_iterations(moving_ave_window=int(N_ITRS / 20), fig_size=(5, 6))
 
-compare(q_function_degrees=Q_FUNC_DEGREE)
+compare(q_function_degree=Q_FUNC_DEGREE)
 
