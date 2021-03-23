@@ -33,6 +33,6 @@ optimizer.minimize_all(n_iterations=N_ITRS, n_last_itrs_to_find_minimum=int(N_IT
 optimizer.plot_iterations(moving_ave_window=int(N_ITRS / 20), fig_size=(5, 6),
                           folder_to_save_figures='optimization_figures')
 
-compare(q_function_degree=Q_FUNC_DEGREES,
+compare(q_function_degree=Q_FUNC_DEGREES[0],
         q_functions_csvfile='optimal_q_functions.csv')
 
