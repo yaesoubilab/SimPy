@@ -25,6 +25,9 @@ class EpsilonGreedy(_ExplorationRule):
     def __init__(self, beta):
         self._beta = beta
 
+    def __str__(self):
+        return 'Beta{}'.format(self._beta)
+
     def get_epsilon(self, itr):
 
         return pow(itr, -self._beta)
@@ -36,6 +39,9 @@ class Harmonic(_LearningRule):
 
     def __init__(self, b):
         self._b = b
+
+    def __str__(self):
+        return 'b{}'.format(self._b)
 
     def get_step_size(self, itr):
         return self._b / (self._b + itr - 1)

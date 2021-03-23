@@ -206,7 +206,7 @@ class EpsilonGreedyApproxDecisionMaker(_ApproxDecisionMaker):
 class ApproximatePolicyIteration:
     
     def __init__(self, sim_model, num_of_actions, learning_rule, exploration_rule, discount_factor,
-                 q_function_degree, l2_penalty, q_functions_csv_file='q-functions.csv'):
+                 q_function_degree, l2_penalty, q_functions_csv_file='q-functions.csv', name=None):
         """
         :param sim_model (SimModel) simulation model
         :param num_of_actions: (int) number of possible actions to turn on or off
@@ -216,6 +216,7 @@ class ApproximatePolicyIteration:
         :param q_function_degree: (int) degree of the polynomial function used for q-functions
         :param l2_penalty: (float) l2 regularization penalty
         :param q_functions_csv_file: (string) csv filename to store the coefficient of the q-functions
+        :param name: (string) to use in filenames and figure titles
         """
 
         assert hasattr(sim_model, 'set_approx_decision_maker'), \
@@ -228,6 +229,7 @@ class ApproximatePolicyIteration:
         self.simModel = sim_model
         self.learningRule = learning_rule
         self.discountFactor = discount_factor
+        self.name = name
 
         self.itr_i = []  # iteration indices
         self.itr_total_cost = []  # discounted total cost over iterations
@@ -354,13 +356,42 @@ class ApproximatePolicyIteration:
         write_dictionary_to_csv(dictionary=columns, file_name=csv_file)
 
     # ---------- plots -------------
+    def plot_iterations(self, moving_ave_window=None, y_ranges=None, y_labels=None, fig_size=(6, 6), filename=None):
+
+        if y_ranges is None:
+            y_ranges = [None]*4
+        if y_labels is None:
+            y_labels = [None]*4
+
+        f, axarr = plt.subplots(4, 1, figsize=fig_size, sharex=True)
+
+        # cost
+        self.add_cost_itr(ax=axarr[0], moving_ave_window=moving_ave_window,
+                          y_range=y_ranges[0], y_label=y_labels[0])
+
+        # error
+        self.add_error_itr(ax=axarr[1], moving_ave_window=None,
+                           y_range=y_ranges[1], y_label=y_labels[1])
+
+        # forgetting factor
+        self.add_forgetting_factor_itr(ax=axarr[2], y_range=y_ranges[2], y_label=y_labels[2])
+
+        # exploration rate
+        self.add_exploration_rate_itr(ax=axarr[3], y_range=y_ranges[3], y_label=y_labels[3])
+
+        f.tight_layout()
+        f.align_ylabels()
+
+        if filename is None:
+            plt.show()
+        else:
+            plt.savefig(filename=filename, dpi=300)
+
     def plot_cost_itr(self, moving_ave_window=None,
                       y_range=None,
                       y_label='Discounted total cost',
                       x_label='Iteration', fig_size=(6, 5)):
-        """
-        :return: a plot of cost as the algorithm iterates
-        """
+        """ plots of cost as the algorithm iterates """
 
         fig, ax = plt.subplots(figsize=fig_size)
 
@@ -435,30 +466,69 @@ class ApproximatePolicyIteration:
         ax.set_ylim(y_range)
         ax.set_ylabel(y_label)
 
-    def plot_itr(self, moving_ave_window=None, y_ranges=None, y_labels=None, fig_size=(6, 6)):
 
-        if y_ranges is None:
-            y_ranges = [None]*4
-        if y_labels is None:
-            y_labels = [None]*4
+class MultiApproximatePolicyIteration:
+    # class to create multiple approximate policy iterations
 
-        f, axarr = plt.subplots(4, 1, figsize=fig_size, sharex=True)
+    def __init__(self, num_of_actions, discount_factor, sim_models, learning_rules, exploration_rules,
+                 q_function_degrees, l2_penalties, q_functions_folder='q-functions'):
+        """
+        :param num_of_actions:
+        :param discount_factor:
+        :param sim_models:
+        :param learning_rules:
+        :param exploration_rules:
+        :param q_function_degrees:
+        :param l2_penalties:
+        :param q_functions_folder:
+        """
 
-        # cost
-        self.add_cost_itr(ax=axarr[0], moving_ave_window=moving_ave_window,
-                          y_range=y_ranges[0], y_label=y_labels[0])
+        i = 0
+        self.optimizers = []
+        for l in learning_rules:
+            for e in exploration_rules:
+                for d in q_function_degrees:
+                    for p in l2_penalties:
+                        name = 'l-{}_e-{}_d-{}_p-{}'.format(l, e, d, p)
+                        self.optimizers.append(ApproximatePolicyIteration(
+                            name=name,
+                            sim_model=sim_models[i],
+                            num_of_actions=num_of_actions,
+                            learning_rule=l,
+                            exploration_rule=e,
+                            discount_factor=discount_factor,
+                            q_function_degree=d,
+                            l2_penalty=p,
+                            q_functions_csv_file=q_functions_folder+'/{}.csv'.format(name)))
+                        i += 1
 
-        # error
-        self.add_error_itr(ax=axarr[1], moving_ave_window=None,
-                           y_range=y_ranges[1], y_label=y_labels[1])
+    def optimize_all(self, n_iterations, if_parallel=True, folder_to_save_iterations=None):
+        """
+        :param n_iterations:
+        :param if_parallel:
+        :param folder_to_save_iterations:
+        """
 
-        # forgetting factor
-        self.add_forgetting_factor_itr(ax=axarr[2], y_range=y_ranges[2], y_label=y_labels[2])
+        if if_parallel:
+            for o in self.optimizers:
+                o.optimize(n_iterations=n_iterations)
 
-        # exploration rate
-        self.add_exploration_rate_itr(ax=axarr[3], y_range=y_ranges[3], y_label=y_labels[3])
+        else:
+            pass
 
-        f.tight_layout()
-        f.align_ylabels()
+        # export iterations
+        for o in self.optimizers:
+            if folder_to_save_iterations is not None:
+                o.export_results(csv_file=folder_to_save_iterations + '/{}.csv'.format(o.name))
 
-        plt.show()
+    def plot_iterations(self, moving_ave_window=None, fig_size=(5, 6), folder_to_save_figures='figures'):
+        """
+        :param moving_ave_window: (int) number of past iterations to use to calculate moving average
+        :param fig_size: (tuple)
+        :param folder_to_save_figures: (string)
+        """
+
+        for o in self.optimizers:
+            o.plot_iterations(moving_ave_window=moving_ave_window,
+                              fig_size=fig_size,
+                              filename=folder_to_save_figures+'/{}.csv'.format(o.name))

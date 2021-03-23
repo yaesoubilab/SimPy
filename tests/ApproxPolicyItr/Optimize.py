@@ -1,7 +1,7 @@
 from Compare import compare
 from Model import Model
 from SimPy.Optimization.ApproxPolicyIteration import ApproximatePolicyIteration
-from SimPy.Optimization.LearningRules import *
+from SimPy.Optimization.LearningAndExplorationRules import *
 
 ACTION_COST = 3
 COST_SIGMA = 0
@@ -26,7 +26,7 @@ api = ApproximatePolicyIteration(sim_model=sim_model,
 api.optimize(n_iterations=N_ITRS)
 
 api.export_results(csv_file='iterations.csv')
-api.plot_itr(moving_ave_window=int(N_ITRS/20), fig_size=(5, 6))
+api.plot_iterations(moving_ave_window=int(N_ITRS / 20), fig_size=(5, 6))
 
 compare(q_function_degrees=Q_FUNC_DEGREE)
 
