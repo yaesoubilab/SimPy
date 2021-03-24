@@ -3,6 +3,7 @@ from math import pow
 import matplotlib.pyplot as plt
 import numpy as np
 
+from SimPy.FormatFunctions import format_number
 from SimPy.InOutFunctions import write_csv, read_csv_rows, write_dictionary_to_csv
 from SimPy.Optimization.Support import *
 from SimPy.Plots.FigSupport import output_figure
@@ -356,7 +357,9 @@ class ApproximatePolicyIteration:
         write_dictionary_to_csv(dictionary=columns, file_name=csv_file)
 
     # ---------- plots -------------
-    def plot_iterations(self, moving_ave_window=None, y_ranges=None, y_labels=None, fig_size=(6, 6), filename=None):
+    def plot_iterations(self, moving_ave_window=None, y_ranges=None, y_labels=None,
+                        n_last_iterations_to_ave=None,
+                        fig_size=(6, 6), filename=None):
 
         if y_ranges is None:
             y_ranges = [None]*4
@@ -367,11 +370,13 @@ class ApproximatePolicyIteration:
 
         # cost
         self.add_cost_itr(ax=axarr[0], moving_ave_window=moving_ave_window,
-                          y_range=y_ranges[0], y_label=y_labels[0])
+                          y_range=y_ranges[0], y_label=y_labels[0],
+                          n_last_iterations_to_ave=n_last_iterations_to_ave)
 
         # error
         self.add_error_itr(ax=axarr[1], moving_ave_window=None,
-                           y_range=y_ranges[1], y_label=y_labels[1])
+                           y_range=y_ranges[1], y_label=y_labels[1],
+                           n_last_iterations_to_ave=n_last_iterations_to_ave)
 
         # forgetting factor
         self.add_forgetting_factor_itr(ax=axarr[2], y_range=y_ranges[2], y_label=y_labels[2])
@@ -400,7 +405,7 @@ class ApproximatePolicyIteration:
         plt.show()
 
     def add_cost_itr(self, ax, moving_ave_window=None,
-                     y_range=None, y_label=None):
+                     y_range=None, y_label=None, n_last_iterations_to_ave=None, sig_digits=4):
         """
         :return: a plot of cost as the algorithm iterates
         """
@@ -412,6 +417,11 @@ class ApproximatePolicyIteration:
             ax.plot(self.itr_i, get_moving_average(self.itr_total_cost, window=moving_ave_window),
                     'k-', markersize=1)
 
+        if n_last_iterations_to_ave is not None:
+            self._add_ave_to_ax(ax=ax, data=self.itr_total_cost,
+                                n_last_iterations_to_ave=n_last_iterations_to_ave,
+                                sig_digits=sig_digits)
+
         if y_label is None:
             y_label = 'Discounted\ntotal cost'
 
@@ -419,7 +429,8 @@ class ApproximatePolicyIteration:
         ax.set_ylabel(y_label)
 
     def add_error_itr(self, ax, moving_ave_window=None,
-                      y_range=None, y_label=None):
+                      y_range=None, y_label=None,
+                      n_last_iterations_to_ave=None, sig_digits=4):
         """
         :return: a plot of error of first period as the algorithm iterates
         """
@@ -430,6 +441,11 @@ class ApproximatePolicyIteration:
         if moving_ave_window is not None:
             ax.plot(self.itr_i, get_moving_average(self.itr_error, window=moving_ave_window),
                     'k-', markersize=1)
+
+        if n_last_iterations_to_ave is not None:
+            self._add_ave_to_ax(ax=ax, data=self.itr_error,
+                                n_last_iterations_to_ave=n_last_iterations_to_ave,
+                                sig_digits=sig_digits)
 
         ax.axhline(y=0, linestyle='--', color='black', linewidth=1)
 
@@ -462,6 +478,17 @@ class ApproximatePolicyIteration:
 
         ax.set_ylim(y_range)
         ax.set_ylabel(y_label)
+
+    @staticmethod
+    def _add_ave_to_ax(ax, data, n_last_iterations_to_ave, sig_digits):
+
+        n_last_iterations_to_ave = int(n_last_iterations_to_ave)
+        ave_cost = sum(data[-n_last_iterations_to_ave:]) / n_last_iterations_to_ave
+        ax.text(0.99, 0.98,
+                format_number(ave_cost, sig_digits=sig_digits),
+                horizontalalignment='right',
+                verticalalignment='top',
+                transform=ax.transAxes)
 
 
 class MultiApproximatePolicyIteration:

@@ -7,8 +7,8 @@ ACTION_COST = 3
 COST_SIGMA = 0
 
 N_ITRS = 1000
-B = 50
-BETA = 0.4
+B = 25
+BETA = 0.5
 Q_FUNC_DEGREE = 2
 L2_PENALTY = 0.01
 
@@ -25,7 +25,8 @@ api = ApproximatePolicyIteration(sim_model=sim_model,
 api.minimize(n_iterations=N_ITRS)
 
 api.export_results(csv_file='iterations.csv')
-api.plot_iterations(moving_ave_window=int(N_ITRS / 20), fig_size=(5, 6))
+api.plot_iterations(moving_ave_window=int(N_ITRS / 20), fig_size=(5, 6),
+                    n_last_iterations_to_ave=N_ITRS/5)
 
 compare(q_function_degree=Q_FUNC_DEGREE)
 
