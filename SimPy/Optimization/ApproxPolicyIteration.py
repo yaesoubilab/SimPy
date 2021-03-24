@@ -575,7 +575,8 @@ class MultiApproximatePolicyIteration:
         self.optAlgorithm.appoxDecisionMaker.export_q_functions(csv_file=optimal_q_functions_csvfile)
         write_csv(rows=self.summary, file_name='summary.csv', directory=folder_to_save_iterations)
 
-    def plot_iterations(self, moving_ave_window=None, y_ranges=None, fig_size=(5, 6),
+    def plot_iterations(self, moving_ave_window=None, y_ranges=None,
+                        n_last_iterations_to_ave=None, fig_size=(5, 6),
                         folder_to_save_figures='figures'):
         """
         :param moving_ave_window: (int) number of past iterations to use to calculate moving average
@@ -586,7 +587,7 @@ class MultiApproximatePolicyIteration:
 
         for o in self.optimizers:
             o.plot_iterations(moving_ave_window=moving_ave_window, y_ranges=y_ranges,
-                              fig_size=fig_size,
+                              fig_size=fig_size, n_last_iterations_to_ave=n_last_iterations_to_ave,
                               filename=folder_to_save_figures+'/{}.png'.format(o.name))
 
 
