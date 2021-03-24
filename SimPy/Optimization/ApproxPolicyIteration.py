@@ -480,6 +480,7 @@ class MultiApproximatePolicyIteration:
         """
 
         self.optAlgorithm = None
+        self.summary = [['Learning rule', 'Exploration rule', 'Q-function degree', 'L2 penalty', 'E[Cost]']]
 
         i = 0
         self.optimizers = []
@@ -487,7 +488,10 @@ class MultiApproximatePolicyIteration:
             for e in exploration_rules:
                 for d in q_function_degrees:
                     for p in l2_penalties:
+
                         name = '{}_{}_degree{}_penalty{}'.format(l, e, d, p)
+                        self.summary.append([str(l), str(e), d, p])
+
                         self.optimizers.append(ApproximatePolicyIteration(
                             name=name,
                             sim_model=sim_models[i],
@@ -526,13 +530,15 @@ class MultiApproximatePolicyIteration:
 
         # find the best option
         minimum = float('inf')
-        for o in self.optimizers:
+        for i, o in enumerate(self.optimizers):
             ave_cost = sum(o.itr_total_cost[-n_last_itrs_to_find_minimum:])/n_last_itrs_to_find_minimum
+            self.summary[i+1].extend([ave_cost])
             if ave_cost < minimum:
                 minimum = ave_cost
                 self.optAlgorithm = o
 
         self.optAlgorithm.appoxDecisionMaker.export_q_functions(csv_file=optimal_q_functions_csvfile)
+        write_csv(rows=self.summary, file_name='summary.csv', directory=folder_to_save_iterations)
 
     def plot_iterations(self, moving_ave_window=None, y_ranges=None, fig_size=(5, 6),
                         folder_to_save_figures='figures'):
