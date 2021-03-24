@@ -1,4 +1,4 @@
-import  Compare as C
+import Compare as C
 from Model import Model
 from SimPy.Optimization.ApproxPolicyIteration import ApproximatePolicyIteration
 from SimPy.Optimization.LearningAndExplorationRules import *

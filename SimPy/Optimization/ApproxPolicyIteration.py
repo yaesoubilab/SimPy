@@ -1,3 +1,4 @@
+import multiprocessing as mp
 from math import pow
 
 import matplotlib.pyplot as plt
@@ -9,6 +10,8 @@ from SimPy.Optimization.Support import *
 from SimPy.Plots.FigSupport import output_figure
 from SimPy.Regression import PolynomialQFunction
 from SimPy.Support.MiscFunctions import get_moving_average
+
+MAX_PROCESSES = mp.cpu_count()  # maximum number of processors
 
 
 class SimModel:
@@ -548,7 +551,12 @@ class MultiApproximatePolicyIteration:
             for o in self.optimizers:
                 o.minimize(n_iterations=n_iterations, csv_file=q_functions_folder + '/{}.csv'.format(o.name))
         else:
-            pass
+            # create a list of arguments for simulating the cohorts in parallel
+            args = [(o, n_iterations, q_functions_folder + '/{}.csv'.format(o.name)) for o in self.optimizers]
+
+            # simulate all cohorts in parallel
+            with mp.Pool(MAX_PROCESSES) as pl:
+                self.optimizers = pl.starmap(minimize_this, args)
 
         # export iterations
         if folder_to_save_iterations is not None:
@@ -580,3 +588,10 @@ class MultiApproximatePolicyIteration:
             o.plot_iterations(moving_ave_window=moving_ave_window, y_ranges=y_ranges,
                               fig_size=fig_size,
                               filename=folder_to_save_figures+'/{}.png'.format(o.name))
+
+
+def minimize_this(optimizer, n_iterations, csv_file):
+
+    # simulate and return the cohort
+    optimizer.minimize(n_iterations=n_iterations, csv_file=csv_file)
+    return optimizer
