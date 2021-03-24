@@ -251,10 +251,10 @@ class ApproximatePolicyIteration:
         self.simModel.set_approx_decision_maker(
             approx_decision_maker=self.appoxDecisionMaker)
 
-    def minimize(self, n_iterations, csv_file='q-functions.csv'):
+    def minimize(self, n_iterations, q_function_csv_file='q-functions.csv'):
         """
         :param n_iterations: (int) number of iterations
-        :param csv_file: (string) csv filename to store the coefficient of the q-functions
+        :param q_function_csv_file: (string) csv filename to store the coefficient of the q-functions
         """
 
         for itr in range(1, n_iterations + 1):
@@ -280,7 +280,7 @@ class ApproximatePolicyIteration:
                 seq_of_costs=self.simModel.get_seq_of_costs())
 
         # export q-functions:
-        self.appoxDecisionMaker.export_q_functions(csv_file=csv_file)
+        self.appoxDecisionMaker.export_q_functions(csv_file=q_function_csv_file)
 
     def _back_propagate(self, itr,
                         seq_of_continuous_feature_values,
@@ -549,7 +549,7 @@ class MultiApproximatePolicyIteration:
 
         if not if_parallel:
             for o in self.optimizers:
-                o.minimize(n_iterations=n_iterations, csv_file=q_functions_folder + '/{}.csv'.format(o.name))
+                o.minimize(n_iterations=n_iterations, q_function_csv_file=q_functions_folder + '/{}.csv'.format(o.name))
         else:
             # create a list of arguments for simulating the cohorts in parallel
             args = [(o, n_iterations, q_functions_folder + '/{}.csv'.format(o.name)) for o in self.optimizers]
@@ -593,5 +593,5 @@ class MultiApproximatePolicyIteration:
 def minimize_this(optimizer, n_iterations, csv_file):
 
     # simulate and return the cohort
-    optimizer.minimize(n_iterations=n_iterations, csv_file=csv_file)
+    optimizer.minimize(n_iterations=n_iterations, q_function_csv_file=csv_file)
     return optimizer
