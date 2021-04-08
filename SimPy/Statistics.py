@@ -819,7 +819,7 @@ class RelativeDifferencePaired(_RelativeDifference):
         :param y_ref: list or numpy.array of second set of observations
         :param order: set to 0 to calculate (X-Y_ref)/Y_ref and to 1 to calculate (Y_ref-X)/Y_ref
         """
-        _RelativeDifference.__init__(self, name, x, y_ref, order)
+        _RelativeDifference.__init__(self, x, y_ref, order, name)
 
         if len(self._x) != len(self._y_ref):
             raise ValueError('Two samples should have the same size.')

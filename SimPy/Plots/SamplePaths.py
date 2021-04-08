@@ -200,9 +200,13 @@ def add_sets_of_sample_paths_to_ax(sets_of_sample_paths, ax, color_codes, legend
                 legend = legends[i]
             else:
                 legend = None
+            if color_codes is None:
+                this_color_code = None
+            else:
+                this_color_code = color_codes[i]
             add_sample_path_to_ax(sample_path=path,
                                   ax=ax,
-                                  color_code=color_codes[i],
+                                  color_code=this_color_code,
                                   legend=legend,
                                   transparency=transparency,
                                   connect=connect)
