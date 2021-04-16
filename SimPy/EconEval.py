@@ -12,6 +12,7 @@ import SimPy.InOutFunctions as IO
 from SimPy.Support.EconEvalSupport import *
 from SimPy.Support.SupportClasses import *
 
+# warnings.filterwarnings("always")
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
 LEGEND_FONT_SIZE = 7
 
@@ -254,10 +255,12 @@ class _EconEval:
 
                 # cost-effectiveness ratio of non-base strategies
                 if i > 0:
-                    # TODO: update
-                    s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio of ' + s.name,
-                                                 x=s.dCostObs,
-                                                 y_ref=s.dEffectObs)
+                    s.cer = ICER_Paired(name='Cost-effectiveness ratio of ' + s.name,
+                                        costs_new=s.costObs,
+                                        effects_new=s.effectObs,
+                                        costs_base=self.strategies[0].costObs,
+                                        effects_base=self.strategies[0].effectObs,
+                                        health_measure=self._healthMeasure)
 
         else:  # if not paired
             # get average cost and effect of the base strategy
@@ -283,10 +286,12 @@ class _EconEval:
 
                 # cost-effectiveness ratio of non-base strategies
                 if i > 0:
-                    # TODO: update
-                    s.cer = Stat.RatioStatIndp(name='Cost-effectiveness ratio',
-                                               x=s.dCostObs,
-                                               y_ref=s.dEffectObs)
+                    s.cer = ICER_Indp(name='Cost-effectiveness ratio of ' + s.name,
+                                      costs_new=s.costObs,
+                                      effects_new=s.effectObs,
+                                      costs_base=self.strategies[0].costObs,
+                                      effects_base=self.strategies[0].effectObs,
+                                      health_measure=self._healthMeasure)
 
     @staticmethod
     def _format_ax(ax,
@@ -510,7 +515,7 @@ class CEA(_EconEval):
             if s.ifDominated:
                 row.append('Dominated')
             elif s.icer is not None:
-                row.append(s.icer.get_formatted_ICER_and_interval(interval_type=interval_type,
+                row.append(s.icer.get_formatted_mean_and_interval(interval_type=interval_type,
                                                                   alpha=alpha,
                                                                   deci=icer_digits,
                                                                   form=',',
@@ -1804,6 +1809,9 @@ class _ICER(_ComparativeEconMeasure):
             # $ per DALY averted or $ per QALY gained
             self._ICER = self._delta_ave_cost / self._delta_ave_effect
 
+            if self._ICER < 0:
+                self._ICER = math.nan
+
     def get_ICER(self):
         """ return ICER """
         return self._ICER
@@ -1826,7 +1834,7 @@ class _ICER(_ComparativeEconMeasure):
         # abstract method to be overridden in derived classes to process an event
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
-    def get_formatted_ICER_and_interval(self, interval_type='c',
+    def get_formatted_mean_and_interval(self, interval_type='c',
                                         alpha=0.05, deci=0, sig_digits=4, form=None,
                                         multiplier=1, num_bootstrap_samples=1000):
         """
@@ -1887,8 +1895,6 @@ class ICER_Paired(_ICER):
         # check if ICER is computable
         if min(self._deltaEffects) <= 0:
             self._isDefined = False
-            warnings.warn("\nFor '{0},' one of ICERs is not computable because at least one "
-                          "incremental effect is negative.".format(name))
 
         # calculate ICERs
         if self._isDefined:
@@ -1903,6 +1909,8 @@ class ICER_Paired(_ICER):
         """
 
         if not self._isDefined:
+            warnings.warn("\nFor '{0},' the confidence interval of ICERs is not computable because at least one "
+                          "incremental effect is negative.".format(self.name))
             return [math.nan, math.nan]
 
         # create a new random number generator if one is not provided.
@@ -1944,6 +1952,8 @@ class ICER_Paired(_ICER):
         :return: prediction interval in the format of list [l, u]
         """
         if not self._isDefined:
+            warnings.warn("\nFor '{0},' the prediction interval of ICERs is not computable because at least one "
+                          "incremental effect is negative.".format(self.name))
             return [math.nan, math.nan]
 
         return np.percentile(self._icers, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
@@ -1978,6 +1988,9 @@ class ICER_Indp(_ICER):
         :return: bootstrap confidence interval in the format of list [l, u]
         """
 
+        if self._ICER is math.nan:
+            return [math.nan, math.nan]
+
         # create a new random number generator if one is not provided.
         if rng is None:
             rng = RandomState(seed=1)
@@ -2009,9 +2022,11 @@ class ICER_Indp(_ICER):
             # calculate this bootstrap ICER
             if (mean_effects_new - mean_effects_base) * self._effect_multiplier <= 0:
                 self._isDefined = False
-                warnings.warn('\nConfidence intervals for one of bootstrap ICERs is not computable'
+                warnings.warn('\nFor "{},"'
+                              '\nConfidence intervals for one of bootstrap ICERs is not computable'
                               '\nbecause at least one of bootstrap incremental effect is negative.'
-                              '\nIncreasing the number of cost and effect observations might resolve the issue.')
+                              '\nIncreasing the number of cost and effect observations '
+                              'might resolve the issue.'.format(self.name))
                 return [math.nan, math.nan]
 
             else:
@@ -2031,6 +2046,9 @@ class ICER_Indp(_ICER):
         :param rng: random number generator
         :return: prediction interval in the format of list [l, u]
         """
+
+        if self._ICER is math.nan:
+            return [math.nan, math.nan]
 
         # create a new random number generator if one is not provided.
         if rng is None:

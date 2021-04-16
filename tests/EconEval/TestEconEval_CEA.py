@@ -34,8 +34,11 @@ myCEA.build_CE_table(interval_type='c',
 myCEA.plot_CE_plane('CE plane with paired observations and showing labels',
                     x_label='E[Effect]', y_label='E[Cost]', show_legend=True, add_clouds=True, fig_size=(6, 6))
 
-print(myCEA.get_dCost_dEffect_cer(interval_type='c', alpha=0.05,
-                                  cost_digits=0, effect_digits=0, icer_digits=1))
+dict = myCEA.get_dCost_dEffect_cer(interval_type='c', alpha=0.05,
+                                   cost_digits=0, effect_digits=0, icer_digits=1)
+print('dCost, dEffect, CER')
+for s in dict:
+    print(s, dict[s])
 
 # create a CEA object -- paired
 myCEA2 = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)
