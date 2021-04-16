@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import scipy.stats as stat
+from numpy.random import RandomState
 
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
@@ -204,7 +205,7 @@ class _EconEval:
         for i, s in enumerate(strategies):
             s.idx = i
             if if_reset_strategies:
-                s._reset()
+                s.reset()
 
         self._n = len(strategies)  # number of strategies
         self._ifPaired = if_paired  # if cost and effect outcomes are paired across strategies
@@ -215,6 +216,7 @@ class _EconEval:
         self.__assign_colors()
 
     def __assign_colors(self):
+        """ assignes color to each strategy if colors are not provided """
 
         # decide about the color of each curve
         rainbow_colors = cm.rainbow(np.linspace(0, 1, self._n))
@@ -249,8 +251,10 @@ class _EconEval:
                     s.dEffect = Stat.DifferenceStatPaired(name='Effect with respect to base',
                                                           x=self.strategies[0].effectObs,
                                                           y_ref=s.effectObs)
-                # cost-effectiveness ratio
+
+                # cost-effectiveness ratio of non-base strategies
                 if i > 0:
+                    # TODO: update
                     s.cer = Stat.RatioStatPaired(name='Cost-effectiveness ratio of ' + s.name,
                                                  x=s.dCostObs,
                                                  y_ref=s.dEffectObs)
@@ -277,8 +281,9 @@ class _EconEval:
                                                         x=self.strategies[0].effectObs,
                                                         y_ref=s.effectObs)
 
-                # cost-effectiveness ratio
+                # cost-effectiveness ratio of non-base strategies
                 if i > 0:
+                    # TODO: update
                     s.cer = Stat.RatioStatIndp(name='Cost-effectiveness ratio',
                                                x=s.dCostObs,
                                                y_ref=s.dEffectObs)
@@ -584,7 +589,7 @@ class CEA(_EconEval):
         for s in self.strategies:
             # the mean change in effect and cost
             ax.scatter(s.dEffect.get_mean()*effect_multiplier, s.dCost.get_mean()*cost_multiplier,
-                       c=s.color,  # color
+                       color=s.color,  # color
                        alpha=1,  # transparency
                        marker=s.marker,  # markers
                        s=center_s,  # marker size
@@ -596,7 +601,7 @@ class CEA(_EconEval):
         # add the frontier line
         if len(self.get_strategies_not_on_frontier()) > 1:
             ax.plot(frontier_d_effect, frontier_d_costs,
-                    c='k',  # color
+                    color='k',  # color
                     alpha=0.6,  # transparency
                     linewidth=2,  # line width
                     zorder=3,
@@ -611,7 +616,7 @@ class CEA(_EconEval):
             # add all strategies
             for s in self.strategies:
                 ax.scatter(s.dEffectObs * effect_multiplier, s.dCostObs * cost_multiplier,
-                           c=s.color,  # color of dots
+                           color=s.color,  # color of dots
                            marker=s.marker, # marker
                            alpha=transparency,  # transparency of dots
                            s=cloud_s,  # size of dots
@@ -1882,7 +1887,8 @@ class ICER_Paired(_ICER):
         # check if ICER is computable
         if min(self._deltaEffects) <= 0:
             self._isDefined = False
-            warnings.warn("\nFor '{0}' one of ICERs is not computable because at least one incremental effect is negative.".format(name))
+            warnings.warn("\nFor '{0},' one of ICERs is not computable because at least one "
+                          "incremental effect is negative.".format(name))
 
         # calculate ICERs
         if self._isDefined:
@@ -1901,20 +1907,20 @@ class ICER_Paired(_ICER):
 
         # create a new random number generator if one is not provided.
         if rng is None:
-            rng = RVG.RNG(seed=1)
-        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
+            rng = RandomState(seed=1)
 
         # check if ICER is computable
-        if min(self._deltaEffects) == 0 and max(self._deltaEffects) == 0:
-            warnings.warn(self.name + ': Incremental health observations are 0, ICER is not computable')
+        if not self._isDefined:
             return [math.nan, math.nan]
         else:
             # bootstrap algorithm
             icer_bootstrap_means = np.zeros(num_bootstrap_samples)
             for i in range(num_bootstrap_samples):
-                # because cost and health are paired as one observation,
-                # so do delta cost and delta health, should sample them together
-                indices = rng.choice(range(len(self._deltaCosts)), size=len(self._deltaCosts), replace=True)
+                # because cost and health observations are paired,
+                # we sample delta cost and delta health together
+                indices = rng.choice(a=range(len(self._deltaCosts)),
+                                     size=len(self._deltaCosts),
+                                     replace=True)
                 sampled_delta_costs = self._deltaCosts[indices]
                 sampled_delta_effects = self._deltaEffects[indices]
 
@@ -1925,6 +1931,7 @@ class ICER_Paired(_ICER):
                 if np.average(ave_delta_effect) == 0:
                     warnings.warn(
                         self.name + ': Mean incremental health is 0 for one bootstrap sample, ICER is not computable')
+                    return [math.nan, math.nan]
 
                 icer_bootstrap_means[i] = ave_delta_cost / ave_delta_effect - self._ICER
 
@@ -1973,8 +1980,7 @@ class ICER_Indp(_ICER):
 
         # create a new random number generator if one is not provided.
         if rng is None:
-            rng = RVG.RNG(seed=1)
-        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
+            rng = RandomState(seed=1)
 
         # vector to store bootstrap ICERs
         icer_bootstrap_means = np.zeros(num_bootstrap_samples)
@@ -1985,12 +1991,12 @@ class ICER_Indp(_ICER):
         # get bootstrap samples
         for i in range(num_bootstrap_samples):
             # for the new alternative
-            indices_new = rng.choice(range(n_obs_new), size=n_obs_new, replace=True)
+            indices_new = rng.choice(a=range(n_obs_new), size=n_obs_new, replace=True)
             costs_new = self._costsNew[indices_new]
             effects_new = self._effectsNew[indices_new]
 
             # for the base alternative
-            indices_base = np.random.choice(range(n_obs_base), size=n_obs_base, replace=True)
+            indices_base = np.random.choice(a=range(n_obs_base), size=n_obs_base, replace=True)
             costs_base = self._costsBase[indices_base]
             effects_base = self._effectsBase[indices_base]
 
@@ -2006,7 +2012,7 @@ class ICER_Indp(_ICER):
                 warnings.warn('\nConfidence intervals for one of bootstrap ICERs is not computable'
                               '\nbecause at least one of bootstrap incremental effect is negative.'
                               '\nIncreasing the number of cost and effect observations might resolve the issue.')
-                break
+                return [math.nan, math.nan]
 
             else:
                 icer_bootstrap_means[i] = \
@@ -2028,23 +2034,26 @@ class ICER_Indp(_ICER):
 
         # create a new random number generator if one is not provided.
         if rng is None:
-            rng = RVG.RNG(seed=1)
-        assert type(rng) is RVG.RNG, "rng should be of type RandomVariateGenerators.RNG"
+            rng = RandomState(seed=1)
 
         if num_bootstrap_samples == 0:
             num_bootstrap_samples = max(len(self._costsNew), len(self._costsBase))
 
         # calculate element-wise ratio as sample of ICER
-        indices_new = rng.choice(range(num_bootstrap_samples), size=num_bootstrap_samples, replace=True)
+        indices_new = rng.choice(a=range(num_bootstrap_samples), size=num_bootstrap_samples, replace=True)
         costs_new = self._costsNew[indices_new]
         effects_new = self._effectsNew[indices_new]
 
-        indices_base = rng.choice(range(num_bootstrap_samples), size=num_bootstrap_samples, replace=True)
+        indices_base = rng.choice(a=range(num_bootstrap_samples), size=num_bootstrap_samples, replace=True)
         costs_base = self._costsBase[indices_base]
         effects_base = self._effectsBase[indices_base]
 
         if min((effects_new - effects_base) * self._effect_multiplier) <= 0:
             self._isDefined = False
+            warnings.warn('\nPrediction intervals for one of bootstrap ICERs is not computable'
+                          '\nbecause at least one of bootstrap incremental effect is negative.'
+                          '\nIncreasing the number of cost and effect observations might resolve the issue.')
+            return [math.nan, math.nan]
         else:
             sample_icers = np.divide(
                 (costs_new - costs_base),
@@ -2120,14 +2129,14 @@ class _INMB(_ComparativeEconMeasure):
         else:
             raise ValueError('Invalid value for interval_type.')
 
-        line_lower_err = S.Line(x1=wtp_range[0],
-                                x2=wtp_range[1],
-                                y1=interval_at_min_wtp[0],
-                                y2=interval_at_max_wtp[0])
-        line_upper_err = S.Line(x1=wtp_range[0],
-                                x2=wtp_range[1],
-                                y1=interval_at_min_wtp[1],
-                                y2=interval_at_max_wtp[1])
+        line_lower_err = Line(x1=wtp_range[0],
+                              x2=wtp_range[1],
+                              y1=interval_at_min_wtp[0],
+                              y2=interval_at_max_wtp[0])
+        line_upper_err = Line(x1=wtp_range[0],
+                              x2=wtp_range[1],
+                              y1=interval_at_min_wtp[1],
+                              y2=interval_at_max_wtp[1])
 
         if self.get_ave_d_effect() >= 0:
             interval = [line_upper_err.get_intercept_with_x_axis(),
@@ -2164,12 +2173,16 @@ class INMB_Paired(_INMB):
         self._deltaHealth = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
         self._n = len(costs_new)
-        self._statDeltaCost = Stat.SummaryStat(self.name, self._deltaCost)
-        self._statDeltaHealth = Stat.SummaryStat(self.name, self._deltaHealth)
+        self._statDeltaCost = Stat.SummaryStat(name=self.name, data=self._deltaCost)
+        self._statDeltaHealth = Stat.SummaryStat(name=self.name, data=self._deltaHealth)
 
     def get_CI(self, wtp, alpha=0.05):
-
-        mean = wtp * self._statDeltaHealth.get_mean() - self._statDeltaCost.get_mean()
+        """
+        :param wtp: willingness-to-pay value ($ for QALY gained or $ for DALY averted)
+        :param alpha: significance level, a value from [0, 1]
+        :return: confidence interval in the format of list [l, u]
+        """
+        mean = self.get_INMB(wtp=wtp)
 
         t = math.nan
         if self._n > 1:
@@ -2183,8 +2196,13 @@ class INMB_Paired(_INMB):
         return [l, u]
 
     def get_PI(self, wtp, alpha=0.05):
-
-        return Stat.SummaryStat(self.name, wtp * self._deltaHealth - self._deltaCost).get_PI(alpha)
+        """
+        :param wtp: willingness-to-pay value ($ for QALY gained or $ for DALY averted)
+        :param alpha: significance level, a value from [0, 1]
+        :return: percentile interval in the format of list [l, u]
+        """
+        return Stat.SummaryStat(name=self.name,
+                                data=wtp * self._deltaHealth - self._deltaCost).get_PI(alpha)
 
 
 class INMB_Indp(_INMB):
@@ -2209,20 +2227,30 @@ class INMB_Indp(_INMB):
         _INMB.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
     def get_CI(self, wtp, alpha=0.05):
+        """
+        :param wtp: willingness-to-pay value ($ for QALY gained or $ for DALY averted)
+        :param alpha: significance level, a value from [0, 1]
+        :return: confidence interval in the format of list [l, u]
+        """
         # NMB observations of two alternatives
         stat_new = wtp * self._effectsNew * self._effect_multiplier - self._costsNew
         stat_base = wtp * self._effectsBase * self._effect_multiplier - self._costsBase
 
         # to get CI for stat_new - stat_base
-        diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
+        diff_stat = Stat.DifferenceStatIndp(name=self.name, x=stat_new, y_ref=stat_base)
         return diff_stat.get_t_CI(alpha)
 
     def get_PI(self, wtp, alpha=0.05):
+        """
+        :param wtp: willingness-to-pay value ($ for QALY gained or $ for DALY averted)
+        :param alpha: significance level, a value from [0, 1]
+        :return: percentile interval in the format of list [l, u]
+        """
         # NMB observations of two alternatives
         stat_new = wtp * self._effectsNew * self._effect_multiplier - self._costsNew
         stat_base = wtp * self._effectsBase * self._effect_multiplier - self._costsBase
 
         # to get PI for stat_new - stat_base
-        diff_stat = Stat.DifferenceStatIndp(self.name, stat_new, stat_base)
+        diff_stat = Stat.DifferenceStatIndp(name=self.name, x=stat_new, y_ref=stat_base)
         return diff_stat.get_PI(alpha)
 

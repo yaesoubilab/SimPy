@@ -3,6 +3,7 @@ import numpy as np
 from SimPy import EconEval as ce
 
 np.random.seed(573)
+# create the centers of strategies
 s_center = np.random.normal(0, 5000, (10, 2))
 
 s0 = ce.Strategy("s1", s_center[0, 0]+np.random.normal(0, 200, 10), s_center[0, 1]+np.random.normal(0, 200, 10))
@@ -21,58 +22,38 @@ myCEA = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=False)
 
 # plot with label and sample cloud
 myCEA.plot_CE_plane('CE plane with unpaired observations and showing labels',
-                    'E[Effect]', 'E[Cost]', show_legend=True, add_clouds=True, fig_size=(6,6))
-
-# plot with label and sample cloud
-myCEA.plot_CE_plane('CE plane with unpaired observations and showing labels',
-                    'E[Effect]', 'E[Cost]', show_legend=True, add_clouds=True, fig_size=(6,6))
-
-# plot with sample cloud and legend
-myCEA.plot_CE_plane('CE Plane with unpaired observations and showing legend',
-                    'E[Effect]', 'E[Cost]', show_legend=True, add_clouds=True, fig_size=(6,6))
-
-# plot with label and sample cloud
-myCEA.plot_CE_plane('CE Plane with unpaired observations and no clouds',
-                    'E[Effect]', 'E[Cost]', show_legend=True, add_clouds=False, fig_size=(6,6))
+                    x_label='E[Effect]', y_label='E[Cost]', show_legend=True, add_clouds=True, fig_size=(6, 6))
 
 # table
 print('')
-myCEA.build_CE_table(interval_type='c', cost_multiplier=1, effect_multiplier=1)
+myCEA.build_CE_table(interval_type='c',
+                     cost_digits=0, effect_digits=0, icer_digits=1,
+                     file_name='Table-Indp.csv')
+
+# plot with label and sample cloud
+myCEA.plot_CE_plane('CE plane with paired observations and showing labels',
+                    x_label='E[Effect]', y_label='E[Cost]', show_legend=True, add_clouds=True, fig_size=(6, 6))
 
 print(myCEA.get_dCost_dEffect_cer(interval_type='c', alpha=0.05,
-                                  cost_digits=0, effect_digits=2, icer_digits=1,
-                                  cost_multiplier=1, effect_multiplier=1))
+                                  cost_digits=0, effect_digits=0, icer_digits=1))
 
 # create a CEA object -- paired
 myCEA2 = ce.CEA([s0, s1, s2, s3, s4, s5, s6, s7, s8, s9], if_paired=True)
 
-# plot with label and sample cloud
-myCEA2.plot_CE_plane('CE plane with paired observations and showing labels',
-                     'E[Effect]', 'E[Cost]', show_names=True, show_clouds=True, figure_size=6)
-
-# plot with sample cloud and legend
-myCEA2.plot_CE_plane('CE Plane with paired observations and showing legend',
-                     'E[Effect]', 'E[Cost]', show_legend=True, show_clouds=True, figure_size=6)
-
-# plot with no label and sample cloud
-myCEA2.plot_CE_plane('CE Plane with paired observations and no clouds',
-                     'E[Effect]', 'E[Cost]', show_clouds=False, show_names=True)
 
 # frontier results
 print('')
 print('Strategies on the frontier:')
 frontier = myCEA2.get_strategies_on_frontier()
 for s in frontier:
-    print(s.name)
-    print(s.aveCost)
+    print('name:', s.name)
+    print('cost', s.cost.get_mean())
+    print('dCost', s.dCost.get_mean())
+    if s.incCost is None:
+        print('incCost', None)
+    else:
+        print('incCost', s.incCost.get_mean())
 
-# frontier results for shifted data
-print('')
-print('Shifted Strategies on the frontier:')
-frontier = myCEA2.get_shifted_strategies_on_frontier()
-for s in frontier:
-    print(s.name)
-    print(s.aveCost)
 
 
 
