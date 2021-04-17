@@ -15,6 +15,9 @@ from SimPy.Support.SupportClasses import *
 # warnings.filterwarnings("always")
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
 LEGEND_FONT_SIZE = 7
+FRONTIER_COLOR = 'k'
+FRONTIER_TRANSPARENCY = 0.6
+FRONTIER_LINE_WIDTH = 2
 
 
 def pv_single_payment(payment, discount_rate, discount_period, discount_continuously=False):
@@ -604,11 +607,11 @@ class CEA(_EconEval):
                        )
 
         # add the frontier line
-        if len(self.get_strategies_not_on_frontier()) > 1:
+        if len(self.get_strategies_on_frontier()) > 1:
             ax.plot(frontier_d_effect, frontier_d_costs,
-                    color='k',  # color
-                    alpha=0.6,  # transparency
-                    linewidth=2,  # line width
+                    color=FRONTIER_COLOR,  # color
+                    alpha=FRONTIER_TRANSPARENCY,  # transparency
+                    linewidth=FRONTIER_LINE_WIDTH,  # line width
                     zorder=3,
                     label='Frontier', # label to show in the legend
                     )
