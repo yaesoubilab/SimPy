@@ -814,7 +814,7 @@ class LogNormal(RVG):
             log_likelihood=np.sum(stat.lognorm.logpdf(data, s, loc, scale)))
 
         # report results in the form of a dictionary
-        return {"mu": mu, "sigma": sigma, "loc": loc}
+        return {"mu": mu, "sigma": sigma, "loc": loc, "AIC": aic}
 
 
 class Multinomial(RVG):
