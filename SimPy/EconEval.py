@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import scipy.stats as stat
+from numpy import exp, power
 from numpy.random import RandomState
 
 import SimPy.FormatFunctions as F
@@ -41,9 +42,9 @@ def pv_single_payment(payment, discount_rate, discount_period, discount_continuo
 
     # calculate the present value
     if discount_continuously:
-        return payment * np.exp(-discount_rate * discount_period)
+        return payment * exp(-discount_rate * discount_period)
     else:
-        return payment * np.power(1 + discount_rate, -discount_period)
+        return payment * power(1 + discount_rate, -discount_period)
 
 
 def pv_continuous_payment(payment, discount_rate, discount_period):
@@ -62,8 +63,8 @@ def pv_continuous_payment(payment, discount_rate, discount_period):
         return payment * (discount_period[1] - discount_period[0])
     else:
         return payment/discount_rate * \
-               (np.exp(-discount_rate*discount_period[0])
-                - np.exp(-discount_rate*discount_period[1]))
+               (exp(-discount_rate*discount_period[0])
+                - exp(-discount_rate*discount_period[1]))
 
 
 def equivalent_annual_value(present_value, discount_rate, discount_period):
@@ -82,7 +83,7 @@ def equivalent_annual_value(present_value, discount_rate, discount_period):
         raise ValueError("discount_period cannot be less than 0.")
 
     # calculate the equivalent annual value
-    return discount_rate*present_value/(1-np.power(1+discount_rate, -discount_period))
+    return discount_rate*present_value/(1-power(1+discount_rate, -discount_period))
 
 
 class Strategy:

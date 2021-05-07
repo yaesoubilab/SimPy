@@ -1,6 +1,6 @@
 import numpy as np
 
-import SimPy.RandomVariateGenerators as RVG
+from SimPy.RandomVariateGenerators import Empirical, Exponential
 
 
 class MarkovJumpProcess:
@@ -24,7 +24,7 @@ class MarkovJumpProcess:
                                  'Sum of row {0} is {1}.'.format(i, s))
 
             # create an empirical distribution over the future states from this state
-            self._empiricalDists.append(RVG.Empirical(probabilities=probs))
+            self._empiricalDists.append(Empirical(probabilities=probs))
 
     def get_next_state(self, current_state_index, rng):
         """
@@ -59,7 +59,7 @@ class Gillespie:
             # if the rate is 0, put None as the exponential and empirical distributions
             if rate_out > 0:
                 # create an exponential distribution with rate equal to sum of rates out of this state
-                self._expDists.append(RVG.Exponential(scale=1/rate_out))
+                self._expDists.append(Exponential(scale=1/rate_out))
                 # find the transition rates to other states
                 # assume that the rate into this state is 0
                 rates = []
@@ -72,7 +72,7 @@ class Gillespie:
                 # calculate the probability of each event (prob_j = rate_j / (sum over j of rate_j)
                 probs = np.array(rates) / rate_out
                 # create an empirical distribution over the future states from this state
-                self._empiricalDists.append(RVG.Empirical(probs))
+                self._empiricalDists.append(Empirical(probs))
 
             else:  # if the sum of rates out of this state is 0
                 self._expDists.append(None)
