@@ -283,7 +283,7 @@ class Product(_Parameter):
 
 class Surge(_Parameter):
     # f(t) = base.value * ( 1 + percentChange(t))
-    # percentChange(t) = A * (1 - cos(1/(2\pi) * (t1-t)/(t1-t0)) / 2
+    # percentChange(t) = A * (1 - cos(2*pi*(t1-t)/(t1-t0)) / 2
     # A is maximum % change
     def __init__(self, par_base=1, par_max_percent_change=1, par_t0=0, par_t1=1, id=None, name=None):
         """
@@ -351,6 +351,45 @@ class TimeDependentSigmoid(_Parameter):
         dt = time - self.parT0.value
         logistic = 1 / (1 + exp(-self.parB.value * dt))
         self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * logistic
+
+        return self.value
+
+
+class TimeStep(_Parameter):
+    # f(t) = 0  for       t < t0
+    #      = v0 for t0 <= t < t1
+    #      = v1 for t1 <= t < t2
+    #      = v2 for t2 <= t
+
+    def __init__(self, ts, vs, id=None, name=None):
+        """
+        :param ts: (list) of time break points
+        :param vs: (list) of values
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=True)
+
+        assert len(ts) == len(vs), 'There should be an equal number of time breakpoints (ts) and function values (vs).'
+
+        self.ts = ts
+        self.vs = vs
+
+    def sample(self, rng=None, time=None):
+
+        self.value = 0
+
+        if time < self.ts[0]:
+            self.value = 0
+        else:
+            i = 0
+            while True:
+                if time < self.ts[i]:
+                    break
+                else:
+                    i += 1
+
+            self.value = self.vs[i]
 
         return self.value
 
