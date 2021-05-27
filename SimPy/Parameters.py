@@ -377,6 +377,8 @@ class TimeStep(_Parameter):
 
     def sample(self, rng=None, time=None):
 
+        raise ValueError('Needs to be debugged.')
+
         self.value = 0
 
         if time < self.ts[0]:
