@@ -4,6 +4,7 @@ import numpy as np
 from numpy import exp, pi, cos
 
 from SimPy.RandomVariateGenerators import Beta as B
+from SimPy.RandomVariateGenerators import Multinomial as Mult
 from SimPy.RandomVariateGenerators import Uniform as U
 from SimPy.RandomVariateGenerators import UniformDiscrete as UD
 
@@ -114,6 +115,42 @@ class Equal(_Parameter):
 
     def sample(self, rng=None, time=None):
         self.value = self.par.value
+        return self.value
+
+
+class Multinomial(_Parameter):
+    def __init__(self, par_n, p_values, id=None, name=None):
+        """
+        :param par_n: (Parameter) number of trials
+        :param p_values: (array) probabilities of success for each category
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name)
+        self.parN = par_n
+        self.pVals = p_values
+
+    def sample(self, rng=None, time=None):
+
+        self.value = Mult(N=self.parN.value, pvals=self.pVals).sample(rng=rng)
+        return self.value
+
+
+class AMultinomialOutcome(_Parameter):
+    # a parameter that is defined on one outcome of a multinomial parameter
+    def __init__(self, par_multinomial, outcome_index, id=None, name=None):
+        """
+        :param par_multinomial: (Parameter) a multinomial parameter
+        :param outcome_index: (int) index of the outcome of interest
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name)
+        self.multinomial = par_multinomial
+        self.i = outcome_index
+
+    def sample(self, rng=None, time=None):
+        self.value = self.multinomial.value[self.i]
         return self.value
 
 
