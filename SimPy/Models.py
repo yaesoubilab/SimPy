@@ -16,9 +16,9 @@ class MortalityModel:
     This class assumes that the first column contains age groups and the last column contains mortality rates
     """
 
-    def __init__(self, rows, group_mins, group_maxs, group_delta, age_min, age_delta):
+    def __init__(self, mortality_rates, group_mins, group_maxs, group_delta, age_min, age_delta):
         """
-        :param rows: (list of list) the table above
+        :param mortality_rates: (list of list) the table above
         :param group_mins: list of minimum value of x (in example above: [0, 0])
         :param group_maxs: list of maximum value of x (in example above: [10, 1])
         :param group_delta: list of interval between break points of x
@@ -36,7 +36,7 @@ class MortalityModel:
 
         for df_row in self.df.get_rows():
             rates = []
-            for row in rows:
+            for row in mortality_rates:
                 if df_row[:-1] == row[1:-1]:
                     rates.append(row[-1])
             self.df.set_obj(x_value=df_row[0:-1],

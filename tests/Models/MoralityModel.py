@@ -15,11 +15,11 @@ rows = [
 rng = RVGs.RNG(seed=1)
 
 # mortality model
-mortalityModel = MortalityModel(rows=rows,           # life table
-                                group_mins=0,        # minimum value of sex group
-                                group_maxs=1,        # maximum value of sex group
-                                group_delta='int',   # sex group is a category
-                                age_min=0,           # minimum age in this life table
+mortalityModel = MortalityModel(mortality_rates=rows,  # life table
+                                group_mins=0,  # minimum value of sex group
+                                group_maxs=1,  # maximum value of sex group
+                                group_delta='int',  # sex group is a category
+                                age_min=0,  # minimum age in this life table
                                 age_delta=5)         # age interval
 
 # get sample for time until death
