@@ -290,6 +290,34 @@ class LinearCombination(_Parameter):
         return self.value
 
 
+class OneMinusSum(_Parameter):
+    # 1 - sum of of multiple parameters
+
+    def __init__(self, parameters, id=None, name=None):
+        """
+        :param parameters: (list of Parameters)
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+
+        # if this is a time-dependent parameter
+        if_time_dep = False
+        for p in parameters:
+            if p.ifTimeDep:
+                if_time_dep = True
+                break
+
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
+        self.params = parameters
+
+    def sample(self, rng=None, time=None):
+
+        self.value = 1
+        for p in self.params:
+            self.value -= p.value
+        return self.value
+
+
 class Product(_Parameter):
     # product of multiple parameters
 

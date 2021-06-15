@@ -100,7 +100,7 @@ class ParameterAnalyzer:
 
         if not sample_by_weight:
             # choose the first n parameter values
-            for i, row in enumerate(rows_of_selected_param_values):
+            for i, row in enumerate(rows_of_weights_and_parameter_values):
                 if i > n: # first rwo is the header
                     break
                 elif i > 0 and row[weight_col] > 0:
