@@ -124,6 +124,11 @@ class ParameterAnalyzer:
 
         self.dictOfParamValues = IO.read_csv_cols_to_dictionary(file_name=csvfile_resampled_params,
                                                                 if_convert_float=True)
+        # check if parameters have values
+        for key, values in self.dictOfParamValues.items():
+            if len(values) == 0:
+                raise ValueError('Parameter values are not provided in '+csvfile_resampled_params+'.')
+
         for name in columns_to_be_deleted:
             del (self.dictOfParamValues[name])
 
@@ -191,7 +196,7 @@ class ParameterAnalyzer:
                     x_range = None
 
                 # find the filename the histogram should be saved as
-                file_name = posterior_fig_loc + '\Par-' + str(par_id) + ' ' + F.proper_file_name(par_name)
+                file_name = posterior_fig_loc + '/Par-' + str(par_id) + ' ' + F.proper_file_name(par_name)
 
                 # find title
                 if priors[par_id][ColumnsPriorDistCSV.TITLE.value] in ('', None):
@@ -489,7 +494,7 @@ class ParameterAnalyzer:
 
         ratio_obss = self.__calculate_ratio_obss(numerator_par_name, denominator_par_names)
 
-        file_name = output_fig_loc + '\Ratio-' + title
+        file_name = output_fig_loc + '/Ratio-' + title
 
         # create the histogram of ratio
         Fig.plot_histogram(
