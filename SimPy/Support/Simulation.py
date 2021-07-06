@@ -142,6 +142,11 @@ class SeedGenerator:
                     self.posWeights.append(w)
 
     def next_seed(self, rng=None, sample_by_weight=False):
+        """
+        :param rng: (Random number generator)
+        :param sample_by_weight: (bool) True to sample seeds by weight and
+                                        False to only used seeds with positive weights
+        """
 
         if self.seeds is not None:
             # if seeds are provided
