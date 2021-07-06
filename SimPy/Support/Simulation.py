@@ -1,7 +1,8 @@
 import os
 
-import SimPy.InOutFunctions as io
 from numpy import iinfo, int32
+
+import SimPy.InOutFunctions as io
 
 
 class _Trace:
@@ -123,6 +124,9 @@ class SeedGenerator:
         if seeds is not None and weights is not None:
             if len(seeds) != len(weights):
                 raise ValueError('There should be equal number of seeds and weights.')
+            if sum(weights) == 0:
+                raise ValueError('Weights of all provided seeds are zero. '
+                                 'Make sure that at least one seed has a positive weight.')
 
         self.seeds = seeds
         self.weights = weights

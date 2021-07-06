@@ -4,6 +4,7 @@ import numpy as np
 from numpy import exp, pi, cos
 
 from SimPy.RandomVariateGenerators import Beta as B
+from SimPy.RandomVariateGenerators import Gamma as G
 from SimPy.RandomVariateGenerators import Multinomial as Mult
 from SimPy.RandomVariateGenerators import Uniform as U
 from SimPy.RandomVariateGenerators import UniformDiscrete as UD
@@ -101,6 +102,24 @@ class Beta(_Parameter):
         return self.value
 
 
+class Gamma(_Parameter):
+    def __init__(self, mean, st_dev, id=None, name=None):
+        """
+        :param mean: (float) mean value of a parameter with beta distribution
+        :param st_dev: (float) st_dev value of a parameter with beta distribution
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+
+        _Parameter.__init__(self, id=id, name=name)
+        fit_results = G.fit_mm(mean=mean, st_dev=st_dev)
+        self.par = G(a=fit_results['a'], scale=fit_results['scale'])
+
+    def sample(self, rng=None, time=None):
+        self.value = self.par.sample(rng=rng)
+        return self.value
+
+
 class Equal(_Parameter):
     # value = value of another parameter
 
@@ -126,6 +145,10 @@ class Multinomial(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
+
+        if not (0.9999999 <= sum(p_values) <= 1.0000001):
+            raise ValueError("Sum of p_values should be 1 (not {}) for parameter '{}'.".format(sum(p_values), name))
+
         _Parameter.__init__(self, id=id, name=name)
         self.parN = par_n
         self.pVals = p_values
