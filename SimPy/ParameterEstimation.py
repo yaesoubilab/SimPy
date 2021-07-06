@@ -12,6 +12,7 @@ import SimPy.InOutFunctions as IO
 import SimPy.Plots.Histogram as Fig
 import SimPy.Statistics as Stat
 import SimPy.Support.MiscFunctions as F
+from SimPy.Plots.FigSupport import output_figure
 
 # list of columns in the parameter csv file that are not considered a parameter
 COLUMNS_TO_SKIP = ['ID', 'Seed', 'Probability', 'Message', 'Simulation Replication', 'Random Seed']
@@ -349,7 +350,7 @@ class ParameterAnalyzer:
 
         f.align_ylabels(axarr[:, 0])
         f.tight_layout()
-        f.savefig(fig_filename, bbox_inches='tight', dpi=300)
+        output_figure(plt=f, filename=fig_filename, dpi=300)
 
     def export_means_and_intervals(self,
                                    poster_file='ParameterEstimates.csv',
