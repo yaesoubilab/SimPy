@@ -126,6 +126,9 @@ class _Statistics(object):
         :returns a list [L, U] """
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
+    # TODO: add wilson interval for binomial proportion CI
+    # https: // en.wikipedia.org / wiki / Binomial_proportion_confidence_interval
+
     def get_PI(self, alpha):
         """ calculates percentile interval (abstract method to be overridden in derived classes)
         :param alpha: significance level (between 0 and 1)
