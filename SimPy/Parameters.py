@@ -532,3 +532,31 @@ class MatrixOfConstantParams(_Parameter):
 
         self.value = np.array(self.value)
         return self.value
+
+
+class ValuesOfParams(_Parameter):
+    """ returns the values of a list of parameters """
+
+    def __init__(self, parameters, id=None, name=None):
+        """
+        :param parameters: (list) of Parameters
+        :param id:
+        :param name:
+        """
+
+        self.parameters = parameters
+        # find if time-dependant
+        if_time_dep = False
+        for p in self.parameters:
+            if p.ifTimeDep:
+                if_time_dep = True
+                break
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
+
+    def sample(self, rng=None, time=None):
+
+        self.value = []
+        for param in self.parameters:
+            self.value.append(param.value)
+        return self.value
+
