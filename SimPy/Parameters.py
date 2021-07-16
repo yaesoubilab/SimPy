@@ -488,16 +488,16 @@ class TimeStep(_Parameter):
         return self.value
 
 
-class MatrixOfConstantParams(_Parameter):
-    def __init__(self, matrix_of_values, id=None, name=None):
+class MatrixOfParams(_Parameter):
+    def __init__(self, matrix_of_params_or_values, id=None, name=None):
         """
-        :param matrix_of_values: (list of list) of numbers or Parameters
+        :param matrix_of_params_or_values: (list of list) of numbers or Parameters
         :param id:
         :param name:
         """
 
         self.matrixOfParams = []
-        for row in matrix_of_values:
+        for row in matrix_of_params_or_values:
             params = []
             for v in row:
                 if isinstance(v, _Parameter):
@@ -522,6 +522,9 @@ class MatrixOfConstantParams(_Parameter):
             self.sample()
 
     def sample(self, rng=None, time=None):
+        """
+        :return: (np.array)
+        """
 
         self.value = []
         for params in self.matrixOfParams:
