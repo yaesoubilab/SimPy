@@ -4,7 +4,7 @@ import SimPy.DecisionTree as dt
 
 # dictionary for decision nodes
 #               // key: cost, utility, [future nodes]
-dictDecisions = {'d1': [0,     0,       ['c1', 'c5']]};
+dictDecisions = {'d1': [0,     0,       ['c1', 'c5']]}
 
 # dictionary for chance nodes
 #           // key: cost,   utility,  [future nodes],  [probabilities]
