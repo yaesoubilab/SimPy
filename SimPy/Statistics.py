@@ -6,6 +6,7 @@ import numpy as np
 import scipy.stats as stat
 import statsmodels.api as sm
 from scipy.stats import pearsonr
+from statsmodels.stats.proportion import proportion_confint
 
 import SimPy.FormatFunctions as F
 
@@ -119,15 +120,22 @@ class _Statistics(object):
         else:
             return [math.nan, math.nan]
 
+    def _get_proportion_CI(self, n_of_successes, n_of_trials, alpha):
+        """
+        :param n_of_successes: number of successes
+        :param n_of_trials: number of trials
+        :param alpha: significance level (between 0 and 1)
+        :return: Wilon score interval in the format of list [l, u]
+        """
+
+        return proportion_confint(count=n_of_successes, nobs=n_of_trials, alpha=alpha, method='wilson')
+
     def get_bootstrap_CI(self, alpha, num_samples):
         """ calculates empirical bootstrap confidence interval (abstract method to be overridden in derived classes)
         :param alpha: significance level
         :param num_samples: number of bootstrap samples
         :returns a list [L, U] """
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
-
-    # TODO: add wilson interval for binomial proportion CI
-    # https: // en.wikipedia.org / wiki / Binomial_proportion_confidence_interval
 
     def get_PI(self, alpha):
         """ calculates percentile interval (abstract method to be overridden in derived classes)
@@ -292,6 +300,19 @@ class SummaryStat(_Statistics):
 
         # return [l, u]
         return self.get_mean() - np.percentile(delta, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
+
+    def get_proportion_CI(self, alpha):
+        """
+        :param alpha: significance level (between 0 and 1)
+        :return: Wilson score interval in the format of list [l, u]
+        """
+
+        # observations should be either 0 or 1
+        for d in self._data:
+            if d not in (0, 1):
+                raise ValueError('Wilson score interval can only be calculated for binary (0 or 1) outcomes.')
+
+        return self._get_proportion_CI(n_of_successes=sum(self._data), n_of_trials=self._n, alpha=alpha)
 
     def get_PI(self, alpha):
         """

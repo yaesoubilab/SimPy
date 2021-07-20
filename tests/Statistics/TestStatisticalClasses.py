@@ -1,7 +1,7 @@
 import numpy
 
 from SimPy import FormatFunctions as Support
-from SimPy import StatisticalClasses as Stat
+from SimPy import Statistics as Stat
 
 
 def print_results(stat):
@@ -20,7 +20,7 @@ def print_results(stat):
 
 def mytest_summary_stat(data):
     # define a summary statistics
-    sum_stat = Stat.SummaryStat('Test summary statistics', data)
+    sum_stat = Stat.SummaryStat(data=data, name='Test summary statistics',)
     print('Testing summary statistics:')
     print_results(sum_stat)
 
@@ -38,7 +38,7 @@ def mytest_discrete_time(data):
 
 def mytest_continuous_time(times, observations):
     # define a continuous-time statistics
-    continuous_stat = Stat.ContinuousTimeStat('Test continuous-time statistics', 0)
+    continuous_stat = Stat.ContinuousTimeStat(initial_time=0, name='Test continuous-time statistics')
 
     for obs in range(0, len(times)):
         # find the increment
@@ -55,42 +55,43 @@ def mytest_continuous_time(times, observations):
 
 def mytest_diff_stat_indp(x, y):
     # define
-    stat = Stat.DifferenceStatIndp('Test DifferenceStatIndp', x, y)
+    stat = Stat.DifferenceStatIndp(x, y, name='Test DifferenceStatIndp')
     print('Testing DifferenceStatIndp:')
     print_results(stat)
 
 
 def mytest_diff_stat_paired(x, y):
     # define
-    stat = Stat.DifferenceStatPaired('Test DifferenceStatPaired', x, y)
+    stat = Stat.DifferenceStatPaired(x, y, name='Test DifferenceStatPaired')
     print('Testing DifferenceStatPaired:')
     print_results(stat)
 
 
 def mytest_ratio_stat_indp(x, y):
     # define
-    stat = Stat.RatioStatIndp('Test RatioStatIndp', x, y)
+    stat = Stat.RatioStatIndp(x, y, name='Test RatioStatIndp')
     print('Testing RatioStatIndp:')
     print_results(stat)
 
 
 def mytest_ratio_stat_paied(x, y):
     # define
-    stat = Stat.RatioStatPaired('Test RatioStatPaired', x, y)
+    stat = Stat.RatioStatPaired(x, y, name='Test RatioStatPaired')
 
     print('Testing RatioStatPaired:')
     print_results(stat)
 
+
 def mytest_relativeDiff_stat_paied(x, y):
     # define
-    stat = Stat.RelativeDifferencePaired('Test RelativeDifferencePaired', x, y)
+    stat = Stat.RelativeDifferencePaired(x, y, name='Test RelativeDifferencePaired')
 
     print('Testing RelativeDifferencePaired:')
     print_results(stat)
 
 def mytest_relativeDiff_stat_indp(x, y):
     # define
-    stat = Stat.RelativeDifferenceIndp('Test RelativeDifferenceIndp', x, y)
+    stat = Stat.RelativeDifferenceIndp(x, y, name='Test RelativeDifferenceIndp')
 
     print('Testing RelativeDifferenceIndp:')
     print_results(stat)
