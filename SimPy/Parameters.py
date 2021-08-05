@@ -1,4 +1,4 @@
-from math import log
+from math import log, cos, pi
 
 import numpy as np
 from numpy import exp, pi, cos
@@ -414,8 +414,8 @@ class Surge(_Parameter):
 
 
 class TimeDependentSigmoid(_Parameter):
-    # f(t) = min + (max-min) * 1 / (1 + exp(-b * (t - t_middle)) if t > t_min
-    # returns min for t = -inf and max for t = inf if with b >= 0
+    # f(t) = min + (max-min) * 1 / (1 + exp(-b * (t - t_middle - t_min)) if t > t_min
+    # returns min for t = -inf and max for t = inf if b >= 0
 
     def __init__(self, par_b, par_t_min=None, par_t_middle=None, par_min=None, par_max=None, id=None, name=None):
         """
@@ -430,7 +430,7 @@ class TimeDependentSigmoid(_Parameter):
         _Parameter.__init__(self, id=id, name=name, if_time_dep=True)
 
         self.parB = par_b
-        self.parTMin = par_t_min if par_t_min is not None else Constant(value=float('-inf'))
+        self.parTMin = par_t_min if par_t_min is not None else Constant(value=0)
         self.parTMid = par_t_middle if par_t_middle is not None else Constant(value=0)
         self.parMin = par_min if par_min is not None else Constant(value=0)
         self.parMax = par_max if par_max is not None else Constant(value=1)
@@ -440,14 +440,42 @@ class TimeDependentSigmoid(_Parameter):
         if time < self.parTMin.value:
             self.value = 0
         else:
-            dt = time - self.parTMid.value
+            dt = time - self.parTMid.value - self.parTMin.value
             logistic = 1 / (1 + exp(-self.parB.value * dt))
             self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * logistic
 
         return self.value
 
 
-class TimeStep(_Parameter):
+class TimeDependentCosine(_Parameter):
+    # f(t) = min + (max-min) * Cos (2 * pi * (t - phase)/scale)
+
+    def __init__(self, par_phase=None, par_scale=None, par_min=None, par_max=None, id=None, name=None):
+        """
+        :param par_phase: (Parameter) of phase
+        :param par_scale: (Parameter) of scale
+        :param par_min: (Parameter) of min (if not provided, Constant(0) is used)
+        :param par_max: (Parameter) of max (if not provided, Constant(1) is used)
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=True)
+
+        self.parPhase = par_phase
+        self.parScale = par_scale
+        self.parMin = par_min if par_min is not None else Constant(value=0)
+        self.parMax = par_max if par_max is not None else Constant(value=1)
+
+    def sample(self, rng=None, time=None):
+
+        arg = (time - self.parPhase.value)/self.parScale.value
+        cosine = cos(2*pi*arg)
+        self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * (cosine + 1) / 2
+
+        return self.value
+
+
+class TimeDependentStepWise(_Parameter):
     # f(t) = 0  for       t < t0
     #      = v0 for t0 <= t < t1
     #      = v1 for t1 <= t < t2
