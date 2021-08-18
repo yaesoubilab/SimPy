@@ -7,7 +7,7 @@ def proper_file_name(text):
     :return: filename where invalid characters are removed
     """
 
-    return text.replace('|', ',').replace(':', ',').replace('<', 'l').replace('>', 'g').replace('\n', '')
+    return text.replace('|', ',').replace('<', 'l').replace('>', 'g').replace('\n', '')
 
 
 def get_moving_average(data, window=2):
