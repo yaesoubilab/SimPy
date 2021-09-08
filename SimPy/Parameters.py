@@ -211,6 +211,25 @@ class OneMinus(_Parameter):
         return self.value
 
 
+class OneMinusTimes(_Parameter):
+    # value = (1- par1) * par2
+
+    def __init__(self, par1, par2, id=None, name=None):
+        """
+        :param par1: (Parameter) parameter 1
+        :param par2: (Parameter) parameter 2
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=(par1.ifTimeDep or par2.ifTimeDep))
+        self.par1 = par1
+        self.par2 = par2
+
+    def sample(self, rng=None, time=None):
+        self.value = (1 - self.par1.value) * self.par2.value
+        return self.value
+
+
 class TenToPower(_Parameter):
     # 10^(value of another parameter)
 
