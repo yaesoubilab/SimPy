@@ -4,6 +4,21 @@ import os
 import numpy as numpy
 
 
+def make_directory(filename):
+    """
+    creates a directory to save the file for which the filename is provided
+    :param filename: (string) name of the file for which the directory should be created for
+    """
+
+    # get directory
+    directory_path = os.path.dirname(filename)
+
+    # create the directory if does not exist
+    if directory_path != '':
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+
+
 def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete_existing_files=False):
     """ write a list to a csv file
     :param rows: list of lists to be imported to the csv file
