@@ -321,6 +321,15 @@ class SummaryStat(_Statistics):
         """
         return [self.get_percentile(100*alpha/2), self.get_percentile(100*(1-alpha/2))]
 
+    @staticmethod
+    def get_array_from_formatted_interval(interval):
+        """
+        :param interval: (string) of form '[a, b]'
+        :return: (np.array) [a, b]
+        """
+        str_range = interval[1:-1].split(',')
+        return np.array(str_range).astype(float)
+
 
 class DiscreteTimeStat(_Statistics):
     """ to calculate statistics on observations accumulating over time """
