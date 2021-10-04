@@ -432,6 +432,38 @@ class Surge(_Parameter):
         return self.value
 
 
+class SigmoidOnModelOutput(_Parameter):
+    # f(h) = min + (max-min) * 1 / (1 + exp(-b * h))
+
+    def __init__(self, par_b, par_min=None, par_max=None, id=None, name=None):
+        """
+        :param par_b: (Parameter) of b
+        :param par_t_min: (Parameter) of t_min
+        :param par_t_middle: (Parameter) of t_middle
+        :param par_min: (Parameter) of min (if not provided, Constant(0) is used)
+        :param par_max: (Parameter) of max (if not provided, Constant(1) is used)
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+        _Parameter.__init__(self, id=id, name=name, if_time_dep=True)
+
+        self.parB = par_b
+        self.parMin = par_min if par_min is not None else Constant(value=0)
+        self.parMax = par_max if par_max is not None else Constant(value=1)
+        self.simOut = None
+
+    def assign_sim_output(self, sim_output):
+
+        self.simOut = sim_output
+
+    def sample(self, rng=None, time=None):
+
+        logistic = 1 / (1 + exp(-self.parB.value * self.simOut.get_value()))
+        self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * logistic
+
+        return self.value
+
+
 class TimeDependentSigmoid(_Parameter):
     # f(t) = min + (max-min) * 1 / (1 + exp(-b * (t - t_middle - t_min)) if t > t_min
     # returns min for t = -inf and max for t = inf if b >= 0
@@ -519,7 +551,6 @@ class TimeDependentStepWise(_Parameter):
         raise ValueError('Needs to be debugged.')
 
         self.value = 0
-
         if time < self.ts[0]:
             self.value = 0
         else:
