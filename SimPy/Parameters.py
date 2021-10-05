@@ -381,9 +381,14 @@ class Product(_Parameter):
         self.parameters = parameters
 
     def sample(self, rng=None, time=None):
+
         self.value = 1
         for p in self.parameters:
-            self.value *= p.value
+            if p.value is None:
+                self.value = None
+                break
+            else:
+                self.value *= p.value
 
         return self.value
 
@@ -438,8 +443,6 @@ class SigmoidOnModelOutput(_Parameter):
     def __init__(self, par_b, par_min=None, par_max=None, id=None, name=None):
         """
         :param par_b: (Parameter) of b
-        :param par_t_min: (Parameter) of t_min
-        :param par_t_middle: (Parameter) of t_middle
         :param par_min: (Parameter) of min (if not provided, Constant(0) is used)
         :param par_max: (Parameter) of max (if not provided, Constant(1) is used)
         :param id: (int) id of a parameter
@@ -454,12 +457,20 @@ class SigmoidOnModelOutput(_Parameter):
 
     def assign_sim_output(self, sim_output):
 
+        assert hasattr(sim_output, 'get_value'), 'sim_output must have the attribute .get_value()'
+
         self.simOut = sim_output
 
     def sample(self, rng=None, time=None):
 
-        logistic = 1 / (1 + exp(-self.parB.value * self.simOut.get_value()))
-        self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * logistic
+        assert self.simOut is not None, 'Make sure that sim_out is assigned.'
+
+        v = self.simOut.get_value()
+        if v is None:
+            self.value = 0
+        else:
+            logistic = 1 / (1 + exp(-self.parB.value * v))
+            self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * logistic
 
         return self.value
 
