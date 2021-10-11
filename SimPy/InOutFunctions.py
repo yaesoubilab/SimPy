@@ -161,6 +161,10 @@ def read_csv_cols_to_dictionary(file_name, delimiter=',', if_convert_float=False
     return dict_of_columns
 
 
+def delete_file(file_name):
+    os.remove(file_name)
+
+
 def delete_files(extension='.txt', path='..'):
     """ delete every files with the specified extension inside the directory
     :param extension: (string) extension of the files to be removed
