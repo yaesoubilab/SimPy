@@ -510,14 +510,14 @@ class TimeDependentSigmoid(_Parameter):
 
 
 class TimeDependentCosine(_Parameter):
-    # f(t) = min + (max-min) * Cos (2 * pi * (t - phase)/scale)
+    # f(t) = a0 + a1 * Cos (2 * pi * (t - phase)/scale)
 
-    def __init__(self, par_phase=None, par_scale=None, par_min=None, par_max=None, id=None, name=None):
+    def __init__(self, par_phase=None, par_scale=None, par_a0=None, par_a1=None, id=None, name=None):
         """
         :param par_phase: (Parameter) of phase
         :param par_scale: (Parameter) of scale
-        :param par_min: (Parameter) of min (if not provided, Constant(0) is used)
-        :param par_max: (Parameter) of max (if not provided, Constant(1) is used)
+        :param par_a0: (Parameter) of base (if not provided, Constant(0) is used)
+        :param par_a1: (Parameter) of a (if not provided, Constant(1) is used)
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
@@ -525,14 +525,14 @@ class TimeDependentCosine(_Parameter):
 
         self.parPhase = par_phase
         self.parScale = par_scale
-        self.parMin = par_min if par_min is not None else Constant(value=0)
-        self.parMax = par_max if par_max is not None else Constant(value=1)
+        self.parA0 = par_a0 if par_a0 is not None else Constant(value=0)
+        self.parA1 = par_a1 if par_a1 is not None else Constant(value=1)
 
     def sample(self, rng=None, time=None):
 
         arg = (time - self.parPhase.value)/self.parScale.value
         cosine = cos(2*pi*arg)
-        self.value = self.parMin.value + (self.parMax.value - self.parMin.value) * (cosine + 1) / 2
+        self.value = self.parA0.value + self.parA1.value * cosine
 
         return self.value
 

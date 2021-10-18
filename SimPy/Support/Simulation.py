@@ -134,12 +134,16 @@ class SeedGenerator:
 
         self.i = -1
         self.posWeights = []
-        self.seedsWithPosWeights = []
-        if self.weights is not None:
-            for s, w in zip(self.seeds, self.weights):
-                if w > 0:
-                    self.seedsWithPosWeights.append(s)
-                    self.posWeights.append(w)
+
+        if seeds is not None and weights is None:
+            self.seedsWithPosWeights = seeds
+        else:
+            self.seedsWithPosWeights = []
+            if self.weights is not None:
+                for s, w in zip(self.seeds, self.weights):
+                    if w > 0:
+                        self.seedsWithPosWeights.append(s)
+                        self.posWeights.append(w)
 
     def next_seed(self, rng=None, sample_by_weight=False):
         """
