@@ -31,6 +31,16 @@ class _Parameter:
         """
         pass
 
+    @staticmethod
+    def if_any_time_dep(parameters):
+
+        # if this is a time-dependent parameter
+        for p in parameters:
+            if p.ifTimeDep:
+                return True
+
+        return False
+
 
 class Constant(_Parameter):
     def __init__(self, value, id=None, name=None):
@@ -129,10 +139,14 @@ class Equal(_Parameter):
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
-        _Parameter.__init__(self, id=id, name=name, if_time_dep=par.ifTimeDep)
+
+        _Parameter.__init__(self, id=id, name=name,
+                            if_time_dep=par.ifTimeDep)
+
         self.par = par
 
     def sample(self, rng=None, time=None):
+
         self.value = self.par.value
         return self.value
 
@@ -310,14 +324,8 @@ class LinearCombination(_Parameter):
         :param name: (string) name of a parameter
         """
 
-        # if this is a time-dependent parameter
-        if_time_dep = False
-        for p in parameters:
-            if p.ifTimeDep:
-                if_time_dep = True
-                break
-
-        _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
+        _Parameter.__init__(self, id=id, name=name,
+                            if_time_dep=self.if_any_time_dep(parameters=parameters))
         self.parameters = parameters
         if coefficients is not None:
             self.coefficients = coefficients
@@ -370,14 +378,8 @@ class Product(_Parameter):
         :param name: (string) name of a parameter
         """
 
-        # if this is a time-dependent parameter
-        if_time_dep = False
-        for p in parameters:
-            if p.ifTimeDep:
-                if_time_dep = True
-                break
-
-        _Parameter.__init__(self, id=id, name=name, if_time_dep=if_time_dep)
+        _Parameter.__init__(self, id=id, name=name,
+                            if_time_dep=self.if_any_time_dep(parameters=parameters))
         self.parameters = parameters
 
     def sample(self, rng=None, time=None):
