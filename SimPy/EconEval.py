@@ -16,9 +16,22 @@ from SimPy.Support.SupportClasses import *
 # warnings.filterwarnings("always")
 NUM_OF_BOOTSTRAPS = 1000  # number of bootstrap samples to calculate confidence intervals for ICER
 LEGEND_FONT_SIZE = 7
-FRONTIER_COLOR = 'k'
-FRONTIER_TRANSPARENCY = 0.6
-FRONTIER_LINE_WIDTH = 2
+
+CE_FRONTIER_COLOR = 'k'
+CE_FRONTIER_TRANSPARENCY = 0.6
+CE_FRONTIER_LINE_WIDTH = 2
+CE_EDGE_COLOR = 'w'
+
+CEAC_LINE_WIDTH = 0.75
+CEAF_LINE_WIDTH = 2.5
+
+# for constrained optimization and NMB
+NMB_LINE_WIDTH = 0.75
+NMB_INTERVAL_TRANSPARENCY = 0.5
+NMB_FRONTIER_LINE_WIDTH = 2.5
+
+FRONTIER_LABEL_SHIFT_X = -0.01 # shift labels to right or left (proportional to the length of the x_axis)
+FRONTIER_LABEL_SHIFT_Y = 0.01 # shift labels to right or left (proportional to the length of the x_axis)
 
 
 def pv_single_payment(payment, discount_rate, discount_period, discount_continuously=False):
@@ -87,7 +100,7 @@ def equivalent_annual_value(present_value, discount_rate, discount_period):
 
 
 class Strategy:
-    def __init__(self, name, cost_obs, effect_obs, color=None, marker='o', label=None):
+    def __init__(self, name, cost_obs, effect_obs, color=None, marker='o', label=None, short_label=None):
         """
         :param name: name of the strategy
         :param cost_obs: list or numpy.array of cost observations
@@ -97,6 +110,8 @@ class Strategy:
         :param marker: (string) marker code
                 (https://matplotlib.org/3.1.1/api/markers_api.html)
         :param label: (string) label to show on the legend (if None, name is used)
+        :param short_label: (string) label to show on the center of the probability clouds
+            or on the curves of of NMBs (if None, label is used)
         """
 
         assert color is None or type(color) is str, "color argument should be a string."
@@ -105,10 +120,9 @@ class Strategy:
         self.name = name
         self.color = color
         self.marker = marker
-        if label is None:
-            self.label = name
-        else:
-            self.label = label
+
+        self.label = name if label is None else label
+        self.shortLabel = self.label if short_label is None else short_label
 
         self.ifDominated = False
         self.switchingWTP = 0
@@ -355,20 +369,22 @@ class _EconEval:
         if not if_y_axis_prob:
             ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
-    def _add_curves_to_ax(self, ax, curves, x_values, title, x_label, y_label, y_range=None,
+    def _add_curves_to_ax(self, ax, curves, title,
+                          x_values, x_label, y_label, y_range=None,
                           y_axis_multiplier=1, y_axis_decimal=1,
                           delta_x=None,
                           transparency_lines=0.4,
                           transparency_intervals=0.2,
                           show_legend=False,
                           show_frontier=True,
+                          curve_line_width=1.0, frontier_line_width=4.0,
                           if_y_axis_prob=False,
                           if_format_y_numbers=True):
 
         for curve in curves:
             # plot line
             ax.plot(curve.xs, curve.ys * y_axis_multiplier,
-                    c=curve.color, alpha=transparency_lines, label=curve.label)
+                    c=curve.color, alpha=transparency_lines, linewidth=curve_line_width, label=curve.label)
             # plot intervals
             if curve.l_errs is not None and curve.u_errs is not None:
                 ax.fill_between(curve.xs,
@@ -378,9 +394,9 @@ class _EconEval:
             # plot frontier
             if show_frontier:
                 # check if this strategy is not dominated
-                if curve.optXs is not None:
+                if curve.optXs is not None and len(curve.optXs)>0:
                     ax.plot(curve.optXs, curve.optYs * y_axis_multiplier,
-                            c=curve.color, alpha=1, linewidth=4)
+                            c=curve.color, alpha=1, linewidth=frontier_line_width)
 
         if show_legend:
             ax.legend(loc=2, fontsize=LEGEND_FONT_SIZE)
@@ -389,6 +405,18 @@ class _EconEval:
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.set_ylim(y_range)
+
+        # add labels on the frontier
+        y_min, y_max = ax.get_ylim()
+        y_axis_length = y_max - y_min
+        for curve in curves:
+            if show_frontier:
+                if curve.optXs is not None and len(curve.optXs) > 0:
+                    x_axis_length = x_values[-1] - x_values[0]
+                    x = 0.5 * (curve.optXs[0] + curve.optXs[-1]) + FRONTIER_LABEL_SHIFT_X * x_axis_length
+                    y = 0.5*(curve.optYs[0] + curve.optYs[-1])*y_axis_multiplier \
+                        + FRONTIER_LABEL_SHIFT_Y * y_axis_length
+                    ax.text(x=x, y=y, s=curve.label, fontsize=LEGEND_FONT_SIZE+1, c=curve.color)
 
         # do the other formatting
         self._format_ax(ax=ax, y_range=y_range,
@@ -585,7 +613,22 @@ class CEA(_EconEval):
                            add_clouds=True, show_legend=True,
                            center_s=50, cloud_s=10, transparency=0.1,
                            cost_multiplier=1, effect_multiplier=1,
-                           cost_digits=0, effect_digits=1):
+                           cost_decimals=0, effect_decimals=1):
+        """
+        adds a cost-effectiveness plane to the provided ax
+        :param ax: axis
+        :param x_range: (tuple) range of x-axis
+        :param y_range: (tuple) range of y-axis
+        :param add_clouds: (bool) if to add the probability clouds
+        :param show_legend: (bool) if to show the legend
+        :param center_s: (float) the size of the dot showing (x,y) of a strategy
+        :param cloud_s: (float) the size of dots building the probability clouds
+        :param transparency: (float) the transparency of dots building the probability clouds
+        :param cost_multiplier: (float) to multiply the cost values
+        :param effect_multiplier: (float) to multiply the effect values
+        :param cost_decimals: (int) to round the labels of cost axis
+        :param effect_digits: (int) to round the labels of the effect axis
+        """
 
         # find the frontier (x, y)'s
         frontier_d_effect = []
@@ -604,17 +647,17 @@ class CEA(_EconEval):
                        s=center_s,  # marker size
                        label=s.label,  # label to show in the legend
                        zorder=2,
-                       #edgecolors='k'
+                       edgecolors=CE_EDGE_COLOR
                        )
 
         # add the frontier line
         if len(self.get_strategies_on_frontier()) > 1:
             ax.plot(frontier_d_effect, frontier_d_costs,
-                    color=FRONTIER_COLOR,  # color
-                    alpha=FRONTIER_TRANSPARENCY,  # transparency
-                    linewidth=FRONTIER_LINE_WIDTH,  # line width
+                    color=CE_FRONTIER_COLOR,  # color
+                    alpha=CE_FRONTIER_TRANSPARENCY,  # transparency
+                    linewidth=CE_FRONTIER_LINE_WIDTH,  # line width
                     zorder=3,
-                    label='Frontier', # label to show in the legend
+                    label='Frontier',  # label to show in the legend
                     )
 
         if show_legend:
@@ -638,12 +681,12 @@ class CEA(_EconEval):
         # format x-axis
         vals_x = ax.get_xticks()
         ax.set_xticks(vals_x)
-        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=effect_digits) for x in vals_x])
+        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=effect_decimals) for x in vals_x])
 
         # format y-axis
         vals_y = ax.get_yticks()
         ax.set_yticks(vals_y)
-        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=cost_digits) for x in vals_y])
+        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=cost_decimals) for x in vals_y])
 
         ax.axhline(y=0, c='k', linestyle='--', linewidth=0.5)
         ax.axvline(x=0, c='k', linestyle='--', linewidth=0.5)
@@ -695,7 +738,7 @@ class CEA(_EconEval):
                                 show_legend=show_legend,
                                 center_s=center_s, cloud_s=cloud_s, transparency=transparency,
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier,
-                                cost_digits=cost_digits, effect_digits=effect_digits)
+                                cost_decimals=cost_digits, effect_digits=effect_digits)
 
         fig.tight_layout()
 
@@ -1100,6 +1143,7 @@ class CBA(_EconEval):
 
             # make a NMB curve
             self.inmbCurves.append(INMBCurve(label=s.label,
+                                             short_label=s.shortLabel,
                                              color=s.color,
                                              wtp_values=self.wtp_values,
                                              inmb_stat=inmb,
@@ -1120,9 +1164,10 @@ class CBA(_EconEval):
         # initialize acceptability curves
         self.acceptabilityCurves = []
         for s in self.strategies:
-            self.acceptabilityCurves.append(AcceptabilityCurve(label=s.label,
-                                                               color=s.color,
-                                                               wtp_values=self.wtp_values))
+            self.acceptabilityCurves.append(
+                AcceptabilityCurve(label=s.label,
+                                   short_label=s.shortLabel,
+                                   color=s.color))
 
         n_obs = len(self.strategies[0].costObs)
 
@@ -1390,23 +1435,22 @@ class CBA(_EconEval):
                               y_label='Expected Incremental Net Monetary Benefit',
                               y_range=None,
                               y_axis_multiplier=1,
-                              y_axis_decimal=1,
-                              interval_type='c',
+                              y_axis_decimal=None,
                               delta_wtp=None,
-                              transparency_lines=0.5,
-                              transparency_intervals=0.2,
-                              show_legend=True,
-                              show_frontier=True):
+                              show_legend=True):
 
         self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtp_values,
                                title=title, x_label=x_label,
                                y_label=y_label, y_range=y_range, delta_x=delta_wtp,
                                y_axis_decimal=y_axis_decimal,
                                y_axis_multiplier=y_axis_multiplier,
-                               transparency_lines=transparency_lines,
-                               transparency_intervals=transparency_intervals,
+                               transparency_lines=1,
+                               transparency_intervals=NMB_INTERVAL_TRANSPARENCY,
                                show_legend=show_legend,
-                               show_frontier=show_frontier)
+                               show_frontier=True,
+                               curve_line_width=NMB_LINE_WIDTH,
+                               frontier_line_width=NMB_FRONTIER_LINE_WIDTH,
+                               if_format_y_numbers=True if y_axis_decimal is not None else False)
 
     def plot_acceptability_curves(self,
                                   title=None,
@@ -1418,7 +1462,7 @@ class CBA(_EconEval):
                                   legends=None,
                                   file_name=None):
         """
-        plots the acceptibility curves
+        plots the acceptability curves
         :param title: title
         :param x_label: x-axis label
         :param y_label: y-axis label
@@ -1455,17 +1499,32 @@ class CBA(_EconEval):
         else:
             fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
-    def add_acceptability_curves_to_ax(self,
-                                       ax, wtp_delta=None,
-                                       y_range=None, show_legend=True, legends=None):
+    def add_acceptability_curves_to_ax(
+            self, ax, wtp_delta=None, y_range=None, show_legend=True, legends=None):
+        """
+        adds the acceptability curves to the provided ax
+        :param ax: axis
+        :param wtp_delta: (float) distance between ticks on x-axis
+        :param y_range: (tuple) range of y-axis
+        :param show_legend: (bool) if to show the legend
+        :param legends: (list of strings) texts for legends
+        """
+
+        if len(self.inmbCurves) == 0:
+            self.build_inmb_curves(interval_type='n')
+
+        if len(self.acceptabilityCurves) == 0:
+            self.build_acceptability_curves()
 
         for i, curve in enumerate(self.acceptabilityCurves):
             # plot line
             if legends is None:
-                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1, label=curve.label)
+                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1,
+                        label=curve.label, linewidth=CEAC_LINE_WIDTH)
             else:
-                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1, label=legends[i])
-            ax.plot(curve.optXs, curve.optYs, c=curve.color, linewidth=4)
+                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1,
+                        label=legends[i], linewidth=CEAC_LINE_WIDTH)
+            ax.plot(curve.optXs, curve.optYs, c=curve.color, linewidth=CEAF_LINE_WIDTH)
 
         self._format_ax(ax=ax, y_range=y_range,
                         x_range=[self.wtp_values[0], self.wtp_values[-1]],
@@ -1661,6 +1720,7 @@ class HealthMaxSubjectToBudget(_EconEval):
             self.effectCurves.append(
                 ExpHealthCurve(
                     label=s.name,
+                    short_label=s.shortLabel,
                     color=s.color,
                     effect_stat=s.dEffect,
                     interval_type='c')
@@ -1717,26 +1777,36 @@ class HealthMaxSubjectToBudget(_EconEval):
         if file_name is not None:
             fig.savefig(file_name, dpi=300)
 
-    def add_plot_to_ax(self, ax, delta_budget=None,
-                       title=None, x_label=None, y_label=None,
-                       y_range=None, y_axis_multiplier=1,
-                       transparency_lines=0.4,
-                       transparency_intervals=0.2,
+    def add_plot_to_ax(self, ax, title=None,
+                       delta_budget=None, x_label=None,
+                       y_label=None, y_range=None, y_axis_multiplier=1, effect_decimals=None,
                        show_legend=True,
                        show_frontier=True,
                        ):
+        """
+        :param ax: axis
+        :param title: (string) title of the figure
+        :param delta_budget: (float) the distance between ticks on the x-axis
+        :param x_label: (string) x-axis label
+        :param y_label: (string) y-axis label
+        :param y_range: (tuple) y-axis range
+        :param y_axis_multiplier: (float) to multiply the y-axis values by
+        :param effect_decimals: (int) to round the values of y-axis (effect)
+        :param show_legend: (bool) to show legends
+        :param show_frontier: (bool) to show the frontier (curves with maximum effect or NMB)
+        :return:
+        """
 
-        self._add_curves_to_ax(ax=ax,
-                               curves=self.effectCurves,
-                               x_values=self.budget_values,
-                               delta_x=delta_budget,
-                               title=title, x_label=x_label, y_label=y_label,
-                               y_range=y_range, y_axis_multiplier=y_axis_multiplier,
-                               transparency_lines=transparency_lines,
-                               transparency_intervals=transparency_intervals,
-                               show_legend=show_legend,
-                               show_frontier=show_frontier,
-                               if_format_y_numbers=False)
+        self._add_curves_to_ax(
+            ax=ax, curves=self.effectCurves, title=title,
+            x_values=self.budget_values,
+            delta_x=delta_budget, x_label=x_label,
+            y_label=y_label, y_axis_decimal=effect_decimals, y_range=y_range, y_axis_multiplier=y_axis_multiplier,
+            transparency_lines=1, transparency_intervals=NMB_INTERVAL_TRANSPARENCY,
+            show_legend=show_legend,
+            show_frontier=show_frontier,
+            curve_line_width=NMB_LINE_WIDTH, frontier_line_width=NMB_FRONTIER_LINE_WIDTH,
+            if_format_y_numbers=True if effect_decimals is not None else False)
 
 
 class _ComparativeEconMeasure:

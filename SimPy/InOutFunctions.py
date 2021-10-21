@@ -29,6 +29,11 @@ def write_csv(rows, file_name='csvfile.csv', delimiter=',', directory='', delete
     :param delete_existing_files: set to True to delete the existing trace files in the specified directory
     """
 
+    if file_name[0] == '/':
+        file_name = file_name[1:]
+    if len(directory) > 0 and directory[0] == '/':
+        directory = directory[1:]
+
     # create a new file
     file_name = os.path.join(directory, file_name)
 

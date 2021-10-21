@@ -1,4 +1,5 @@
 import os
+import string
 
 import SimPy.FormatFunctions as F
 from SimPy.Support.MiscFunctions import *
@@ -60,3 +61,20 @@ def format_x_axis(ax, min_x, max_x, delta_x, buffer=0, form=None, deci=None):
         ax.set_xticklabels([F.format_number(x, deci=deci, format=form) for x in xs])
 
     ax.set_xlim([min_x-buffer, max_x+buffer])
+
+
+def add_labels_to_panels(axarr, x_coord=-0.2, y_coord=1, font_size=8):
+    """
+    adds A), B), etc. labels to panels
+    :param axarr: (array) of panels
+    :param x_coord: (float) increase to move labels right
+    :param y_coord: (float) increase to move labels up
+    :param font_size: (float) font size of labels
+    """
+    axs = axarr.flat
+    for n, ax in enumerate(axs):
+        ax.text(x_coord, y_coord,
+                string.ascii_uppercase[n] + ')',
+                transform=ax.transAxes,
+                size=font_size,
+                weight='bold')

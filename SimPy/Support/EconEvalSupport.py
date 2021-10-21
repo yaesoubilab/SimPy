@@ -97,8 +97,9 @@ def utility_sample_stat(utility, d_cost_samples, d_effect_samples,
 
 
 class _Curve:
-    def __init__(self, label, color):
+    def __init__(self, label, color, short_label):
         self.label = label
+        self.shortLabel = label if short_label is None else short_label
         self.color = color
         self.xs = []
         self.ys = []
@@ -114,7 +115,7 @@ class _Curve:
 
 class INMBCurve(_Curve):
     # incremental net monetary benefit curve of one strategy
-    def __init__(self, label, color, wtp_values, inmb_stat, interval_type='n'):
+    def __init__(self, label, color, wtp_values, inmb_stat, interval_type='n', short_label=None):
         """
         :param label: (string) label of this incremental NMB curve
         :param color: color code of this curve
@@ -123,9 +124,10 @@ class INMBCurve(_Curve):
         :param interval_type: (string) 'n' for no interval
                                        'c' for t-based confidence interval,
                                        'p' for percentile interval
+        :param short_label: (string) to display on the curves
         """
 
-        _Curve.__init__(self, label, color)
+        _Curve.__init__(self=self, label=label, color=color, short_label=short_label)
         self.inmbStat = inmb_stat
         self.xs = wtp_values
         self.intervalType = interval_type
@@ -172,14 +174,14 @@ class INMBCurve(_Curve):
 
 class AcceptabilityCurve(_Curve):
     # cost-effectiveness acceptability curve of one strategy
-    def __init__(self, label, color, wtp_values):
+    def __init__(self, label, color, short_label=None):
 
-        _Curve.__init__(self, label, color)
+        _Curve.__init__(self, label=label, color=color, short_label=short_label)
 
 
 class ExpHealthCurve(_Curve):
 
-    def __init__(self, label, color, effect_stat, interval_type='n'):
+    def __init__(self, label, color, effect_stat, interval_type='n', short_label=None):
         """
         :param label: (string) label of this incremental NMB curve
         :param color: color code of this curve
@@ -187,9 +189,10 @@ class ExpHealthCurve(_Curve):
         :param interval_type: (string) 'n' for no interval
                                        'c' for t-based confidence interval,
                                        'p' for percentile interval
+        :param short_label: (string) to display on the curves
         """
 
-        _Curve.__init__(self, label, color)
+        _Curve.__init__(self, label=label, color=color, short_label=short_label)
 
         self.dEffectMean = effect_stat.get_mean()
 
