@@ -5,7 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import scipy.stats as stat
-from numpy import exp, power
+from numpy import exp, power, average
 from numpy.random import RandomState
 
 import SimPy.FormatFunctions as F
@@ -1705,6 +1705,8 @@ class HealthMaxSubjectToBudget(_EconEval):
         self.dEffect = []
         # list of expected effect curves
         self.effectCurves = []
+        # expected value of perfect information
+        self.evpi = None
 
         # determine budget values
         self.budget_values = np.linspace(budget_range[0], budget_range[1],
@@ -1744,6 +1746,30 @@ class HealthMaxSubjectToBudget(_EconEval):
         # convert lists to arrays
         for c in self.effectCurves:
             c.convert_lists_to_arrays()
+
+    def calculate_evpi_curve(self):
+        """ calculates the expected value of perfect information (EVPI) curve """
+
+        self.evpi = []
+
+        # for all budget value
+        for b in self.budget_values:
+
+            # find the best achievable expected effect under perfect information
+            max_effects = []
+            for i in range(len(self.strategies[0].dCostObs)):
+                # find costs and effects of strategies for the ith monte carlo simulation run
+                costs = [s.dCostObs[i] for s in self.strategies]
+                effects = [s.dEffectObs[i] for s in self.strategies]
+
+                # find the maximum effect
+                max_e = float('-inf')
+                for c, e in zip(costs, effects):
+                    if c < b and e > max_e:
+                        max_e = e
+                max_effects.append(max_e)
+
+            self.evpi.append(average(max_effects))
 
     def plot(self,
              title='Expected Increase in Effect',
