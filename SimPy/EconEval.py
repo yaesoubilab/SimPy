@@ -384,7 +384,9 @@ class _EconEval:
         for curve in curves:
             # plot line
             ax.plot(curve.xs, curve.ys * y_axis_multiplier,
-                    c=curve.color, alpha=transparency_lines, linewidth=curve_line_width, label=curve.label)
+                    c=curve.color, alpha=transparency_lines,
+                    linewidth=curve_line_width, linestyle=curve.linestyle, label=curve.label)
+
             # plot intervals
             if curve.l_errs is not None and curve.u_errs is not None:
                 ax.fill_between(curve.xs,
@@ -613,7 +615,7 @@ class CEA(_EconEval):
                            add_clouds=True, show_legend=True,
                            center_s=50, cloud_s=10, transparency=0.1,
                            cost_multiplier=1, effect_multiplier=1,
-                           cost_decimals=0, effect_decimals=1):
+                           cost_decimals=None, effect_decimals=None):
         """
         adds a cost-effectiveness plane to the provided ax
         :param ax: axis
@@ -627,7 +629,7 @@ class CEA(_EconEval):
         :param cost_multiplier: (float) to multiply the cost values
         :param effect_multiplier: (float) to multiply the effect values
         :param cost_decimals: (int) to round the labels of cost axis
-        :param effect_digits: (int) to round the labels of the effect axis
+        :param effect_decimals: (int) to round the labels of the effect axis
         """
 
         # find the frontier (x, y)'s
@@ -679,14 +681,16 @@ class CEA(_EconEval):
         ax.set_ylim(y_range)  # y-axis range
 
         # format x-axis
-        vals_x = ax.get_xticks()
-        ax.set_xticks(vals_x)
-        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=effect_decimals) for x in vals_x])
+        if effect_decimals is not None:
+            vals_x = ax.get_xticks()
+            ax.set_xticks(vals_x)
+            ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=effect_decimals) for x in vals_x])
 
         # format y-axis
-        vals_y = ax.get_yticks()
-        ax.set_yticks(vals_y)
-        ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=cost_decimals) for x in vals_y])
+        if cost_decimals is not None:
+            vals_y = ax.get_yticks()
+            ax.set_yticks(vals_y)
+            ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=cost_decimals) for x in vals_y])
 
         ax.axhline(y=0, c='k', linestyle='--', linewidth=0.5)
         ax.axvline(x=0, c='k', linestyle='--', linewidth=0.5)
@@ -1094,6 +1098,7 @@ class CBA(_EconEval):
 
         self.inmbCurves = []  # list of incremental NMB curves with respect to the base
         self.acceptabilityCurves = []  # the list of acceptability curves
+        self.evpi = None
 
         # use net monetary benefit for utility by default
         if health_measure == 'u':
@@ -1102,8 +1107,8 @@ class CBA(_EconEval):
             self.utility = inmb_d
 
         # wtp values (includes the specified minimum and maximum wtp value)
-        self.wtp_values = np.linspace(wtp_range[0], wtp_range[1],
-                                      num=n_of_wtp_values, endpoint=True)
+        self.wtpValues = np.linspace(wtp_range[0], wtp_range[1],
+                                     num=n_of_wtp_values, endpoint=True)
 
         # index of strategy with the highest
         # expected net-monetary benefit over the wtp range
@@ -1145,7 +1150,7 @@ class CBA(_EconEval):
             self.inmbCurves.append(INMBCurve(label=s.label,
                                              short_label=s.shortLabel,
                                              color=s.color,
-                                             wtp_values=self.wtp_values,
+                                             wtp_values=self.wtpValues,
                                              inmb_stat=inmb,
                                              interval_type=interval_type)
                                    )
@@ -1173,7 +1178,7 @@ class CBA(_EconEval):
 
         # for each WTP value, calculate the number of times that
         # each strategy has the highest NMB value
-        for w in self.wtp_values:
+        for w in self.wtpValues:
 
             # number of times that each strategy is optimal
             count_maximum = np.zeros(self._n)
@@ -1210,7 +1215,7 @@ class CBA(_EconEval):
             self.__find_strategies_with_highest_einmb()
 
         # find the optimal strategy for each wtp value
-        for wtp_idx, wtp in enumerate(self.wtp_values):
+        for wtp_idx, wtp in enumerate(self.wtpValues):
             opt_idx = self.idxHighestExpNMB[wtp_idx]
             self.acceptabilityCurves[opt_idx].optXs.append(wtp)
             self.acceptabilityCurves[opt_idx].optYs.append(
@@ -1247,7 +1252,7 @@ class CBA(_EconEval):
          """
 
         # find the optimal strategy for each wtp value
-        for wtp_idx, wtp in enumerate(self.wtp_values):
+        for wtp_idx, wtp in enumerate(self.wtpValues):
 
             max_value = float('-inf')
             max_idx = 0
@@ -1273,7 +1278,7 @@ class CBA(_EconEval):
         s_star_names = []   # names of optimal strategies
 
         # working wtp value
-        w = self.wtp_values[0]
+        w = self.wtpValues[0]
 
         # find the optimal strategy at wtp = 0
         max_nmb = float('-inf')
@@ -1293,7 +1298,7 @@ class CBA(_EconEval):
         s_star_names.append(self.strategies[s_star].name)
 
         # find the optimal switching wtp values
-        while w <= self.wtp_values[-1] and len(s_stars) < len(self.strategies):
+        while w <= self.wtpValues[-1] and len(s_stars) < len(self.strategies):
 
             # find the intersect of the current strategy with other
             w_min = float('inf')
@@ -1341,7 +1346,7 @@ class CBA(_EconEval):
                 )
 
             w_star, interval = inmb.get_switch_wtp_and_interval(
-                wtp_range=[self.wtp_values[0], self.wtp_values[-1]],
+                wtp_range=[self.wtpValues[0], self.wtpValues[-1]],
                 interval_type=interval_type
             )
             w_star_intervals.append(interval)
@@ -1371,10 +1376,40 @@ class CBA(_EconEval):
 
         return result
 
+    def calculate_evpi_curve(self):
+        """ calculates the expected value of perfect information (EVPI) curve """
+
+        self.evpi = []
+        n_of_sims = len(self.strategies[0].dCostObs)
+
+        # for all budget value
+        for wtp in self.wtpValues:
+
+            # find the highest achievable NMB under perfect information
+            max_nmbs = []
+            for i in range(n_of_sims):
+                # find costs and effects of strategies for the ith monte carlo simulation run
+                costs = [s.dCostObs[i] for s in self.strategies]
+                effects = [s.dEffectObs[i] for s in self.strategies]
+
+                # find the maximum effect
+                max_nmb = float('-inf')
+                for c, e in zip(costs, effects):
+                    nmb = wtp * e - c
+                    if nmb > max_nmb:
+                        max_nmb = nmb
+                max_nmbs.append(max_nmb)
+
+            self.evpi.append(average(max_nmbs))
+
+        # curve
+        self.inmbCurves.append(EVPI(xs=self.wtpValues, ys=self.evpi, label='EVPI', color='k'))
+
     def plot_incremental_nmbs(self,
                               title='Incremental Net Monetary Benefit',
                               x_label='Willingness-To-Pay Threshold',
                               y_label='Expected Incremental Net Monetary Benefit',
+                              show_evpi=False,
                               y_range=None,
                               y_axis_multiplier=1,
                               y_axis_decimal=0,
@@ -1391,6 +1426,7 @@ class CBA(_EconEval):
         :param title: title
         :param x_label: x-axis label
         :param y_label: y-axis label
+        :param show_evpi: (bool) if to show EVPI curve
         :param y_range: (list) range of y-axis
         :param y_axis_multiplier: (float) multiplier to scale the y-axis
             (e.g. 0.001 for thousands)
@@ -1409,11 +1445,14 @@ class CBA(_EconEval):
         # make incremental NMB curves
         self.build_inmb_curves(interval_type=interval_type)
 
+        if show_evpi:
+            self.calculate_evpi_curve()
+
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtp_values,
+        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtpValues,
                                title=title, x_label=x_label,
                                y_label=y_label, y_range=y_range, delta_x=delta_wtp,
                                y_axis_multiplier=y_axis_multiplier,
@@ -1433,13 +1472,21 @@ class CBA(_EconEval):
                               title='Incremental Net Monetary Benefit',
                               x_label='Willingness-To-Pay Threshold',
                               y_label='Expected Incremental Net Monetary Benefit',
+                              show_evpi=False,
                               y_range=None,
                               y_axis_multiplier=1,
                               y_axis_decimal=None,
                               delta_wtp=None,
+                              interval_type='n',
                               show_legend=True):
 
-        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtp_values,
+        # make incremental NMB curves
+        self.build_inmb_curves(interval_type=interval_type)
+
+        if show_evpi:
+            self.calculate_evpi_curve()
+
+        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtpValues,
                                title=title, x_label=x_label,
                                y_label=y_label, y_range=y_range, delta_x=delta_wtp,
                                y_axis_decimal=y_axis_decimal,
@@ -1527,7 +1574,7 @@ class CBA(_EconEval):
             ax.plot(curve.optXs, curve.optYs, c=curve.color, linewidth=CEAF_LINE_WIDTH)
 
         self._format_ax(ax=ax, y_range=y_range,
-                        x_range=[self.wtp_values[0], self.wtp_values[-1]],
+                        x_range=[self.wtpValues[0], self.wtpValues[-1]],
                         delta_x=wtp_delta,
                         if_y_axis_prob=True)
 
@@ -1540,7 +1587,7 @@ class CBA(_EconEval):
         s_stars = []
         s_star_names = []
 
-        w = self.wtp_values[0]
+        w = self.wtpValues[0]
 
         # at initial w
         max_nmb = float('-inf')
@@ -1557,7 +1604,7 @@ class CBA(_EconEval):
         s_stars.append(s_star)
         s_star_names.append(self.strategies[s_star].name)
 
-        while w <= self.wtp_values[-1] and len(s_stars) < len(self.strategies):
+        while w <= self.wtpValues[-1] and len(s_stars) < len(self.strategies):
 
             # find the intersect of the current strategy with other
             w_min = float('inf')
@@ -1671,8 +1718,9 @@ class CBA(_EconEval):
             fig.savefig(file_name, bbox_inches='tight', dpi=300)
 
 
-class HealthMaxSubjectToBudget(_EconEval):
-    """ a class for selecting the alternative with the highest expected health outcomes
+class BCHO(_EconEval):
+    """ budget-constrained health optimization
+    a class for selecting the alternative with the highest expected health outcomes
     subject to a budget constraint """
 
     def __init__(self, strategies, budget_range, if_paired, health_measure='u',
@@ -1703,8 +1751,8 @@ class HealthMaxSubjectToBudget(_EconEval):
         self.dCostUp = []
         # list of expected delta effect
         self.dEffect = []
-        # list of expected effect curves
-        self.effectCurves = []
+        # list of expected effect curves (and EVPI if needed)
+        self.curves = []
         # expected value of perfect information
         self.evpi = None
 
@@ -1719,7 +1767,7 @@ class HealthMaxSubjectToBudget(_EconEval):
             else:
                 self.dCostUp.append(s.dCost.get_percentile(q=(1 - epsilon) * 100))
             self.dEffect.append(s.dEffect.get_mean())
-            self.effectCurves.append(
+            self.curves.append(
                 ExpHealthCurve(
                     label=s.name,
                     short_label=s.shortLabel,
@@ -1734,30 +1782,31 @@ class HealthMaxSubjectToBudget(_EconEval):
             for s_i, s in enumerate(self.strategies):
                 # if this strategy is feasible
                 if self.dCostUp[s_i] <= b:
-                    self.effectCurves[s_i].update_feasibility(b=b)
+                    self.curves[s_i].update_feasibility(b=b)
                     if self.dEffect[s_i] > max_effect:
                         max_effect = self.dEffect[s_i]
                         max_s_i = s_i
 
             # self.effectCurves[max_s_i].update_range_with_highest_value(x=b)
-            self.effectCurves[max_s_i].optXs.append(b)
-            self.effectCurves[max_s_i].optYs.append(max_effect)
+            self.curves[max_s_i].optXs.append(b)
+            self.curves[max_s_i].optYs.append(max_effect)
 
         # convert lists to arrays
-        for c in self.effectCurves:
+        for c in self.curves:
             c.convert_lists_to_arrays()
 
     def calculate_evpi_curve(self):
         """ calculates the expected value of perfect information (EVPI) curve """
 
         self.evpi = []
+        n_of_sims = len(self.strategies[0].dCostObs)
 
         # for all budget value
         for b in self.budget_values:
 
             # find the best achievable expected effect under perfect information
             max_effects = []
-            for i in range(len(self.strategies[0].dCostObs)):
+            for i in range(n_of_sims):
                 # find costs and effects of strategies for the ith monte carlo simulation run
                 costs = [s.dCostObs[i] for s in self.strategies]
                 effects = [s.dEffectObs[i] for s in self.strategies]
@@ -1765,16 +1814,20 @@ class HealthMaxSubjectToBudget(_EconEval):
                 # find the maximum effect
                 max_e = float('-inf')
                 for c, e in zip(costs, effects):
-                    if c < b and e > max_e:
+                    if c <= b and e > max_e:
                         max_e = e
                 max_effects.append(max_e)
 
             self.evpi.append(average(max_effects))
 
+        # curve
+        self.curves.append(EVPI(xs=self.budget_values, ys=self.evpi, label='EVPI', color='k'))
+
     def plot(self,
              title='Expected Increase in Effect',
              x_label='Budget',
              y_label='Expected Increase in Effect',
+             show_evpi=False,
              y_range=None,
              y_axis_multiplier=1,
              delta_budget=None,
@@ -1787,9 +1840,12 @@ class HealthMaxSubjectToBudget(_EconEval):
         # initialize plot
         fig, ax = plt.subplots(figsize=figure_size)
 
+        if show_evpi:
+            self.calculate_evpi_curve()
+
         # add plot to the ax
         self._add_curves_to_ax(ax=ax,
-                               curves=self.effectCurves,
+                               curves=self.curves,
                                x_values=self.budget_values,
                                title=title, x_label=x_label,
                                y_label=y_label, y_range=y_range, delta_x=delta_budget,
@@ -1806,8 +1862,7 @@ class HealthMaxSubjectToBudget(_EconEval):
     def add_plot_to_ax(self, ax, title=None,
                        delta_budget=None, x_label=None,
                        y_label=None, y_range=None, y_axis_multiplier=1, effect_decimals=None,
-                       show_legend=True,
-                       show_frontier=True,
+                       show_evpi=False, show_legend=True, show_frontier=True,
                        ):
         """
         :param ax: axis
@@ -1818,13 +1873,17 @@ class HealthMaxSubjectToBudget(_EconEval):
         :param y_range: (tuple) y-axis range
         :param y_axis_multiplier: (float) to multiply the y-axis values by
         :param effect_decimals: (int) to round the values of y-axis (effect)
+        :param show_evpi: (bool) to show the expected value of perfect information (EVPI) curve
         :param show_legend: (bool) to show legends
         :param show_frontier: (bool) to show the frontier (curves with maximum effect or NMB)
         :return:
         """
 
+        if show_evpi:
+            self.calculate_evpi_curve()
+
         self._add_curves_to_ax(
-            ax=ax, curves=self.effectCurves, title=title,
+            ax=ax, curves=self.curves, title=title,
             x_values=self.budget_values,
             delta_x=delta_budget, x_label=x_label,
             y_label=y_label, y_axis_decimal=effect_decimals, y_range=y_range, y_axis_multiplier=y_axis_multiplier,

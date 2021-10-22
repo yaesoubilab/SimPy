@@ -97,14 +97,17 @@ def utility_sample_stat(utility, d_cost_samples, d_effect_samples,
 
 
 class _Curve:
-    def __init__(self, label, color, short_label):
+    def __init__(self, label, color, linestyle, short_label):
         self.label = label
         self.shortLabel = label if short_label is None else short_label
         self.color = color
+        self.linestyle = linestyle
         self.xs = []
         self.ys = []
         self.optXs = []
         self.optYs = []
+        self.l_errs = None  # lower error length of health outcome over a range of budget values
+        self.u_errs = None  # upper error length of health outcome over a range of budget values
 
     def convert_lists_to_arrays(self):
         self.xs = np.array(self.xs)
@@ -127,12 +130,10 @@ class INMBCurve(_Curve):
         :param short_label: (string) to display on the curves
         """
 
-        _Curve.__init__(self=self, label=label, color=color, short_label=short_label)
+        _Curve.__init__(self=self, label=label, color=color, short_label=short_label, linestyle='-')
         self.inmbStat = inmb_stat
         self.xs = wtp_values
         self.intervalType = interval_type
-        self.l_errs = []    # lower error length of NMB over a range of wtp values
-        self.u_errs = []    # upper error length of NMB over a range of wtp values
 
         self._calculate_ys_lerrs_uerrs()
 
@@ -141,6 +142,9 @@ class INMBCurve(_Curve):
         calculates the expected incremental NMB and the confidence or prediction intervals over the specified
         range of wtp values.
         """
+
+        self.l_errs = []
+        self.u_errs = []
 
         # get the NMB values for each wtp
         self.ys = [self.inmbStat.get_INMB(x) for x in self.xs]
@@ -173,10 +177,11 @@ class INMBCurve(_Curve):
 
 
 class AcceptabilityCurve(_Curve):
-    # cost-effectiveness acceptability curve of one strategy
+    """ cost-effectiveness acceptability curve of one strategy """
+
     def __init__(self, label, color, short_label=None):
 
-        _Curve.__init__(self, label=label, color=color, short_label=short_label)
+        _Curve.__init__(self, label=label, color=color, short_label=short_label, linestyle='-')
 
 
 class ExpHealthCurve(_Curve):
@@ -192,7 +197,7 @@ class ExpHealthCurve(_Curve):
         :param short_label: (string) to display on the curves
         """
 
-        _Curve.__init__(self, label=label, color=color, short_label=short_label)
+        _Curve.__init__(self, label=label, color=color, short_label=short_label, linestyle='-')
 
         self.dEffectMean = effect_stat.get_mean()
 
@@ -205,15 +210,14 @@ class ExpHealthCurve(_Curve):
         else:
             raise ValueError('Invalid value for internal_type.')
 
+        self.l_errs = []
+        self.u_errs = []
         if interval:
             self.l_err = effect_stat.get_mean() - interval[0]
             self.u_err = interval[1] - effect_stat.get_mean()
         else:
             self.l_err = None
             self.u_err = None
-
-        self.l_errs = []  # lower error length of health outcome over a range of budget values
-        self.u_errs = []  # upper error length of health outcome over a range of budget values
 
     def update_feasibility(self, b):
         self.xs.append(b)
@@ -222,4 +226,13 @@ class ExpHealthCurve(_Curve):
         self.u_errs.append(self.u_err)
 
 
+class EVPI(_Curve):
+    """ curve of expected value of perfect information """
+
+    def __init__(self, xs, ys, label, color, short_label=None):
+
+        _Curve.__init__(self, label=label, color=color, short_label=short_label, linestyle='dashdot')
+
+        self.xs = assert_np_list(obs=xs, error_message='x-values should be list or numpy.array')
+        self.ys = assert_np_list(obs=ys, error_message='y-values should be list of numpy.array')
 
