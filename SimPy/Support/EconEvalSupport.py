@@ -235,4 +235,3 @@ class EVPI(_Curve):
 
         self.xs = assert_np_list(obs=xs, error_message='x-values should be list or numpy.array')
         self.ys = assert_np_list(obs=ys, error_message='y-values should be list of numpy.array')
-

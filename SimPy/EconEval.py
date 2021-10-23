@@ -396,8 +396,9 @@ class _EconEval:
             # plot frontier
             if show_frontier:
                 # check if this strategy is not dominated
-                if curve.optXs is not None and len(curve.optXs)>0:
-                    ax.plot(curve.optXs, curve.optYs * y_axis_multiplier,
+                if curve.optXs is not None and len(curve.optXs) > 0:
+                    y = [y*y_axis_multiplier if y is not None else None for y in curve.optYs]
+                    ax.plot(curve.optXs, y,
                             c=curve.color, alpha=1, linewidth=frontier_line_width)
 
         if show_legend:
@@ -414,11 +415,12 @@ class _EconEval:
         for curve in curves:
             if show_frontier:
                 if curve.optXs is not None and len(curve.optXs) > 0:
-                    x_axis_length = x_values[-1] - x_values[0]
-                    x = 0.5 * (curve.optXs[0] + curve.optXs[-1]) + FRONTIER_LABEL_SHIFT_X * x_axis_length
-                    y = 0.5*(curve.optYs[0] + curve.optYs[-1])*y_axis_multiplier \
-                        + FRONTIER_LABEL_SHIFT_Y * y_axis_length
-                    ax.text(x=x, y=y, s=curve.label, fontsize=LEGEND_FONT_SIZE+1, c=curve.color)
+                    if curve.optYs[0] is not None and curve.optYs[-1] is not None:
+                        x_axis_length = x_values[-1] - x_values[0]
+                        x = 0.5 * (curve.optXs[0] + curve.optXs[-1]) + FRONTIER_LABEL_SHIFT_X * x_axis_length
+                        y = 0.5*(curve.optYs[0] + curve.optYs[-1])*y_axis_multiplier \
+                            + FRONTIER_LABEL_SHIFT_Y * y_axis_length
+                        ax.text(x=x, y=y, s=curve.label, fontsize=LEGEND_FONT_SIZE+1, c=curve.color)
 
         # do the other formatting
         self._format_ax(ax=ax, y_range=y_range,
@@ -1787,9 +1789,7 @@ class BCHO(_EconEval):
                         max_effect = self.dEffect[s_i]
                         max_s_i = s_i
 
-            # self.effectCurves[max_s_i].update_range_with_highest_value(x=b)
             if max_s_i is None:
-                raise ValueError('debug.')
                 self.curves[0].optXs.append(b)
                 self.curves[0].optYs.append(None)
             else:
