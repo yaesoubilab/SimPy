@@ -1788,8 +1788,13 @@ class BCHO(_EconEval):
                         max_s_i = s_i
 
             # self.effectCurves[max_s_i].update_range_with_highest_value(x=b)
-            self.curves[max_s_i].optXs.append(b)
-            self.curves[max_s_i].optYs.append(max_effect)
+            if max_s_i is None:
+                raise ValueError('debug.')
+                self.curves[0].optXs.append(b)
+                self.curves[0].optYs.append(None)
+            else:
+                self.curves[max_s_i].optXs.append(b)
+                self.curves[max_s_i].optYs.append(max_effect)
 
         # convert lists to arrays
         for c in self.curves:
