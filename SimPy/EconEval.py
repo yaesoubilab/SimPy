@@ -1801,6 +1801,10 @@ class BCHO(_EconEval):
         self.evpi = []
         n_of_sims = len(self.strategies[0].dCostObs)
 
+        extra_budget = []
+        for s in self.strategies:
+            extra_budget.append(s.cost.get_percentile(97.5) - s.cost.get_mean())
+
         # for all budget value
         for b in self.budget_values:
 
@@ -1813,8 +1817,10 @@ class BCHO(_EconEval):
 
                 # find the maximum effect
                 max_e = float('-inf')
-                for c, e in zip(costs, effects):
-                    if c <= b and e > max_e:
+                for c, e, extra in zip(costs, effects, extra_budget):
+
+                    # cost of this strategy doesn't satisfy the budget if
+                    if c <= b + extra and e > max_e:
                         max_e = e
                 max_effects.append(max_e)
 
