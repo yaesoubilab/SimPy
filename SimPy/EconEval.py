@@ -10,6 +10,7 @@ from numpy.random import RandomState
 
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
+from SimPy.Plots.EconEvalFigSupport import format_ax, add_curves_to_ax
 from SimPy.Support.EconEvalSupport import *
 from SimPy.Support.SupportClasses import *
 
@@ -311,63 +312,6 @@ class _EconEval:
                                       effects_base=self.strategies[0].effectObs,
                                       health_measure=self._healthMeasure)
 
-    @staticmethod
-    def _format_ax(ax,
-                   x_range=None, delta_x=None,
-                   y_range=None, delta_y=None, if_y_axis_prob=True,
-                   if_format_y_numbers=True, y_axis_decimal=1):
-
-        # the range of x and y-axis are set so that we can get the
-        # tick values and label
-        if y_range is None and if_y_axis_prob:
-            ax.set_ylim((-0.01, 1.01))
-        if y_range:
-            ax.set_ylim(y_range)
-        if x_range:
-            ax.set_xlim(x_range)
-
-        # get x ticks
-        if delta_x is None:
-            vals_x = ax.get_xticks()
-        else:
-            vals_x = []
-            x = x_range[0]
-            while x <= x_range[1]:
-                vals_x.append(x)
-                x += delta_x
-
-        # get y ticks
-        if delta_y is None:
-            vals_y = ax.get_yticks()
-        else:
-            vals_y = []
-            y = y_range[0]
-            while y <= y_range[1]:
-                vals_y.append(y)
-                y += delta_y
-
-        # format x-axis
-        ax.set_xticks(vals_x)
-        ax.set_xticklabels(['{:,.{prec}f}'.format(x, prec=0) for x in vals_x])
-
-        d = 2 * (x_range[1] - x_range[0]) / 200
-        ax.set_xlim([x_range[0] - d, x_range[1] + d])
-
-        # format y-axis
-        if y_range is None:
-            ax.set_yticks(vals_y)
-        if if_y_axis_prob:
-            ax.set_yticklabels(['{:.{prec}f}'.format(x, prec=1) for x in vals_y])
-        elif if_format_y_numbers:
-            ax.set_yticklabels(['{:,.{prec}f}'.format(x, prec=y_axis_decimal) for x in vals_y])
-
-        if y_range is None and if_y_axis_prob:
-            ax.set_ylim((-0.01, 1.01))
-        if y_range:
-            ax.set_ylim(y_range)
-
-        if not if_y_axis_prob:
-            ax.axhline(y=0, c='k', ls='--', linewidth=0.5)
 
     def _add_curves_to_ax(self, ax, curves, title,
                           x_values, x_label, y_label, y_range=None,
@@ -423,11 +367,11 @@ class _EconEval:
                         ax.text(x=x, y=y, s=curve.label, fontsize=LEGEND_FONT_SIZE+1, c=curve.color)
 
         # do the other formatting
-        self._format_ax(ax=ax, y_range=y_range,
-                        x_range=[x_values[0], x_values[-1]], delta_x=delta_x,
-                        if_y_axis_prob=if_y_axis_prob,
-                        if_format_y_numbers=if_format_y_numbers,
-                        y_axis_decimal=y_axis_decimal)
+        format_ax(ax=ax, y_range=y_range,
+                  x_range=[x_values[0], x_values[-1]], x_delta=delta_x,
+                  if_y_axis_prob=if_y_axis_prob,
+                  if_format_y_numbers=if_format_y_numbers,
+                  y_axis_decimal=y_axis_decimal)
 
 
 class CEA(_EconEval):
@@ -1100,6 +1044,7 @@ class CBA(_EconEval):
 
         self.inmbCurves = []  # list of incremental NMB curves with respect to the base
         self.acceptabilityCurves = []  # the list of acceptability curves
+        self.eLossCurves = [] # the list of expected loss curves
         self.evpi = None
 
         # use net monetary benefit for utility by default
@@ -1203,15 +1148,9 @@ class CBA(_EconEval):
             # calculate probabilities that each strategy has been optimal
             prob_maximum = count_maximum / n_obs
 
-            # max_prob = 0
-            # max_s_i = 0
             for i in range(self._n):
                 self.acceptabilityCurves[i].xs.append(w)
                 self.acceptabilityCurves[i].ys.append(prob_maximum[i])
-                #
-                # if prob_maximum[i] > max_prob:
-                #     max_prob = prob_maximum[i]
-                #     max_s_i = i
 
         if len(self.idxHighestExpNMB) == 0:
             self.__find_strategies_with_highest_einmb()
@@ -1226,27 +1165,64 @@ class CBA(_EconEval):
         for c in self.acceptabilityCurves:
             c.convert_lists_to_arrays()
 
-    # def get_wtp_ranges_with_highest_exp_nmb(self):
-    #     """
-    #     :return: dictionary (with strategy names as keys) of wtp ranges over which
-    #     each strategy has the highest expected incremental net monetary benefit.
-    #     """
-    #
-    #     dict = {}
-    #     for curve in self.inmbCurves:
-    #         dict[curve.label] = curve.rangeWTPHighestValue
-    #     return dict
-    #
-    # def get_wtp_range_with_highest_prob_of_optimal(self):
-    #     """
-    #     :return: dictionary (with strategy names as keys) of wtp ranges over which
-    #     each strategy has the highest probability of being optimal.
-    #     """
-    #
-    #     dict = {}
-    #     for curve in self.acceptabilityCurves:
-    #         dict[curve.label] = curve.rangeWTPHighestValue
-    #     return dict
+    def build_expect_loss_curves(self):
+        """
+        prepares the information needed to plot the expected loss curves
+        """
+
+        if not self._ifPaired:
+            raise ValueError('Calculating the expected loss curves when outcomes are not paired'
+                             'across strategies is not implemented.')
+
+        # initialize expected loss curves
+        self.eLossCurves = []
+        for s in self.strategies:
+            self.eLossCurves.append(
+                ExpectedLossCurve(label=s.label,
+                                  short_label=s.shortLabel,
+                                  color=s.color))
+
+        n_obs = len(self.strategies[0].costObs)
+
+        # for each WTP value, calculate the number of times that
+        # each strategy has the highest NMB value
+        for i, w in enumerate(self.wtpValues):
+
+            mean_max_nmb = 0
+            for obs_idx in range(n_obs):
+
+                # find which strategy has the maximum nmb:
+                max_nmb = float('-inf')
+                max_s_i = 0  # index of the optimal strategy for this observation
+                for s_i, s in enumerate(self.strategies):
+                    d_effect = (s.effectObs[obs_idx] - self.strategies[0].effectObs[obs_idx]) * self._u_or_d
+                    d_cost = s.costObs[obs_idx] - self.strategies[0].costObs[obs_idx]
+                    nmb = w * d_effect - d_cost
+                    if nmb > max_nmb:
+                        max_nmb = nmb
+                        max_s_i = s_i
+
+                mean_max_nmb += max_nmb
+
+            # calculate probabilities that each strategy has been optimal
+            mean_max_nmb = mean_max_nmb / n_obs
+
+            for s_i in range(self._n):
+                self.eLossCurves[s_i].xs.append(w)
+                self.eLossCurves[s_i].ys.append(mean_max_nmb-self.inmbCurves[s_i].ys[i])
+
+        if len(self.idxHighestExpNMB) == 0:
+            self.__find_strategies_with_highest_einmb()
+
+        # find the optimal strategy for each wtp value
+        for wtp_idx, wtp in enumerate(self.wtpValues):
+            opt_idx = self.idxHighestExpNMB[wtp_idx]
+            self.eLossCurves[opt_idx].optXs.append(wtp)
+            self.eLossCurves[opt_idx].optYs.append(
+                self.eLossCurves[opt_idx].ys[wtp_idx])
+
+        for c in self.eLossCurves:
+            c.convert_lists_to_arrays()
 
     def __find_strategies_with_highest_einmb(self):
         """ find strategies with the highest expected incremental net monetary benefit.
@@ -1565,23 +1541,27 @@ class CBA(_EconEval):
         if len(self.acceptabilityCurves) == 0:
             self.build_acceptability_curves()
 
-        for i, curve in enumerate(self.acceptabilityCurves):
-            # plot line
-            if legends is None:
-                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1,
-                        label=curve.label, linewidth=CEAC_LINE_WIDTH)
-            else:
-                ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1,
-                        label=legends[i], linewidth=CEAC_LINE_WIDTH)
-            ax.plot(curve.optXs, curve.optYs, c=curve.color, linewidth=CEAF_LINE_WIDTH)
+        add_curves_to_ax(ax=ax,
+                         curves=self.acceptabilityCurves,
+                         legends=legends,
+                         x_range=[self.wtpValues[0], self.wtpValues[-1]],
+                         x_delta=wtp_delta,
+                         y_range=y_range, show_legend=show_legend,
+                         line_width=CEAC_LINE_WIDTH, opt_line_width=CEAF_LINE_WIDTH,
+                         legend_font_size=LEGEND_FONT_SIZE)
 
-        self._format_ax(ax=ax, y_range=y_range,
-                        x_range=[self.wtpValues[0], self.wtpValues[-1]],
-                        delta_x=wtp_delta,
-                        if_y_axis_prob=True)
+    def add_expected_loss_curves_to_ax(
+            self, ax, wtp_delta=None, y_range=None, show_legend=True, legends=None):
+        """
+        adds the acceptability curves to the provided ax
+        :param ax: axis
+        :param wtp_delta: (float) distance between ticks on x-axis
+        :param y_range: (tuple) range of y-axis
+        :param show_legend: (bool) if to show the legend
+        :param legends: (list of strings) texts for legends
+        """
 
-        if show_legend:
-            ax.legend(fontsize=LEGEND_FONT_SIZE)  # xx-small, x-small, small, medium, large, x-large, xx-large
+        pass
 
     def get_w_starts(self):
 

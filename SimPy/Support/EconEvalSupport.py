@@ -184,6 +184,14 @@ class AcceptabilityCurve(_Curve):
         _Curve.__init__(self, label=label, color=color, short_label=short_label, linestyle='-')
 
 
+class ExpectedLossCurve(_Curve):
+    """ expected loss curve of one strategy """
+
+    def __init__(self, label, color, short_label=None):
+
+        _Curve.__init__(self, label=label, color=color, short_label=short_label, linestyle='-')
+
+
 class ExpHealthCurve(_Curve):
 
     def __init__(self, label, color, effect_stat, interval_type='n', short_label=None):
