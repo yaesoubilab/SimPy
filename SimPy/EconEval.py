@@ -1044,7 +1044,7 @@ class CBA(_EconEval):
 
         self.inmbCurves = []  # list of incremental NMB curves with respect to the base
         self.acceptabilityCurves = []  # the list of acceptability curves
-        self.eLossCurves = [] # the list of expected loss curves
+        self.eLossCurves = []  # the list of expected loss curves
         self.evpi = None
 
         # use net monetary benefit for utility by default
@@ -1057,9 +1057,10 @@ class CBA(_EconEval):
         self.wtpValues = np.linspace(wtp_range[0], wtp_range[1],
                                      num=n_of_wtp_values, endpoint=True)
 
-        # index of strategy with the highest
-        # expected net-monetary benefit over the wtp range
+        # index of strategy with the highest expected net-monetary benefit over the wtp range
         self.idxHighestExpNMB = []
+        # index of strategy with the lowest expected loss over the wtp range
+        self.idxLowestExpLoss = []
 
     def build_inmb_curves(self, interval_type='n'):
         """
@@ -1102,7 +1103,8 @@ class CBA(_EconEval):
                                              interval_type=interval_type)
                                    )
 
-        self.__find_strategies_with_highest_einmb()
+        self.idxHighestExpNMB = update_curves_with_highest_values(
+            wtp_values=self.wtpValues, curves=self.inmbCurves)
 
     def build_acceptability_curves(self):
         """
@@ -1153,7 +1155,9 @@ class CBA(_EconEval):
                 self.acceptabilityCurves[i].ys.append(prob_maximum[i])
 
         if len(self.idxHighestExpNMB) == 0:
-            self.__find_strategies_with_highest_einmb()
+            self.idxHighestExpNMB = update_curves_with_highest_values(
+                wtp_values=self.wtpValues, curves=self.inmbCurves)
+            # self.__find_strategies_with_highest_einmb()
 
         # find the optimal strategy for each wtp value
         for wtp_idx, wtp in enumerate(self.wtpValues):
@@ -1212,7 +1216,9 @@ class CBA(_EconEval):
                 self.eLossCurves[s_i].ys.append(mean_max_nmb-self.inmbCurves[s_i].ys[i])
 
         if len(self.idxHighestExpNMB) == 0:
-            self.__find_strategies_with_highest_einmb()
+            self.idxHighestExpNMB = update_curves_with_highest_values(
+                wtp_values=self.wtpValues, curves=self.inmbCurves)
+            # self.__find_strategies_with_highest_einmb()
 
         # find the optimal strategy for each wtp value
         for wtp_idx, wtp in enumerate(self.wtpValues):
@@ -1223,30 +1229,6 @@ class CBA(_EconEval):
 
         for c in self.eLossCurves:
             c.convert_lists_to_arrays()
-
-    def __find_strategies_with_highest_einmb(self):
-        """ find strategies with the highest expected incremental net monetary benefit.
-            It records the indices of these strategies over the range of wtp values
-         """
-
-        # find the optimal strategy for each wtp value
-        for wtp_idx, wtp in enumerate(self.wtpValues):
-
-            max_value = float('-inf')
-            max_idx = 0
-            for s_idx in range(len(self.inmbCurves)):
-                if self.inmbCurves[s_idx].ys[wtp_idx] > max_value:
-                    max_value = self.inmbCurves[s_idx].ys[wtp_idx]
-                    max_idx = s_idx
-
-            # store the index of the optimal strategy
-            self.idxHighestExpNMB.append(max_idx)
-            # self.inmbCurves[max_idx].update_range_with_highest_value(x=wtp)
-            self.inmbCurves[max_idx].optXs.append(wtp)
-            self.inmbCurves[max_idx].optYs.append(max_value)
-
-        for curve in self.inmbCurves:
-            curve.convert_lists_to_arrays()
 
     def find_optimal_switching_wtp_values(self, interval_type='n', deci=0):
 

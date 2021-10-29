@@ -96,6 +96,60 @@ def utility_sample_stat(utility, d_cost_samples, d_effect_samples,
     return Stat.SummaryStat(name='', data=samples)
 
 
+def update_curves_with_highest_values(wtp_values, curves):
+    """ find strategies with the highest expected incremental net monetary benefit.
+        and return the indices of these strategies over the range of wtp values
+     """
+
+    # find the optimal strategy for each wtp value
+    idx_highest_exp_value = []
+    for wtp_idx, wtp in enumerate(wtp_values):
+
+        max_value = float('-inf')
+        max_idx = 0
+        for s_idx in range(len(curves)):
+            if curves[s_idx].ys[wtp_idx] > max_value:
+                max_value = curves[s_idx].ys[wtp_idx]
+                max_idx = s_idx
+
+        # store the index of the optimal strategy
+        idx_highest_exp_value.append(max_idx)
+        curves[max_idx].optXs.append(wtp)
+        curves[max_idx].optYs.append(max_value)
+
+    for curve in curves:
+        curve.convert_lists_to_arrays()
+
+    return idx_highest_exp_value
+
+
+def update_curves_with_lowest_values(wtp_values, curves):
+    """ find strategies with the lowest expected loss.
+        and return the indices of these strategies over the range of wtp values
+     """
+
+    # find the optimal strategy for each wtp value
+    idx_lowest_exp_value = []
+    for wtp_idx, wtp in enumerate(wtp_values):
+
+        min_value = float('inf')
+        min_idx = 0
+        for s_idx in range(len(curves)):
+            if curves[s_idx].ys[wtp_idx] < min_value:
+                min_value = curves[s_idx].ys[wtp_idx]
+                min_idx = s_idx
+
+        # store the index of the optimal strategy
+        idx_lowest_exp_value.append(min_idx)
+        curves[min_idx].optXs.append(wtp)
+        curves[min_idx].optYs.append(min_value)
+
+    for curve in curves:
+        curve.convert_lists_to_arrays()
+
+    return idx_lowest_exp_value
+
+
 class _Curve:
     def __init__(self, label, color, linestyle, short_label):
         self.label = label
@@ -243,3 +297,5 @@ class EVPI(_Curve):
 
         self.xs = assert_np_list(obs=xs, error_message='x-values should be list or numpy.array')
         self.ys = assert_np_list(obs=ys, error_message='y-values should be list of numpy.array')
+
+
