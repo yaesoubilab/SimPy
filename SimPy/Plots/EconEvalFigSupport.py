@@ -58,22 +58,32 @@ def format_ax(ax,
 
 
 def add_curves_to_ax(ax, curves, legends, x_range, x_delta, y_range, show_legend,
-                     line_width, opt_line_width, legend_font_size):
+                     line_width, opt_line_width, legend_font_size,
+                     y_axis_multiplier=1, y_axis_decimal=1,
+                     opt='max', if_y_axis_prob=True):
 
     for i, curve in enumerate(curves):
         # plot line
         if legends is None:
-            ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1,
+            ax.plot(curve.xs, curve.ys*y_axis_multiplier, c=curve.color, alpha=1,
                     label=curve.label, linewidth=line_width)
         else:
-            ax.plot(curve.xs, curve.ys, c=curve.color, alpha=1,
+            ax.plot(curve.xs, curve.ys*y_axis_multiplier, c=curve.color, alpha=1,
                     label=legends[i], linewidth=line_width)
-        ax.plot(curve.optXs, curve.optYs, c=curve.color, linewidth=opt_line_width)
+
+        if opt == 'max':
+            ax.plot(curve.maxXs, curve.maxYs*y_axis_multiplier, c=curve.color, linewidth=opt_line_width)
+        elif opt == 'min':
+            ax.plot(curve.minXs, curve.minYs*y_axis_multiplier, c=curve.color, linewidth=opt_line_width)
+        else:
+            raise ValueError('opt parameter should be min or max.')
 
     format_ax(ax=ax, y_range=y_range,
               x_range=x_range,
               x_delta=x_delta,
-              if_y_axis_prob=True)
+              if_y_axis_prob=if_y_axis_prob,
+              if_format_y_numbers=True,
+              y_axis_decimal=y_axis_decimal)
 
     if show_legend:
         ax.legend(fontsize=legend_font_size)  # xx-small, x-small, small, medium, large, x-large, xx-large

@@ -114,8 +114,8 @@ def update_curves_with_highest_values(wtp_values, curves):
 
         # store the index of the optimal strategy
         idx_highest_exp_value.append(max_idx)
-        curves[max_idx].optXs.append(wtp)
-        curves[max_idx].optYs.append(max_value)
+        curves[max_idx].maxXs.append(wtp)
+        curves[max_idx].maxYs.append(max_value)
 
     for curve in curves:
         curve.convert_lists_to_arrays()
@@ -141,8 +141,8 @@ def update_curves_with_lowest_values(wtp_values, curves):
 
         # store the index of the optimal strategy
         idx_lowest_exp_value.append(min_idx)
-        curves[min_idx].optXs.append(wtp)
-        curves[min_idx].optYs.append(min_value)
+        curves[min_idx].minXs.append(wtp)
+        curves[min_idx].minYs.append(min_value)
 
     for curve in curves:
         curve.convert_lists_to_arrays()
@@ -158,16 +158,20 @@ class _Curve:
         self.linestyle = linestyle
         self.xs = []
         self.ys = []
-        self.optXs = []
-        self.optYs = []
+        self.maxXs = []
+        self.maxYs = []
+        self.minXs = []
+        self.minYs = []
         self.l_errs = None  # lower error length of health outcome over a range of budget values
         self.u_errs = None  # upper error length of health outcome over a range of budget values
 
     def convert_lists_to_arrays(self):
         self.xs = np.array(self.xs)
         self.ys = np.array(self.ys)
-        self.optXs = np.array(self.optXs)
-        self.optYs = np.array(self.optYs)
+        self.maxXs = np.array(self.maxXs)
+        self.maxYs = np.array(self.maxYs)
+        self.minXs = np.array(self.minXs)
+        self.minYs = np.array(self.minYs)
 
 
 class INMBCurve(_Curve):

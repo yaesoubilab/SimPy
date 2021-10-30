@@ -312,7 +312,6 @@ class _EconEval:
                                       effects_base=self.strategies[0].effectObs,
                                       health_measure=self._healthMeasure)
 
-
     def _add_curves_to_ax(self, ax, curves, title,
                           x_values, x_label, y_label, y_range=None,
                           y_axis_multiplier=1, y_axis_decimal=1,
@@ -340,9 +339,9 @@ class _EconEval:
             # plot frontier
             if show_frontier:
                 # check if this strategy is not dominated
-                if curve.optXs is not None and len(curve.optXs) > 0:
-                    y = [y*y_axis_multiplier if y is not None else None for y in curve.optYs]
-                    ax.plot(curve.optXs, y,
+                if curve.maxXs is not None and len(curve.maxXs) > 0:
+                    y = [y*y_axis_multiplier if y is not None else None for y in curve.maxYs]
+                    ax.plot(curve.maxXs, y,
                             c=curve.color, alpha=1, linewidth=frontier_line_width)
 
         if show_legend:
@@ -358,11 +357,11 @@ class _EconEval:
         y_axis_length = y_max - y_min
         for curve in curves:
             if show_frontier:
-                if curve.optXs is not None and len(curve.optXs) > 0:
-                    if curve.optYs[0] is not None and curve.optYs[-1] is not None:
+                if curve.maxXs is not None and len(curve.maxXs) > 0:
+                    if curve.maxYs[0] is not None and curve.maxYs[-1] is not None:
                         x_axis_length = x_values[-1] - x_values[0]
-                        x = 0.5 * (curve.optXs[0] + curve.optXs[-1]) + FRONTIER_LABEL_SHIFT_X * x_axis_length
-                        y = 0.5*(curve.optYs[0] + curve.optYs[-1])*y_axis_multiplier \
+                        x = 0.5 * (curve.maxXs[0] + curve.maxXs[-1]) + FRONTIER_LABEL_SHIFT_X * x_axis_length
+                        y = 0.5 * (curve.maxYs[0] + curve.maxYs[-1]) * y_axis_multiplier \
                             + FRONTIER_LABEL_SHIFT_Y * y_axis_length
                         ax.text(x=x, y=y, s=curve.label, fontsize=LEGEND_FONT_SIZE+1, c=curve.color)
 
@@ -1044,7 +1043,7 @@ class CBA(_EconEval):
 
         self.inmbCurves = []  # list of incremental NMB curves with respect to the base
         self.acceptabilityCurves = []  # the list of acceptability curves
-        self.eLossCurves = []  # the list of expected loss curves
+        self.expectedLossCurves = []  # the list of expected loss curves
         self.evpi = None
 
         # use net monetary benefit for utility by default
@@ -1157,19 +1156,18 @@ class CBA(_EconEval):
         if len(self.idxHighestExpNMB) == 0:
             self.idxHighestExpNMB = update_curves_with_highest_values(
                 wtp_values=self.wtpValues, curves=self.inmbCurves)
-            # self.__find_strategies_with_highest_einmb()
 
         # find the optimal strategy for each wtp value
         for wtp_idx, wtp in enumerate(self.wtpValues):
             opt_idx = self.idxHighestExpNMB[wtp_idx]
-            self.acceptabilityCurves[opt_idx].optXs.append(wtp)
-            self.acceptabilityCurves[opt_idx].optYs.append(
+            self.acceptabilityCurves[opt_idx].maxXs.append(wtp)
+            self.acceptabilityCurves[opt_idx].maxYs.append(
                 self.acceptabilityCurves[opt_idx].ys[wtp_idx])
 
         for c in self.acceptabilityCurves:
             c.convert_lists_to_arrays()
 
-    def build_expect_loss_curves(self):
+    def build_expected_loss_curves(self):
         """
         prepares the information needed to plot the expected loss curves
         """
@@ -1179,9 +1177,9 @@ class CBA(_EconEval):
                              'across strategies is not implemented.')
 
         # initialize expected loss curves
-        self.eLossCurves = []
+        self.expectedLossCurves = []
         for s in self.strategies:
-            self.eLossCurves.append(
+            self.expectedLossCurves.append(
                 ExpectedLossCurve(label=s.label,
                                   short_label=s.shortLabel,
                                   color=s.color))
@@ -1212,23 +1210,22 @@ class CBA(_EconEval):
             mean_max_nmb = mean_max_nmb / n_obs
 
             for s_i in range(self._n):
-                self.eLossCurves[s_i].xs.append(w)
-                self.eLossCurves[s_i].ys.append(mean_max_nmb-self.inmbCurves[s_i].ys[i])
+                self.expectedLossCurves[s_i].xs.append(w)
+                self.expectedLossCurves[s_i].ys.append(mean_max_nmb - self.inmbCurves[s_i].ys[i])
 
-        if len(self.idxHighestExpNMB) == 0:
-            self.idxHighestExpNMB = update_curves_with_highest_values(
-                wtp_values=self.wtpValues, curves=self.inmbCurves)
-            # self.__find_strategies_with_highest_einmb()
+        if len(self.idxLowestExpLoss) == 0:
+            self.idxLowestExpLoss = update_curves_with_lowest_values(
+                wtp_values=self.wtpValues, curves=self.expectedLossCurves)
 
-        # find the optimal strategy for each wtp value
-        for wtp_idx, wtp in enumerate(self.wtpValues):
-            opt_idx = self.idxHighestExpNMB[wtp_idx]
-            self.eLossCurves[opt_idx].optXs.append(wtp)
-            self.eLossCurves[opt_idx].optYs.append(
-                self.eLossCurves[opt_idx].ys[wtp_idx])
-
-        for c in self.eLossCurves:
-            c.convert_lists_to_arrays()
+        # # find the optimal strategy for each wtp value
+        # for wtp_idx, wtp in enumerate(self.wtpValues):
+        #     opt_idx = self.idxLowestExpLoss[wtp_idx]
+        #     self.expectedLossCurves[opt_idx].minXs.append(wtp)
+        #     self.expectedLossCurves[opt_idx].minYs.append(
+        #         self.expectedLossCurves[opt_idx].ys[wtp_idx])
+        #
+        # for c in self.expectedLossCurves:
+        #     c.convert_lists_to_arrays()
 
     def find_optimal_switching_wtp_values(self, interval_type='n', deci=0):
 
@@ -1530,10 +1527,11 @@ class CBA(_EconEval):
                          x_delta=wtp_delta,
                          y_range=y_range, show_legend=show_legend,
                          line_width=CEAC_LINE_WIDTH, opt_line_width=CEAF_LINE_WIDTH,
-                         legend_font_size=LEGEND_FONT_SIZE)
+                         legend_font_size=LEGEND_FONT_SIZE, opt='max')
 
     def add_expected_loss_curves_to_ax(
-            self, ax, wtp_delta=None, y_range=None, show_legend=True, legends=None):
+            self, ax, wtp_delta=None, y_range=None, show_legend=True, legends=None,
+            y_axis_multiplier=1, y_axis_decimal=None):
         """
         adds the acceptability curves to the provided ax
         :param ax: axis
@@ -1543,7 +1541,22 @@ class CBA(_EconEval):
         :param legends: (list of strings) texts for legends
         """
 
-        pass
+        if len(self.inmbCurves) == 0:
+            self.build_inmb_curves(interval_type='n')
+
+        if len(self.expectedLossCurves) == 0:
+            self.build_expected_loss_curves()
+
+        add_curves_to_ax(ax=ax,
+                         curves=self.expectedLossCurves,
+                         legends=legends,
+                         x_range=[self.wtpValues[0], self.wtpValues[-1]],
+                         x_delta=wtp_delta,
+                         y_range=y_range, show_legend=show_legend,
+                         line_width=CEAC_LINE_WIDTH, opt_line_width=CEAF_LINE_WIDTH,
+                         legend_font_size=LEGEND_FONT_SIZE,
+                         y_axis_multiplier=y_axis_multiplier, y_axis_decimal=y_axis_decimal,
+                         if_y_axis_prob=False, opt='min')
 
     def get_w_starts(self):
 
@@ -1752,11 +1765,11 @@ class BCHO(_EconEval):
                         max_s_i = s_i
 
             if max_s_i is None:
-                self.curves[0].optXs.append(b)
-                self.curves[0].optYs.append(None)
+                self.curves[0].maxXs.append(b)
+                self.curves[0].maxYs.append(None)
             else:
-                self.curves[max_s_i].optXs.append(b)
-                self.curves[max_s_i].optYs.append(max_effect)
+                self.curves[max_s_i].maxXs.append(b)
+                self.curves[max_s_i].maxYs.append(max_effect)
 
         # convert lists to arrays
         for c in self.curves:
