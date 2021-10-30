@@ -10,7 +10,7 @@ from numpy.random import RandomState
 
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
-from SimPy.Plots.EconEvalFigSupport import format_ax, add_curves_to_ax
+from SimPy.Plots.EconEvalFigSupport import old_add_curves_to_ax, add_curves_to_ax
 from SimPy.Support.EconEvalSupport import *
 from SimPy.Support.SupportClasses import *
 
@@ -311,66 +311,6 @@ class _EconEval:
                                       costs_base=self.strategies[0].costObs,
                                       effects_base=self.strategies[0].effectObs,
                                       health_measure=self._healthMeasure)
-
-    def _add_curves_to_ax(self, ax, curves, title,
-                          x_values, x_label, y_label, y_range=None,
-                          y_axis_multiplier=1, y_axis_decimal=1,
-                          delta_x=None,
-                          transparency_lines=0.4,
-                          transparency_intervals=0.2,
-                          show_legend=False,
-                          show_frontier=True,
-                          curve_line_width=1.0, frontier_line_width=4.0,
-                          if_y_axis_prob=False,
-                          if_format_y_numbers=True):
-
-        for curve in curves:
-            # plot line
-            ax.plot(curve.xs, curve.ys * y_axis_multiplier,
-                    c=curve.color, alpha=transparency_lines,
-                    linewidth=curve_line_width, linestyle=curve.linestyle, label=curve.label)
-
-            # plot intervals
-            if curve.l_errs is not None and curve.u_errs is not None:
-                ax.fill_between(curve.xs,
-                                (curve.ys - curve.l_errs) * y_axis_multiplier,
-                                (curve.ys + curve.u_errs) * y_axis_multiplier,
-                                color=curve.color, alpha=transparency_intervals)
-            # plot frontier
-            if show_frontier:
-                # check if this strategy is not dominated
-                if curve.maxXs is not None and len(curve.maxXs) > 0:
-                    y = [y*y_axis_multiplier if y is not None else None for y in curve.maxYs]
-                    ax.plot(curve.maxXs, y,
-                            c=curve.color, alpha=1, linewidth=frontier_line_width)
-
-        if show_legend:
-            ax.legend(loc=2, fontsize=LEGEND_FONT_SIZE)
-
-        ax.set_title(title)
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        ax.set_ylim(y_range)
-
-        # add labels on the frontier
-        y_min, y_max = ax.get_ylim()
-        y_axis_length = y_max - y_min
-        for curve in curves:
-            if show_frontier:
-                if curve.maxXs is not None and len(curve.maxXs) > 0:
-                    if curve.maxYs[0] is not None and curve.maxYs[-1] is not None:
-                        x_axis_length = x_values[-1] - x_values[0]
-                        x = 0.5 * (curve.maxXs[0] + curve.maxXs[-1]) + FRONTIER_LABEL_SHIFT_X * x_axis_length
-                        y = 0.5 * (curve.maxYs[0] + curve.maxYs[-1]) * y_axis_multiplier \
-                            + FRONTIER_LABEL_SHIFT_Y * y_axis_length
-                        ax.text(x=x, y=y, s=curve.label, fontsize=LEGEND_FONT_SIZE+1, c=curve.color)
-
-        # do the other formatting
-        format_ax(ax=ax, y_range=y_range,
-                  x_range=[x_values[0], x_values[-1]], x_delta=delta_x,
-                  if_y_axis_prob=if_y_axis_prob,
-                  if_format_y_numbers=if_format_y_numbers,
-                  y_axis_decimal=y_axis_decimal)
 
 
 class CEA(_EconEval):
@@ -687,7 +627,7 @@ class CEA(_EconEval):
                                 show_legend=show_legend,
                                 center_s=center_s, cloud_s=cloud_s, transparency=transparency,
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier,
-                                cost_decimals=cost_digits, effect_digits=effect_digits)
+                                cost_decimals=cost_digits, effect_decimals=effect_digits)
 
         fig.tight_layout()
 
@@ -1217,16 +1157,6 @@ class CBA(_EconEval):
             self.idxLowestExpLoss = update_curves_with_lowest_values(
                 wtp_values=self.wtpValues, curves=self.expectedLossCurves)
 
-        # # find the optimal strategy for each wtp value
-        # for wtp_idx, wtp in enumerate(self.wtpValues):
-        #     opt_idx = self.idxLowestExpLoss[wtp_idx]
-        #     self.expectedLossCurves[opt_idx].minXs.append(wtp)
-        #     self.expectedLossCurves[opt_idx].minYs.append(
-        #         self.expectedLossCurves[opt_idx].ys[wtp_idx])
-        #
-        # for c in self.expectedLossCurves:
-        #     c.convert_lists_to_arrays()
-
     def find_optimal_switching_wtp_values(self, interval_type='n', deci=0):
 
         w_stars = []  # wtp values to switch between strategies
@@ -1409,9 +1339,9 @@ class CBA(_EconEval):
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtpValues,
+        add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtpValues,
                                title=title, x_label=x_label,
-                               y_label=y_label, y_range=y_range, delta_x=delta_wtp,
+                               y_label=y_label, y_range=y_range, x_delta=delta_wtp,
                                y_axis_multiplier=y_axis_multiplier,
                                y_axis_decimal=y_axis_decimal,
                                transparency_lines=transparency_lines,
@@ -1443,18 +1373,18 @@ class CBA(_EconEval):
         if show_evpi:
             self.calculate_evpi_curve()
 
-        self._add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtpValues,
-                               title=title, x_label=x_label,
-                               y_label=y_label, y_range=y_range, delta_x=delta_wtp,
-                               y_axis_decimal=y_axis_decimal,
-                               y_axis_multiplier=y_axis_multiplier,
-                               transparency_lines=1,
-                               transparency_intervals=NMB_INTERVAL_TRANSPARENCY,
-                               show_legend=show_legend,
-                               show_frontier=True,
-                               curve_line_width=NMB_LINE_WIDTH,
-                               frontier_line_width=NMB_FRONTIER_LINE_WIDTH,
-                               if_format_y_numbers=True if y_axis_decimal is not None else False)
+        add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtpValues,
+                         title=title, x_label=x_label,
+                         y_label=y_label, y_range=y_range, x_delta=delta_wtp,
+                         y_axis_decimal=y_axis_decimal,
+                         y_axis_multiplier=y_axis_multiplier,
+                         transparency_lines=1,
+                         transparency_intervals=NMB_INTERVAL_TRANSPARENCY,
+                         show_legend=show_legend,
+                         show_frontier=True,
+                         curve_line_width=NMB_LINE_WIDTH,
+                         frontier_line_width=NMB_FRONTIER_LINE_WIDTH,
+                         if_format_y_numbers=True if y_axis_decimal is not None else False)
 
     def plot_acceptability_curves(self,
                                   title=None,
@@ -1520,14 +1450,14 @@ class CBA(_EconEval):
         if len(self.acceptabilityCurves) == 0:
             self.build_acceptability_curves()
 
-        add_curves_to_ax(ax=ax,
-                         curves=self.acceptabilityCurves,
-                         legends=legends,
-                         x_range=[self.wtpValues[0], self.wtpValues[-1]],
-                         x_delta=wtp_delta,
-                         y_range=y_range, show_legend=show_legend,
-                         line_width=CEAC_LINE_WIDTH, opt_line_width=CEAF_LINE_WIDTH,
-                         legend_font_size=LEGEND_FONT_SIZE, opt='max')
+        old_add_curves_to_ax(ax=ax,
+                             curves=self.acceptabilityCurves,
+                             legends=legends,
+                             x_range=[self.wtpValues[0], self.wtpValues[-1]],
+                             x_delta=wtp_delta,
+                             y_range=y_range, show_legend=show_legend,
+                             line_width=CEAC_LINE_WIDTH, opt_line_width=CEAF_LINE_WIDTH,
+                             legend_font_size=LEGEND_FONT_SIZE, opt='max')
 
     def add_expected_loss_curves_to_ax(
             self, ax, wtp_delta=None, y_range=None, show_legend=True, legends=None,
@@ -1547,16 +1477,16 @@ class CBA(_EconEval):
         if len(self.expectedLossCurves) == 0:
             self.build_expected_loss_curves()
 
-        add_curves_to_ax(ax=ax,
-                         curves=self.expectedLossCurves,
-                         legends=legends,
-                         x_range=[self.wtpValues[0], self.wtpValues[-1]],
-                         x_delta=wtp_delta,
-                         y_range=y_range, show_legend=show_legend,
-                         line_width=CEAC_LINE_WIDTH, opt_line_width=CEAF_LINE_WIDTH,
-                         legend_font_size=LEGEND_FONT_SIZE,
-                         y_axis_multiplier=y_axis_multiplier, y_axis_decimal=y_axis_decimal,
-                         if_y_axis_prob=False, opt='min')
+        old_add_curves_to_ax(ax=ax,
+                             curves=self.expectedLossCurves,
+                             legends=legends,
+                             x_range=[self.wtpValues[0], self.wtpValues[-1]],
+                             x_delta=wtp_delta,
+                             y_range=y_range, show_legend=show_legend,
+                             line_width=CEAC_LINE_WIDTH, opt_line_width=CEAF_LINE_WIDTH,
+                             legend_font_size=LEGEND_FONT_SIZE,
+                             y_axis_multiplier=y_axis_multiplier, y_axis_decimal=y_axis_decimal,
+                             if_y_axis_prob=False, opt='min')
 
     def get_w_starts(self):
 
@@ -1834,7 +1764,7 @@ class BCHO(_EconEval):
                                curves=self.curves,
                                x_values=self.budget_values,
                                title=title, x_label=x_label,
-                               y_label=y_label, y_range=y_range, delta_x=delta_budget,
+                               y_label=y_label, y_range=y_range, x_delta=delta_budget,
                                y_axis_multiplier=y_axis_multiplier,
                                transparency_lines=transparency_lines,
                                transparency_intervals=transparency_intervals,
@@ -1868,16 +1798,20 @@ class BCHO(_EconEval):
         if show_evpi:
             self.calculate_evpi_curve()
 
-        self._add_curves_to_ax(
+        add_curves_to_ax(
             ax=ax, curves=self.curves, title=title,
             x_values=self.budget_values,
-            delta_x=delta_budget, x_label=x_label,
+            x_delta=delta_budget, x_label=x_label,
             y_label=y_label, y_axis_decimal=effect_decimals, y_range=y_range, y_axis_multiplier=y_axis_multiplier,
             transparency_lines=1, transparency_intervals=NMB_INTERVAL_TRANSPARENCY,
             show_legend=show_legend,
             show_frontier=show_frontier,
             curve_line_width=NMB_LINE_WIDTH, frontier_line_width=NMB_FRONTIER_LINE_WIDTH,
-            if_format_y_numbers=True if effect_decimals is not None else False)
+            if_format_y_numbers=True if effect_decimals is not None else False,
+            legend_font_size=LEGEND_FONT_SIZE,
+            frontier_label_shift_x=FRONTIER_LABEL_SHIFT_X,
+            frontier_label_shift_y=FRONTIER_LABEL_SHIFT_Y
+        )
 
 
 class _ComparativeEconMeasure:
