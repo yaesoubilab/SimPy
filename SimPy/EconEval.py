@@ -1384,7 +1384,9 @@ class CBA(_EconEval):
                          show_frontier=True,
                          curve_line_width=NMB_LINE_WIDTH,
                          frontier_line_width=NMB_FRONTIER_LINE_WIDTH,
-                         if_format_y_numbers=True if y_axis_decimal is not None else False)
+                         if_format_y_numbers=True if y_axis_decimal is not None else False,
+                         frontier_label_shift_x=FRONTIER_LABEL_SHIFT_X,
+                         frontier_label_shift_y=FRONTIER_LABEL_SHIFT_Y)
 
     def plot_acceptability_curves(self,
                                   title=None,
