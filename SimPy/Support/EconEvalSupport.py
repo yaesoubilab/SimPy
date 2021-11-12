@@ -13,7 +13,7 @@ def assert_np_list(obs, error_message):
     """
 
     if type(obs) is not list and type(obs) is not np.ndarray:
-        raise ValueError(error_message)
+        obs = [obs]
 
     try:
         new_array = np.array(obs)

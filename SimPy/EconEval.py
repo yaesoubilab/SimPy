@@ -500,7 +500,8 @@ class CEA(_EconEval):
                            add_clouds=True, show_legend=True,
                            center_s=50, cloud_s=10, transparency=0.1,
                            cost_multiplier=1, effect_multiplier=1,
-                           cost_decimals=None, effect_decimals=None):
+                           cost_decimals=None, effect_decimals=None,
+                           legend_loc_code=0):
         """
         adds a cost-effectiveness plane to the provided ax
         :param ax: axis
@@ -515,6 +516,8 @@ class CEA(_EconEval):
         :param effect_multiplier: (float) to multiply the effect values
         :param cost_decimals: (int) to round the labels of cost axis
         :param effect_decimals: (int) to round the labels of the effect axis
+        :param legend_loc_code: (int) legend location code
+            https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html
         """
 
         # find the frontier (x, y)'s
@@ -548,7 +551,7 @@ class CEA(_EconEval):
                     )
 
         if show_legend:
-            ax.legend(fontsize='7.5')
+            ax.legend(fontsize='7.5', loc=legend_loc_code)
 
         # and the clouds
         if add_clouds:
