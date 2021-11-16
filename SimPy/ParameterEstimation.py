@@ -272,7 +272,7 @@ class ParameterAnalyzer:
 
                 # find title
                 if priors is not None:
-                    if  priors[par_id][ColumnsPriorDistCSV.TITLE.value] in ('', None):
+                    if priors[par_id][ColumnsPriorDistCSV.TITLE.value] in ('', None):
                         label = priors[par_id][ColumnsPriorDistCSV.NAME.value]
                     else:
                         label = priors[par_id][ColumnsPriorDistCSV.TITLE.value]
@@ -309,6 +309,11 @@ class ParameterAnalyzer:
 
         # plot each panel
         n = len(info_of_params_to_include)
+
+        if n == 0:
+            raise ValueError('Values of parameters are not provided. '
+                             'Make sure the calibration algorithm exports the parameter values.')
+
         f, axarr = plt.subplots(nrows=n, ncols=n, figsize=figure_size)
 
         for i in range(n):
