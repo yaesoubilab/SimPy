@@ -561,15 +561,13 @@ class TimeDependentStepWise(_Parameter):
 
     def sample(self, rng=None, time=None):
 
-        raise ValueError('Needs to be debugged.')
-
         self.value = 0
         if time < self.ts[0]:
             self.value = 0
         else:
             i = 0
-            while True:
-                if time < self.ts[i]:
+            while i+1 < len(self.ts):
+                if time < self.ts[i+1]:
                     break
                 else:
                     i += 1
