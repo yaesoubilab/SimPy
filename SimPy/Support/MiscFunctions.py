@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 
 
@@ -80,3 +82,24 @@ def effective_sample_size(likelihood_weights):
         likelihood_weights = likelihood_weights / s
 
     return 1 / np.sum(likelihood_weights ** 2)
+
+
+def get_random_colors(n, seed=0):
+    """
+    :param n: (int) number of colors randomly selected 
+    :param seed: (int) seed of the random number generator 
+    :return: (list) of color codes 
+    """
+    
+    random.seed(seed)
+
+    colors = []
+    for j in range(n):
+        rand_colors = "#" + ''.join([random.choice('ABCDEF0123456789') for i in range(6)])
+        colors.append(rand_colors)
+    
+    return colors
+
+# print(get_random_colors(n=3))
+
+
