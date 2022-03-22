@@ -231,22 +231,26 @@ class ParameterAnalyzer:
         :param ids: (list) ids of parameters to display
         :param names: (list) names of parameter to display
         :param csv_file_name_prior: (string) filename where parameter prior ranges are located
+            (Note: '!' will be replaced with '\n')
         :param fig_filename: (string) filename to save the figure as
         :param figure_size: (tuple) figure size
         """
 
         # read prior distributions
-        priors = None
+        dict_priors = None
         if csv_file_name_prior is not None:
-            priors = IO.read_csv_rows(
+            dict_priors = {}
+            rows_priors = IO.read_csv_rows(
                 file_name=csv_file_name_prior,
                 if_ignore_first_row=True,
                 delimiter=',',
                 if_convert_float=True
             )
+            for row in rows_priors:
+                dict_priors[row[ColumnsPriorDistCSV.NAME.value]] = row
 
-        # find the names of parameters to include in the analysis
-        info_of_params_to_include = []
+        # find the info of parameters to include in the analysis
+        info_of_param_info_to_include = []
 
         par_id = 0
         for par_name, par_values in self.dictOfParamValues.items():
@@ -262,29 +266,30 @@ class ParameterAnalyzer:
             if if_show:
                 # find prior range
                 x_range = None
-                if priors is not None:
+                if dict_priors is not None and par_name in dict_priors:
                     try:
-                        x_range = [float(priors[par_id][ColumnsPriorDistCSV.LB.value]), float(priors[par_id][ColumnsPriorDistCSV.UB.value])]
+                        x_range = [float(dict_priors[par_name][ColumnsPriorDistCSV.LB.value]),
+                                   float(dict_priors[par_name][ColumnsPriorDistCSV.UB.value])]
                     except:
                         print('Could not convert string to float to find the prior distribution of parameter:', par_id)
                 else:
                     x_range = None
 
                 # find title
-                if priors is not None:
-                    if priors[par_id][ColumnsPriorDistCSV.TITLE.value] in ('', None):
-                        label = priors[par_id][ColumnsPriorDistCSV.NAME.value]
+                if dict_priors is not None and par_name in dict_priors:
+                    if dict_priors[par_name][ColumnsPriorDistCSV.TITLE.value] in ('', None):
+                        label = dict_priors[par_name][ColumnsPriorDistCSV.NAME.value]
                     else:
-                        label = priors[par_id][ColumnsPriorDistCSV.TITLE.value]
+                        label = dict_priors[par_name][ColumnsPriorDistCSV.TITLE.value]
                 else:
                     label = par_name
 
                 # find multiplier
-                if priors is not None:
-                    if priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
+                if dict_priors is not None and par_name in dict_priors:
+                    if dict_priors[par_name][ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
                         multiplier = 1
                     else:
-                        multiplier = float(priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value])
+                        multiplier = float(dict_priors[par_name][ColumnsPriorDistCSV.MULTIPLIER.value])
                 else:
                     multiplier = 1
 
@@ -293,8 +298,9 @@ class ParameterAnalyzer:
                 par_values = [v*multiplier for v in par_values]
 
                 # append the info for this parameter
-                info_of_params_to_include.append(
-                    ParamInfo(idx=par_id, name=par_name, label=label.replace('!', '\n'),
+                info_of_param_info_to_include.append(
+                    ParamInfo(idx=par_id, name=par_name,
+                              label=label.replace('!', '\n'),
                               values=par_values, range=x_range)
                 )
 
@@ -308,7 +314,7 @@ class ParameterAnalyzer:
         plt.rc('axes', titleweight='semibold')  # fontweight of the figure title
 
         # plot each panel
-        n = len(info_of_params_to_include)
+        n = len(info_of_param_info_to_include)
 
         if n == 0:
             raise ValueError('Values of parameters are not provided. '
@@ -323,33 +329,33 @@ class ParameterAnalyzer:
                 ax = axarr[i, j]
 
                 if j == 0:
-                    ax.set_ylabel(info_of_params_to_include[i].label)
+                    ax.set_ylabel(info_of_param_info_to_include[i].label)
                 if i == n-1:
-                    ax.set_xlabel(info_of_params_to_include[j].label)
+                    ax.set_xlabel(info_of_param_info_to_include[j].label)
 
                 if i == j:
                     # plot histogram
                     Fig.add_histogram_to_ax(
                         ax=ax,
-                        data=info_of_params_to_include[i].values,
-                        x_range=info_of_params_to_include[i].range
+                        data=info_of_param_info_to_include[i].values,
+                        x_range=info_of_param_info_to_include[i].range
                     )
                     ax.set_yticklabels([])
                     ax.set_yticks([])
 
                 else:
-                    ax.scatter(info_of_params_to_include[j].values,
-                               info_of_params_to_include[i].values,
+                    ax.scatter(info_of_param_info_to_include[j].values,
+                               info_of_param_info_to_include[i].values,
                                alpha=0.5, s=2)
-                    ax.set_xlim(info_of_params_to_include[j].range)
-                    ax.set_ylim(info_of_params_to_include[i].range)
+                    ax.set_xlim(info_of_param_info_to_include[j].range)
+                    ax.set_ylim(info_of_param_info_to_include[i].range)
                     # correlation line
-                    b, m = polyfit(info_of_params_to_include[j].values,
-                                   info_of_params_to_include[i].values, 1)
-                    ax.plot(info_of_params_to_include[j].values,
-                            b + m * info_of_params_to_include[j].values, '-', c='black')
-                    corr, p = pearsonr(info_of_params_to_include[j].values,
-                                       info_of_params_to_include[i].values)
+                    b, m = polyfit(info_of_param_info_to_include[j].values,
+                                   info_of_param_info_to_include[i].values, 1)
+                    ax.plot(info_of_param_info_to_include[j].values,
+                            b + m * info_of_param_info_to_include[j].values, '-', c='black')
+                    corr, p = pearsonr(info_of_param_info_to_include[j].values,
+                                       info_of_param_info_to_include[i].values)
                     ax.text(0.95, 0.95, '{0:.2f}'.format(corr), transform=ax.transAxes, fontsize=6,
                             va='top', ha='right')
 
