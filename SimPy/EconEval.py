@@ -501,6 +501,7 @@ class CEA(_EconEval):
                            center_s=50, cloud_s=10, transparency=0.1,
                            cost_multiplier=1, effect_multiplier=1,
                            cost_decimals=None, effect_decimals=None,
+                           interval_type=None, significance_level=0.05, interval_transparency=0.5,
                            legend_loc_code=0):
         """
         adds a cost-effectiveness plane to the provided ax
@@ -516,6 +517,12 @@ class CEA(_EconEval):
         :param effect_multiplier: (float) to multiply the effect values
         :param cost_decimals: (int) to round the labels of cost axis
         :param effect_decimals: (int) to round the labels of the effect axis
+        :param interval_type: (string) None to not display the intervals,
+                                       'c' for t-based confidence interval,
+                                       'cb' for bootstrap confidence interval, and
+                                       'p' for percentile interval
+        :param significance_level: (float) significance level for the interval
+        :param interval_transparency: (float) the transparency of intervals
         :param legend_loc_code: (int) legend location code
             https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html
         """
@@ -539,6 +546,20 @@ class CEA(_EconEval):
                        zorder=2,
                        edgecolors=CE_EDGE_COLOR
                        )
+            # add error bars
+            if interval_type is not None:
+                x_mean = s.dEffect.get_mean()*effect_multiplier
+                y_mean = s.dCost.get_mean()*cost_multiplier
+
+                x_interval = s.dEffect.get_interval(
+                    interval_type=interval_type, alpha=significance_level, multiplier=effect_multiplier)
+                y_interval = s.dCost.get_interval(
+                    interval_type=interval_type, alpha=significance_level, multiplier=cost_multiplier)
+
+                ax.errorbar(x_mean, y_mean,
+                            xerr=[[x_mean-x_interval[0]], [x_interval[1]-x_mean]],
+                            yerr=[[y_mean-y_interval[0]], [y_interval[1]-y_mean]],
+                            fmt='none', color=s.color, linewidth=1, alpha=interval_transparency)
 
         # add the frontier line
         if len(self.get_strategies_on_frontier()) > 1:
@@ -593,6 +614,7 @@ class CEA(_EconEval):
                       center_s=75, cloud_s=25, transparency=0.1,
                       cost_multiplier=1, effect_multiplier=1,
                       cost_digits=0, effect_digits=1,
+                      interval_type=None, significance_level=0.05, interval_transparency=0.5,
                       file_name=None
                       ):
         ''' plots a cost-effectiveness plane
@@ -613,6 +635,12 @@ class CEA(_EconEval):
                 thousands or hundred thousands unit
         :param cost_digits: (int) number of digits to round cost labels to
         :param effect_digits: (int) number of digits to round effect labels to
+        :param interval_type: (string) None to not display the intervals,
+                               'c' for t-based confidence interval,
+                               'cb' for bootstrap confidence interval, and
+                               'p' for percentile interval
+        :param significance_level: (float) significance level for the interval
+        :param interval_transparency: (float) the transparency of intervals
         :param file_name: (string) file name to save the figure as
         :return:
         '''
@@ -630,7 +658,9 @@ class CEA(_EconEval):
                                 show_legend=show_legend,
                                 center_s=center_s, cloud_s=cloud_s, transparency=transparency,
                                 cost_multiplier=cost_multiplier, effect_multiplier=effect_multiplier,
-                                cost_decimals=cost_digits, effect_decimals=effect_digits)
+                                cost_decimals=cost_digits, effect_decimals=effect_digits,
+                                interval_type=interval_type, significance_level=significance_level,
+                                interval_transparency=interval_transparency)
 
         fig.tight_layout()
 
