@@ -588,7 +588,7 @@ class CEA(_EconEval):
                       x_label='Additional Health',
                       y_label='Additional Cost',
                       x_range=None, y_range=None,
-                      add_clouds=True, fig_size=(5, 5),
+                      add_clouds=False, fig_size=(5, 5),
                       show_legend=True,
                       center_s=75, cloud_s=25, transparency=0.1,
                       cost_multiplier=1, effect_multiplier=1,
@@ -1308,6 +1308,7 @@ class CBA(_EconEval):
                               transparency_lines=0.5,
                               transparency_intervals=0.2,
                               show_legend=True,
+                              show_labels_on_frontier=False,
                               figure_size=(5, 5),
                               file_name=None):
         """
@@ -1328,6 +1329,7 @@ class CBA(_EconEval):
         :param transparency_lines: transparency of net monetary benefit lines (0.0 transparent through 1.0 opaque)
         :param transparency_intervals: transparency of intervals (0.0 transparent through 1.0 opaque)
         :param show_legend: set true to show legend
+        :param show_labels_on_frontier: set true to show strategy labels on frontier
         :param figure_size: (tuple) size of the figure (e.g. (2, 3)
         :param file_name: (string) filename to save the figure as
         """
@@ -1342,14 +1344,16 @@ class CBA(_EconEval):
         fig, ax = plt.subplots(figsize=figure_size)
 
         # add the incremental NMB curves
-        add_curves_to_ax(ax=ax, curves=self.inmbCurves, x_values=self.wtpValues,
-                               title=title, x_label=x_label,
-                               y_label=y_label, y_range=y_range, x_delta=delta_wtp,
-                               y_axis_multiplier=y_axis_multiplier,
-                               y_axis_decimal=y_axis_decimal,
-                               transparency_lines=transparency_lines,
-                               transparency_intervals=transparency_intervals,
-                               show_legend=show_legend)
+        add_curves_to_ax(ax=ax, curves=self.inmbCurves,
+                         x_values=self.wtpValues,
+                         title=title, x_label=x_label,
+                         y_label=y_label, y_range=y_range, x_delta=delta_wtp,
+                         y_axis_multiplier=y_axis_multiplier,
+                         y_axis_decimal=y_axis_decimal,
+                         transparency_lines=transparency_lines,
+                         transparency_intervals=transparency_intervals,
+                         show_legend=show_legend,
+                         show_labels_on_frontier=show_labels_on_frontier)
 
         fig.tight_layout()
 
@@ -1368,7 +1372,8 @@ class CBA(_EconEval):
                               y_axis_decimal=None,
                               delta_wtp=None,
                               interval_type='n',
-                              show_legend=True):
+                              show_legend=True,
+                              show_labels_on_frontier=False):
 
         # make incremental NMB curves
         self.build_inmb_curves(interval_type=interval_type)
@@ -1384,6 +1389,7 @@ class CBA(_EconEval):
                          transparency_lines=1,
                          transparency_intervals=NMB_INTERVAL_TRANSPARENCY,
                          show_legend=show_legend,
+                         show_labels_on_frontier=show_labels_on_frontier,
                          show_frontier=True,
                          curve_line_width=NMB_LINE_WIDTH,
                          frontier_line_width=NMB_FRONTIER_LINE_WIDTH,

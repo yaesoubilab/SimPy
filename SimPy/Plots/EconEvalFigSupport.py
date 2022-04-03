@@ -97,6 +97,7 @@ def add_curves_to_ax(ax, curves, title,
                      transparency_intervals=0.2,
                      show_legend=False,
                      show_frontier=True,
+                     show_labels_on_frontier=False,
                      curve_line_width=1.0, frontier_line_width=4.0,
                      if_y_axis_prob=False,
                      if_format_y_numbers=True,
@@ -133,10 +134,10 @@ def add_curves_to_ax(ax, curves, title,
     ax.set_ylim(y_range)
 
     # add labels on the frontier
-    y_min, y_max = ax.get_ylim()
-    y_axis_length = y_max - y_min
-    for curve in curves:
-        if show_frontier:
+    if show_labels_on_frontier:
+        y_min, y_max = ax.get_ylim()
+        y_axis_length = y_max - y_min
+        for curve in curves:
             if curve.maxXs is not None and len(curve.maxXs) > 0:
                 if curve.maxYs[0] is not None and curve.maxYs[-1] is not None:
                     x_axis_length = x_values[-1] - x_values[0]
