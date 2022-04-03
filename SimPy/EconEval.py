@@ -11,7 +11,9 @@ from numpy.random import RandomState
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
 from SimPy.Plots.EconEvalFigSupport import old_add_curves_to_ax, add_curves_to_ax
+from SimPy.Statistics import SummaryStat
 from SimPy.Support.EconEvalSupport import *
+from SimPy.Support.MiscFunctions import convert_lnl_to_prob
 from SimPy.Support.SupportClasses import *
 
 # warnings.filterwarnings("always")
@@ -2020,11 +2022,12 @@ class ICER_Paired(_ICER):
         if self._isDefined:
             self._icers = np.divide(self._deltaCosts, self._deltaEffects)
 
-    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
+    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None, prior_range=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
         :param rng: random number generator
+        :param prior_range: (tuple) in form of (l, u) for the prior range of WTP where NMB is zero.
         :return: confidence interval in the format of list [l, u]
         """
 
@@ -2037,9 +2040,44 @@ class ICER_Paired(_ICER):
         if rng is None:
             rng = RandomState(seed=1)
 
-        # check if ICER is computable
-        if not self._isDefined:
-            return [math.nan, math.nan]
+        # check if the Bayesian approach is selected
+        if prior_range is not None:
+
+            lambda_0s = []
+            ln_weights = []
+            st_dev_d_effect = np.std(self._deltaEffects)
+            for i in range(num_bootstrap_samples):
+                # a sample from the prior distribution of where 0 occurs
+                lambda_0 = rng.uniform(low=prior_range[0], high=prior_range[1])
+
+                # a sample from incremental cost and incremental effect
+                j = rng.randint(low=0, high=len(self._deltaCosts))
+                d_effect = self._deltaEffects[j]
+                d_cost = self._deltaCosts[j]
+
+                ln_weight = stat.norm.logpdf(
+                    x=d_cost,
+                    loc=d_effect*lambda_0,
+                    scale=st_dev_d_effect)
+                ln_weight += stat.norm.logpdf(
+                    x=d_effect,
+                    loc=d_effect,
+                    scale=st_dev_d_effect)
+
+                ln_weights.append(ln_weight)
+                lambda_0s.append(lambda_0)
+
+            probs = convert_lnl_to_prob(ln_weights)
+
+            sampled_lambda_0s = np.random.choice(
+                a=lambda_0s,
+                size=num_bootstrap_samples,
+                replace=True,
+                p=probs)
+
+            sum_stat = SummaryStat(data=sampled_lambda_0s)
+            return sum_stat.get_interval(interval_type='p', alpha=alpha,)
+
         else:
             # bootstrap algorithm
             icer_bootstrap_means = np.zeros(num_bootstrap_samples)
@@ -2056,15 +2094,16 @@ class ICER_Paired(_ICER):
                 ave_delta_effect = np.average(sampled_delta_effects)
 
                 # assert all the means should not be 0
-                if np.average(ave_delta_effect) == 0:
+                if ave_delta_effect <= 0:
                     warnings.warn(
-                        self.name + ': Mean incremental health is 0 for one bootstrap sample, ICER is not computable')
+                        self.name + ': Mean incremental health is 0 or less for one bootstrap sample, '
+                                    'ICER is not computable')
                     return [math.nan, math.nan]
 
                 icer_bootstrap_means[i] = ave_delta_cost / ave_delta_effect - self._ICER
 
-        # return the bootstrap interval
-        return self._ICER - np.percentile(icer_bootstrap_means, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
+            # return the bootstrap interval
+            return self._ICER - np.percentile(icer_bootstrap_means, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
 
     def get_PI(self, alpha=0.05):
         """

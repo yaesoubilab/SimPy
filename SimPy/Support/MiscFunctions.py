@@ -100,6 +100,16 @@ def get_random_colors(n, seed=0):
     
     return colors
 
-# print(get_random_colors(n=3))
 
+def convert_lnl_to_prob(ln_likelihoods):
+
+    # find the maximum lnl
+    max_lnl = max(ln_likelihoods)
+
+    # find probability weights
+    probs = [np.exp(s - max_lnl) for s in ln_likelihoods]
+    sum_prob = sum(probs)
+
+    # normalize the probability weights
+    return np.array(probs)/sum_prob
 
