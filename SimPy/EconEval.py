@@ -2014,60 +2014,60 @@ class ICER_Paired(_ICER):
         self._deltaCosts = self._costsNew - self._costsBase
         self._deltaEffects = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
-        # check if ICER is computable
-        if min(self._deltaEffects) <= 0:
-            self._isDefined = False
-
         # calculate ICERs
         if self._isDefined:
             self._icers = np.divide(self._deltaCosts, self._deltaEffects)
 
-    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None, prior_range=None):
+    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None, method='bootstrap', prior_range=None):
         """
         :param alpha: significance level, a value from [0, 1]
         :param num_bootstrap_samples: number of bootstrap samples
         :param rng: random number generator
+        :param method: (string) 'bootstrap' or 'Bayesian'
         :param prior_range: (tuple) in form of (l, u) for the prior range of WTP where NMB is zero.
         :return: confidence interval in the format of list [l, u]
         """
 
-        if not self._isDefined:
-            warnings.warn("\nFor '{0},' the confidence interval of ICERs is not computable because at least one "
-                          "incremental effect is negative.".format(self.name))
-            return [math.nan, math.nan]
+        n_obs = len(self._deltaCosts)
 
         # create a new random number generator if one is not provided.
         if rng is None:
             rng = RandomState(seed=1)
 
         # check if the Bayesian approach is selected
-        if prior_range is not None:
+        if method == 'Bayesian':
 
-            lambda_0s = []
-            ln_weights = []
+            if prior_range is None:
+                prior_range = [0, 2*self._ICER]
+
+            # lambda0 s
+            lambda_0s = np.linspace(start=prior_range[0],
+                                    stop=prior_range[1],
+                                    num=num_bootstrap_samples)
+            weights = []
             st_dev_d_effect = np.std(self._deltaEffects)
-            for i in range(num_bootstrap_samples):
-                # a sample from the prior distribution of where 0 occurs
-                lambda_0 = rng.uniform(low=prior_range[0], high=prior_range[1])
+            for lambda_0 in lambda_0s:
 
                 # a sample from incremental cost and incremental effect
-                j = rng.randint(low=0, high=len(self._deltaCosts))
+                j = rng.randint(low=0, high=n_obs)
                 d_effect = self._deltaEffects[j]
                 d_cost = self._deltaCosts[j]
 
-                ln_weight = stat.norm.logpdf(
+                # lnl of observing this incremental cost given
+                # the observed incremental effect and the sampled lambda_0
+                weight = stat.norm.logpdf(
                     x=d_cost,
                     loc=d_effect*lambda_0,
-                    scale=st_dev_d_effect)
-                ln_weight += stat.norm.logpdf(
-                    x=d_effect,
-                    loc=d_effect,
-                    scale=st_dev_d_effect)
+                    scale=st_dev_d_effect*lambda_0)
+                # # lnl of observing this incremental effect
+                # ln_weight += stat.norm.logpdf(
+                #     x=d_effect,
+                #     loc=d_effect,
+                #     scale=st_dev_d_effect)
 
-                ln_weights.append(ln_weight)
-                lambda_0s.append(lambda_0)
+                weights.append(weight)
 
-            probs = convert_lnl_to_prob(ln_weights)
+            probs = convert_lnl_to_prob(weights)
 
             sampled_lambda_0s = np.random.choice(
                 a=lambda_0s,
@@ -2078,14 +2078,14 @@ class ICER_Paired(_ICER):
             sum_stat = SummaryStat(data=sampled_lambda_0s)
             return sum_stat.get_interval(interval_type='p', alpha=alpha,)
 
-        else:
+        elif method == 'bootstrap':
             # bootstrap algorithm
             icer_bootstrap_means = np.zeros(num_bootstrap_samples)
             for i in range(num_bootstrap_samples):
                 # because cost and health observations are paired,
                 # we sample delta cost and delta health together
-                indices = rng.choice(a=range(len(self._deltaCosts)),
-                                     size=len(self._deltaCosts),
+                indices = rng.choice(a=range(n_obs),
+                                     size=n_obs,
                                      replace=True)
                 sampled_delta_costs = self._deltaCosts[indices]
                 sampled_delta_effects = self._deltaEffects[indices]
@@ -2098,12 +2098,16 @@ class ICER_Paired(_ICER):
                     warnings.warn(
                         self.name + ': Mean incremental health is 0 or less for one bootstrap sample, '
                                     'ICER is not computable')
+                    self._isDefined = False
                     return [math.nan, math.nan]
 
                 icer_bootstrap_means[i] = ave_delta_cost / ave_delta_effect - self._ICER
 
             # return the bootstrap interval
             return self._ICER - np.percentile(icer_bootstrap_means, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
+
+        else:
+            raise ValueError('Invalid method. Method should be either bootstrap or Bayesian.')
 
     def get_PI(self, alpha=0.05):
         """

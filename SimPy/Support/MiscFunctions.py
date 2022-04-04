@@ -103,6 +103,10 @@ def get_random_colors(n, seed=0):
 
 def convert_lnl_to_prob(ln_likelihoods):
 
+    for i, lnl in enumerate(ln_likelihoods):
+        if np.isnan(lnl):
+            ln_likelihoods[i] = -np.inf
+
     # find the maximum lnl
     max_lnl = max(ln_likelihoods)
 
