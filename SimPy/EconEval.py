@@ -367,16 +367,24 @@ class CEA(_EconEval):
         return [s for s in self.strategies if s.ifDominated]
 
     def build_CE_table(self,
-                       interval_type='n',
-                       alpha=0.05,
+                       interval_type='c',
+                       alpha=0.05, method='bootstrap', num_bootstrap_samples=1000, rng=None,
+                       prior_range=None, num_wtp_thresholds=1000,
                        cost_digits=0, effect_digits=2, icer_digits=1,
                        cost_multiplier=1, effect_multiplier=1,
                        file_name='CETable.csv', directory=''):
         """
-        :param interval_type: (string) 'n' for no interval,
-                                       'c' for confidence interval,
+        :param interval_type: (string) 'n' for no interval
+                                       'c' or 'cb' for bootstrap confidence interval, and
                                        'p' for percentile interval
-        :param alpha: significance level
+        :param alpha: significance level, a value from [0, 1]
+        :param method: (string) method to calculate confidence interval ('bootstrap' or 'Bayesian')
+        :param num_bootstrap_samples: number of bootstrap samples when 'bootstrap' method is selected
+        :param rng: random number generator to generate empirical bootstrap samples
+        :param num_wtp_thresholds: (int) number of willingness-to-pay thresholds to evaluate posterior
+            when 'Bayesian' approach is selected
+        :param prior_range: (tuple) in form of (l, u) for the prior range of willingness-to-pay
+            threshold that makes NMB zero (if prior is not provided [0, 4 * ICER] will be used
         :param cost_digits: digits to round cost estimates to
         :param effect_digits: digits to round effect estimate to
         :param icer_digits: digits to round ICER estimates to
@@ -439,10 +447,14 @@ class CEA(_EconEval):
             elif s.icer is not None:
                 row.append(s.icer.get_formatted_mean_and_interval(interval_type=interval_type,
                                                                   alpha=alpha,
+                                                                  method=method,
+                                                                  num_bootstrap_samples=num_bootstrap_samples,
+                                                                  rng=rng,
+                                                                  prior_range=prior_range,
+                                                                  num_wtp_thresholds=num_wtp_thresholds,
                                                                   deci=icer_digits,
                                                                   form=',',
-                                                                  multiplier=1,
-                                                                  num_bootstrap_samples=NUM_OF_BOOTSTRAPS))
+                                                                  multiplier=1))
             else:
                 row.append('-')
 
@@ -1938,19 +1950,22 @@ class _ICER(_ComparativeEconMeasure):
             # $ per DALY averted or $ per QALY gained
             self._ICER = self._delta_ave_cost / self._delta_ave_effect
 
-            if self._ICER < 0:
-                self._ICER = math.nan
 
     def get_ICER(self):
         """ return ICER """
         return self._ICER
 
-    # TODO: update this
-    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
+    def get_CI(self, alpha=0.05, method='bootstrap', num_bootstrap_samples=1000, rng=None,
+               prior_range=None, num_wtp_thresholds=1000):
         """
         :param alpha: significance level, a value from [0, 1]
-        :param num_bootstrap_samples: number of bootstrap samples
-        :param rng: random number generator
+        :param method: (string) 'bootstrap' or 'Bayesian'
+        :param num_bootstrap_samples: number of bootstrap samples when 'bootstrap' method is selected
+        :param rng: random number generator to generate empirical bootstrap samples
+        :param num_wtp_thresholds: (int) number of willingness-to-pay thresholds to evaluate posterior
+            when 'Bayesian' approach is selected
+        :param prior_range: (tuple) in form of (l, u) for the prior range of willingness-to-pay
+            threshold that makes NMB zero (if prior is not provided [0, 4 * ICER] will be used.
         :return: confidence interval in the format of list [l, u]
         """
         # abstract method to be overridden in derived classes to process an event
@@ -1964,15 +1979,23 @@ class _ICER(_ComparativeEconMeasure):
         # abstract method to be overridden in derived classes to process an event
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
-    # TODO: update this
     def get_formatted_mean_and_interval(self, interval_type='c',
-                                        alpha=0.05, deci=0, sig_digits=4, form=None,
-                                        multiplier=1, num_bootstrap_samples=1000):
+                                        alpha=0.05, method='bootstrap', num_bootstrap_samples=1000, rng=None,
+                                        prior_range=None, num_wtp_thresholds=1000,
+                                        deci=0, sig_digits=4, form=None,
+                                        multiplier=1):
         """
         :param interval_type: (string) 'n' for no interval
                                        'c' or 'cb' for bootstrap confidence interval, and
                                        'p' for percentile interval
-        :param alpha: significance level
+        :param alpha: significance level, a value from [0, 1]
+        :param method: (string) method to calculate confidence interval ('bootstrap' or 'Bayesian')
+        :param num_bootstrap_samples: number of bootstrap samples when 'bootstrap' method is selected
+        :param rng: random number generator to generate empirical bootstrap samples
+        :param num_wtp_thresholds: (int) number of willingness-to-pay thresholds to evaluate posterior
+            when 'Bayesian' approach is selected
+        :param prior_range: (tuple) in form of (l, u) for the prior range of willingness-to-pay
+            threshold that makes NMB zero (if prior is not provided [0, 4 * ICER] will be used
         :param deci: digits to round the numbers to
         :param sig_digits: number of significant digits
         :param form: ',' to format as number, '%' to format as percentage, and '$' to format as currency
@@ -1984,7 +2007,8 @@ class _ICER(_ComparativeEconMeasure):
         estimate = self.get_ICER() * multiplier
 
         if interval_type == 'c' or interval_type == 'cb':
-            interval = self.get_CI(alpha=alpha, num_bootstrap_samples=num_bootstrap_samples)
+            interval = self.get_CI(alpha=alpha, method=method, num_bootstrap_samples=num_bootstrap_samples, rng=rng,
+                                   prior_range=prior_range, num_wtp_thresholds=num_wtp_thresholds)
         elif interval_type == 'p':
             interval = self.get_PI(alpha=alpha)
         else:
@@ -2156,16 +2180,25 @@ class ICER_Indp(_ICER):
         # initialize the base class
         _ICER.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
-    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
+    def get_CI(self, alpha=0.05, method='bootstrap', num_bootstrap_samples=1000, rng=None,
+               prior_range=None, num_wtp_thresholds=1000):
         """
         :param alpha: significance level, a value from [0, 1]
-        :param num_bootstrap_samples: number of bootstrap samples
-        :param rng: random number generator
-        :return: bootstrap confidence interval in the format of list [l, u]
+        :param method: (string) 'bootstrap' or 'Bayesian'
+        :param num_bootstrap_samples: number of bootstrap samples when 'bootstrap' method is selected
+        :param rng: random number generator to generate empirical bootstrap samples
+        :param num_wtp_thresholds: (int) number of willingness-to-pay thresholds to evaluate posterior
+            when 'Bayesian' approach is selected
+        :param prior_range: (tuple) in form of (l, u) for the prior range of willingness-to-pay
+            threshold that makes NMB zero (if prior is not provided [0, 4 * ICER] will be used.
+        :return: confidence interval in the format of list [l, u]
         """
 
-        if self._ICER is math.nan:
+        if not self._isDefined:
             return [math.nan, math.nan]
+
+        if method == 'Bayesian':
+            raise ValueError('The Bayesian approach is not yet implemented. Use bootsrap instead.')
 
         # create a new random number generator if one is not provided.
         if rng is None:
