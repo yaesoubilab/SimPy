@@ -1924,8 +1924,14 @@ class _ICER(_ComparativeEconMeasure):
         _ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # calculate ICER
-        if self._delta_ave_effect == 0:
-            warnings.warn(self.name + ': Mean incremental effect is 0. ICER is not computable.')
+        if self._delta_ave_effect <= 0 and self._delta_ave_cost >= 0:
+            warnings.warn(self.name + ': Mean incremental effect is <= 0 but mean incremental cost is >= 0. '
+                                      'ICER is not computable.')
+            self._isDefined = False
+            self._ICER = math.nan
+        elif self._delta_ave_effect >= 0 and self._delta_ave_cost < 0:
+            warnings.warn(self.name + ': Mean incremental effect is >= 0 but mean incremental cost is < 0. '
+                                      'ICER is not computable.')
             self._isDefined = False
             self._ICER = math.nan
         else:
@@ -1939,6 +1945,7 @@ class _ICER(_ComparativeEconMeasure):
         """ return ICER """
         return self._ICER
 
+    # TODO: update this
     def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None):
         """
         :param alpha: significance level, a value from [0, 1]
@@ -1957,6 +1964,7 @@ class _ICER(_ComparativeEconMeasure):
         # abstract method to be overridden in derived classes to process an event
         raise NotImplementedError("This is an abstract method and needs to be implemented in derived classes.")
 
+    # TODO: update this
     def get_formatted_mean_and_interval(self, interval_type='c',
                                         alpha=0.05, deci=0, sig_digits=4, form=None,
                                         multiplier=1, num_bootstrap_samples=1000):
@@ -1997,8 +2005,8 @@ class ICER_Paired(_ICER):
         """
         :param costs_new: (list or numpy.array) cost data for the new strategy
         :param effects_new: (list or numpy.array) health data for the new strategy
-        :param costs_base: (list or numpy.array) cost data for the base line
-        :param effects_base: (list or numpy.array) health data for the base line
+        :param costs_base: (list or numpy.array) cost data for the baseline
+        :param effects_base: (list or numpy.array) health data for the baseline
         :param health_measure: (string) choose 'u' if higher "effect" implies better health
         (e.g. when QALY is used) and set to 'd' if higher "effect" implies worse health
         (e.g. when DALYS is used)
@@ -2019,13 +2027,17 @@ class ICER_Paired(_ICER):
         if self._isDefined:
             self._icers = np.divide(self._deltaCosts, self._deltaEffects)
 
-    def get_CI(self, alpha=0.05, num_bootstrap_samples=1000, rng=None, method='bootstrap', prior_range=None):
+    def get_CI(self, alpha=0.05, method='bootstrap', num_bootstrap_samples=1000, rng=None,
+               prior_range=None, num_wtp_thresholds=1000):
         """
         :param alpha: significance level, a value from [0, 1]
-        :param num_bootstrap_samples: number of bootstrap samples
-        :param rng: random number generator
-        :param method: (string) 'bootstrap' or 'Bayesian'
-        :param prior_range: (tuple) in form of (l, u) for the prior range of WTP where NMB is zero.
+         :param method: (string) 'bootstrap' or 'Bayesian'
+        :param num_bootstrap_samples: number of bootstrap samples when 'bootstrap' method is selected
+        :param rng: random number generator to generate empirical bootstrap samples
+        :param num_wtp_thresholds: (int) number of willingness-to-pay thresholds to evaluate posterior
+            when 'Bayesian' approach is selected
+        :param prior_range: (tuple) in form of (l, u) for the prior range of willingness-to-pay
+            threshold that makes NMB zero (if prior is not provided [0, 4 * ICER] will be used.
         :return: confidence interval in the format of list [l, u]
         """
 
@@ -2039,45 +2051,39 @@ class ICER_Paired(_ICER):
         if method == 'Bayesian':
 
             if prior_range is None:
-                prior_range = [0, 2*self._ICER]
+                prior_range = [0, 4*self._ICER]
 
             # lambda0 s
             lambda_0s = np.linspace(start=prior_range[0],
                                     stop=prior_range[1],
-                                    num=num_bootstrap_samples)
-            weights = []
-            mean_effect = np.mean(self._deltaEffects)
+                                    num=num_wtp_thresholds)
+            lnl_weights = []
+            mean_d_effect = self._delta_ave_effect
             st_err_d_effect = sem(self._deltaEffects)
+            mean_d_cost = self._delta_ave_cost
+            st_err_d_cost = sem(self._deltaCosts)
+
+            # lnl of observing NMB = 0 given the sampled lambda_0s
             for lambda_0 in lambda_0s:
+                lnl_weight = 0
+                lnl_weight += stat.norm.logpdf(
+                    x=0,
+                    loc=lambda_0 * mean_d_effect - mean_d_cost,
+                    scale=lambda_0 * st_err_d_effect + st_err_d_cost)
 
-                # a sample from incremental cost and incremental effect
-                j = rng.randint(low=0, high=n_obs)
-                d_effect = self._deltaEffects[j]
-                d_cost = self._deltaCosts[j]
+                lnl_weights.append(lnl_weight)
 
-                # lnl of observing this incremental cost given
-                # the observed incremental effect and the sampled lambda_0
-                weight = 0
-                weight += stat.norm.logpdf(
-                    x=d_cost,
-                    loc=mean_effect*lambda_0,
-                    scale=st_err_d_effect*lambda_0)
-                # # lnl of observing this incremental effect
-                # ln_weight += stat.norm.logpdf(
-                #     x=d_effect,
-                #     loc=d_effect,
-                #     scale=st_dev_d_effect)
+            # convert likelihoods to probabilities
+            probs = convert_lnl_to_prob(lnl_weights)
 
-                weights.append(weight)
-
-            probs = convert_lnl_to_prob(weights)
-
+            # resamples lambda_0s based on the probabilities
             sampled_lambda_0s = np.random.choice(
                 a=lambda_0s,
                 size=num_bootstrap_samples,
                 replace=True,
                 p=probs)
 
+            # report CI
             sum_stat = SummaryStat(data=sampled_lambda_0s)
             return sum_stat.get_interval(interval_type='p', alpha=alpha)
 
@@ -2110,7 +2116,7 @@ class ICER_Paired(_ICER):
             return self._ICER - np.percentile(icer_bootstrap_means, [100 * (1 - alpha / 2.0), 100 * alpha / 2.0])
 
         else:
-            raise ValueError('Invalid method. Method should be either bootstrap or Bayesian.')
+            raise ValueError('Invalid method. Method should be either bootstrap, Bayesian-Ratio, or Bayesian-NMB.')
 
     def get_PI(self, alpha=0.05):
         """

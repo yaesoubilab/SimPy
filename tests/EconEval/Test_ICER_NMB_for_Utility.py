@@ -17,10 +17,15 @@ ICER_paired = EconEval.ICER_Paired(name='Testing paired ICER',
                                    effects_new=effect_intervention,
                                    costs_base=cost_base,
                                    effects_base=effect_base)
-print('Paired ICER (confidence and prediction interval): ',
+print('Paired ICER:'
+      '\n\tICER: {} '
+      '\n\tCI (boostrap): {} '
+      '\n\tCI (Bayesian): {} '
+      '\n\tPI: {}'.format(
       ICER_paired.get_ICER(),
       ICER_paired.get_CI(0.05, 1000),
-      ICER_paired.get_PI(0.05, ))
+      ICER_paired.get_CI(0.05, 1000, method='Bayesian'),
+      ICER_paired.get_PI(0.05)))
 
 # ICER calculation assuming independent observations
 ICER_indp = EconEval.ICER_Indp('Testing independent ICER',
