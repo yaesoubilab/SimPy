@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stat
 from numpy import exp, power, average
 from numpy.random import RandomState
+from scipy.stats import sem
 
 import SimPy.FormatFunctions as F
 import SimPy.InOutFunctions as IO
@@ -2045,7 +2046,8 @@ class ICER_Paired(_ICER):
                                     stop=prior_range[1],
                                     num=num_bootstrap_samples)
             weights = []
-            st_dev_d_effect = np.std(self._deltaEffects)
+            mean_effect = np.mean(self._deltaEffects)
+            st_err_d_effect = sem(self._deltaEffects)
             for lambda_0 in lambda_0s:
 
                 # a sample from incremental cost and incremental effect
@@ -2055,10 +2057,11 @@ class ICER_Paired(_ICER):
 
                 # lnl of observing this incremental cost given
                 # the observed incremental effect and the sampled lambda_0
-                weight = stat.norm.logpdf(
+                weight = 0
+                weight += stat.norm.logpdf(
                     x=d_cost,
-                    loc=d_effect*lambda_0,
-                    scale=st_dev_d_effect*lambda_0)
+                    loc=mean_effect*lambda_0,
+                    scale=st_err_d_effect*lambda_0)
                 # # lnl of observing this incremental effect
                 # ln_weight += stat.norm.logpdf(
                 #     x=d_effect,
@@ -2069,6 +2072,8 @@ class ICER_Paired(_ICER):
 
             probs = convert_lnl_to_prob(weights)
 
+            print(np.dot(probs, lambda_0s))
+
             sampled_lambda_0s = np.random.choice(
                 a=lambda_0s,
                 size=num_bootstrap_samples,
@@ -2076,7 +2081,8 @@ class ICER_Paired(_ICER):
                 p=probs)
 
             sum_stat = SummaryStat(data=sampled_lambda_0s)
-            return sum_stat.get_interval(interval_type='p', alpha=alpha,)
+            print(sum_stat.get_mean())
+            return sum_stat.get_interval(interval_type='p', alpha=alpha)
 
         elif method == 'bootstrap':
             # bootstrap algorithm
