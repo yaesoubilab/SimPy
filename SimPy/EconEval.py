@@ -2076,10 +2076,14 @@ class ICER_Paired(_ICER):
             # convert likelihoods to probabilities
             probs = convert_lnl_to_prob(lnl_weights)
 
+            # l = get_percentile_of_empirical_dist(xs=lambda_0s, probs=probs, q=alpha / 2)
+            # u = get_percentile_of_empirical_dist(xs=lambda_0s, probs=probs, q=1 - alpha / 2)
+            # print([l, u])
+
             # resamples lambda_0s based on the probabilities
             sampled_lambda_0s = np.random.choice(
                 a=lambda_0s,
-                size=num_bootstrap_samples,
+                size=num_wtp_thresholds,
                 replace=True,
                 p=probs)
 

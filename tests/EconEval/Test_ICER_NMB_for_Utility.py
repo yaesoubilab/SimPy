@@ -23,8 +23,8 @@ print('Paired ICER:'
       '\n\tCI (Bayesian): {} '
       '\n\tPI: {}'.format(
       ICER_paired.get_ICER(),
-      ICER_paired.get_CI(0.05, 1000),
-      ICER_paired.get_CI(0.05, 1000, method='Bayesian'),
+      ICER_paired.get_CI(0.05),
+      ICER_paired.get_CI(0.05, method='Bayesian'),
       ICER_paired.get_PI(0.05)))
 
 # ICER calculation assuming independent observations
@@ -35,7 +35,7 @@ ICER_indp = EconEval.ICER_Indp('Testing independent ICER',
                                effects_base=effect_base)
 print('Independent ICER (confidence and prediction interval): ',
       ICER_indp.get_ICER(),
-      ICER_indp.get_CI(0.05, 1000),
+      ICER_indp.get_CI(0.05),
       ICER_indp.get_PI(0.05, ))
 
 # NMB

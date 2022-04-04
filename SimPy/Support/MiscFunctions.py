@@ -117,3 +117,55 @@ def convert_lnl_to_prob(ln_likelihoods):
     # normalize the probability weights
     return np.array(probs)/sum_prob
 
+
+def get_percentile_of_empirical_dist(xs, probs, q):
+    """
+    :param xs: (list or np.array) values that the random variable can take
+        (assumed to be sorted in the increasing order)
+    :param probs: (list or np.array) probability of each value
+    :param q: (float) percentile value (has to be between 0 and 1)
+    :return: the value of x where q*100% of cumulative probability distribution is below q
+    """
+
+    raise ValueError('needs to be debugged.')
+
+    if not 0 <= q <= 1:
+        raise ValueError('q should be between 0 and 1.')
+
+    # remove x values with 0 probability
+    xs_nonzero_prob = []
+    nonzero_probs = []
+    for i, p in enumerate(probs):
+        if p > 0:
+            xs_nonzero_prob.append(xs[i])
+            nonzero_probs.append(p)
+
+    sum_p = 0
+
+    if q <= 0.5:
+        i = 0
+        while True:
+            sum_p += nonzero_probs[i]
+            if sum_p >= q:
+                if i - 1 < 0:
+                    return None
+                else:
+                    return xs_nonzero_prob[i - 1]
+            i += 1
+
+    else:
+        i = len(xs_nonzero_prob) - 1
+        while True:
+            if q == 1:
+                return xs_nonzero_prob[-1]
+            else:
+                sum_p += nonzero_probs[i]
+                if sum_p >= 1 - q:
+                    return xs_nonzero_prob[i - 1]
+                i -= 1
+
+#
+# print(get_percentile_of_empirical_dist(xs=[1, 2, 3, 4], probs=[0.1, 0.2, 0.7, 0], q=0.05))
+# print(get_percentile_of_empirical_dist(xs=[1, 2, 3, 4], probs=[0.1, 0.2, 0.7, 0], q=0.4))
+# print(get_percentile_of_empirical_dist(xs=[1, 2, 3, 4], probs=[0.1, 0.2, 0.7, 0], q=1))
+# print(get_percentile_of_empirical_dist(xs=[1, 2, 3, 4], probs=[0.1, 0.2, 0.7, 0], q=0.6))
