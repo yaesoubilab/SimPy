@@ -2072,8 +2072,6 @@ class ICER_Paired(_ICER):
 
             probs = convert_lnl_to_prob(weights)
 
-            print(np.dot(probs, lambda_0s))
-
             sampled_lambda_0s = np.random.choice(
                 a=lambda_0s,
                 size=num_bootstrap_samples,
@@ -2081,7 +2079,6 @@ class ICER_Paired(_ICER):
                 p=probs)
 
             sum_stat = SummaryStat(data=sampled_lambda_0s)
-            print(sum_stat.get_mean())
             return sum_stat.get_interval(interval_type='p', alpha=alpha)
 
         elif method == 'bootstrap':
