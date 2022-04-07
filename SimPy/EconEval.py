@@ -2047,10 +2047,6 @@ class ICER_Paired(_ICER):
         self._deltaCosts = self._costsNew - self._costsBase
         self._deltaEffects = (self._effectsNew - self._effectsBase) * self._effect_multiplier
 
-        # calculate ICERs
-        if self._isDefined:
-            self._icers = np.divide(self._deltaCosts, self._deltaEffects)
-
     def get_CI(self, alpha=0.05, method='bootstrap', num_bootstrap_samples=1000, rng=None,
                prior_range=None, num_wtp_thresholds=1000):
         """
@@ -2151,12 +2147,16 @@ class ICER_Paired(_ICER):
         :param alpha: significance level, a value from [0, 1]
         :return: prediction interval in the format of list [l, u]
         """
-        if not self._isDefined:
-            warnings.warn("\nFor '{0},' the prediction interval of ICERs is not computable because at least one "
-                          "incremental effect is negative.".format(self.name))
-            return [math.nan, math.nan]
 
-        return np.percentile(self._icers, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
+        # calculate ICERs
+        if min(self._deltaEffects) <= 0:
+            warnings.warn("\nFor '{0},' the prediction interval of ICERs is not computable because at least one "
+                          "incremental effect is negative or zero.".format(self.name))
+            return [math.nan, math.nan]
+        else:
+            icers = np.divide(self._deltaCosts, self._deltaEffects)
+
+        return np.percentile(icers, [100 * alpha / 2.0, 100 * (1 - alpha / 2.0)])
 
 
 class ICER_Indp(_ICER):
