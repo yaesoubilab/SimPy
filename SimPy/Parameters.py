@@ -4,6 +4,7 @@ import numpy as np
 from numpy import exp, pi, cos
 
 from SimPy.RandomVariateGenerators import Beta as B
+from SimPy.RandomVariateGenerators import Dirichlet as Dirich
 from SimPy.RandomVariateGenerators import Gamma as G
 from SimPy.RandomVariateGenerators import Multinomial as Mult
 from SimPy.RandomVariateGenerators import Uniform as U
@@ -155,7 +156,7 @@ class Multinomial(_Parameter):
     def __init__(self, par_n, p_values, id=None, name=None):
         """
         :param par_n: (Parameter) number of trials
-        :param p_values: (array) probabilities of success for each category
+        :param p_values: (list) probabilities of success for each category
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
@@ -173,21 +174,42 @@ class Multinomial(_Parameter):
         return self.value
 
 
-class AMultinomialOutcome(_Parameter):
-    # a parameter that is defined on one outcome of a multinomial parameter
-    def __init__(self, par_multinomial, outcome_index, id=None, name=None):
+class Dirichlet(_Parameter):
+    def __init__(self, par_ns, if_ignore_0s=False, id=None, name=None):
         """
-        :param par_multinomial: (Parameter) a multinomial parameter
+        :param par_ns: (list) number of
+        :param if_ignore_0s: (bool) numpy requires all elements of 'a' to be >0. Setting this
+            parameter to True allows 'a' to contain 0s.
+        :param id: (int) id of a parameter
+        :param name: (string) name of a parameter
+        """
+
+        _Parameter.__init__(self, id=id, name=name)
+        self.parNs = par_ns
+        self.ifIgnore0s = if_ignore_0s
+
+    def sample(self, rng=None, time=None):
+
+        self.value = Dirich(a=self.parNs, if_ignore_0s=self.ifIgnore0s).sample(rng=rng)
+        return self.value
+
+
+class AnOutcomeOfAMultiVariateDist(_Parameter):
+    # a parameter that is defined on one outcome of a multi-variate parameter
+    # such as multinomial or Dirichlet distributions
+    def __init__(self, par_multivariante, outcome_index, id=None, name=None):
+        """
+        :param par_multivariante: (Parameter) a multivariate parameter such as multinomial or Dirichlet
         :param outcome_index: (int) index of the outcome of interest
         :param id: (int) id of a parameter
         :param name: (string) name of a parameter
         """
         _Parameter.__init__(self, id=id, name=name)
-        self.multinomial = par_multinomial
+        self.multivariate = par_multivariante
         self.i = outcome_index
 
     def sample(self, rng=None, time=None):
-        self.value = self.multinomial.value[self.i]
+        self.value = self.multivariate.value[self.i]
         return self.value
 
 

@@ -318,20 +318,36 @@ class Binomial(RVG):
 
 
 class Dirichlet(RVG):
-    def __init__(self, a):
+    def __init__(self, a, if_ignore_0s=False):
         """
         E[Xi] = ai/a0 where a0 = sum of ai's.
         Var[Xi] = (ai(a0-ai))/((a0)**2(a0+1)) where a0 = sum of ai's.
         :param a: array or list
+        :param if_ignore_0s: (bool) numpy requires all elements of 'a' to be >0. Setting this
+            parameter to True allows 'a' to contain 0s.
         """
         RVG.__init__(self)
         self.a = a
+        self.ifIgnore0s = if_ignore_0s
+        self.nonZeroA = []
+        self.idxOfNonZeroA = []
+        for i, value in enumerate(a):
+            if value > 0:
+                self.nonZeroA.append(value)
+                self.idxOfNonZeroA.append(i)
 
     def sample(self, rng, arg=None):
         """
         :return: (array) a realization from the Dirichlet distribution
         """
-        return rng.dirichlet(self.a)
+        if self.ifIgnore0s:
+            sample = rng.dirichlet(self.nonZeroA)
+            result = [0]*len(self.a)
+            for i, idx in enumerate(self.idxOfNonZeroA):
+                result[idx] = sample[i]
+            return result
+        else:
+            return rng.dirichlet(self.a)
 
 
 class Empirical(RVG):
