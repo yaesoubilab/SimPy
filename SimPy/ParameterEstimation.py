@@ -451,12 +451,17 @@ class ParameterAnalyzer:
             if par_name in dict_of_priors:
 
                 prior_info = dict_of_priors[par_name]
-                try:
-                    x_range = [float(prior_info[ColumnsPriorDistCSV.LB.value]),
-                               float(prior_info[ColumnsPriorDistCSV.UB.value])]
-                except:
-                    raise ValueError(
-                        'Error in reading the prior distribution of parameter {}:'.format(par_name))
+
+                if prior_info[ColumnsPriorDistCSV.LB.value] in ('', None) or \
+                        prior_info[ColumnsPriorDistCSV.UB.value] in ('', None):
+                    x_range = None
+                else:
+                    try:
+                        x_range = [float(prior_info[ColumnsPriorDistCSV.LB.value]),
+                                   float(prior_info[ColumnsPriorDistCSV.UB.value])]
+                    except:
+                        raise ValueError(
+                            'Error in reading the prior distribution of parameter {}:'.format(par_name))
 
                 # find title
                 if prior_info[ColumnsPriorDistCSV.TITLE.value] in ('', None):
@@ -475,7 +480,9 @@ class ParameterAnalyzer:
                     multiplier = 1
                 else:
                     multiplier = float(prior_info[ColumnsPriorDistCSV.MULTIPLIER.value])
-                x_range = [x * multiplier for x in x_range]
+
+                if x_range is not None:
+                    x_range = [x * multiplier for x in x_range]
 
         return title, multiplier, x_range, decimal, form
 
