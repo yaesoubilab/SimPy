@@ -7,7 +7,6 @@ from numpy.polynomial.polynomial import polyfit
 from numpy.random import choice
 from scipy.stats import pearsonr
 
-import SimPy.FormatFunctions as Format
 import SimPy.InOutFunctions as IO
 import SimPy.Plots.Histogram as Fig
 import SimPy.Statistics as Stat
@@ -379,7 +378,7 @@ class ParameterAnalyzer:
 
         results = self.get_means_and_intervals(significance_level=significance_level,
                                                sig_digits=sig_digits,
-                                               ids=ids, names=names,
+                                               param_ids=ids, param_names=names,
                                                prior_info_csv_file=prior_info_csv_file)
 
         # write parameter estimates and credible intervals
@@ -392,20 +391,20 @@ class ParameterAnalyzer:
         :param significance_level:
         :param sig_digits: number of significant digits
         :param ids:
-        :param names:
+        :param names: (list) of parameter names
         :param prior_info_csv_file: (string) filename where parameter prior ranges are located
         :return:
         """
 
         results = self.get_means_and_intervals(significance_level=significance_level,
                                                sig_digits=sig_digits,
-                                               ids=ids, names=names,
+                                               param_ids=ids, param_names=names,
                                                prior_info_csv_file=prior_info_csv_file)
         for r in results:
             print(r)
 
     def get_means_and_intervals(self, significance_level=0.05, sig_digits=3,
-                                ids=None, names=None, prior_info_csv_file=None):
+                                param_ids=None, param_names=None, prior_info_csv_file=None):
         # read prior distributions
         priors = None
         if prior_info_csv_file is not None:
@@ -426,7 +425,7 @@ class ParameterAnalyzer:
                 continue
 
             # if estimates and credible intervals should be calculated for this parameter
-            if_record = self._if_include(par_id=par_id, par_name=par_name, ids=ids, names=names)
+            if_record = self._if_include(par_id=par_id, par_name=par_name, ids=param_ids, names=param_names)
 
             # record the calculated estimate and credible interval
             if if_record:
@@ -442,20 +441,13 @@ class ParameterAnalyzer:
                     form = priors[par_id][ColumnsPriorDistCSV.FORMAT.value]
                     multip = priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value]
 
-                if multip is None:
-                    data = par_values
-                else:
-                    multip = float(multip)
-                    data = [multip * x for x in par_values]
-
-                sum_stat = Stat.SummaryStat(name=par_name, data=data)
-                mean_text = Format.format_number(number=sum_stat.get_mean(),
-                                                 deci=decimal, sig_digits=sig_digits, format=form)
-                PI_text = Format.format_interval(interval=sum_stat.get_PI(significance_level),
-                                                 deci=decimal, sig_digits=sig_digits, format=form)
+                sum_stat = Stat.SummaryStat(name=par_name, data=par_values)
+                mean_PI_text = sum_stat.get_formatted_mean_and_interval(
+                    interval_type='p', alpha=significance_level, deci=decimal, sig_digits=sig_digits,
+                    form=form, multiplier=multip)
 
                 results.append(
-                    [par_id, par_name, mean_text, PI_text]
+                    [par_id, par_name, mean_PI_text]
                 )
 
             # next parameter
