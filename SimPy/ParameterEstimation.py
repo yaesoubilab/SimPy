@@ -165,7 +165,7 @@ class ParameterAnalyzer:
         # read prior distributions
         dict_of_priors = None
         if csv_file_name_prior is not None:
-            dict_of_priors = self.get_dict_of_priors(csv_file_name_prior=csv_file_name_prior)
+            dict_of_priors = self.get_dict_of_priors(prior_info_csv_file=csv_file_name_prior)
 
         if par_names is None:
             par_names = self.get_all_parameter_names()
@@ -173,37 +173,27 @@ class ParameterAnalyzer:
         # for all parameters, read sampled parameter values and create the histogram
         for par_name in par_names:
 
+            # get values for this parameter
             par_values = self.dictOfParamValues[par_name]
 
-            # check if the histogram should be created for this parameter
-            if_show = self._if_include(par_name=par_name, names=par_names)
+            # get info of this parameter
+            title, multiplier, x_range = self.get_title_multiplier_x_range_decimal_format(
+                par_name=par_name, dict_of_priors=dict_of_priors)
 
-            # create the histogram
-            if if_show:
+            # adjust parameter values
+            par_values = [v*multiplier for v in par_values]
 
-                title = par_name
-                x_range = None
-                multiplier = 1
+            # find the filename the histogram should be saved as
+            file_name = posterior_fig_loc + '/Par-' + par_name + ' ' + F.proper_file_name(par_name)
 
-                # find information related to prior distribution
-                if dict_of_priors is not None:
-                    if par_name in dict_of_priors:
-                        title, multiplier, x_range = self.get_title_multiplier_x_range(
-                            par_name=par_name, dict_of_priors=dict_of_priors)
-
-                par_values = [v*multiplier for v in par_values]
-
-                # find the filename the histogram should be saved as
-                file_name = posterior_fig_loc + '/Par-' + par_name + ' ' + F.proper_file_name(par_name)
-
-                # plot histogram
-                Fig.plot_histogram(
-                    data=par_values,
-                    title=title.replace('!', '\n'),
-                    x_range=x_range,
-                    figure_size=HISTOGRAM_FIG_SIZE,
-                    file_name=file_name
-                )
+            # plot histogram
+            Fig.plot_histogram(
+                data=par_values,
+                title=title.replace('!', '\n'),
+                x_range=x_range,
+                figure_size=HISTOGRAM_FIG_SIZE,
+                file_name=file_name
+            )
 
     def plot_pairwise(self, par_names=None, csv_file_name_prior=None, fig_filename='pairwise_correlation.png',
                       figure_size=(10, 10)):
@@ -215,44 +205,36 @@ class ParameterAnalyzer:
         :param figure_size: (tuple) figure size
         """
 
-        # read prior distributions
+        # read information about prior distributions
         dict_of_priors = None
         if csv_file_name_prior is not None:
-            dict_of_priors = self.get_dict_of_priors(csv_file_name_prior=csv_file_name_prior)
+            dict_of_priors = self.get_dict_of_priors(prior_info_csv_file=csv_file_name_prior)
+
+        # if parameter names are not specified, include all parameters
+        if par_names is None:
+            par_names = self.get_all_parameter_names()
 
         # find the info of parameters to include in the analysis
         info_of_param_info_to_include = []
 
-        if par_names is None:
-            par_names = self.get_all_parameter_names()
-
-        # for all parameters, read sampled parameter values and create the histogram
+        # for each parameter, read sampled parameter values and create the histogram
         for par_name in par_names:
 
+            # get parameter values
             par_values = self.dictOfParamValues[par_name]
 
-            # check if the histogram should be created for this parameter
-            if_show = self._if_include(par_name=par_name, names=par_names)
+            # get info
+            title, multiplier, x_range, decimal, form = self.get_title_multiplier_x_range_decimal_format(
+                par_name=par_name, dict_of_priors=dict_of_priors)
 
-            # create the histogram
-            if if_show:
-                title = par_name
-                x_range = None
-                multiplier = 1
+            # adjust parameter values
+            par_values = [v*multiplier for v in par_values]
 
-                if dict_of_priors is not None:
-                    if par_name in dict_of_priors:
-                        title, multiplier, x_range = self.get_title_multiplier_x_range(
-                            par_name=par_name, dict_of_priors=dict_of_priors)
-
-                par_values = [v*multiplier for v in par_values]
-
-                # append the info for this parameter
-                info_of_param_info_to_include.append(
-                    ParamInfo(name=par_name,
-                              label=title.replace('!', '\n'),
-                              values=par_values, value_range=x_range)
-                )
+            # append the info for this parameter
+            info_of_param_info_to_include.append(
+                ParamInfo(name=par_name,
+                          label=title.replace('!', '\n'),
+                          values=par_values, value_range=x_range))
 
         # plot pairwise
         # set default properties of the figure
@@ -313,20 +295,19 @@ class ParameterAnalyzer:
     def export_means_and_intervals(self,
                                    poster_file='ParameterEstimates.csv',
                                    significance_level=0.05, sig_digits=3,
-                                   ids=None, names=None, prior_info_csv_file=None):
+                                   param_names=None, prior_info_csv_file=None):
         """ calculate the mean and credible intervals of parameters specified by ids
         :param poster_file: csv file where the posterior ranges should be stored
         :param significance_level:
         :param sig_digits: number of significant digits
-        :param ids:
-        :param names: 
+        :param param_names: (list) of parameter names
         :param prior_info_csv_file: (string) filename where parameter prior ranges are located
         :return:
         """
 
         results = self.get_means_and_intervals(significance_level=significance_level,
                                                sig_digits=sig_digits,
-                                               param_ids=ids, param_names=names,
+                                               param_names=param_names,
                                                prior_info_csv_file=prior_info_csv_file)
 
         # write parameter estimates and credible intervals
@@ -334,63 +315,60 @@ class ParameterAnalyzer:
 
     def print_means_and_intervals(self,
                                   significance_level=0.05, sig_digits=3,
-                                  ids=None, names=None, prior_info_csv_file=None):
+                                  param_names=None, prior_info_csv_file=None):
         """ calculate the mean and credible intervals of parameters specified by ids
         :param significance_level:
         :param sig_digits: number of significant digits
-        :param ids:
-        :param names: (list) of parameter names
+        :param param_names: (list) of parameter names
         :param prior_info_csv_file: (string) filename where parameter prior ranges are located
         :return:
         """
 
         results = self.get_means_and_intervals(significance_level=significance_level,
-                                               sig_digits=sig_digits, param_names=names,
+                                               sig_digits=sig_digits, param_names=param_names,
                                                prior_info_csv_file=prior_info_csv_file)
         for r in results:
             print(r)
 
     def get_means_and_intervals(self, significance_level=0.05, sig_digits=3,
                                 param_names=None, prior_info_csv_file=None):
-        # read prior distributions
-        priors = None
-        if prior_info_csv_file is not None:
-            priors = IO.read_csv_rows(
-                file_name=prior_info_csv_file,
-                if_ignore_first_row=True,
-                delimiter=',',
-                if_convert_float=True
-            )
-
-        # if parameters are not specified, then do parameter estimation for all parameters
-        if param_names is None:
-            param_names = self.get_all_parameter_names()
+        """
+        :param significance_level: (float) significant level to calculate confidence or credible intervals
+        :param sig_digits: (int) number of significant digits
+        :param param_names: (list) of parameter names
+        :param prior_info_csv_file: (string)
+        :return:
+        """
 
         results = []  # list of parameter estimates and credible intervals
 
-        par_id = 0
+        # read information about prior distributions
+        dict_of_priors = None
+        if prior_info_csv_file is not None:
+            dict_of_priors = self.get_dict_of_priors(prior_info_csv_file=prior_info_csv_file)
+
+        # if parameter names are not specified, include all parameters
+        if param_names is None:
+            param_names = self.get_all_parameter_names()
+
+        # for each parameter get mean and  intervals
         for par_name in param_names:
 
+            # get values for this parameter
             par_values = self.dictOfParamValues[par_name]
 
-            if priors is None:
-                decimal = None
-                form = ''
-                multip = 1
-            else:
-                decimal = priors[par_id][ColumnsPriorDistCSV.DECI.value]
-                decimal = 0 if decimal is None else decimal
-                sig_digits = None
-                form = priors[par_id][ColumnsPriorDistCSV.FORMAT.value]
-                multip = priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value]
+            # get info of this parameter
+            title, multiplier, x_range, decimal, form = self.get_title_multiplier_x_range_decimal_format(
+                par_name=par_name, dict_of_priors=dict_of_priors)
 
+            # summary statistics
             sum_stat = Stat.SummaryStat(name=par_name, data=par_values)
             mean_PI_text = sum_stat.get_formatted_mean_and_interval(
                 interval_type='p', alpha=significance_level, deci=decimal, sig_digits=sig_digits,
-                form=form, multiplier=multip)
+                form=form, multiplier=multiplier)
 
             results.append(
-                [par_id, par_name, mean_PI_text])
+                [par_name, mean_PI_text])
 
         return results
 
@@ -447,11 +425,11 @@ class ParameterAnalyzer:
             file_name=file_name)
 
     @staticmethod
-    def get_dict_of_priors(csv_file_name_prior):
+    def get_dict_of_priors(prior_info_csv_file):
 
         dict_priors = {}
         rows_priors = IO.read_csv_rows(
-            file_name=csv_file_name_prior,
+            file_name=prior_info_csv_file,
             if_ignore_first_row=True,
             delimiter=',',
             if_convert_float=True
@@ -462,33 +440,50 @@ class ParameterAnalyzer:
         return dict_priors
 
     @staticmethod
-    def get_title_multiplier_x_range(par_name, dict_of_priors):
+    def get_title_multiplier_x_range_decimal_format(par_name, dict_of_priors):
 
-        prior_info = dict_of_priors[par_name]
-        try:
-            x_range = [float(prior_info[ColumnsPriorDistCSV.LB.value]),
-                       float(prior_info[ColumnsPriorDistCSV.UB.value])]
-        except:
-            raise ValueError(
-                'Error in reading the prior distribution of parameter {}:'.format(par_name))
+        title = par_name
+        x_range = None
+        multiplier = 1
+        decimal = None
+        form = None
 
-        # find title
-        if prior_info[ColumnsPriorDistCSV.TITLE.value] in ('', None):
-            title = par_name
-        else:
-            title = prior_info[ColumnsPriorDistCSV.TITLE.value]
+        if dict_of_priors is not None:
+            if par_name in dict_of_priors:
 
-        # find multiplier
-        if prior_info[ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
-            multiplier = 1
-        else:
-            multiplier = float(prior_info[ColumnsPriorDistCSV.MULTIPLIER.value])
-        x_range = [x * multiplier for x in x_range]
+                prior_info = dict_of_priors[par_name]
+                try:
+                    x_range = [float(prior_info[ColumnsPriorDistCSV.LB.value]),
+                               float(prior_info[ColumnsPriorDistCSV.UB.value])]
+                except:
+                    raise ValueError(
+                        'Error in reading the prior distribution of parameter {}:'.format(par_name))
 
-        return title, multiplier, x_range
+                # find title
+                if prior_info[ColumnsPriorDistCSV.TITLE.value] in ('', None):
+                    title = par_name
+                else:
+                    title = prior_info[ColumnsPriorDistCSV.TITLE.value]
+
+                # decimal
+                decimal = prior_info[ColumnsPriorDistCSV.DECI.value]
+
+                # format
+                form = prior_info[ColumnsPriorDistCSV.FORMAT.value]
+
+                # find multiplier
+                if prior_info[ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
+                    multiplier = 1
+                else:
+                    multiplier = float(prior_info[ColumnsPriorDistCSV.MULTIPLIER.value])
+                x_range = [x * multiplier for x in x_range]
+
+        return title, multiplier, x_range, decimal, form
 
     def get_all_parameter_names(self):
         """ :returns the names of all parameters """
+
+        raise ValueError('Needs to be debugged.')
 
         names = self.dictOfParamValues.keys()
 

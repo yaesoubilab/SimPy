@@ -14,6 +14,7 @@ def add_histogram_to_ax(ax, data, color=None, bin_width=None, x_range=None,
             linewidth=1,
             alpha=transparency,
             label=label)
+    ax.set_xlim(x_range)
 
     if format_deci is not None:
         vals = ax.get_xticks()
