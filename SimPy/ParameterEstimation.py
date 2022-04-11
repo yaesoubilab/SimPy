@@ -20,14 +20,13 @@ HISTOGRAM_FIG_SIZE = (4.2, 3.2)
 
 class ColumnsPriorDistCSV(Enum):
     # columns of the csv file containing parameter prior distributions
-    ID = 0
-    NAME = 1
-    LB = 2
-    UB = 3
-    TITLE = 4
-    MULTIPLIER = 5
-    FORMAT = 6
-    DECI = 7
+    NAME = 0
+    LB = 1
+    UB = 2
+    TITLE = 3
+    MULTIPLIER = 4
+    FORMAT = 5 # ',' to format as number, '%' to format as percentage, and '$' to format as currency
+    DECI = 6
 
 
 class ParamInfo:
@@ -195,11 +194,11 @@ class ParameterAnalyzer:
                 file_name=file_name
             )
 
-    def plot_pairwise(self, par_names=None, csv_file_name_prior=None, fig_filename='pairwise_correlation.png',
+    def plot_pairwise(self, par_names=None, prior_info_csv_file=None, fig_filename='pairwise_correlation.png',
                       figure_size=(10, 10)):
         """ creates pairwise correlation between parameters specified by ids
         :param par_names: (list) names of parameter to display
-        :param csv_file_name_prior: (string) filename where parameter prior ranges are located
+        :param prior_info_csv_file: (string) filename where parameter prior ranges are located
             (Note: '!' will be replaced with '\n')
         :param fig_filename: (string) filename to save the figure as
         :param figure_size: (tuple) figure size
@@ -207,8 +206,8 @@ class ParameterAnalyzer:
 
         # read information about prior distributions
         dict_of_priors = None
-        if csv_file_name_prior is not None:
-            dict_of_priors = self.get_dict_of_priors(prior_info_csv_file=csv_file_name_prior)
+        if prior_info_csv_file is not None:
+            dict_of_priors = self.get_dict_of_priors(prior_info_csv_file=prior_info_csv_file)
 
         # if parameter names are not specified, include all parameters
         if par_names is None:
