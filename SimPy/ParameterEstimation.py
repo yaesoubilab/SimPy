@@ -14,7 +14,7 @@ import SimPy.Support.MiscFunctions as F
 from SimPy.Plots.FigSupport import output_figure
 
 # list of columns in the parameter csv file that are not considered a parameter
-COLUMNS_TO_SKIP = ['ID', 'Seed', 'Probability', 'Message', 'Simulation Replication', 'Random Seed']
+COLUMNS_TO_SKIP = ['ID', 'Seed', 'LnL', 'Probability', 'Message', 'Simulation Replication', 'Random Seed']
 HISTOGRAM_FIG_SIZE = (4.2, 3.2)
 
 
@@ -31,20 +31,18 @@ class ColumnsPriorDistCSV(Enum):
 
 
 class ParamInfo:
-    # class to store information about a parameter (id, name, estimate and confidence/uncertainty interval)
-    def __init__(self, idx, name, values=None, label=None, range=None):
+    # class to store information about a parameter (name, estimate and confidence/uncertainty interval)
+    def __init__(self, name, values=None, label=None, value_range=None):
         """
-        :param idx: (int) id of this parameter
         :param name: (string) name of this parameter (mainly to use as a key in dictionaries)
         :param values: (list) of parameter values
         :param label: (string) label of this parameter to display on figures
-        :param range: (tuple) range of this parameter to display on figures
+        :param value_range: (tuple) range of this parameter to display on figures
         """
-        self.idx = idx
         self.name = name
         self.label = label
         self.values = np.array(values)
-        self.range = range
+        self.range = value_range
         self.estimate = None
         self.interval = None
 
@@ -152,65 +150,51 @@ class ParameterAnalyzer:
             x_range=x_range, figure_size=HISTOGRAM_FIG_SIZE, file_name=folder+'/'+title
         )
 
-    def plot_histograms(self, ids=None, names=None, csv_file_name_prior=None, posterior_fig_loc='figures_national'):
+    def plot_histograms(self, par_names=None, csv_file_name_prior=None, posterior_fig_loc='figures_national'):
         """ creates histograms of parameters specified by ids
-        :param ids: (list) of parameter ids to plot
-        :param names: (list) of parameter names to plot
+        :param par_names: (list) of parameter names to plot
         :param csv_file_name_prior: (string) filename where parameter prior ranges are located
         :param posterior_fig_loc: (string) location where posterior figures_national should be located
         """
+
+        raise ValueError('Needs to be debugged.')
 
         # clean the directory
         IO.delete_files('.png', posterior_fig_loc)
 
         # read prior distributions
+        dict_of_priors = None
         if csv_file_name_prior is not None:
-            priors = IO.read_csv_rows(
-                file_name=csv_file_name_prior,
-                if_ignore_first_row=True,
-                delimiter=',',
-                if_convert_float=True
-            )
+            dict_of_priors = self.get_dict_of_priors(csv_file_name_prior=csv_file_name_prior)
+
+        if par_names is None:
+            par_names = self.get_all_parameter_names()
 
         # for all parameters, read sampled parameter values and create the histogram
-        par_id = 0
-        for par_name, par_values in self.dictOfParamValues.items():
+        for par_name in par_names:
 
-            # skip the columns that are not considered parameter
-            if par_name in COLUMNS_TO_SKIP:
-                continue
+            par_values = self.dictOfParamValues[par_name]
 
             # check if the histogram should be created for this parameter
-            if_show = self._if_include(par_id=par_id, par_name=par_name, ids=ids, names=names)
+            if_show = self._if_include(par_name=par_name, names=par_names)
 
             # create the histogram
             if if_show:
-                # find prior range
+
+                title = par_name
                 x_range = None
-                if priors is not None:
-                    try:
-                        x_range = [float(priors[par_id][ColumnsPriorDistCSV.LB.value]), float(priors[par_id][ColumnsPriorDistCSV.UB.value])]
-                    except:
-                        print('Could not convert string to float to find the prior distribution of parameter:', par_id)
-                else:
-                    x_range = None
+                multiplier = 1
+
+                # find information related to prior distribution
+                if dict_of_priors is not None:
+                    if par_name in dict_of_priors:
+                        title, multiplier, x_range = self.get_title_multiplier_x_range(
+                            par_name=par_name, dict_of_priors=dict_of_priors)
+
+                par_values = [v*multiplier for v in par_values]
 
                 # find the filename the histogram should be saved as
-                file_name = posterior_fig_loc + '/Par-' + str(par_id) + ' ' + F.proper_file_name(par_name)
-
-                # find title
-                if priors[par_id][ColumnsPriorDistCSV.TITLE.value] in ('', None):
-                    title = priors[par_id][ColumnsPriorDistCSV.NAME.value]
-                else:
-                    title = priors[par_id][ColumnsPriorDistCSV.TITLE.value]
-
-                # find multiplier
-                if priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
-                    multiplier = 1
-                else:
-                    multiplier = float(priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value])
-                x_range = [x*multiplier for x in x_range]
-                par_values = [v*multiplier for v in par_values]
+                file_name = posterior_fig_loc + '/Par-' + par_name + ' ' + F.proper_file_name(par_name)
 
                 # plot histogram
                 Fig.plot_histogram(
@@ -221,14 +205,10 @@ class ParameterAnalyzer:
                     file_name=file_name
                 )
 
-            # move to the next parameter
-            par_id += 1
-
-    def plot_pairwise(self, ids=None, names=None, csv_file_name_prior=None, fig_filename='pairwise_correlation.png',
+    def plot_pairwise(self, par_names=None, csv_file_name_prior=None, fig_filename='pairwise_correlation.png',
                       figure_size=(10, 10)):
         """ creates pairwise correlation between parameters specified by ids
-        :param ids: (list) ids of parameters to display
-        :param names: (list) names of parameter to display
+        :param par_names: (list) names of parameter to display
         :param csv_file_name_prior: (string) filename where parameter prior ranges are located
             (Note: '!' will be replaced with '\n')
         :param fig_filename: (string) filename to save the figure as
@@ -236,75 +216,43 @@ class ParameterAnalyzer:
         """
 
         # read prior distributions
-        dict_priors = None
+        dict_of_priors = None
         if csv_file_name_prior is not None:
-            dict_priors = {}
-            rows_priors = IO.read_csv_rows(
-                file_name=csv_file_name_prior,
-                if_ignore_first_row=True,
-                delimiter=',',
-                if_convert_float=True
-            )
-            for row in rows_priors:
-                dict_priors[row[ColumnsPriorDistCSV.NAME.value]] = row
+            dict_of_priors = self.get_dict_of_priors(csv_file_name_prior=csv_file_name_prior)
 
         # find the info of parameters to include in the analysis
         info_of_param_info_to_include = []
 
-        par_id = 0
-        for par_name, par_values in self.dictOfParamValues.items():
+        if par_names is None:
+            par_names = self.get_all_parameter_names()
 
-            # skip these columns
-            if par_name in COLUMNS_TO_SKIP:
-                continue
+        # for all parameters, read sampled parameter values and create the histogram
+        for par_name in par_names:
+
+            par_values = self.dictOfParamValues[par_name]
 
             # check if the histogram should be created for this parameter
-            if_show = self._if_include(par_id=par_id, par_name=par_name, ids=ids, names=names)
+            if_show = self._if_include(par_name=par_name, names=par_names)
 
             # create the histogram
             if if_show:
-                # find prior range
+                title = par_name
                 x_range = None
-                if dict_priors is not None and par_name in dict_priors:
-                    try:
-                        x_range = [float(dict_priors[par_name][ColumnsPriorDistCSV.LB.value]),
-                                   float(dict_priors[par_name][ColumnsPriorDistCSV.UB.value])]
-                    except:
-                        print('Could not convert string to float to find the prior distribution of parameter:', par_id)
-                else:
-                    x_range = None
+                multiplier = 1
 
-                # find title
-                if dict_priors is not None and par_name in dict_priors:
-                    if dict_priors[par_name][ColumnsPriorDistCSV.TITLE.value] in ('', None):
-                        label = dict_priors[par_name][ColumnsPriorDistCSV.NAME.value]
-                    else:
-                        label = dict_priors[par_name][ColumnsPriorDistCSV.TITLE.value]
-                else:
-                    label = par_name
+                if dict_of_priors is not None:
+                    if par_name in dict_of_priors:
+                        title, multiplier, x_range = self.get_title_multiplier_x_range(
+                            par_name=par_name, dict_of_priors=dict_of_priors)
 
-                # find multiplier
-                if dict_priors is not None and par_name in dict_priors:
-                    if dict_priors[par_name][ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
-                        multiplier = 1
-                    else:
-                        multiplier = float(dict_priors[par_name][ColumnsPriorDistCSV.MULTIPLIER.value])
-                else:
-                    multiplier = 1
-
-                if x_range is not None:
-                    x_range = [x*multiplier for x in x_range]
                 par_values = [v*multiplier for v in par_values]
 
                 # append the info for this parameter
                 info_of_param_info_to_include.append(
-                    ParamInfo(idx=par_id, name=par_name,
-                              label=label.replace('!', '\n'),
-                              values=par_values, range=x_range)
+                    ParamInfo(name=par_name,
+                              label=title.replace('!', '\n'),
+                              values=par_values, value_range=x_range)
                 )
-
-            # move to the next parameter
-            par_id += 1
 
         # plot pairwise
         # set default properties of the figure
@@ -397,14 +345,13 @@ class ParameterAnalyzer:
         """
 
         results = self.get_means_and_intervals(significance_level=significance_level,
-                                               sig_digits=sig_digits,
-                                               param_ids=ids, param_names=names,
+                                               sig_digits=sig_digits, param_names=names,
                                                prior_info_csv_file=prior_info_csv_file)
         for r in results:
             print(r)
 
     def get_means_and_intervals(self, significance_level=0.05, sig_digits=3,
-                                param_ids=None, param_names=None, prior_info_csv_file=None):
+                                param_names=None, prior_info_csv_file=None):
         # read prior distributions
         priors = None
         if prior_info_csv_file is not None:
@@ -415,43 +362,35 @@ class ParameterAnalyzer:
                 if_convert_float=True
             )
 
+        # if parameters are not specified, then do parameter estimation for all parameters
+        if param_names is None:
+            param_names = self.get_all_parameter_names()
+
         results = []  # list of parameter estimates and credible intervals
 
         par_id = 0
-        for par_name, par_values in self.dictOfParamValues.items():
+        for par_name in param_names:
 
-            # skip these columns
-            if par_name in COLUMNS_TO_SKIP:
-                continue
+            par_values = self.dictOfParamValues[par_name]
 
-            # if estimates and credible intervals should be calculated for this parameter
-            if_record = self._if_include(par_id=par_id, par_name=par_name, ids=param_ids, names=param_names)
+            if priors is None:
+                decimal = None
+                form = ''
+                multip = 1
+            else:
+                decimal = priors[par_id][ColumnsPriorDistCSV.DECI.value]
+                decimal = 0 if decimal is None else decimal
+                sig_digits = None
+                form = priors[par_id][ColumnsPriorDistCSV.FORMAT.value]
+                multip = priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value]
 
-            # record the calculated estimate and credible interval
-            if if_record:
+            sum_stat = Stat.SummaryStat(name=par_name, data=par_values)
+            mean_PI_text = sum_stat.get_formatted_mean_and_interval(
+                interval_type='p', alpha=significance_level, deci=decimal, sig_digits=sig_digits,
+                form=form, multiplier=multip)
 
-                if priors is None:
-                    decimal = None
-                    form = ''
-                    multip = 1
-                else:
-                    decimal = priors[par_id][ColumnsPriorDistCSV.DECI.value]
-                    decimal = 0 if decimal is None else decimal
-                    sig_digits = None
-                    form = priors[par_id][ColumnsPriorDistCSV.FORMAT.value]
-                    multip = priors[par_id][ColumnsPriorDistCSV.MULTIPLIER.value]
-
-                sum_stat = Stat.SummaryStat(name=par_name, data=par_values)
-                mean_PI_text = sum_stat.get_formatted_mean_and_interval(
-                    interval_type='p', alpha=significance_level, deci=decimal, sig_digits=sig_digits,
-                    form=form, multiplier=multip)
-
-                results.append(
-                    [par_id, par_name, mean_PI_text]
-                )
-
-            # next parameter
-            par_id += 1
+            results.append(
+                [par_id, par_name, mean_PI_text])
 
         return results
 
@@ -470,16 +409,14 @@ class ParameterAnalyzer:
         return self.dictOfParamValues[numerator_par_name] / sum_denom
 
     @staticmethod
-    def _if_include(par_id, par_name, ids=None, names=None):
+    def _if_include(par_name, names=None):
         # check if this parameter should be included
         if_include = False
-        if ids is None and names is None:
+        if names is None:
             if_include = True
-        else:
-            if ids is not None and par_id in ids:
-                if_include = True
-            if names is not None and par_name in names:
-                if_include = True
+        elif par_name in names:
+            if_include = True
+
         return if_include
 
     def get_ratio_mean_interval(self, numerator_par_name, denominator_par_names, deci=0, form=None):
@@ -508,3 +445,54 @@ class ParameterAnalyzer:
             x_range=x_range,
             figure_size=HISTOGRAM_FIG_SIZE,
             file_name=file_name)
+
+    @staticmethod
+    def get_dict_of_priors(csv_file_name_prior):
+
+        dict_priors = {}
+        rows_priors = IO.read_csv_rows(
+            file_name=csv_file_name_prior,
+            if_ignore_first_row=True,
+            delimiter=',',
+            if_convert_float=True
+        )
+        for row in rows_priors:
+            dict_priors[row[ColumnsPriorDistCSV.NAME.value]] = row
+
+        return dict_priors
+
+    @staticmethod
+    def get_title_multiplier_x_range(par_name, dict_of_priors):
+
+        prior_info = dict_of_priors[par_name]
+        try:
+            x_range = [float(prior_info[ColumnsPriorDistCSV.LB.value]),
+                       float(prior_info[ColumnsPriorDistCSV.UB.value])]
+        except:
+            raise ValueError(
+                'Error in reading the prior distribution of parameter {}:'.format(par_name))
+
+        # find title
+        if prior_info[ColumnsPriorDistCSV.TITLE.value] in ('', None):
+            title = par_name
+        else:
+            title = prior_info[ColumnsPriorDistCSV.TITLE.value]
+
+        # find multiplier
+        if prior_info[ColumnsPriorDistCSV.MULTIPLIER.value] in ('', None):
+            multiplier = 1
+        else:
+            multiplier = float(prior_info[ColumnsPriorDistCSV.MULTIPLIER.value])
+        x_range = [x * multiplier for x in x_range]
+
+        return title, multiplier, x_range
+
+    def get_all_parameter_names(self):
+        """ :returns the names of all parameters """
+
+        names = self.dictOfParamValues.keys()
+
+        for to_del in COLUMNS_TO_SKIP:
+            del(names[to_del])
+
+        return names
