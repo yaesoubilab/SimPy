@@ -1886,10 +1886,6 @@ class _ComparativeEconMeasure:
             raise ValueError("health_measure can be either 'u' (for utility) or 'd' (for disutility).")
 
         self.name = name
-        self._costsNew = costs_new  # cost data for the new strategy
-        self._effectsNew = effects_new  # effect data for the new strategy
-        self._costsBase = costs_base  # cost data for teh base line
-        self._effectsBase = effects_base  # effect data for the base line
         # if QALY or DALY is being used
         self._effect_multiplier = 1 if health_measure == 'u' else -1
 
@@ -1936,13 +1932,9 @@ class _ICER(_ComparativeEconMeasure):
         _ComparativeEconMeasure.__init__(self, name, costs_new, effects_new, costs_base, effects_base, health_measure)
 
         # calculate ICER
-        if self._delta_ave_effect <= 0 and self._delta_ave_cost >= 0:
-            warnings.warn(self.name + ': Mean incremental effect is <= 0 but mean incremental cost is >= 0. '
-                                      'ICER is not computable.')
-            self._isDefined = False
-            self._ICER = math.nan
-        elif self._delta_ave_effect >= 0 and self._delta_ave_cost < 0:
-            warnings.warn(self.name + ': Mean incremental effect is >= 0 but mean incremental cost is < 0. '
+        if not (self._delta_ave_effect > 0 and self._delta_ave_cost >= 0):
+            warnings.warn(self.name + ': Mean incremental effect should be > 0 '
+                                      'and mean incremental cost should be >= 0. '
                                       'ICER is not computable.')
             self._isDefined = False
             self._ICER = math.nan
@@ -2231,9 +2223,9 @@ class ICER_Indp(_ICER):
             # calculate this bootstrap ICER
             if (mean_effects_new - mean_effects_base) * self._effect_multiplier <= 0:
                 self._isDefined = False
-                warnings.warn('\nFor "{},"'
-                              '\nConfidence intervals for one of bootstrap ICERs is not computable'
-                              '\nbecause at least one of bootstrap incremental effect is negative.'
+                warnings.warn('\nFor "{}, the confidence interval of ICER is not computable."'
+                              '\nThis is because at least one of bootstrap mean incremental effect '
+                              'is negative.'
                               '\nIncreasing the number of cost and effect observations '
                               'might resolve the issue.'.format(self.name))
                 return [math.nan, math.nan]
@@ -2277,9 +2269,9 @@ class ICER_Indp(_ICER):
 
         if min((effects_new - effects_base) * self._effect_multiplier) <= 0:
             self._isDefined = False
-            warnings.warn('\nPrediction intervals for one of bootstrap ICERs is not computable'
-                          '\nbecause at least one of bootstrap incremental effect is negative.'
-                          '\nIncreasing the number of cost and effect observations might resolve the issue.')
+            warnings.warn('\nFor "{}, the prediction interval of ICER is not computable."'
+                          '\nThis is because at least one of bootstrap mean incremental effect '
+                          'is negative'.format(self.name))
             return [math.nan, math.nan]
         else:
             sample_icers = np.divide(
