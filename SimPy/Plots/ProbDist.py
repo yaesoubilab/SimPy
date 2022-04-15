@@ -62,7 +62,7 @@ def add_discrete_dist(ax, dist, label):
 
 
 def format_fig(ax, title, x_label, x_range, y_range):
-    """ adds title and x_label """
+    """ adds title, x_label, x_range, and y_range (it removes the ticks and lables of y-axis """
 
     ax.set_title(title)
     ax.set_xlim(x_range)
@@ -75,6 +75,7 @@ def format_fig(ax, title, x_label, x_range, y_range):
 
 
 def finish_figure(ax, data, bin_width, title, x_label, x_range, y_range, filename):
+    """ add the histogram and format the figure """
 
     if data is not None:
         add_hist(ax, data, bin_width)
@@ -88,6 +89,7 @@ def finish_figure(ax, data, bin_width, title, x_label, x_range, y_range, filenam
 
 def plot_fit_continuous(data, dist, label, title=None, x_label=None, x_range=None, y_range=None,
                         fig_size=(6, 5), bin_width=None, filename=None):
+    """ plots the pdf of a continuous probability distribution a long with the histogram of data. """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=fig_size)
@@ -102,6 +104,7 @@ def plot_fit_continuous(data, dist, label, title=None, x_label=None, x_range=Non
 
 def plot_fit_discrete(data, dist, label, title=None, x_label=None, x_range=None, y_range=None,
                       fig_size=(6, 5), bin_width=None, filename=None):
+    """ plots the pmf of a discrete probability distribution a long with the histogram of data. """
 
     # plot histogram
     fig, ax = plt.subplots(1, 1, figsize=fig_size)
@@ -123,6 +126,7 @@ def plot_beta_fit(data, fit_results, title=None, x_label=None, x_range=None, y_r
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -145,6 +149,7 @@ def plot_beta_binomial_fit(data, fit_results, title=None, x_label=None, x_range=
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -167,6 +172,7 @@ def plot_binomial_fit(data, fit_results, title=None, x_label=None, x_range=None,
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -189,6 +195,7 @@ def plot_exponential_fit(data, fit_results, title=None, x_label=None, x_range=No
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -211,6 +218,7 @@ def plot_gamma_fit(data, fit_results, title=None, x_label=None, x_range=None, y_
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -234,6 +242,7 @@ def plot_gamma_poisson_fit(data, fit_results, title=None, x_label=None, x_range=
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -257,6 +266,7 @@ def plot_geometric_fit(data, fit_results, title=None, x_label=None, x_range=None
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -279,6 +289,7 @@ def plot_johnson_sb_fit(data, fit_results, title=None, x_label=None, x_range=Non
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -301,6 +312,7 @@ def plot_johnson_su_fit(data, fit_results, title=None, x_label=None, x_range=Non
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -323,6 +335,7 @@ def plot_lognormal_fit(data, fit_results, title=None, x_label=None, x_range=None
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -346,6 +359,7 @@ def plot_normal_fit(data, fit_results, title=None, x_label=None, x_range=None, y
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -368,6 +382,7 @@ def plot_negbinomial_fit(data, fit_results, title=None, x_label=None, x_range=No
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -390,6 +405,7 @@ def plot_poisson_fit(data, fit_results, title=None, x_label=None, x_range=None, 
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -412,6 +428,7 @@ def plot_triangular_fit(data, fit_results, title=None, x_label=None, x_range=Non
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -435,6 +452,7 @@ def plot_uniform_fit(data, fit_results, title=None, x_label=None, x_range=None, 
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -458,6 +476,7 @@ def plot_uniform_discrete_fit(data, fit_results, title=None, x_label=None, x_ran
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
@@ -480,6 +499,7 @@ def plot_weibull_fit(data, fit_results, title=None, x_label=None, x_range=None, 
     :param x_label: label to show on the x-axis of the histogram
     :param x_range: (tuple) x range
     :param y_range: (tuple) y range
+        (the histogram shows the probability density so the upper value of y_range should be 1).
     :param fig_size: int, specify the figure size
     :param bin_width: bin width
     :param filename: filename to save the figure as
