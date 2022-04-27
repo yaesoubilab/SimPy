@@ -49,6 +49,12 @@ class Gillespie:
         :param transition_rate_matrix: transition rate matrix of the continuous-time Markov model
         """
 
+        assert isinstance(transition_rate_matrix, list), \
+            'transition_rate_matrix should be an array, {} was provided'.format(type(transition_rate_matrix))
+
+        if len(transition_rate_matrix) == 0:
+            raise ValueError('An empty transition_rate_matrix is provided.')
+
         self._rateMatrix = transition_rate_matrix
         self._expDists = []
         self._empiricalDists = []
